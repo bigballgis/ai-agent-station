@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -156,7 +156,7 @@ import {
 import { useTheme } from '@/composables/useTheme'
 import { getAllAgents } from '@/api/agent'
 import { getToolStats } from '@/api/tool'
-import { getAlertStats, getAlertRecords } from '@/api/alert'
+import { getAlertRecords } from '@/api/alert'
 import { testApi } from '@/api/test'
 import { getLogs } from '@/api/log'
 import { PageHeader, StatCard, ChartContainer } from '@/components'
@@ -313,7 +313,7 @@ const lineChartOptions = computed(() => ({
       beginAtZero: true,
     },
   },
-}))
+}) as any)
 
 const doughnutChartData = computed(() => ({
   labels: [

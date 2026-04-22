@@ -17,26 +17,26 @@
             clip-rule="evenodd"
           />
         </svg>
-        <span class="console-title">控制台</span>
+        <span class="console-title">{{ t('designer.console.title') }}</span>
         <span v-if="logs.length > 0" class="console-badge">{{ logs.length }}</span>
       </div>
       <button
         v-if="logs.length > 0"
         class="console-clear-btn"
         @click.stop="$emit('clear')"
-        title="清空日志"
+        :title="t('designer.console.clear')"
       >
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        清空
+        {{ t('designer.console.clear') }}
       </button>
     </div>
 
     <!-- Log Entries -->
     <div v-show="!collapsed" ref="logContainerRef" class="console-body">
       <div v-if="logs.length === 0" class="console-empty">
-        暂无日志
+        {{ t('designer.console.empty') }}
       </div>
       <div
         v-for="log in logs"
@@ -54,7 +54,10 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ConsoleLog } from '@/composables/designer/types'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   logs: ConsoleLog[]

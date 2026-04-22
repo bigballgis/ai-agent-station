@@ -1,6 +1,7 @@
 package com.aiagent.controller;
 
 import com.aiagent.annotation.OperationLog;
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.dto.UserDTO;
@@ -26,20 +27,24 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
+    @Operation(summary = "获取所有用户列表")
+    @RequiresPermission("user:read")
     @RequiresRole("ADMIN")
     public Result<List<User>> getAllUsers() {
         return Result.success(userService.getAllUsers());
     }
 
-    @Operation(summary = "获取所有用户列表")
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取用户详情")
+    @RequiresPermission("user:read")
     @RequiresRole("ADMIN")
     public Result<User> getUserById(@PathVariable Long id) {
         return Result.success(userService.getUserById(id));
     }
 
-    @Operation(summary = "根据ID获取用户详情")
     @PostMapping
+    @Operation(summary = "创建用户")
+    @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "创建用户", module = "用户管理")
     public Result<User> createUser(@Valid @RequestBody UserDTO dto) {
@@ -52,8 +57,9 @@ public class UserController {
         return Result.success(userService.createUser(user));
     }
 
-    @Operation(summary = "创建用户")
     @PutMapping("/{id}")
+    @Operation(summary = "更新用户信息")
+    @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "更新用户", module = "用户管理")
     public Result<User> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
@@ -66,8 +72,9 @@ public class UserController {
         return Result.success(userService.updateUser(id, user));
     }
 
-    @Operation(summary = "更新用户")
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除用户")
+    @RequiresPermission("user:delete")
     @RequiresRole("ADMIN")
     @OperationLog(value = "删除用户", module = "用户管理")
     public Result<Void> deleteUser(@PathVariable Long id) {
@@ -75,8 +82,9 @@ public class UserController {
         return Result.success();
     }
 
-    @Operation(summary = "删除用户")
     @PostMapping("/{id}/reset-password")
+    @Operation(summary = "重置用户密码")
+    @RequiresPermission("user:manage")
     @RequiresRole("ADMIN")
     public Result<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(id, request.getNewPassword());

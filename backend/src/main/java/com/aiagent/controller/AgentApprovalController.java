@@ -59,12 +59,14 @@ public class AgentApprovalController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取审批详情")
     public Result<AgentApproval> getApprovalById(@Parameter(description = "审批ID") @PathVariable Long id) {
         AgentApproval approval = agentApprovalService.getApprovalById(id);
         return Result.success(approval);
     }
 
     @GetMapping("/agent/{agentId}")
+    @Operation(summary = "根据Agent ID获取审批列表")
     public Result<List<AgentApproval>> getApprovalsByAgentId(@Parameter(description = "Agent ID") @PathVariable Long agentId) {
         List<AgentApproval> approvals = agentApprovalService.getApprovalsByAgentId(agentId);
         return Result.success(approvals);

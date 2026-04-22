@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '版本管理' }
       },
       {
-        path: 'agent/design',
+        path: 'agent/design/:id?',
         name: 'AgentDesign',
         component: () => import('@/pages/AgentDesigner.vue'),
         meta: { title: 'Agent 设计器' }

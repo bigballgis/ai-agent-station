@@ -40,6 +40,7 @@ public class FileController {
      */
     @RequiresPermission("file:upload")
     @PostMapping("/upload")
+    @Operation(summary = "上传文件")
     public Result<FileInfo> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "subDir", required = false) String subDir) {
@@ -65,6 +66,7 @@ public class FileController {
      */
     @RequiresPermission("file:view")
     @GetMapping("/download/{filePath}")
+    @Operation(summary = "下载文件")
     public ResponseEntity<Resource> download(@PathVariable String filePath) {
         log.info("File download request: {}", filePath);
         try {
@@ -90,7 +92,7 @@ public class FileController {
      * @param subDir optional sub-directory to list files from
      * @return list of FileInfo for all files in the directory
      */
-    @Operation(summary = "下载文件")
+    @Operation(summary = "获取文件列表")
     @GetMapping("/list")
     public Result<List<FileInfo>> listFiles(
             @RequestParam(value = "subDir", required = false) String subDir) {
@@ -112,6 +114,7 @@ public class FileController {
      */
     @RequiresPermission("file:delete")
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除文件")
     public Result<Void> delete(@PathVariable String id) {
         log.info("File delete request: {}", id);
         try {

@@ -124,20 +124,20 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              编辑配置
+              {{ t('designer.contextMenu.editConfig') }}
             </div>
             <div class="context-menu-item" @click="handleContextDuplicate">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              复制节点
+              {{ t('designer.contextMenu.copyNode') }}
             </div>
             <div class="context-menu-divider" />
             <div class="context-menu-item danger" @click="handleContextDeleteNode">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              删除节点
+              {{ t('designer.contextMenu.deleteNode') }}
             </div>
           </template>
           <template v-else-if="contextMenu.type === 'connection'">
@@ -145,7 +145,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              删除连线
+              {{ t('designer.contextMenu.deleteConnection') }}
             </div>
           </template>
           <template v-else>
@@ -153,13 +153,13 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              粘贴节点
+              {{ t('designer.contextMenu.pasteNode') }}
             </div>
             <div class="context-menu-item" @click="handleFitView">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
-              适应画布
+              {{ t('designer.contextMenu.fitView') }}
             </div>
           </template>
         </div>
@@ -200,6 +200,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 
 // ============================================================
@@ -236,6 +237,7 @@ import { agentApi } from '@/api/agent'
 // ============================================================
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 
 function goBack() {
   router.push('/agents')
@@ -305,7 +307,7 @@ const { autoLayout } = useAutoLayout()
 // ============================================================
 // Local State
 // ============================================================
-const agentName = ref('未命名 Agent')
+const agentName = ref(t('designer.messages.unnamedAgent'))
 const leftPanelCollapsed = ref(false)
 const bottomPanelCollapsed = ref(true)
 const consoleLogs = ref<ConsoleLog[]>([])
@@ -358,8 +360,9 @@ const tempConnectionPath = computed(() => {
   const rect = canvasContainerRef.value?.getBoundingClientRect()
   if (!rect) return null
 
-  const mouseX = connectingMouseX
-  const mouseY = connectingMouseY
+  // Convert screen-space mouse coordinates to canvas space
+  const mouseX = (connectingMouseX - panX.value) / zoom.value
+  const mouseY = (connectingMouseY - panY.value) / zoom.value
 
   return getTempConnectionPath(pos.x, pos.y, mouseX, mouseY, portType)
 })
@@ -454,7 +457,7 @@ function onCanvasDrop(event: DragEvent) {
 
   const node = addNode(nodeType, x - 90, y - 30)
   pushHistory(nodes.value, connections.value)
-  addLog('info', `添加节点: ${node.label}`)
+  addLog('info', `${t('designer.messages.addNode')}: ${node.label}`)
   hideContextMenu()
 }
 
@@ -504,7 +507,7 @@ function handleConnectionEnd(event: MouseEvent) {
           const conn = createConnection(from.nodeId, from.portName, node.id, port.name, nodes.value)
           if (conn) {
             pushHistory(nodes.value, connections.value)
-            addLog('info', `创建连线: ${from.nodeId}.${from.portName} -> ${node.id}.${port.name}`)
+            addLog('info', `${t('designer.messages.createConnection')}: ${from.nodeId}.${from.portName} -> ${node.id}.${port.name}`)
           }
           created = true
           break
@@ -522,7 +525,7 @@ function handleConnectionEnd(event: MouseEvent) {
           const conn = createConnection(node.id, port.name, from.nodeId, from.portName, nodes.value)
           if (conn) {
             pushHistory(nodes.value, connections.value)
-            addLog('info', `创建连线: ${node.id}.${port.name} -> ${from.nodeId}.${from.portName}`)
+            addLog('info', `${t('designer.messages.createConnection')}: ${node.id}.${port.name} -> ${from.nodeId}.${from.portName}`)
           }
           created = true
           break
@@ -536,25 +539,17 @@ function handleConnectionEnd(event: MouseEvent) {
   cancelConnecting()
 }
 
-function onNodeSelect(node: CanvasNode) {
+function onNodeSelect(event: MouseEvent, node: CanvasNode) {
   hideContextMenu()
   selectedNodeId.value = node.id
   selectedConnectionId.value = null
 
   // Start node dragging
   isDraggingNode = true
-  dragStartX = 0 // Will be set on first mousemove since we don't have the event here
-  dragStartY = 0
+  dragStartX = event.clientX
+  dragStartY = event.clientY
   dragNodeStartX = node.x
   dragNodeStartY = node.y
-
-  // Use a one-time listener to capture the actual mouse position from the next mousemove
-  const onFirstMove = (e: MouseEvent) => {
-    dragStartX = e.clientX
-    dragStartY = e.clientY
-    window.removeEventListener('mousemove', onFirstMove)
-  }
-  window.addEventListener('mousemove', onFirstMove)
 }
 
 function onNodeContextMenu(event: MouseEvent, node: CanvasNode) {
@@ -586,7 +581,7 @@ function handleContextDuplicate() {
   if (contextMenu.targetNode) {
     duplicateNode(contextMenu.targetNode)
     pushHistory(nodes.value, connections.value)
-    addLog('info', `复制节点: ${contextMenu.targetNode.label}`)
+    addLog('info', `${t('designer.messages.copyNode')}: ${contextMenu.targetNode.label}`)
   }
   hideContextMenu()
 }
@@ -596,7 +591,7 @@ function handleContextDeleteNode() {
     const label = contextMenu.targetNode.label
     deleteNode(contextMenu.targetNode.id)
     pushHistory(nodes.value, connections.value)
-    addLog('info', `删除节点: ${label}`)
+    addLog('info', `${t('designer.messages.deleteNode')}: ${label}`)
   }
   hideContextMenu()
 }
@@ -605,7 +600,7 @@ function handleContextDeleteConnection() {
   if (contextMenu.targetConnectionId) {
     deleteConnection(contextMenu.targetConnectionId)
     pushHistory(nodes.value, connections.value)
-    addLog('info', '删除连线')
+    addLog('info', t('designer.messages.deleteConnection'))
   }
   hideContextMenu()
 }
@@ -614,7 +609,7 @@ function handleContextPaste() {
   const pasted = pasteNode()
   if (pasted) {
     pushHistory(nodes.value, connections.value)
-    addLog('info', `粘贴节点: ${pasted.label}`)
+    addLog('info', `${t('designer.messages.pasteNode')}: ${pasted.label}`)
   }
   hideContextMenu()
 }
@@ -664,17 +659,17 @@ function handleValidate() {
       validationMessage.value = result.warnings[0]
       validationType.value = 'warning'
     } else {
-      validationMessage.value = '验证通过'
+      validationMessage.value = t('designer.validation.passed')
       validationType.value = 'success'
     }
-    addLog('success', '验证通过')
+    addLog('success', t('designer.messages.validatePassed'))
   } else {
     validationMessage.value = result.errors[0]
     validationType.value = 'error'
-    addLog('error', `验证失败: ${result.errors.join('; ')}`)
+    addLog('error', `${t('designer.messages.validateFailed')}: ${result.errors.join('; ')}`)
     if (result.warnings.length > 0) {
       for (const w of result.warnings) {
-        addLog('warn', `警告: ${w}`)
+        addLog('warn', `${t('designer.messages.warning')}: ${w}`)
       }
     }
   }
@@ -687,7 +682,7 @@ function handleValidate() {
 function handleAutoLayout() {
   autoLayout(nodes.value, connections.value)
   pushHistory(nodes.value, connections.value)
-  addLog('info', '自动布局完成')
+  addLog('info', t('designer.messages.autoLayoutComplete'))
   nextTick(() => fitView(nodes.value, canvasContainerRef))
 }
 
@@ -704,7 +699,7 @@ function handleDeleteNode(nodeId: string) {
   const label = node?.label || nodeId
   deleteNode(nodeId)
   pushHistory(nodes.value, connections.value)
-  addLog('info', `删除节点: ${label}`)
+  addLog('info', `${t('designer.messages.deleteNode')}: ${label}`)
 }
 
 function handlePaletteDragStart(_nodeType: any) {
@@ -777,19 +772,19 @@ function saveAgent() {
       name: agentName.value,
       graphDefinition: graphData,
     }).then(() => {
-      message.success('Agent 已保存')
-      addLog('success', `保存成功: ${agentName.value}`)
+      message.success(t('designer.messages.saveSuccess'))
+      addLog('success', `${t('designer.messages.saveSuccess')}: ${agentName.value}`)
     }).catch(() => {
       // Fallback to localStorage
       localStorage.setItem('agent_designer_data', JSON.stringify({ ...graphData, name: agentName.value }))
-      message.success('Agent 已保存（本地）')
-      addLog('success', `保存成功（本地）: ${agentName.value}`)
+      message.success(t('designer.messages.saveSuccessLocal'))
+      addLog('success', `${t('designer.messages.saveSuccessLocal')}: ${agentName.value}`)
     })
   } else {
     // No agent ID, save to localStorage
     localStorage.setItem('agent_designer_data', JSON.stringify({ ...graphData, name: agentName.value }))
-    message.success('Agent 已保存')
-    addLog('success', `保存成功: ${agentName.value}`)
+    message.success(t('designer.messages.saveSuccess'))
+    addLog('success', `${t('designer.messages.saveSuccess')}: ${agentName.value}`)
   }
 }
 
@@ -802,7 +797,7 @@ function exportJson() {
   a.download = `${agentName.value || 'agent-design'}.json`
   a.click()
   URL.revokeObjectURL(url)
-  addLog('info', '导出 JSON 文件')
+  addLog('info', t('designer.messages.exportSuccess'))
 }
 
 function triggerImport() {
@@ -821,12 +816,12 @@ function handleImport(event: Event) {
       if (data.name) agentName.value = data.name
       fromGraphData(data)
       resetHistory(nodes.value, connections.value)
-      addLog('success', '导入成功')
-      message.success('导入成功')
+      addLog('success', t('designer.messages.importSuccess'))
+      message.success(t('designer.messages.importSuccess'))
       nextTick(() => fitView(nodes.value, canvasContainerRef))
     } catch {
-      message.error('JSON 格式错误')
-      addLog('error', '导入失败: JSON 格式错误')
+      message.error(t('designer.messages.importFailed'))
+      addLog('error', `${t('designer.messages.importFailed')}`)
     }
   }
   reader.readAsText(file)
@@ -838,14 +833,14 @@ function handleImport(event: Event) {
 // ============================================================
 async function runAgent() {
   if (nodes.value.length === 0) {
-    message.warning('请先添加节点')
+    message.warning(t('designer.messages.noNodes'))
     return
   }
 
   const startNode = nodes.value.find(n => n.type === 'start')
   if (!startNode) {
-    message.warning('请添加开始节点')
-    addLog('warn', '运行失败: 缺少开始节点')
+    message.warning(t('designer.messages.noStartNode'))
+    addLog('warn', `${t('designer.messages.runFailed')}: missing start node`)
     return
   }
 
@@ -854,7 +849,7 @@ async function runAgent() {
   completedNodeIds.value.clear()
   failedNodeIds.value.clear()
 
-  addLog('info', '开始运行 Agent...')
+  addLog('info', t('designer.messages.runStart'))
   addLog('info', `节点数量: ${nodes.value.length}, 连线数量: ${connections.value.length}`)
 
   const order = getExecutionOrder(startNode.id, nodes.value, connections.value)
@@ -863,30 +858,30 @@ async function runAgent() {
     if (!node) continue
 
     runningNodeIds.value.add(nodeId)
-    addLog('info', `执行节点: ${node.label} (${node.type})`)
+    addLog('info', `${t('designer.messages.nodeRunning')}: ${node.label} (${node.type})`)
 
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700))
 
     runningNodeIds.value.delete(nodeId)
     if (Math.random() < 0.05) {
       failedNodeIds.value.add(nodeId)
-      addLog('error', `节点执行失败: ${node.label}`)
+      addLog('error', `${t('designer.messages.nodeFailed')}: ${node.label}`)
     } else {
       completedNodeIds.value.add(nodeId)
-      addLog('success', `节点完成: ${node.label}`)
+      addLog('success', `${t('designer.messages.nodeComplete')}: ${node.label}`)
     }
   }
 
   const endNode = nodes.value.find(n => n.type === 'end')
   if (endNode && completedNodeIds.value.has(endNode.id)) {
-    addLog('success', 'Agent 运行完成!')
-    message.success('运行完成')
+    addLog('success', t('designer.messages.runComplete'))
+    message.success(t('designer.messages.runComplete'))
   } else if (failedNodeIds.value.size > 0) {
-    addLog('error', 'Agent 运行失败')
-    message.error('运行失败')
+    addLog('error', t('designer.messages.runFailed'))
+    message.error(t('designer.messages.runFailed'))
   } else {
-    addLog('warn', 'Agent 运行结束（未到达结束节点）')
-    message.warning('运行结束（未到达结束节点）')
+    addLog('warn', t('designer.messages.runIncomplete'))
+    message.warning(t('designer.messages.runIncomplete'))
   }
 }
 
@@ -917,7 +912,7 @@ function onKeyDown(event: KeyboardEvent) {
     } else if (selectedConnectionId.value) {
       deleteConnection(selectedConnectionId.value)
       pushHistory(nodes.value, connections.value)
-      addLog('info', '删除连线')
+      addLog('info', t('designer.messages.deleteConnection'))
     }
     return
   }
@@ -955,7 +950,7 @@ function onKeyDown(event: KeyboardEvent) {
     const pasted = pasteNode()
     if (pasted) {
       pushHistory(nodes.value, connections.value)
-      addLog('info', `粘贴节点: ${pasted.label}`)
+      addLog('info', `${t('designer.messages.pasteNode')}: ${pasted.label}`)
     }
     return
   }

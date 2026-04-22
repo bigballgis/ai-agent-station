@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 
 import com.aiagent.common.PageResult;
@@ -38,8 +39,10 @@ public class DictController {
     /**
      * 分页查询字典类型列表
      */
+    @RequiresPermission("dict:read")
     @RequiresRole("ADMIN")
     @GetMapping
+    @Operation(summary = "分页查询字典类型列表")
     public Result<PageResult<DictTypeVO>> getDictTypes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -55,9 +58,10 @@ public class DictController {
     /**
      * 获取所有活跃字典类型（不分页）
      */
+    @RequiresPermission("dict:read")
     @RequiresRole("ADMIN")
     @GetMapping("/active")
-    @Operation(summary = "分页查询字典类型列表")
+    @Operation(summary = "获取所有活跃字典类型")
     public Result<List<DictTypeVO>> getActiveDictTypes() {
         List<DictTypeVO> voList = dictService.getAllActiveDictTypes().stream()
                 .map(DictTypeVO::fromEntity)
@@ -68,7 +72,8 @@ public class DictController {
     /**
      * 根据ID获取字典类型详情
      */
-    @Operation(summary = "获取所有活跃字典类型")
+    @Operation(summary = "根据ID获取字典类型详情")
+    @RequiresPermission("dict:read")
     @RequiresRole("ADMIN")
     @GetMapping("/{id}")
     public Result<DictTypeVO> getDictType(@PathVariable Long id) {
@@ -78,7 +83,8 @@ public class DictController {
     /**
      * 创建字典类型
      */
-    @Operation(summary = "根据ID获取字典类型详情")
+    @Operation(summary = "创建字典类型")
+    @RequiresPermission("dict:write")
     @RequiresRole("ADMIN")
     @PostMapping
     public Result<DictTypeVO> createDictType(@Valid @RequestBody DictTypeDTO dto) {
@@ -93,7 +99,8 @@ public class DictController {
     /**
      * 更新字典类型
      */
-    @Operation(summary = "创建字典类型")
+    @Operation(summary = "更新字典类型")
+    @RequiresPermission("dict:write")
     @RequiresRole("ADMIN")
     @PutMapping("/{id}")
     public Result<DictTypeVO> updateDictType(@PathVariable Long id, @Valid @RequestBody DictTypeDTO dto) {
@@ -109,7 +116,8 @@ public class DictController {
     /**
      * 删除字典类型
      */
-    @Operation(summary = "更新字典类型")
+    @Operation(summary = "删除字典类型")
+    @RequiresPermission("dict:manage")
     @RequiresRole("ADMIN")
     @DeleteMapping("/{id}")
     public Result<Void> deleteDictType(@PathVariable Long id) {
@@ -122,7 +130,8 @@ public class DictController {
     /**
      * 根据字典类型编码获取字典项列表
      */
-    @Operation(summary = "删除字典类型")
+    @Operation(summary = "根据字典类型编码获取字典项列表")
+    @RequiresPermission("dict:read")
     @RequiresRole("ADMIN")
     @GetMapping("/{dictType}/items")
     public Result<List<DictItemVO>> getDictItems(@PathVariable String dictType) {
@@ -135,7 +144,8 @@ public class DictController {
     /**
      * 批量获取字典项（Map结构，供前端下拉选择使用）
      */
-    @Operation(summary = "根据字典类型编码获取字典项列表")
+    @Operation(summary = "批量获取字典项")
+    @RequiresPermission("dict:read")
     @RequiresRole("ADMIN")
     @GetMapping("/dict-items/batch")
     public Result<Map<String, List<DictItemVO>>> getDictItemsMap(@RequestParam List<String> dictTypes) {
@@ -151,7 +161,8 @@ public class DictController {
     /**
      * 创建字典项
      */
-    @Operation(summary = "批量获取字典项")
+    @Operation(summary = "创建字典项")
+    @RequiresPermission("dict:write")
     @RequiresRole("ADMIN")
     @PostMapping("/dict-items")
     public Result<DictItemVO> createDictItem(@Valid @RequestBody DictItemDTO dto) {
@@ -170,7 +181,8 @@ public class DictController {
     /**
      * 更新字典项
      */
-    @Operation(summary = "创建字典项")
+    @Operation(summary = "更新字典项")
+    @RequiresPermission("dict:write")
     @RequiresRole("ADMIN")
     @PutMapping("/dict-items/{id}")
     public Result<DictItemVO> updateDictItem(@PathVariable Long id, @Valid @RequestBody DictItemDTO dto) {
@@ -190,7 +202,8 @@ public class DictController {
     /**
      * 删除字典项
      */
-    @Operation(summary = "更新字典项")
+    @Operation(summary = "删除字典项")
+    @RequiresPermission("dict:manage")
     @RequiresRole("ADMIN")
     @DeleteMapping("/dict-items/{id}")
     public Result<Void> deleteDictItem(@PathVariable Long id) {

@@ -47,12 +47,14 @@ public class AlertController {
 
     @RequiresPermission("alert:manage")
     @PostMapping("/rules")
+    @Operation(summary = "创建告警规则")
     public Result<AlertRuleVO> createRule(@RequestBody AlertRule rule) {
         return Result.success(AlertRuleVO.fromEntity(ruleRepository.save(rule)));
     }
 
     @RequiresPermission("alert:manage")
     @PutMapping("/rules/{id}")
+    @Operation(summary = "更新告警规则")
     public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @RequestBody AlertRule rule) {
         rule.setId(id);
         return Result.success(AlertRuleVO.fromEntity(ruleRepository.save(rule)));
@@ -60,6 +62,7 @@ public class AlertController {
 
     @RequiresPermission("alert:manage")
     @DeleteMapping("/rules/{id}")
+    @Operation(summary = "删除告警规则")
     public Result<Void> deleteRule(@Parameter(description = "规则ID") @PathVariable Long id) {
         ruleRepository.deleteById(id);
         return Result.success();

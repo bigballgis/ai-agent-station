@@ -2,7 +2,7 @@
   <div class="designer-toolbar">
     <!-- Left Section -->
     <div class="toolbar-left">
-      <button class="toolbar-btn" title="返回" @click="$emit('back')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.back')" @click="$emit('back')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -10,12 +10,12 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" title="撤销 (Ctrl+Z)" :disabled="!canUndo" @click="$emit('undo')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.undo') + ' (Ctrl+Z)'" :disabled="!canUndo" @click="$emit('undo')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2M3 10l4-4M3 10l4 4" />
         </svg>
       </button>
-      <button class="toolbar-btn" title="重做 (Ctrl+Y)" :disabled="!canRedo" @click="$emit('redo')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.redo') + ' (Ctrl+Y)'" :disabled="!canRedo" @click="$emit('redo')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a5 5 0 00-5 5v2M21 10l-4-4M21 10l-4 4" />
         </svg>
@@ -23,18 +23,18 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" title="缩小" @click="$emit('zoom-out')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.zoomOut')" @click="$emit('zoom-out')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
         </svg>
       </button>
       <span class="zoom-label">{{ Math.round(zoom * 100) }}%</span>
-      <button class="toolbar-btn" title="放大" @click="$emit('zoom-in')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.zoomIn')" @click="$emit('zoom-in')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
         </svg>
       </button>
-      <button class="toolbar-btn" title="重置缩放" @click="$emit('zoom-reset')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.resetZoom')" @click="$emit('zoom-reset')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
         </svg>
@@ -48,18 +48,18 @@
         type="text"
         :value="agentName"
         @input="$emit('update-name', ($event.target as HTMLInputElement).value)"
-        placeholder="输入 Agent 名称..."
+        :placeholder="t('designer.toolbar.agentNamePlaceholder')"
       />
     </div>
 
     <!-- Right Section -->
     <div class="toolbar-right">
-      <button class="toolbar-btn" title="导入 JSON" @click="$emit('import')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.import')" @click="$emit('import')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
       </button>
-      <button class="toolbar-btn" title="导出 JSON" @click="$emit('export')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.export')" @click="$emit('export')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
@@ -67,12 +67,12 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" title="验证" @click="$emit('validate')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.validate')" @click="$emit('validate')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </button>
-      <button class="toolbar-btn" title="自动布局" @click="$emit('auto-layout')">
+      <button class="toolbar-btn" :title="t('designer.toolbar.autoLayout')" @click="$emit('auto-layout')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
         </svg>
@@ -80,18 +80,18 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn btn-run" title="运行" @click="$emit('run')">
+      <button class="toolbar-btn btn-run" :title="t('designer.toolbar.run')" @click="$emit('run')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        运行
+        {{ t('designer.toolbar.run') }}
       </button>
-      <button class="toolbar-btn btn-save" title="保存 (Ctrl+S)" @click="$emit('save')">
+      <button class="toolbar-btn btn-save" :title="t('designer.toolbar.save') + ' (Ctrl+S)'" @click="$emit('save')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
         </svg>
-        保存
+        {{ t('designer.toolbar.save') }}
       </button>
     </div>
 
@@ -103,6 +103,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps<{
   agentName: string
   canUndo: boolean

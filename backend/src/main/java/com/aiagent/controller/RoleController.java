@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.entity.Role;
@@ -24,58 +25,67 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping
+    @Operation(summary = "获取所有角色列表")
+    @RequiresPermission("role:read")
     @RequiresRole("ADMIN")
     public Result<List<Role>> getAllRoles() {
         return Result.success(roleService.getAllRoles());
     }
 
-    @Operation(summary = "获取所有角色列表")
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取角色详情")
+    @RequiresPermission("role:read")
     @RequiresRole("ADMIN")
     public Result<Role> getRoleById(@PathVariable Long id) {
         return Result.success(roleService.getRoleById(id));
     }
 
-    @Operation(summary = "根据ID获取角色详情")
     @PostMapping
+    @Operation(summary = "创建角色")
+    @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
     public Result<Role> createRole(@RequestBody Role role) {
         return Result.success(roleService.createRole(role));
     }
 
-    @Operation(summary = "创建角色")
     @PutMapping("/{id}")
+    @Operation(summary = "更新角色信息")
+    @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
     public Result<Role> updateRole(@PathVariable Long id, @RequestBody Role role) {
         return Result.success(roleService.updateRole(id, role));
     }
 
-    @Operation(summary = "更新角色")
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除角色")
+    @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
     public Result<Void> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
         return Result.success();
     }
 
-    @Operation(summary = "删除角色")
     @PostMapping("/assign")
+    @Operation(summary = "分配角色给用户")
+    @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
     public Result<Void> assignRoleToUser(@Valid @RequestBody AssignRoleRequest request) {
         roleService.assignRoleToUser(request.getUserId(), request.getRoleId());
         return Result.success();
     }
 
-    @Operation(summary = "分配角色给用户")
     @DeleteMapping("/remove")
+    @Operation(summary = "从用户移除角色")
+    @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
     public Result<Void> removeRoleFromUser(@RequestParam Long userId, @RequestParam Long roleId) {
         roleService.removeRoleFromUser(userId, roleId);
         return Result.success();
     }
 
-    @Operation(summary = "从用户移除角色")
     @GetMapping("/user/{userId}")
+    @Operation(summary = "获取用户角色列表")
+    @RequiresPermission("role:read")
     @RequiresRole("ADMIN")
     public Result<List<UserRole>> getUserRoles(@PathVariable Long userId) {
         return Result.success(roleService.getUserRoles(userId));

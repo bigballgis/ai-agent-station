@@ -28,6 +28,7 @@ public class ApiInterfaceController {
 
     @RequiresPermission("api:view")
     @GetMapping
+    @Operation(summary = "分页查询API接口列表")
     public Result<PageResult<ApiInterface>> list(
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestParam(defaultValue = "0") int page,
@@ -38,14 +39,15 @@ public class ApiInterfaceController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取API接口详情")
     public Result<ApiInterface> getById(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
         return Result.success(apiInterfaceService.getById(id, tenantId));
     }
 
+    @Operation(summary = "根据Agent ID获取API接口列表")
     @GetMapping("/agent/{agentId}")
-    @Operation(summary = "根据ID获取API接口详情")
     public Result<List<ApiInterface>> listByAgent(
             @PathVariable Long agentId,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
@@ -54,7 +56,7 @@ public class ApiInterfaceController {
 
     @RequiresPermission("api:manage")
     @PostMapping
-    @Operation(summary = "根据Agent ID获取API接口列表")
+    @Operation(summary = "创建API接口")
     public Result<ApiInterface> create(
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestBody ApiInterface apiInterface) {
@@ -63,6 +65,7 @@ public class ApiInterfaceController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "更新API接口")
     public Result<ApiInterface> update(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,
@@ -71,7 +74,7 @@ public class ApiInterfaceController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "更新API接口")
+    @Operation(summary = "删除API接口")
     public Result<Void> delete(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
@@ -80,7 +83,7 @@ public class ApiInterfaceController {
     }
 
     @PatchMapping("/{id}/toggle")
-    @Operation(summary = "删除API接口")
+    @Operation(summary = "切换API接口启用状态")
     public Result<ApiInterface> toggleActive(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,

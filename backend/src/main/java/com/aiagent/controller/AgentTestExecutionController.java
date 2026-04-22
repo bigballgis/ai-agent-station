@@ -23,6 +23,7 @@ public class AgentTestExecutionController {
 
     @RequiresPermission("test:execute")
     @PostMapping
+    @Operation(summary = "创建测试执行")
     public Result<AgentTestExecution> createExecution(@RequestBody AgentTestExecution execution) {
         AgentTestExecution createdExecution = executionService.createExecution(execution);
         return Result.success(createdExecution);

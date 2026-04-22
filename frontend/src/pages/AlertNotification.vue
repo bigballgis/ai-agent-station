@@ -337,7 +337,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, getAlertRecords, getAlertStats, resolveAlertRecord } from '@/api/alert'
-import { PageHeader, StatCard, StatusBadge, ConfirmModal } from '@/components'
+import { PageHeader, StatCard, StatusBadge } from '@/components'
 
 // Tab
 const tabs = ref([
@@ -460,11 +460,18 @@ async function fetchAlertData() {
   }
 }
 
+// Modal state declarations (must be before watch)
+const showCreateRuleModal = ref(false)
+const showDetailModal = ref(false)
+const detailRecord = ref<typeof alertRecords.value[0] | null>(null)
+const editingRuleId = ref<number | string | null>(null)
+const newRule = ref({ name: '', type: undefined as string | undefined, threshold: '', severity: undefined as string | undefined })
+
 // Modal 打开时自动聚焦
 watch(showCreateRuleModal, (val) => {
   if (val) {
     nextTick(() => {
-      document.querySelector('.ant-modal input')?.focus()
+      (document.querySelector('.ant-modal input') as HTMLElement | null)?.focus()
     })
   }
 })
@@ -472,7 +479,7 @@ watch(showCreateRuleModal, (val) => {
 watch(showDetailModal, (val) => {
   if (val) {
     nextTick(() => {
-      document.querySelector('.ant-modal input')?.focus()
+      (document.querySelector('.ant-modal input') as HTMLElement | null)?.focus()
     })
   }
 })
@@ -568,18 +575,10 @@ async function resolveRecord(record: typeof alertRecords.value[0]) {
   }
 }
 
-const showDetailModal = ref(false)
-const detailRecord = ref<typeof alertRecords.value[0] | null>(null)
-
 function viewRecordDetail(record: typeof alertRecords.value[0]) {
   detailRecord.value = record
   showDetailModal.value = true
 }
-
-// 新建规则
-const showCreateRuleModal = ref(false)
-const editingRuleId = ref<number | string | null>(null)
-const newRule = ref({ name: '', type: undefined as string | undefined, threshold: '', severity: undefined as string | undefined })
 
 async function handleCreateRule() {
   if (!newRule.value.name) {

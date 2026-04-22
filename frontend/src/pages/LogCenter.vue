@@ -388,9 +388,9 @@ const loading = ref(false)
 const tabItems = computed<TabItem[]>(() => tabs.map(tab => ({ key: tab.key, label: tab.label })))
 
 // TimeRangePicker change handlers
-function handleOperationTimeRangeChange(range: { start: string; end: string } | null) {
+function handleOperationTimeRangeChange(range: [string, string] | null) {
   if (range) {
-    operationFilters.value.dateRange = range
+    operationFilters.value.dateRange = { start: range[0], end: range[1] }
   } else {
     operationFilters.value.dateRange = null
   }
@@ -398,9 +398,9 @@ function handleOperationTimeRangeChange(range: { start: string; end: string } | 
   fetchOperationLogs()
 }
 
-function handleApiTimeRangeChange(range: { start: string; end: string } | null) {
+function handleApiTimeRangeChange(range: [string, string] | null) {
   if (range) {
-    apiFilters.value.dateRange = range
+    apiFilters.value.dateRange = { start: range[0], end: range[1] }
   } else {
     apiFilters.value.dateRange = null
   }
@@ -600,9 +600,9 @@ const errorFilters = ref({
   level: '',
 })
 
-function handleErrorTimeRangeChange(range: { start: string; end: string } | null) {
+function handleErrorTimeRangeChange(range: [string, string] | null) {
   if (range) {
-    errorFilters.value.dateRange = range
+    errorFilters.value.dateRange = { start: range[0], end: range[1] }
   } else {
     errorFilters.value.dateRange = null
   }

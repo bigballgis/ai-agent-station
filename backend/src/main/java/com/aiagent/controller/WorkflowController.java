@@ -49,6 +49,7 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:view")
     @GetMapping("/definitions")
+    @Operation(summary = "分页查询工作流定义列表")
     public Result<PageResult<WorkflowDefinitionVO>> listDefinitions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -72,7 +73,7 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions")
-    @Operation(summary = "分页查询工作流定义列表")
+    @Operation(summary = "创建工作流定义")
     public Result<WorkflowDefinitionVO> createDefinition(
             @Valid @RequestBody CreateDefinitionRequest request) {
 
@@ -93,6 +94,7 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:view")
     @GetMapping("/definitions/{id}")
+    @Operation(summary = "根据ID获取工作流定义详情")
     public Result<WorkflowDefinitionVO> getDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
@@ -100,9 +102,9 @@ public class WorkflowController {
         return Result.success(WorkflowDefinitionVO.fromEntity(definition));
     }
 
-    @Operation(summary = "根据ID获取工作流定义详情")
     @RequiresPermission("workflow:manage")
     @PutMapping("/definitions/{id}")
+    @Operation(summary = "更新工作流定义")
     public Result<WorkflowDefinitionVO> updateDefinition(
             @PathVariable Long id,
             @Valid @RequestBody UpdateDefinitionRequest request) {
@@ -137,6 +139,7 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:manage")
     @DeleteMapping("/definitions/{id}")
+    @Operation(summary = "删除工作流定义")
     public Result<Void> deleteDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -151,9 +154,9 @@ public class WorkflowController {
         return Result.success();
     }
 
-    @Operation(summary = "删除工作流定义")
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions/{id}/publish")
+    @Operation(summary = "发布工作流定义")
     public Result<WorkflowDefinitionVO> publishDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -170,9 +173,9 @@ public class WorkflowController {
 
     // ==================== Workflow Instance APIs ====================
 
-    @Operation(summary = "发布工作流定义")
     @RequiresPermission("workflow:view")
     @GetMapping("/instances")
+    @Operation(summary = "分页查询工作流实例列表")
     public Result<PageResult<WorkflowInstanceVO>> listInstances(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -200,7 +203,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/start")
     @OperationLog(value = "启动工作流", module = "工作流")
-    @Operation(summary = "分页查询工作流实例列表")
+    @Operation(summary = "启动工作流")
     public Result<WorkflowInstanceVO> startWorkflow(
             @Valid @RequestBody StartWorkflowRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -215,23 +218,24 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}")
+    @Operation(summary = "获取工作流实例详情")
     public Result<WorkflowInstanceVO> getInstance(@PathVariable Long id) {
         WorkflowInstance instance = workflowEngine.getWorkflowStatus(id);
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
 
-    @Operation(summary = "获取工作流实例详情")
     @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}/history")
+    @Operation(summary = "获取工作流实例执行历史")
     public Result<List<WorkflowNodeLog>> getInstanceHistory(@PathVariable Long id) {
         List<WorkflowNodeLog> history = workflowEngine.getWorkflowHistory(id);
         return Result.success(history);
     }
 
-    @Operation(summary = "获取工作流实例执行历史")
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{id}/cancel")
     @OperationLog(value = "取消工作流", module = "工作流")
+    @Operation(summary = "取消工作流")
     public Result<WorkflowInstanceVO> cancelWorkflow(
             @PathVariable Long id,
             @Valid @RequestBody CancelWorkflowRequest request) {
@@ -243,7 +247,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/approve")
     @OperationLog(value = "审批工作流节点", module = "工作流")
-    @Operation(summary = "取消工作流")
+    @Operation(summary = "审批通过工作流节点")
     public Result<WorkflowNodeLog> approveNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
@@ -256,7 +260,7 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/reject")
-    @Operation(summary = "审批工作流节点")
+    @Operation(summary = "驳回工作流节点")
     public Result<WorkflowNodeLog> rejectNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,

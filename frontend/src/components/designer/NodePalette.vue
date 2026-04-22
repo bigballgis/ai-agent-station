@@ -13,7 +13,7 @@
       >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
-      <span v-if="!collapsed" class="palette-title">节点面板</span>
+      <span v-if="!collapsed" class="palette-title">{{ t('designer.palette.title') }}</span>
     </div>
 
     <!-- Content -->
@@ -32,7 +32,7 @@
           v-model="searchText"
           class="search-input"
           type="text"
-          placeholder="搜索节点..."
+          :placeholder="t('designer.palette.search')"
         />
         <button v-if="searchText" class="search-clear" @click="searchText = ''">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
@@ -85,7 +85,7 @@
 
       <!-- Empty state -->
       <div v-if="filteredCategories.length === 0" class="empty-state">
-        未找到匹配的节点
+        {{ t('designer.palette.noResults') }}
       </div>
     </div>
   </div>
@@ -93,15 +93,18 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { NodeTypeDefinition } from '@/composables/designer/types'
 import { getNodeTypesByCategory } from '@/composables/designer/nodeRegistry'
 
-const nodeCategories = [
-  { key: 'flow', label: '流程控制', icon: '🔀' },
-  { key: 'ai', label: 'AI 能力', icon: '🤖' },
-  { key: 'integration', label: '集成', icon: '🔌' },
-  { key: 'advanced', label: '高级', icon: '⚙️' },
-]
+const { t } = useI18n()
+
+const nodeCategories = computed(() => [
+  { key: 'flow', label: t('designer.palette.categories.flow'), icon: '🔀' },
+  { key: 'ai', label: t('designer.palette.categories.ai'), icon: '🤖' },
+  { key: 'integration', label: t('designer.palette.categories.integration'), icon: '🔌' },
+  { key: 'advanced', label: t('designer.palette.categories.advanced'), icon: '⚙️' },
+])
 
 defineProps<{
   collapsed?: boolean
@@ -121,9 +124,9 @@ const collapsedCategories = reactive<Record<string, boolean>>({
 })
 
 const filteredCategories = computed(() => {
-  if (!searchText.value.trim()) return nodeCategories
+  if (!searchText.value.trim()) return nodeCategories.value
   const keyword = searchText.value.trim().toLowerCase()
-  return nodeCategories.filter(cat => {
+  return nodeCategories.value.filter(cat => {
     const nodes = getNodeTypesByCategory(cat.key as NodeTypeDefinition['category'])
     return nodes.some(
       n =>

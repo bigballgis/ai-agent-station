@@ -443,6 +443,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @deprecated 此组件已被 designer 模块替代。
+ * 新代码请使用 /pages/AgentDesigner.vue 和 /composables/designer/ 下的 composables。
+ * 保留此文件仅为向后兼容（AgentEdit.vue 历史引用）。
+ * 计划在下一版本中移除。
+ */
 import { ref, computed, reactive, watch } from 'vue'
 
 // ========== 类型定义 ==========

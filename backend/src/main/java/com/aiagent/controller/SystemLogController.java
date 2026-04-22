@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
@@ -23,6 +24,8 @@ public class SystemLogController {
     private final SystemLogService systemLogService;
 
     @GetMapping
+    @Operation(summary = "分页查询系统日志")
+    @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
     public Result<PageResult<SystemLog>> getLogs(@RequestParam(defaultValue = "0") int page,
                                                   @RequestParam(defaultValue = "10") int size) {
@@ -30,8 +33,9 @@ public class SystemLogController {
     }
 
     @GetMapping("/date-range")
+    @Operation(summary = "按日期范围查询系统日志")
+    @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
-    @Operation(summary = "分页查询系统日志")
     public Result<PageResult<SystemLog>> getLogsByDateRange(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
@@ -41,6 +45,8 @@ public class SystemLogController {
     }
 
     @GetMapping("/module/{module}")
+    @Operation(summary = "按模块查询系统日志")
+    @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
     public Result<PageResult<SystemLog>> getLogsByModule(@PathVariable String module,
                                                           @RequestParam(defaultValue = "0") int page,
@@ -49,6 +55,8 @@ public class SystemLogController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取日志详情")
+    @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
     public Result<SystemLog> getLogById(@PathVariable Long id) {
         return Result.success(systemLogService.getLogById(id));

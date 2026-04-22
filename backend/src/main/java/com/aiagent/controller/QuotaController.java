@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 
 import com.aiagent.common.Result;
@@ -27,8 +28,10 @@ public class QuotaController {
      * @param headerTenantId the tenant ID from header for isolation
      * @return quota usage summary
      */
+    @RequiresPermission("quota:read")
     @RequiresRole("ADMIN")
     @GetMapping("/tenant/{tenantId}")
+    @Operation(summary = "获取租户配额概要")
     public Result<?> getTenantQuota(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId) {
@@ -53,7 +56,8 @@ public class QuotaController {
      * @return detailed quota breakdown
      */
     @GetMapping("/tenant/{tenantId}/details")
-    @Operation(summary = "获取租户配额概要")
+    @RequiresPermission("quota:read")
+    @Operation(summary = "获取租户配额详情")
     public Result<?> getTenantQuotaDetails(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId) {
@@ -79,7 +83,8 @@ public class QuotaController {
      * @return updated quota information
      */
     @PutMapping("/tenant/{tenantId}")
-    @Operation(summary = "获取租户配额详情")
+    @RequiresPermission("quota:manage")
+    @Operation(summary = "更新租户配额限制")
     public Result<?> updateTenantQuota(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId,

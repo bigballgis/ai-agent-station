@@ -37,6 +37,7 @@ public class SessionController {
      */
     @RequiresPermission("session:manage")
     @GetMapping("/online")
+    @Operation(summary = "获取在线会话列表")
     public Result<List<SessionVO>> getOnlineSessions() {
         List<SessionVO> voList = sessionService.getOnlineSessions().stream()
                 .map(SessionVO::fromEntity)
@@ -49,7 +50,7 @@ public class SessionController {
      *
      * @return list of the current user's sessions
      */
-    @Operation(summary = "获取在线会话列表")
+    @Operation(summary = "获取当前用户的会话列表")
     @RequiresPermission("session:manage")
     @GetMapping("/me")
     public Result<List<SessionVO>> getMySessions() {
@@ -66,7 +67,7 @@ public class SessionController {
      * @param sessionId the session to kick
      * @return success result
      */
-    @Operation(summary = "获取当前用户的会话列表")
+    @Operation(summary = "踢出指定会话")
     @RequiresPermission("session:manage")
     @DeleteMapping("/{sessionId}")
     public Result<Void> kickSession(@PathVariable String sessionId) {
@@ -80,7 +81,7 @@ public class SessionController {
      * @param userId the user ID to kick
      * @return result with the number of sessions kicked
      */
-    @Operation(summary = "踢出指定会话")
+    @Operation(summary = "踢出用户所有设备")
     @RequiresPermission("session:manage")
     @DeleteMapping("/user/{userId}")
     public Result<Map<String, Object>> kickUserFromAllDevices(@PathVariable Long userId) {
@@ -96,7 +97,7 @@ public class SessionController {
      *
      * @return statistics about online sessions
      */
-    @Operation(summary = "踢出用户所有设备")
+    @Operation(summary = "获取会话统计信息")
     @RequiresPermission("session:manage")
     @GetMapping("/stats")
     public Result<Map<String, Object>> getSessionStats() {

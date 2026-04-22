@@ -23,6 +23,7 @@ public class AgentTestResultController {
 
     @RequiresPermission("test:view")
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取测试结果详情")
     public Result<AgentTestResult> getResultById(@PathVariable Long id) {
         return resultService.getResultById(id)
                 .map(Result::success)

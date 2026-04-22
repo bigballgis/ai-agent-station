@@ -35,12 +35,14 @@ public class AgentController {
 
     @GetMapping("/{id}")
     @RequiresPermission("agent:view")
+    @Operation(summary = "根据ID获取Agent详情")
     public Result<Agent> getAgentById(@Parameter(description = "Agent ID") @PathVariable Long id) {
         return Result.success(agentService.getAgentById(id));
     }
 
     @PostMapping
     @RequiresPermission("agent:create")
+    @Operation(summary = "创建Agent")
     @OperationLog(value = "创建Agent", module = "Agent管理")
     public Result<Agent> createAgent(@Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
@@ -57,6 +59,7 @@ public class AgentController {
 
     @PutMapping("/{id}")
     @RequiresPermission("agent:update")
+    @Operation(summary = "更新Agent")
     @OperationLog(value = "更新Agent", module = "Agent管理")
     public Result<Agent> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
@@ -73,6 +76,7 @@ public class AgentController {
 
     @DeleteMapping("/{id}")
     @RequiresPermission("agent:delete")
+    @Operation(summary = "删除Agent")
     @OperationLog(value = "删除Agent", module = "Agent管理")
     public Result<Void> deleteAgent(@Parameter(description = "Agent ID") @PathVariable Long id) {
         agentService.deleteAgent(id);
@@ -81,24 +85,28 @@ public class AgentController {
 
     @PostMapping("/{id}/copy")
     @RequiresPermission("agent:create")
+    @Operation(summary = "复制Agent")
     public Result<Agent> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody CopyAgentRequest request) {
         return Result.success(agentService.copyAgent(id, request.getNewName()));
     }
 
     @GetMapping("/{id}/versions")
     @RequiresPermission("agent:view")
+    @Operation(summary = "获取Agent版本列表")
     public Result<List<AgentVersion>> getAgentVersions(@Parameter(description = "Agent ID") @PathVariable Long id) {
         return Result.success(agentService.getAgentVersions(id));
     }
 
     @GetMapping("/{id}/versions/{versionNumber}")
     @RequiresPermission("agent:view")
+    @Operation(summary = "获取Agent指定版本详情")
     public Result<AgentVersion> getAgentVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
         return Result.success(agentService.getAgentVersion(id, versionNumber));
     }
 
     @PostMapping("/{id}/versions/{versionNumber}/rollback")
     @RequiresPermission("agent:update")
+    @Operation(summary = "回滚到指定版本")
     public Result<Agent> rollbackToVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
         return Result.success(agentService.rollbackToVersion(id, versionNumber));
     }

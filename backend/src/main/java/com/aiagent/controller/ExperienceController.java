@@ -31,13 +31,14 @@ public class ExperienceController {
     // 创建经验
     @RequiresPermission("agent:view")
     @PostMapping
+    @Operation(summary = "创建经验")
     public Result<AgentEvolutionExperience> createExperience(@RequestBody AgentEvolutionExperience experience) {
         AgentEvolutionExperience createdExperience = experienceService.createExperience(experience);
         return Result.success(createdExperience);
     }
 
     // 更新经验
-    @Operation(summary = "创建经验")
+    @Operation(summary = "更新经验")
     @PutMapping("/{id}")
     public Result<AgentEvolutionExperience> updateExperience(@PathVariable Long id, @RequestBody AgentEvolutionExperience experienceDetails) {
         AgentEvolutionExperience updatedExperience = experienceService.updateExperience(id, experienceDetails);
@@ -45,7 +46,7 @@ public class ExperienceController {
     }
 
     // 删除经验
-    @Operation(summary = "更新经验")
+    @Operation(summary = "删除经验")
     @DeleteMapping("/{id}")
     public Result<Void> deleteExperience(@PathVariable Long id) {
         experienceService.deleteExperience(id);
@@ -53,7 +54,7 @@ public class ExperienceController {
     }
 
     // 获取单个经验
-    @Operation(summary = "删除经验")
+    @Operation(summary = "根据ID获取经验详情")
     @GetMapping("/{id}")
     public Result<AgentEvolutionExperience> getExperienceById(@PathVariable Long id) {
         AgentEvolutionExperience experience = experienceService.getExperienceById(id);
@@ -61,7 +62,7 @@ public class ExperienceController {
     }
 
     // 获取所有经验
-    @Operation(summary = "根据ID获取经验详情")
+    @Operation(summary = "获取所有经验列表")
     @GetMapping
     public Result<List<AgentEvolutionExperience>> getAllExperiences() {
         List<AgentEvolutionExperience> experiences = experienceService.getAllExperiences();
@@ -69,7 +70,7 @@ public class ExperienceController {
     }
 
     // 搜索经验
-    @Operation(summary = "获取所有经验列表")
+    @Operation(summary = "搜索经验")
     @GetMapping("/search")
     public Result<Page<AgentEvolutionExperience>> searchExperiences(
             @RequestParam(required = false) String keyword,
@@ -89,13 +90,14 @@ public class ExperienceController {
 
     // 按Agent ID获取经验
     @GetMapping("/agent/{agentId}")
+    @Operation(summary = "根据Agent ID获取经验列表")
     public Result<List<AgentEvolutionExperience>> getExperiencesByAgentId(@PathVariable Long agentId) {
         List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByAgentId(agentId);
         return Result.success(experiences);
     }
 
     // 按类型获取经验
-    @Operation(summary = "根据Agent ID获取经验列表")
+    @Operation(summary = "根据类型获取经验列表")
     @GetMapping("/type/{experienceType}")
     public Result<List<AgentEvolutionExperience>> getExperiencesByType(@PathVariable String experienceType) {
         List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByType(experienceType);
@@ -103,7 +105,7 @@ public class ExperienceController {
     }
 
     // 分析经验有效性
-    @Operation(summary = "根据类型获取经验列表")
+    @Operation(summary = "分析经验有效性")
     @GetMapping("/analysis/effectiveness")
     public Result<Map<String, Object>> analyzeExperienceEffectiveness() {
         Map<String, Object> analysis = experienceService.analyzeExperienceEffectiveness();
@@ -111,7 +113,7 @@ public class ExperienceController {
     }
 
     // 去重经验
-    @Operation(summary = "分析经验有效性")
+    @Operation(summary = "去重经验")
     @PostMapping("/deduplicate")
     public Result<Void> deduplicateExperiences() {
         experienceService.deduplicateExperiences();
@@ -119,7 +121,7 @@ public class ExperienceController {
     }
 
     // 清理过期经验
-    @Operation(summary = "去重经验")
+    @Operation(summary = "清理过期经验")
     @PostMapping("/cleanup")
     public Result<Void> cleanupExpiredExperiences() {
         experienceService.cleanupExpiredExperiences();
@@ -127,7 +129,7 @@ public class ExperienceController {
     }
 
     // 增加使用次数
-    @Operation(summary = "清理过期经验")
+    @Operation(summary = "增加经验使用次数")
     @PostMapping("/{id}/increment-usage")
     public Result<Void> incrementUsageCount(@PathVariable Long id) {
         experienceService.incrementUsageCount(id);

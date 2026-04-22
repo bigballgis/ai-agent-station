@@ -11,7 +11,7 @@
       },
     ]"
     :style="nodeStyle"
-    @mousedown.stop="$emit('select', node)"
+    @mousedown.stop="$emit('select', $event, node)"
     @contextmenu.prevent="$emit('contextmenu', $event, node)"
   >
     <!-- Input Ports -->
@@ -60,7 +60,7 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'select', node: CanvasNode): void
+  (e: 'select', event: MouseEvent, node: CanvasNode): void
   (e: 'dragstart', event: MouseEvent, node: CanvasNode): void
   (e: 'portmousedown', event: MouseEvent, node: CanvasNode, port: PortDefinition, portType: string): void
   (e: 'dblclick', node: CanvasNode): void

@@ -36,6 +36,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:view")
     @GetMapping
+    @Operation(summary = "分页查询部署历史")
     public Result<PageResult<DeploymentVO>> getDeploymentHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -51,6 +52,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:view")
     @GetMapping("/agent/{agentId}")
+    @Operation(summary = "根据Agent ID获取部署历史")
     public Result<List<DeploymentVO>> getDeploymentHistoryByAgentId(@PathVariable Long agentId) {
         List<DeploymentVO> voList = deploymentService.getDeploymentHistoryByAgentId(agentId).stream()
                 .map(DeploymentVO::fromEntity)
@@ -60,6 +62,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:view")
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取部署详情")
     public Result<DeploymentVO> getDeploymentById(@PathVariable Long id) {
         DeploymentHistory deployment = deploymentService.getDeploymentById(id);
         return Result.success(DeploymentVO.fromEntity(deployment));
@@ -67,6 +70,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:manage")
     @PostMapping("/deploy")
+    @Operation(summary = "部署Agent")
     @OperationLog(value = "部署Agent", module = "部署管理")
     public Result<DeploymentVO> deploy(
             @Valid @RequestBody DeployRequest request,
@@ -81,6 +85,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:manage")
     @PostMapping("/{id}/rollback")
+    @Operation(summary = "回滚部署")
     @OperationLog(value = "回滚部署", module = "部署管理")
     public Result<DeploymentVO> rollback(
             @PathVariable Long id,
@@ -92,6 +97,7 @@ public class DeploymentController {
 
     @RequiresPermission("deployment:view")
     @GetMapping("/compare")
+    @Operation(summary = "比较两个版本差异")
     public Result<Map<String, Object>> compareVersions(
             @RequestParam Long versionId1,
             @RequestParam Long versionId2) {

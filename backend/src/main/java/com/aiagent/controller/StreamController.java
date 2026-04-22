@@ -71,6 +71,7 @@ public class StreamController {
      */
     @RequiresPermission("agent:invoke")
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "SSE流式对话(GET)")
     public SseEmitter streamChat(
             @RequestParam(defaultValue = "openai") String provider,
             @RequestParam(required = false) String systemPrompt,
@@ -155,6 +156,7 @@ public class StreamController {
      * Body: { "provider": "openai", "systemPrompt": "...", "message": "...", "sessionId": "..." }
      */
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "SSE流式对话(POST)")
     public SseEmitter streamChatPost(@RequestBody Map<String, Object> request) {
         String provider = (String) request.getOrDefault("provider", "openai");
         String systemPrompt = (String) request.get("systemPrompt");

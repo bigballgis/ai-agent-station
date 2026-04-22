@@ -142,11 +142,11 @@ const getPriorityLabel = (priority: number) => {
   return labels[priority] || priority
 }
 
-const viewSuggestion = (suggestion: any) => {
+const viewSuggestion = (_suggestion: any) => {
   // 查看建议详情 - TODO: 实现详情页面跳转
 }
 
-const editSuggestion = (suggestion: any) => {
+const editSuggestion = (_suggestion: any) => {
   // 编辑建议 - TODO: 实现编辑页面跳转
 }
 

@@ -37,6 +37,7 @@ public class DataExportController {
      */
     @RequiresPermission("data:export")
     @GetMapping("/agents")
+    @Operation(summary = "导出Agent数据为CSV")
     public void exportAgents(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String status,
@@ -56,7 +57,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/users")
-    @Operation(summary = "导出Agent数据为CSV")
+    @Operation(summary = "导出用户数据为CSV")
     public void exportUsers(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String keyword,
@@ -76,7 +77,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/logs")
-    @Operation(summary = "导出用户数据为CSV")
+    @Operation(summary = "导出系统日志为CSV")
     public void exportLogs(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String module,
@@ -97,7 +98,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/test-results")
-    @Operation(summary = "导出系统日志为CSV")
+    @Operation(summary = "导出测试结果为CSV")
     public void exportTestResults(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) Long agentId,
@@ -118,7 +119,7 @@ public class DataExportController {
      * @param endDate   filter by start date (end)
      */
     @GetMapping("/workflow-instances")
-    @Operation(summary = "导出测试结果为CSV")
+    @Operation(summary = "导出工作流实例为CSV")
     public void exportWorkflowInstances(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String status,

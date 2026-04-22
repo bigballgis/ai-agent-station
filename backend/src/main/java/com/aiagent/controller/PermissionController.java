@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.entity.Permission;
@@ -24,6 +25,7 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @GetMapping
+    @RequiresPermission("permission:read")
     @RequiresRole("ADMIN")
     @Operation(summary = "获取所有权限列表")
     public Result<List<Permission>> getAllPermissions() {
@@ -31,24 +33,32 @@ public class PermissionController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取权限详情")
+    @RequiresPermission("permission:read")
     @RequiresRole("ADMIN")
     public Result<Permission> getPermissionById(@PathVariable Long id) {
         return Result.success(permissionService.getPermissionById(id));
     }
 
     @PostMapping
+    @Operation(summary = "创建权限")
+    @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
     public Result<Permission> createPermission(@RequestBody Permission permission) {
         return Result.success(permissionService.createPermission(permission));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "更新权限")
+    @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
     public Result<Permission> updatePermission(@PathVariable Long id, @RequestBody Permission permission) {
         return Result.success(permissionService.updatePermission(id, permission));
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除权限")
+    @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
     public Result<Void> deletePermission(@PathVariable Long id) {
         permissionService.deletePermission(id);
@@ -56,6 +66,8 @@ public class PermissionController {
     }
 
     @PostMapping("/assign")
+    @Operation(summary = "分配权限给角色")
+    @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
     public Result<Void> assignPermissionToRole(@Valid @RequestBody AssignPermissionRequest request) {
         permissionService.assignPermissionToRole(request.getRoleId(), request.getPermissionId());
@@ -63,6 +75,8 @@ public class PermissionController {
     }
 
     @DeleteMapping("/remove")
+    @Operation(summary = "从角色移除权限")
+    @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
     public Result<Void> removePermissionFromRole(@RequestParam Long roleId, @RequestParam Long permissionId) {
         permissionService.removePermissionFromRole(roleId, permissionId);
@@ -70,6 +84,8 @@ public class PermissionController {
     }
 
     @GetMapping("/role/{roleId}")
+    @Operation(summary = "获取角色权限列表")
+    @RequiresPermission("permission:read")
     @RequiresRole("ADMIN")
     public Result<List<RolePermission>> getRolePermissions(@PathVariable Long roleId) {
         return Result.success(permissionService.getRolePermissions(roleId));

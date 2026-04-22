@@ -31,13 +31,14 @@ public class SuggestionController {
     // 生成建议
     @RequiresPermission("agent:view")
     @PostMapping("/generate/{agentId}")
+    @Operation(summary = "生成Agent优化建议")
     public Result<List<AgentEvolutionSuggestion>> generateSuggestions(@PathVariable Long agentId) {
         List<AgentEvolutionSuggestion> suggestions = suggestionService.generateSuggestions(agentId);
         return Result.success(suggestions);
     }
 
     // 创建建议
-    @Operation(summary = "生成Agent优化建议")
+    @Operation(summary = "创建建议")
     @PostMapping
     public Result<AgentEvolutionSuggestion> createSuggestion(@RequestBody AgentEvolutionSuggestion suggestion) {
         AgentEvolutionSuggestion createdSuggestion = suggestionService.createSuggestion(suggestion);
@@ -45,7 +46,7 @@ public class SuggestionController {
     }
 
     // 更新建议
-    @Operation(summary = "创建建议")
+    @Operation(summary = "更新建议")
     @PutMapping("/{id}")
     public Result<AgentEvolutionSuggestion> updateSuggestion(@PathVariable Long id, @RequestBody AgentEvolutionSuggestion suggestionDetails) {
         AgentEvolutionSuggestion updatedSuggestion = suggestionService.updateSuggestion(id, suggestionDetails);
@@ -53,7 +54,7 @@ public class SuggestionController {
     }
 
     // 删除建议
-    @Operation(summary = "更新建议")
+    @Operation(summary = "删除建议")
     @DeleteMapping("/{id}")
     public Result<Void> deleteSuggestion(@PathVariable Long id) {
         suggestionService.deleteSuggestion(id);
@@ -61,7 +62,7 @@ public class SuggestionController {
     }
 
     // 获取单个建议
-    @Operation(summary = "删除建议")
+    @Operation(summary = "根据ID获取建议详情")
     @GetMapping("/{id}")
     public Result<AgentEvolutionSuggestion> getSuggestionById(@PathVariable Long id) {
         AgentEvolutionSuggestion suggestion = suggestionService.getSuggestionById(id);
@@ -69,7 +70,7 @@ public class SuggestionController {
     }
 
     // 获取所有建议
-    @Operation(summary = "根据ID获取建议详情")
+    @Operation(summary = "获取所有建议列表")
     @GetMapping
     public Result<List<AgentEvolutionSuggestion>> getAllSuggestions() {
         List<AgentEvolutionSuggestion> suggestions = suggestionService.getAllSuggestions();
@@ -77,7 +78,7 @@ public class SuggestionController {
     }
 
     // 搜索建议
-    @Operation(summary = "获取所有建议列表")
+    @Operation(summary = "搜索建议")
     @GetMapping("/search")
     public Result<Page<AgentEvolutionSuggestion>> searchSuggestions(
             @RequestParam(required = false) String keyword,
@@ -97,13 +98,14 @@ public class SuggestionController {
 
     // 按Agent ID获取建议
     @GetMapping("/agent/{agentId}")
+    @Operation(summary = "根据Agent ID获取建议列表")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByAgentId(@PathVariable Long agentId) {
         List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByAgentId(agentId);
         return Result.success(suggestions);
     }
 
     // 按类型获取建议
-    @Operation(summary = "根据Agent ID获取建议列表")
+    @Operation(summary = "根据类型获取建议列表")
     @GetMapping("/type/{suggestionType}")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByType(@PathVariable String suggestionType) {
         List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByType(suggestionType);
@@ -111,7 +113,7 @@ public class SuggestionController {
     }
 
     // 按优先级获取建议
-    @Operation(summary = "根据类型获取建议列表")
+    @Operation(summary = "根据优先级获取建议列表")
     @GetMapping("/priority/{agentId}")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByPriority(@PathVariable Long agentId) {
         List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByPriority(agentId);
@@ -120,6 +122,7 @@ public class SuggestionController {
 
     // 更新建议状态
     @PutMapping("/{id}/status")
+    @Operation(summary = "更新建议状态")
     public Result<AgentEvolutionSuggestion> updateSuggestionStatus(@PathVariable Long id, @RequestParam String status) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateSuggestionStatus(id, status);
         return Result.success(suggestion);
@@ -127,13 +130,14 @@ public class SuggestionController {
 
     // 更新实现状态
     @PutMapping("/{id}/implementation-status")
+    @Operation(summary = "更新实现状态")
     public Result<AgentEvolutionSuggestion> updateImplementationStatus(@PathVariable Long id, @RequestParam String implementationStatus) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateImplementationStatus(id, implementationStatus);
         return Result.success(suggestion);
     }
 
     // 分析建议效果
-    @Operation(summary = "更新实现状态")
+    @Operation(summary = "分析建议效果")
     @GetMapping("/analysis/effectiveness")
     public Result<Map<String, Object>> analyzeSuggestionEffectiveness() {
         Map<String, Object> analysis = suggestionService.analyzeSuggestionEffectiveness();

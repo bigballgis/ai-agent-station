@@ -34,6 +34,7 @@ public class ToolController {
      */
     @RequiresPermission("tool:view")
     @GetMapping
+    @Operation(summary = "获取所有可用工具列表")
     public Result<Map<String, Object>> listTools() {
         List<Map<String, Object>> tools = new ArrayList<>();
 
@@ -65,7 +66,7 @@ public class ToolController {
      * 获取工具统计信息
      * GET /api/v1/tools/stats
      */
-    @Operation(summary = "获取所有可用工具列表")
+    @Operation(summary = "获取工具统计信息")
     @GetMapping("/stats")
     public Result<Map<String, Object>> getToolStats() {
         Map<String, Object> stats = new LinkedHashMap<>();
@@ -88,7 +89,7 @@ public class ToolController {
      * 查询工具来源
      * GET /api/v1/tools/{toolName}/source
      */
-    @Operation(summary = "获取工具统计信息")
+    @Operation(summary = "查询工具来源")
     @GetMapping("/{toolName}/source")
     public Result<Map<String, Object>> getToolSource(@PathVariable String toolName) {
         String source = compositeToolProvider.getToolSource(toolName);
@@ -103,7 +104,7 @@ public class ToolController {
      * 刷新工具缓存
      * POST /api/v1/tools/refresh
      */
-    @Operation(summary = "查询工具来源")
+    @Operation(summary = "刷新工具缓存")
     @RequiresPermission("tool:manage")
     @PostMapping("/refresh")
     public Result<Map<String, Object>> refreshTools() {

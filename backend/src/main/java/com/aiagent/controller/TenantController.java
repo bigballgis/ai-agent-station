@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.entity.Tenant;
@@ -21,42 +22,49 @@ public class TenantController {
     private final TenantService tenantService;
 
     @GetMapping
+    @Operation(summary = "获取所有租户列表")
+    @RequiresPermission("tenant:read")
     @RequiresRole("SUPER_ADMIN")
     public Result<List<Tenant>> getAllTenants() {
         return Result.success(tenantService.getAllTenants());
     }
 
-    @Operation(summary = "获取所有租户列表")
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取租户详情")
+    @RequiresPermission("tenant:read")
     @RequiresRole("SUPER_ADMIN")
     public Result<Tenant> getTenantById(@PathVariable Long id) {
         return Result.success(tenantService.getTenantById(id));
     }
 
-    @Operation(summary = "根据ID获取租户详情")
     @PostMapping
+    @Operation(summary = "创建租户")
+    @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     public Result<Tenant> createTenant(@RequestBody Tenant tenant) {
         return Result.success(tenantService.createTenant(tenant));
     }
 
-    @Operation(summary = "创建租户")
     @PutMapping("/{id}")
+    @Operation(summary = "更新租户信息")
+    @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     public Result<Tenant> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
         return Result.success(tenantService.updateTenant(id, tenant));
     }
 
-    @Operation(summary = "更新租户")
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除租户")
+    @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<Void> deleteTenant(@PathVariable Long id) {
         tenantService.deleteTenant(id);
         return Result.success();
     }
 
-    @Operation(summary = "删除租户")
     @PostMapping("/{id}/regenerate-api-key")
+    @Operation(summary = "重新生成API密钥")
+    @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<Tenant> regenerateApiKey(@PathVariable Long id) {
         return Result.success(tenantService.regenerateApiKey(id));

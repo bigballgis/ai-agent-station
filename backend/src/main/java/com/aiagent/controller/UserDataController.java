@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
 import com.aiagent.service.UserDataService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,7 @@ public class UserDataController {
      * @return all user data in a structured format
      */
     @GetMapping("/export")
+    @RequiresPermission("userdata:read")
     @Operation(summary = "导出当前用户的所有数据")
     public Result<Map<String, Object>> exportUserData(
             @AuthenticationPrincipal com.aiagent.security.UserPrincipal principal) {
@@ -44,6 +46,7 @@ public class UserDataController {
      * @return success confirmation
      */
     @PostMapping("/delete-request")
+    @RequiresPermission("userdata:write")
     @Operation(summary = "请求删除账户数据(匿名化处理)")
     public Result<Void> requestAccountDeletion(
             @AuthenticationPrincipal com.aiagent.security.UserPrincipal principal) {
@@ -57,6 +60,7 @@ public class UserDataController {
      * @return data retention statistics
      */
     @GetMapping("/retention")
+    @RequiresPermission("userdata:read")
     @Operation(summary = "获取数据保留报告(仅管理员)")
     public Result<Map<String, Object>> getDataRetentionReport() {
         Map<String, Object> report = userDataService.getDataRetentionReport();

@@ -33,7 +33,12 @@
     </div>
 
     <div class="canvas-section">
-      <AgentCanvas v-model="agent.config" @save="saveAgent" />
+      <div class="designer-redirect">
+        <p>请使用可视化设计器编辑 Agent 工作流</p>
+        <router-link :to="`/agent/design/${route.params.id}`" class="btn btn-primary">
+          打开设计器
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -45,7 +50,6 @@ import { message, Modal } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { approvalApi } from '@/api/approval'
 import { deploymentApi } from '@/api/deployment'
-import AgentCanvas from '@/components/AgentCanvas.vue'
 
 const router = useRouter()
 const route = useRoute()

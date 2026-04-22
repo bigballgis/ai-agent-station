@@ -372,9 +372,8 @@
 import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import type { FormInstance } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
-import { PageHeader, SearchBar, StatusBadge, EmptyState, ConfirmModal } from '@/components'
+import { PageHeader, SearchBar, StatusBadge, EmptyState } from '@/components'
 import type { SearchField } from '@/components'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
@@ -456,32 +455,14 @@ async function handleWizardCreate() {
 watch(showCreateModal, (val) => {
   if (val) {
     nextTick(() => {
-      document.querySelector('.ant-modal input')?.focus()
+      (document.querySelector('.ant-modal input') as HTMLElement | null)?.focus()
     })
   }
 })
-
-// 键盘快捷键
 useKeyboardShortcuts({
   'Ctrl+N': () => { showCreateModal.value = true }
 })
 
-const newAgent = ref<Partial<Agent>>({
-  name: '',
-  description: '',
-  config: {}
-})
-const formRef = ref<FormInstance>()
-const formRules = {
-  name: [
-    { required: true, message: '请输入Agent名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '名称长度为2-50个字符', trigger: 'blur' },
-    { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/, message: '名称只能包含中文、字母、数字、下划线和短横线', trigger: 'blur' }
-  ],
-  description: [
-    { max: 500, message: '描述不能超过500个字符', trigger: 'blur' }
-  ]
-}
 const copyAgentName = ref('')
 const currentAgent = ref<Agent | null>(null)
 
@@ -634,24 +615,6 @@ function deleteAgent(agent: Agent) {
   })
 }
 
-async function handleCreate() {
-  try {
-    await formRef.value?.validate()
-  } catch {
-    return
-  }
-
-  try {
-    await agentApi.createAgent(newAgent.value)
-    message.success('创建成功')
-    showCreateModal.value = false
-    newAgent.value = { name: '', description: '', config: {} }
-    loadAgents()
-  } catch (error) {
-    message.error('创建失败')
-  }
-}
-
 function formatDate(date: string | undefined) {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN', {
@@ -659,31 +622,6 @@ function formatDate(date: string | undefined) {
     month: '2-digit',
     day: '2-digit'
   })
-}
-
-// 状态相关辅助函数
-function getStatusLabel(agent: Agent): string {
-  const statusMap: Record<string, string> = {
-    DRAFT: '草稿',
-    PENDING_APPROVAL: '待审批',
-    APPROVED: '已审批',
-    PUBLISHED: '已发布',
-    ARCHIVED: '已归档'
-  }
-  return statusMap[agent.status || ''] || agent.isActive ? '启用' : '禁用'
-}
-
-function getStatusBadgeClass(agent: Agent): string {
-  const classMap: Record<string, string> = {
-    DRAFT: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400',
-    PENDING_APPROVAL: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400',
-    APPROVED: 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400',
-    PUBLISHED: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400',
-    ARCHIVED: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-500'
-  }
-  return classMap[agent.status || ''] || (agent.isActive
-    ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'
-    : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400')
 }
 
 function getAgentIconBg(agent: Agent): string {
