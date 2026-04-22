@@ -1,0 +1,153 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import request from '@/utils/request'
+
+interface Notification {
+  id: number
+  title: string
+  content: string
+  type: string
+  read: boolean
+  sender?: string
+  link?: string
+  createdAt: string
+}
+
+export const useNotificationStore = defineStore('notification', () => {
+  // State
+  const notifications = ref<Notification[]>([])
+  const unreadCount = ref(0)
+  const wsConnected = ref(false)
+  let ws: WebSocket | null = null
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+
+  // Getters
+  const unreadNotifications = computed(() =>
+    notifications.value.filter((n) => !n.read)
+  )
+
+  const sortedNotifications = computed(() =>
+    [...notifications.value].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  )
+
+  // Actions
+  async function fetchNotifications(params?: { page?: number; size?: number }) {
+    const res = await request.get('/api/notifications', { params })
+    notifications.value = res.data.data?.content || res.data.data || []
+    unreadCount.value = notifications.value.filter((n) => !n.read).length
+    return res.data.data
+  }
+
+  async function markAsRead(id: number) {
+    await request.put(`/api/notifications/${id}/read`)
+    const notification = notifications.value.find((n) => n.id === id)
+    if (notification && !notification.read) {
+      notification.read = true
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    }
+  }
+
+  async function markAllAsRead() {
+    await request.put('/api/notifications/read-all')
+    notifications.value.forEach((n) => {
+      n.read = true
+    })
+    unreadCount.value = 0
+  }
+
+  function connectWebSocket(token: string) {
+    if (ws && ws.readyState === WebSocket.OPEN) return
+
+    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/notifications?token=${token}`
+
+    ws = new WebSocket(wsUrl)
+
+    ws.onopen = () => {
+      wsConnected.value = true
+      startHeartbeat()
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'notification') {
+          notifications.value.unshift(data.payload)
+          if (!data.payload.read) {
+            unreadCount.value++
+          }
+        } else if (data.type === 'pong') {
+          // heartbeat response
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    ws.onclose = () => {
+      wsConnected.value = false
+      stopHeartbeat()
+      scheduleReconnect(token)
+    }
+
+    ws.onerror = () => {
+      wsConnected.value = false
+      ws?.close()
+    }
+  }
+
+  function disconnectWebSocket() {
+    stopHeartbeat()
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
+    if (ws) {
+      ws.close()
+      ws = null
+    }
+    wsConnected.value = false
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat()
+    heartbeatTimer = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }))
+      }
+    }, 30000)
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer)
+      heartbeatTimer = null
+    }
+  }
+
+  function scheduleReconnect(token: string) {
+    if (reconnectTimer) return
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      connectWebSocket(token)
+    }, 5000)
+  }
+
+  return {
+    // State
+    notifications,
+    unreadCount,
+    wsConnected,
+    // Getters
+    unreadNotifications,
+    sortedNotifications,
+    // Actions
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    connectWebSocket,
+    disconnectWebSocket,
+  }
+})
