@@ -3,6 +3,7 @@ package com.aiagent.controller;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
+import com.aiagent.dto.AgentDTO;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.service.AgentService;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,14 +42,32 @@ public class AgentController {
     @PostMapping
     @RequiresPermission("agent:create")
     @OperationLog(value = "创建Agent", module = "Agent管理")
-    public Result<Agent> createAgent(@RequestBody Agent agent) {
+    public Result<Agent> createAgent(@Valid @RequestBody AgentDTO dto) {
+        Agent agent = new Agent();
+        agent.setName(dto.getName());
+        agent.setDescription(dto.getDescription());
+        agent.setConfig(dto.getConfig());
+        agent.setCategory(dto.getCategory());
+        agent.setIsActive(dto.getIsActive());
+        if (dto.getType() != null) {
+            agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
+        }
         return Result.success(agentService.createAgent(agent));
     }
 
     @PutMapping("/{id}")
     @RequiresPermission("agent:update")
     @OperationLog(value = "更新Agent", module = "Agent管理")
-    public Result<Agent> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @RequestBody Agent agent) {
+    public Result<Agent> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentDTO dto) {
+        Agent agent = new Agent();
+        agent.setName(dto.getName());
+        agent.setDescription(dto.getDescription());
+        agent.setConfig(dto.getConfig());
+        agent.setCategory(dto.getCategory());
+        agent.setIsActive(dto.getIsActive());
+        if (dto.getType() != null) {
+            agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
+        }
         return Result.success(agentService.updateAgent(id, agent));
     }
 

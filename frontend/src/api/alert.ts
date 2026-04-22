@@ -41,3 +41,10 @@ export function getAlertRecords(params?: any) {
 export function getAlertStats() {
   return request.get('/v1/alerts/stats')
 }
+
+/**
+ * 解决告警记录
+ */
+export function resolveAlertRecord(id: number | string) {
+  return request.post(`/v1/alerts/${id}/resolve`)
+}

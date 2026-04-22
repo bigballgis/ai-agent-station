@@ -1,5 +1,5 @@
 <template>
-  <div class="alert-notification-page">
+  <div class="alert-notification-page" aria-label="告警通知">
     <!-- 页面头部 -->
     <PageHeader title="告警中心" subtitle="统一管理和监控所有告警规则与告警记录，及时发现和处理系统异常" />
 
@@ -114,6 +114,8 @@
                   <div class="flex items-center justify-end gap-1">
                     <button
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
+                      role="button"
+                      tabindex="0"
                       title="编辑"
                       @click="editRule(rule)"
                     >
@@ -123,6 +125,8 @@
                     </button>
                     <button
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
+                      role="button"
+                      tabindex="0"
                       title="删除"
                       @click="deleteRule(rule)"
                     >
@@ -207,6 +211,8 @@
                     <button
                       v-if="record.status === 'firing'"
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 cursor-pointer"
+                      role="button"
+                      tabindex="0"
                       title="确认解决"
                       @click="resolveRecord(record)"
                     >
@@ -216,6 +222,8 @@
                     </button>
                     <button
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
+                      role="button"
+                      tabindex="0"
                       title="查看详情"
                       @click="viewRecordDetail(record)"
                     >
@@ -236,11 +244,11 @@
     <!-- 新建规则弹窗 -->
     <a-modal
       v-model:open="showCreateRuleModal"
-      title="新建告警规则"
+      :title="editingRuleId ? '编辑告警规则' : '新建告警规则'"
       :ok-button-props="{ class: '!rounded-xl' }"
       :cancel-button-props="{ class: '!rounded-xl' }"
       @ok="handleCreateRule"
-      @cancel="showCreateRuleModal = false"
+      @cancel="handleCancelRuleModal"
     >
       <a-form layout="vertical" class="mt-4">
         <a-form-item label="规则名称">
@@ -320,7 +328,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import {
   AlertOutlined,
@@ -328,7 +336,7 @@ import {
   CheckCircleOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, getAlertRecords, getAlertStats } from '@/api/alert'
+import { getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, getAlertRecords, getAlertStats, resolveAlertRecord } from '@/api/alert'
 import { PageHeader, StatCard, StatusBadge, ConfirmModal } from '@/components'
 
 // Tab
@@ -452,6 +460,23 @@ async function fetchAlertData() {
   }
 }
 
+// Modal 打开时自动聚焦
+watch(showCreateRuleModal, (val) => {
+  if (val) {
+    nextTick(() => {
+      document.querySelector('.ant-modal input')?.focus()
+    })
+  }
+})
+
+watch(showDetailModal, (val) => {
+  if (val) {
+    nextTick(() => {
+      document.querySelector('.ant-modal input')?.focus()
+    })
+  }
+})
+
 onMounted(async () => {
   await fetchAlertData()
 })
@@ -506,7 +531,9 @@ async function toggleRule(rule: typeof alertRules.value[0]) {
 }
 
 function editRule(rule: typeof alertRules.value[0]) {
-  message.info(`编辑规则: ${rule.name}`)
+  newRule.value = { name: rule.name, type: rule.type, threshold: rule.threshold, severity: rule.severity }
+  editingRuleId.value = rule.id
+  showCreateRuleModal.value = true
 }
 
 function deleteRule(rule: typeof alertRules.value[0]) {
@@ -530,9 +557,15 @@ function deleteRule(rule: typeof alertRules.value[0]) {
 }
 
 // 记录操作
-function resolveRecord(record: typeof alertRecords.value[0]) {
-  record.status = 'resolved'
-  message.success('告警已标记为已解决')
+async function resolveRecord(record: typeof alertRecords.value[0]) {
+  try {
+    await resolveAlertRecord(record.id)
+    record.status = 'resolved'
+    message.success('告警已确认解决')
+  } catch (e) {
+    console.error('解决告警失败:', e)
+    message.error('操作失败，请重试')
+  }
 }
 
 const showDetailModal = ref(false)
@@ -545,6 +578,7 @@ function viewRecordDetail(record: typeof alertRecords.value[0]) {
 
 // 新建规则
 const showCreateRuleModal = ref(false)
+const editingRuleId = ref<number | string | null>(null)
 const newRule = ref({ name: '', type: undefined as string | undefined, threshold: '', severity: undefined as string | undefined })
 
 async function handleCreateRule() {
@@ -553,15 +587,27 @@ async function handleCreateRule() {
     return
   }
   try {
-    await createAlertRule(newRule.value)
-    message.success('规则创建成功')
+    if (editingRuleId.value) {
+      await updateAlertRule(Number(editingRuleId.value), newRule.value)
+      message.success('规则更新成功')
+    } else {
+      await createAlertRule(newRule.value)
+      message.success('规则创建成功')
+    }
     showCreateRuleModal.value = false
+    editingRuleId.value = null
     newRule.value = { name: '', type: undefined, threshold: '', severity: undefined }
     await fetchAlertData()
   } catch (e) {
-    console.error('创建规则失败:', e)
-    message.error('规则创建失败')
+    console.error(editingRuleId.value ? '更新规则失败:' : '创建规则失败:', e)
+    message.error(editingRuleId.value ? '规则更新失败' : '规则创建失败')
   }
+}
+
+function handleCancelRuleModal() {
+  showCreateRuleModal.value = false
+  editingRuleId.value = null
+  newRule.value = { name: '', type: undefined, threshold: '', severity: undefined }
 }
 </script>
 

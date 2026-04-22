@@ -1,5 +1,5 @@
 <template>
-  <div class="log-center-page">
+  <div class="log-center-page" aria-label="日志中心">
     <!-- 页面头部 -->
     <PageHeader title="日志中心" subtitle="查看系统操作日志、API 调用日志和异常日志，追踪系统运行状态" />
 
@@ -47,7 +47,13 @@
         </div>
 
         <!-- 操作日志表格 -->
-        <div class="overflow-x-auto">
+        <div v-if="loading" class="flex items-center justify-center py-12">
+          <a-spin size="large" />
+        </div>
+        <div v-else-if="filteredOperationLogs.length === 0" class="flex flex-col items-center justify-center py-12">
+          <EmptyState type="noData" description="暂无操作日志" />
+        </div>
+        <div v-else class="overflow-x-auto" aria-label="操作日志表格">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
@@ -100,7 +106,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+        <div v-if="!loading && filteredOperationLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
           <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredOperationLogs.length }} 条记录</span>
           <div class="flex items-center gap-1">
             <button
@@ -155,7 +161,13 @@
         </div>
 
         <!-- 调用日志表格 -->
-        <div class="overflow-x-auto">
+        <div v-if="loading" class="flex items-center justify-center py-12">
+          <a-spin size="large" />
+        </div>
+        <div v-else-if="filteredApiLogs.length === 0" class="flex flex-col items-center justify-center py-12">
+          <EmptyState type="noData" description="暂无调用日志" />
+        </div>
+        <div v-else class="overflow-x-auto" aria-label="调用日志表格">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
@@ -207,7 +219,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+        <div v-if="!loading && filteredApiLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
           <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredApiLogs.length }} 条记录</span>
           <div class="flex items-center gap-1">
             <button
@@ -231,8 +243,45 @@
 
       <!-- 异常日志 Tab -->
       <div v-if="activeTab === 'error'" class="p-6">
+        <!-- 筛选栏 -->
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <TimeRangePicker @change="handleErrorTimeRangeChange" />
+          <select
+            v-model="errorFilters.module"
+            class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
+          >
+            <option value="">全部模块</option>
+            <option value="Agent">Agent</option>
+            <option value="认证">认证</option>
+            <option value="工作流">工作流</option>
+            <option value="部署">部署</option>
+            <option value="系统">系统</option>
+          </select>
+          <select
+            v-model="errorFilters.level"
+            class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
+          >
+            <option value="">全部级别</option>
+            <option value="ERROR">ERROR</option>
+            <option value="WARN">WARN</option>
+            <option value="FATAL">FATAL</option>
+          </select>
+          <button
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
+            @click="resetErrorFilters"
+          >
+            重置
+          </button>
+        </div>
+
         <!-- 异常日志表格 -->
-        <div class="overflow-x-auto">
+        <div v-if="loading" class="flex items-center justify-center py-12">
+          <a-spin size="large" />
+        </div>
+        <div v-else-if="errorLogs.length === 0" class="flex flex-col items-center justify-center py-12">
+          <EmptyState type="noData" description="暂无异常日志" />
+        </div>
+        <div v-else class="overflow-x-auto" aria-label="异常日志表格">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
@@ -280,7 +329,11 @@
                 <!-- 展开的堆栈信息 -->
                 <tr v-if="expandedErrors.has(log.id)">
                   <td colspan="5" class="px-4 py-3 bg-neutral-50 dark:bg-neutral-800/30">
-                    <pre class="text-xs text-neutral-500 dark:text-neutral-400 font-mono whitespace-pre-wrap overflow-x-auto max-h-48 overflow-y-auto p-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">{{ log.stack }}</pre>
+                    <a-collapse ghost>
+                      <a-collapse-panel header="查看技术详情">
+                        <pre class="text-xs text-neutral-500 dark:text-neutral-400 font-mono whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto p-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">{{ log.stack }}</pre>
+                      </a-collapse-panel>
+                    </a-collapse>
                   </td>
                 </tr>
               </template>
@@ -289,8 +342,8 @@
         </div>
 
         <!-- 分页 -->
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ errorLogs.length }} 条记录</span>
+        <div v-if="!loading && filteredErrorLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+          <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredErrorLogs.length }} 条记录</span>
           <div class="flex items-center gap-1">
             <button
               :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer', errorPage <= 1 ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' : 'text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700']"
@@ -318,7 +371,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { getLogs, getLogsByDateRange, getLogsByModule } from '@/api/log'
-import { PageHeader, TabNav, TimeRangePicker } from '@/components'
+import { PageHeader, TabNav, TimeRangePicker, EmptyState } from '@/components'
 import type { TabItem } from '@/components'
 
 // ============ Tab 配置 ============
@@ -540,11 +593,45 @@ const errorPage = ref(1)
 const errorPageSize = 5
 const expandedErrors = ref<Set<string>>(new Set())
 
-const errorTotalPages = computed(() => Math.max(1, Math.ceil(errorLogs.value.length / errorPageSize)))
+// 异常日志筛选
+const errorFilters = ref({
+  dateRange: null as any,
+  module: '',
+  level: '',
+})
+
+function handleErrorTimeRangeChange(range: { start: string; end: string } | null) {
+  if (range) {
+    errorFilters.value.dateRange = range
+  } else {
+    errorFilters.value.dateRange = null
+  }
+  errorPage.value = 1
+  fetchErrorLogs()
+}
+
+function resetErrorFilters() {
+  errorFilters.value = { dateRange: null, module: '', level: '' }
+  errorPage.value = 1
+  fetchErrorLogs()
+}
+
+const filteredErrorLogs = computed(() => {
+  let result = errorLogs.value
+  if (errorFilters.value.module) {
+    result = result.filter(l => l.module === errorFilters.value.module)
+  }
+  if (errorFilters.value.level) {
+    result = result.filter(l => l.level === errorFilters.value.level)
+  }
+  return result
+})
+
+const errorTotalPages = computed(() => Math.max(1, Math.ceil(filteredErrorLogs.value.length / errorPageSize)))
 
 const paginatedErrorLogs = computed(() => {
   const start = (errorPage.value - 1) * errorPageSize
-  return errorLogs.value.slice(start, start + errorPageSize)
+  return filteredErrorLogs.value.slice(start, start + errorPageSize)
 })
 
 function toggleErrorExpand(id: string) {

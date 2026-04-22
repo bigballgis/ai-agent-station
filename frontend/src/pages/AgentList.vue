@@ -1,10 +1,11 @@
 <template>
-  <div class="agent-list-page">
+  <div class="agent-list-page" aria-label="Agent列表">
     <!-- 页面头部 -->
     <PageHeader title="Agent管理" subtitle="管理和监控所有 AI Agent，支持创建、编辑、版本管理和发布">
       <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+          aria-label="创建Agent"
           @click="showCreateModal = true"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,6 +66,9 @@
         :key="agent.id"
         class="agent-card bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-5 hover:-translate-y-1 hover:shadow-float transition-all duration-200 cursor-pointer group animate-slide-up"
         :style="{ animationDelay: `${index * 60}ms` }"
+        role="button"
+        tabindex="0"
+        @keydown.enter="editAgent(agent)"
       >
         <!-- 顶部: 类型图标 + 状态标签 -->
         <div class="flex items-center justify-between mb-4">
@@ -185,27 +189,165 @@
       </button>
     </div>
 
-    <!-- 创建 Agent 弹窗 -->
+    <!-- 创建 Agent 弹窗 - 多步骤向导 -->
     <a-modal
       v-model:open="showCreateModal"
-      title="创建 Agent"
-      :ok-button-props="{ class: '!rounded-xl' }"
-      :cancel-button-props="{ class: '!rounded-xl' }"
-      @ok="handleCreate"
-      @cancel="showCreateModal = false"
+      :title="null"
+      :footer="null"
+      :width="680"
+      :destroy-on-close="true"
+      @cancel="resetWizard"
     >
-      <a-form layout="vertical" class="mt-4">
-        <a-form-item label="名称">
-          <a-input v-model:value="newAgent.name" placeholder="请输入 Agent 名称" />
-        </a-form-item>
-        <a-form-item label="描述">
-          <a-textarea
-            v-model:value="newAgent.description"
-            placeholder="请输入 Agent 描述"
-            :rows="3"
-          />
-        </a-form-item>
-      </a-form>
+      <!-- 步骤条 -->
+      <div class="mb-6">
+        <a-steps :current="currentStep" size="small">
+          <a-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.description" />
+        </a-steps>
+      </div>
+
+      <!-- Step 1: 基本信息 -->
+      <div v-show="currentStep === 0" class="space-y-4">
+        <a-form layout="vertical">
+          <a-form-item label="名称" required>
+            <a-input v-model:value="agentConfig.name" placeholder="请输入 Agent 名称" />
+          </a-form-item>
+          <a-form-item label="描述">
+            <a-textarea v-model:value="agentConfig.description" placeholder="请输入 Agent 描述" :rows="3" />
+          </a-form-item>
+          <a-form-item label="类型">
+            <a-select v-model:value="agentConfig.type">
+              <a-select-option value="CHAT">对话型</a-select-option>
+              <a-select-option value="TASK">任务型</a-select-option>
+              <a-select-option value="FLOW">工作流型</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="分类">
+            <a-select v-model:value="agentConfig.category">
+              <a-select-option value="general">通用</a-select-option>
+              <a-select-option value="customer-service">客服</a-select-option>
+              <a-select-option value="data-analysis">数据分析</a-select-option>
+              <a-select-option value="code-generation">代码生成</a-select-option>
+              <a-select-option value="document">文档处理</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-form>
+      </div>
+
+      <!-- Step 2: 模型配置 -->
+      <div v-show="currentStep === 1" class="space-y-4">
+        <a-form layout="vertical">
+          <a-form-item label="LLM 模型">
+            <a-select v-model:value="agentConfig.model">
+              <a-select-option value="gpt-4">GPT-4</a-select-option>
+              <a-select-option value="gpt-4-turbo">GPT-4 Turbo</a-select-option>
+              <a-select-option value="gpt-3.5-turbo">GPT-3.5 Turbo</a-select-option>
+              <a-select-option value="claude-3-opus">Claude 3 Opus</a-select-option>
+              <a-select-option value="claude-3-sonnet">Claude 3 Sonnet</a-select-option>
+              <a-select-option value="qwen-max">通义千问 Max</a-select-option>
+              <a-select-option value="qwen-plus">通义千问 Plus</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="温度 (Temperature)">
+            <div class="flex items-center gap-3">
+              <a-slider v-model:value="agentConfig.temperature" :min="0" :max="2" :step="0.1" class="flex-1" />
+              <span class="text-sm text-neutral-500 w-10 text-right">{{ agentConfig.temperature }}</span>
+            </div>
+          </a-form-item>
+          <a-form-item label="最大 Token 数">
+            <a-input-number v-model:value="agentConfig.maxTokens" :min="256" :max="128000" :step="256" class="w-full" />
+          </a-form-item>
+        </a-form>
+      </div>
+
+      <!-- Step 3: 工具绑定 -->
+      <div v-show="currentStep === 2" class="space-y-4">
+        <a-form layout="vertical">
+          <a-form-item label="选择可用工具">
+            <a-checkbox-group v-model:value="agentConfig.tools" class="w-full">
+              <div class="grid grid-cols-2 gap-3">
+                <a-checkbox value="web-search" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">网络搜索</div>
+                  <div class="text-xs text-neutral-400">搜索互联网获取最新信息</div>
+                </a-checkbox>
+                <a-checkbox value="code-executor" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">代码执行</div>
+                  <div class="text-xs text-neutral-400">运行代码片段并返回结果</div>
+                </a-checkbox>
+                <a-checkbox value="file-reader" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">文件读取</div>
+                  <div class="text-xs text-neutral-400">读取和解析各类文件</div>
+                </a-checkbox>
+                <a-checkbox value="database-query" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">数据库查询</div>
+                  <div class="text-xs text-neutral-400">执行SQL查询获取数据</div>
+                </a-checkbox>
+                <a-checkbox value="api-caller" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">API 调用</div>
+                  <div class="text-xs text-neutral-400">调用外部API接口</div>
+                </a-checkbox>
+                <a-checkbox value="image-generator" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                  <div class="font-medium text-sm">图片生成</div>
+                  <div class="text-xs text-neutral-400">AI生成图片内容</div>
+                </a-checkbox>
+              </div>
+            </a-checkbox-group>
+          </a-form-item>
+        </a-form>
+      </div>
+
+      <!-- Step 4: 预览确认 -->
+      <div v-show="currentStep === 3" class="space-y-4">
+        <div class="bg-neutral-50 dark:bg-neutral-800/60 rounded-xl p-5 space-y-4">
+          <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">配置预览</h4>
+          <div class="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">名称：</span>
+              <span class="text-neutral-800 dark:text-neutral-200 font-medium">{{ agentConfig.name || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">类型：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ { CHAT: '对话型', TASK: '任务型', FLOW: '工作流型' }[agentConfig.type] }}</span>
+            </div>
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">分类：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ { general: '通用', 'customer-service': '客服', 'data-analysis': '数据分析', 'code-generation': '代码生成', document: '文档处理' }[agentConfig.category] }}</span>
+            </div>
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">模型：</span>
+              <span class="text-neutral-800 dark:text-neutral-200 font-mono">{{ agentConfig.model }}</span>
+            </div>
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">温度：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ agentConfig.temperature }}</span>
+            </div>
+            <div>
+              <span class="text-neutral-400 dark:text-neutral-500">最大 Token：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ agentConfig.maxTokens }}</span>
+            </div>
+          </div>
+          <div v-if="agentConfig.description" class="pt-2 border-t border-neutral-200 dark:border-neutral-700">
+            <span class="text-neutral-400 dark:text-neutral-500 text-sm">描述：</span>
+            <p class="text-sm text-neutral-700 dark:text-neutral-300 mt-1">{{ agentConfig.description }}</p>
+          </div>
+          <div v-if="agentConfig.tools.length" class="pt-2 border-t border-neutral-200 dark:border-neutral-700">
+            <span class="text-neutral-400 dark:text-neutral-500 text-sm">已绑定工具：</span>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              <a-tag v-for="tool in agentConfig.tools" :key="tool" color="blue">{{ tool }}</a-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部按钮 -->
+      <div class="flex items-center justify-between mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+        <a-button v-if="currentStep > 0" @click="prevStep">上一步</a-button>
+        <div v-else></div>
+        <div class="flex items-center gap-2">
+          <a-button @click="resetWizard">取消</a-button>
+          <a-button v-if="currentStep < 3" type="primary" @click="nextStep">下一步</a-button>
+          <a-button v-else type="primary" @click="handleWizardCreate">确认创建</a-button>
+        </div>
+      </div>
     </a-modal>
 
     <!-- 复制 Agent 弹窗 -->
@@ -227,23 +369,119 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
+import type { FormInstance } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { PageHeader, SearchBar, StatusBadge, EmptyState, ConfirmModal } from '@/components'
 import type { SearchField } from '@/components'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
 const router = useRouter()
 const agents = ref<Agent[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
 const showCopyModal = ref(false)
+
+// 多步骤向导状态
+const currentStep = ref(0)
+const agentConfig = reactive({
+  name: '',
+  description: '',
+  type: 'CHAT',
+  category: 'general',
+  model: 'gpt-4',
+  temperature: 0.7,
+  maxTokens: 2048,
+  tools: [] as string[],
+  isActive: true
+})
+
+const steps = [
+  { title: '基本信息', description: '填写Agent基本信息' },
+  { title: '模型配置', description: '选择AI模型和参数' },
+  { title: '工具绑定', description: '选择Agent可用的工具' },
+  { title: '预览确认', description: '确认配置并创建' }
+]
+
+const nextStep = async () => {
+  if (currentStep.value === 0) {
+    if (!agentConfig.name) { message.warning('请输入Agent名称'); return }
+  }
+  currentStep.value++
+}
+
+const prevStep = () => {
+  if (currentStep.value > 0) currentStep.value--
+}
+
+const resetWizard = () => {
+  showCreateModal.value = false
+  currentStep.value = 0
+  agentConfig.name = ''
+  agentConfig.description = ''
+  agentConfig.type = 'CHAT'
+  agentConfig.category = 'general'
+  agentConfig.model = 'gpt-4'
+  agentConfig.temperature = 0.7
+  agentConfig.maxTokens = 2048
+  agentConfig.tools = []
+  agentConfig.isActive = true
+}
+
+async function handleWizardCreate() {
+  try {
+    await agentApi.createAgent({
+      name: agentConfig.name,
+      description: agentConfig.description,
+      config: {
+        type: agentConfig.type,
+        category: agentConfig.category,
+        model: agentConfig.model,
+        temperature: agentConfig.temperature,
+        maxTokens: agentConfig.maxTokens,
+        tools: agentConfig.tools,
+      }
+    })
+    message.success('创建成功')
+    resetWizard()
+    loadAgents()
+  } catch (error) {
+    message.error('创建失败')
+  }
+}
+
+// Modal 打开时自动聚焦
+watch(showCreateModal, (val) => {
+  if (val) {
+    nextTick(() => {
+      document.querySelector('.ant-modal input')?.focus()
+    })
+  }
+})
+
+// 键盘快捷键
+useKeyboardShortcuts({
+  'Ctrl+N': () => { showCreateModal.value = true }
+})
+
 const newAgent = ref<Partial<Agent>>({
   name: '',
   description: '',
   config: {}
 })
+const formRef = ref<FormInstance>()
+const formRules = {
+  name: [
+    { required: true, message: '请输入Agent名称', trigger: 'blur' },
+    { min: 2, max: 50, message: '名称长度为2-50个字符', trigger: 'blur' },
+    { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/, message: '名称只能包含中文、字母、数字、下划线和短横线', trigger: 'blur' }
+  ],
+  description: [
+    { max: 500, message: '描述不能超过500个字符', trigger: 'blur' }
+  ]
+}
 const copyAgentName = ref('')
 const currentAgent = ref<Agent | null>(null)
 
@@ -397,8 +635,9 @@ function deleteAgent(agent: Agent) {
 }
 
 async function handleCreate() {
-  if (!newAgent.value.name) {
-    message.error('请输入 Agent 名称')
+  try {
+    await formRef.value?.validate()
+  } catch {
     return
   }
 

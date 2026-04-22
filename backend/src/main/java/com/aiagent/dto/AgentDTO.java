@@ -17,11 +17,15 @@ public class AgentDTO {
     @Size(max = 2000, message = "描述不能超过2000个字符")
     private String description;
 
+    @Size(max = 100, message = "分类不能超过100个字符")
+    private String category;
+
+    @Size(max = 50, message = "类型不能超过50个字符")
+    private String type;
+
     private String graphDefinition;
     private Map<String, Object> config;
     private String status;
-    private String type;
     private Boolean isActive;
-    private String category;
     private Boolean isTemplate;
 }

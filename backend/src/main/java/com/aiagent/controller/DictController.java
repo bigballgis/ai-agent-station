@@ -4,6 +4,8 @@ import com.aiagent.annotation.RequiresRole;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DictItemDTO;
+import com.aiagent.dto.DictTypeDTO;
 import com.aiagent.entity.DictItem;
 import com.aiagent.entity.DictType;
 import com.aiagent.service.DictService;
@@ -79,7 +81,12 @@ public class DictController {
     @Operation(summary = "根据ID获取字典类型详情")
     @RequiresRole("ADMIN")
     @PostMapping
-    public Result<DictTypeVO> createDictType(@Valid @RequestBody DictType dictType) {
+    public Result<DictTypeVO> createDictType(@Valid @RequestBody DictTypeDTO dto) {
+        DictType dictType = new DictType();
+        dictType.setDictName(dto.getDictName());
+        dictType.setDictType(dto.getDictType());
+        dictType.setStatus(dto.getStatus());
+        dictType.setRemark(dto.getRemark());
         return Result.success(DictTypeVO.fromEntity(dictService.createDictType(dictType)));
     }
 
@@ -89,8 +96,13 @@ public class DictController {
     @Operation(summary = "创建字典类型")
     @RequiresRole("ADMIN")
     @PutMapping("/{id}")
-    public Result<DictTypeVO> updateDictType(@PathVariable Long id, @Valid @RequestBody DictType dictType) {
+    public Result<DictTypeVO> updateDictType(@PathVariable Long id, @Valid @RequestBody DictTypeDTO dto) {
+        DictType dictType = new DictType();
         dictType.setId(id);
+        dictType.setDictName(dto.getDictName());
+        dictType.setDictType(dto.getDictType());
+        dictType.setStatus(dto.getStatus());
+        dictType.setRemark(dto.getRemark());
         return Result.success(DictTypeVO.fromEntity(dictService.updateDictType(dictType)));
     }
 
@@ -142,7 +154,16 @@ public class DictController {
     @Operation(summary = "批量获取字典项")
     @RequiresRole("ADMIN")
     @PostMapping("/dict-items")
-    public Result<DictItemVO> createDictItem(@Valid @RequestBody DictItem dictItem) {
+    public Result<DictItemVO> createDictItem(@Valid @RequestBody DictItemDTO dto) {
+        DictItem dictItem = new DictItem();
+        dictItem.setDictType(dto.getDictType());
+        dictItem.setDictLabel(dto.getDictLabel());
+        dictItem.setDictValue(dto.getDictValue());
+        dictItem.setDictSort(dto.getDictSort());
+        dictItem.setCssClass(dto.getCssClass());
+        dictItem.setListClass(dto.getListClass());
+        dictItem.setIsDefault(dto.getIsDefault());
+        dictItem.setStatus(dto.getStatus());
         return Result.success(DictItemVO.fromEntity(dictService.createDictItem(dictItem)));
     }
 
@@ -152,8 +173,17 @@ public class DictController {
     @Operation(summary = "创建字典项")
     @RequiresRole("ADMIN")
     @PutMapping("/dict-items/{id}")
-    public Result<DictItemVO> updateDictItem(@PathVariable Long id, @Valid @RequestBody DictItem dictItem) {
+    public Result<DictItemVO> updateDictItem(@PathVariable Long id, @Valid @RequestBody DictItemDTO dto) {
+        DictItem dictItem = new DictItem();
         dictItem.setId(id);
+        dictItem.setDictType(dto.getDictType());
+        dictItem.setDictLabel(dto.getDictLabel());
+        dictItem.setDictValue(dto.getDictValue());
+        dictItem.setDictSort(dto.getDictSort());
+        dictItem.setCssClass(dto.getCssClass());
+        dictItem.setListClass(dto.getListClass());
+        dictItem.setIsDefault(dto.getIsDefault());
+        dictItem.setStatus(dto.getStatus());
         return Result.success(DictItemVO.fromEntity(dictService.updateDictItem(dictItem)));
     }
 

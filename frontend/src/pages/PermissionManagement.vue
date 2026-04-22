@@ -1,5 +1,5 @@
 <template>
-  <div class="permission-page">
+  <div class="permission-page" aria-label="权限管理">
     <!-- 页面头部 -->
     <PageHeader title="权限管理" subtitle="管理系统角色和权限，控制不同角色的访问范围">
       <template #actions>
@@ -42,6 +42,9 @@
               v-for="role in filteredRoles"
               :key="role.id"
               @click="selectRole(role)"
+              @keydown.enter="selectRole(role)"
+              role="button"
+              tabindex="0"
               :class="[
                 'w-full text-left p-3.5 rounded-xl transition-all duration-200 group cursor-pointer',
                 selectedRole?.id === role.id
@@ -355,6 +358,7 @@ import {
   updateRole,
   deleteRole,
   removeRole,
+  getRolePermissions,
 } from '@/api/permission'
 import { getUsers } from '@/api/user'
 import { PageHeader, ConfirmModal } from '@/components'
@@ -427,6 +431,23 @@ async function fetchUsers() {
   }
 }
 
+async function loadRoleUsers() {
+  if (!selectedRole.value) return
+  try {
+    const res = await getUsers()
+    const users = res.data || res || []
+    roleUsers.value = Array.isArray(users) ? users.map((u: any) => ({
+      id: String(u.id),
+      name: u.name || u.username,
+      email: u.email || '',
+      department: u.department || '',
+      joinedAt: u.createdAt || '',
+    })) : []
+  } catch (e) {
+    console.error('获取角色用户失败:', e)
+  }
+}
+
 onMounted(async () => {
   await Promise.all([fetchPermissions(), fetchRoles(), fetchUsers()])
 })
@@ -456,17 +477,22 @@ const filteredRoles = computed(() => {
 
 // ============ 方法 ============
 
-function selectRole(role: Role) {
+async function selectRole(role: Role) {
   selectedRole.value = role
   editingRole.value = false
   editForm.value = { name: role.name, description: role.description }
-  // 从 API 获取该角色的权限
+  // 从 API 获取该角色的实际权限
   try {
-    const allKeys = permissionTree.value.flatMap((m: any) => (m.children || []).map((c: any) => c.key))
-    checkedPermissions.value = allKeys
+    const res = await getRolePermissions(Number(role.id))
+    const data = res?.data || res || []
+    checkedPermissions.value = Array.isArray(data)
+      ? data.map((p: any) => p.code || p.key || p.name)
+      : []
   } catch (e) {
     console.error('获取角色权限失败:', e)
+    checkedPermissions.value = []
   }
+  loadRoleUsers()
 }
 
 function handleCreateRole() {
@@ -555,15 +581,24 @@ async function confirmDeleteRole() {
 
 function removeUser(userId: string) {
   if (!selectedRole.value) return
-  removeRole(Number(userId), Number(selectedRole.value.id))
-    .then(() => {
-      roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
-      message.success('用户已移除')
-    })
-    .catch((e: any) => {
-      console.error('移除用户失败:', e)
-      message.error('移除用户失败')
-    })
+  const user = roleUsers.value.find(u => u.id === userId)
+  Modal.confirm({
+    title: '确认移除',
+    content: `确定要将用户 "${user?.name || userId}" 从该角色中移除吗？`,
+    okText: '确认移除',
+    okType: 'danger',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        await removeRole(Number(userId), Number(selectedRole.value!.id))
+        roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
+        message.success('已移除')
+      } catch (e) {
+        console.error('移除用户失败:', e)
+        message.error('移除失败')
+      }
+    }
+  })
 }
 
 function expandAll() {

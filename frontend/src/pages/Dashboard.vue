@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-page">
+  <div class="dashboard-page" aria-label="仪表盘">
     <!-- 页面标题 -->
     <PageHeader :title="t('dashboard.title') || 'Dashboard'" :subtitle="t('dashboard.subtitle')" />
 
@@ -57,13 +57,14 @@
     <!-- 快捷操作 + 最近活动 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <!-- 快捷操作 -->
-      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6 animate-slide-up" style="animation-delay: 150ms;">
+      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6 animate-slide-up" style="animation-delay: 150ms;" aria-label="快捷操作">
         <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50 mb-5">{{ t('dashboard.quickActions') }}</h2>
         <div class="grid grid-cols-2 gap-3">
           <button
             v-for="action in quickActions"
             :key="action.label"
             class="flex flex-col items-center gap-2.5 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 hover:bg-primary-50 dark:hover:bg-primary-950/30 border border-transparent hover:border-primary-200 dark:hover:border-primary-800/40 transition-all duration-200 group cursor-pointer"
+            @click="router.push(action.route)"
           >
             <div
               class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors duration-200"
@@ -124,6 +125,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   RocketOutlined,
@@ -144,6 +146,7 @@ import { PageHeader, StatCard, ChartContainer } from '@/components'
 
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
+const router = useRouter()
 
 // ============ 统计卡片数据 ============
 const totalAgents = ref(0)
@@ -201,25 +204,29 @@ const quickActions = ref([
     label: t('dashboard.createNewAgent'),
     icon: PlusOutlined,
     iconBg: 'bg-blue-100 dark:bg-blue-900/40',
-    iconColor: 'text-blue-600 dark:text-blue-400'
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    route: '/agents'
   },
   {
     label: t('dashboard.viewApprovals'),
     icon: AuditOutlined,
     iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-    iconColor: 'text-amber-600 dark:text-amber-400'
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    route: '/approvals'
   },
   {
     label: t('dashboard.checkApiUsage'),
     icon: FileTextOutlined,
     iconBg: 'bg-green-100 dark:bg-green-900/40',
-    iconColor: 'text-green-600 dark:text-green-400'
+    iconColor: 'text-green-600 dark:text-green-400',
+    route: '/logs'
   },
   {
     label: t('dashboard.testManagement'),
     icon: ExperimentOutlined,
     iconBg: 'bg-purple-100 dark:bg-purple-900/40',
-    iconColor: 'text-purple-600 dark:text-purple-400'
+    iconColor: 'text-purple-600 dark:text-purple-400',
+    route: '/tests'
   }
 ])
 
@@ -426,25 +433,29 @@ watch(locale, () => {
       label: t('dashboard.createNewAgent'),
       icon: PlusOutlined,
       iconBg: 'bg-blue-100 dark:bg-blue-900/40',
-      iconColor: 'text-blue-600 dark:text-blue-400'
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      route: '/agents'
     },
     {
       label: t('dashboard.viewApprovals'),
       icon: AuditOutlined,
       iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-      iconColor: 'text-amber-600 dark:text-amber-400'
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      route: '/approvals'
     },
     {
       label: t('dashboard.checkApiUsage'),
       icon: FileTextOutlined,
       iconBg: 'bg-green-100 dark:bg-green-900/40',
-      iconColor: 'text-green-600 dark:text-green-400'
+      iconColor: 'text-green-600 dark:text-green-400',
+      route: '/logs'
     },
     {
       label: t('dashboard.testManagement'),
       icon: ExperimentOutlined,
       iconBg: 'bg-purple-100 dark:bg-purple-900/40',
-      iconColor: 'text-purple-600 dark:text-purple-400'
+      iconColor: 'text-purple-600 dark:text-purple-400',
+      route: '/tests'
     }
   ]
 

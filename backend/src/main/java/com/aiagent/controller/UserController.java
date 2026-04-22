@@ -3,6 +3,7 @@ package com.aiagent.controller;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.UserDTO;
 import com.aiagent.entity.User;
 import com.aiagent.service.UserService;
 import jakarta.validation.Valid;
@@ -41,7 +42,13 @@ public class UserController {
     @PostMapping
     @RequiresRole("ADMIN")
     @OperationLog(value = "创建用户", module = "用户管理")
-    public Result<User> createUser(@RequestBody User user) {
+    public Result<User> createUser(@Valid @RequestBody UserDTO dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setEmail(dto.getEmail());
+        user.setPhone(dto.getPhone());
+        user.setTenantId(dto.getTenantId());
         return Result.success(userService.createUser(user));
     }
 
@@ -49,7 +56,13 @@ public class UserController {
     @PutMapping("/{id}")
     @RequiresRole("ADMIN")
     @OperationLog(value = "更新用户", module = "用户管理")
-    public Result<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public Result<User> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setEmail(dto.getEmail());
+        user.setPhone(dto.getPhone());
+        user.setTenantId(dto.getTenantId());
         return Result.success(userService.updateUser(id, user));
     }
 
