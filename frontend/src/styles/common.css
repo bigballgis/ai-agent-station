@@ -1,0 +1,138 @@
+/* ===========================================
+   公共样式 - 按钮系统
+   =========================================== */
+
+.btn {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm
+         transition-all duration-200 ease-in-out cursor-pointer
+         focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700
+         focus:ring-blue-500 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:bg-gray-100
+         focus:ring-blue-500 shadow-sm;
+}
+
+.btn-danger {
+  @apply bg-red-500 text-white hover:bg-red-600 active:bg-red-700
+         focus:ring-red-500 shadow-sm hover:shadow-md;
+}
+
+.btn-success {
+  @apply bg-green-500 text-white hover:bg-green-600 active:bg-green-700
+         focus:ring-green-500 shadow-sm hover:shadow-md;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+/* ===========================================
+   公共样式 - 页面头部
+   =========================================== */
+
+.page-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.page-header-title {
+  @apply text-2xl font-bold text-gray-900 dark:text-gray-100;
+}
+
+.page-header-description {
+  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+}
+
+/* ===========================================
+   公共样式 - 卡片
+   =========================================== */
+
+.card {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-card p-6
+         transition-all duration-200 ease-in-out;
+}
+
+.card:hover {
+  @apply shadow-float;
+}
+
+/* ===========================================
+   公共样式 - 表格
+   =========================================== */
+
+.table-container {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-card overflow-hidden;
+}
+
+/* ===========================================
+   过渡动画
+   =========================================== */
+
+.page-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.page-leave-active {
+  transition: all 0.15s ease-in;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* 侧边栏展开/收起动画 */
+.sidebar-enter-active,
+.sidebar-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-enter-from,
+.sidebar-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* 淡入动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 缩放进入动画 */
+.scale-enter-active {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scale-leave-active {
+  transition: all 0.15s ease-in;
+}
+
+.scale-enter-from,
+.scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}

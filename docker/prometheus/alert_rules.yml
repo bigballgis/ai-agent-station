@@ -1,0 +1,83 @@
+groups:
+  - name: ai-agent-platform
+    rules:
+      # API 错误率告警
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API 错误率过高 ({{ $value | humanizePercentage }})"
+          description: "过去 5 分钟内 API 错误率超过 5%，当前值: {{ $value | humanizePercentage }}"
+
+      # API 响应时间告警
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))
+          > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P95 响应时间过高"
+          description: "API P95 响应时间超过 1 秒，当前值: {{ $value | humanizeDuration }}"
+
+      # JVM CPU 使用率告警
+      - alert: HighJvmCpuUsage
+        expr: |
+          process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM CPU 使用率过高"
+          description: "JVM CPU 使用率超过 80%，当前值: {{ $value | humanizePercentage }}"
+
+      # JVM 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: |
+          jvm_memory_used_bytes / jvm_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM 内存使用率过高"
+          description: "JVM 内存使用率超过 85%，当前值: {{ $value | humanizePercentage }}"
+
+      # 数据库连接池耗尽告警
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          hikaricp_connections_active >= hikaricp_connections_max
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "数据库连接池已耗尽"
+          description: "活跃连接数已达到最大值: {{ $value }}"
+
+      # 应用不可用告警
+      - alert: ApplicationDown
+        expr: up{job="ai-agent-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "应用服务不可用"
+          description: "AI Agent 后端服务已停止响应"
+
+      # 磁盘空间告警
+      - alert: HighDiskUsage
+        expr: |
+          (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "磁盘空间不足"
+          description: "可用磁盘空间低于 20%"

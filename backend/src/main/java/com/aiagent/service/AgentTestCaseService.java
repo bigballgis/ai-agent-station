@@ -1,0 +1,92 @@
+package com.aiagent.service;
+
+import com.aiagent.entity.AgentTestCase;
+import com.aiagent.repository.AgentTestCaseRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class AgentTestCaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(AgentTestCaseService.class);
+    private final AgentTestCaseRepository testCaseRepository;
+
+    public AgentTestCaseService(AgentTestCaseRepository testCaseRepository) {
+        this.testCaseRepository = testCaseRepository;
+    }
+
+    @Transactional
+    public AgentTestCase createTestCase(AgentTestCase testCase) {
+        log.info("Creating test case: {}", testCase.getTestName());
+        return testCaseRepository.save(testCase);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<AgentTestCase> getTestCaseById(Long id) {
+        return testCaseRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgentTestCase> getTestCasesByTenantId(Long tenantId) {
+        return testCaseRepository.findByTenantId(tenantId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgentTestCase> getTestCasesByAgentId(Long agentId) {
+        return testCaseRepository.findByAgentId(agentId);
+    }
+
+    @Transactional
+    public AgentTestCase updateTestCase(Long id, AgentTestCase updatedTestCase) {
+        AgentTestCase existingTestCase = testCaseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Test case not found"));
+
+        existingTestCase.setTestName(updatedTestCase.getTestName());
+        existingTestCase.setDescription(updatedTestCase.getDescription());
+        existingTestCase.setTestType(updatedTestCase.getTestType());
+        existingTestCase.setInputParams(updatedTestCase.getInputParams());
+        existingTestCase.setExpectedOutput(updatedTestCase.getExpectedOutput());
+        existingTestCase.setStatus(updatedTestCase.getStatus());
+
+        log.info("Updating test case: {}", existingTestCase.getTestName());
+        return testCaseRepository.save(existingTestCase);
+    }
+
+    @Transactional
+    public void deleteTestCase(Long id) {
+        AgentTestCase testCase = testCaseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Test case not found"));
+        log.info("Deleting test case: {}", testCase.getTestName());
+        testCaseRepository.delete(testCase);
+    }
+
+    @Transactional(readOnly = true)
+    public AgentTestCase getTestCaseByCode(Long tenantId, String testCode) {
+        return testCaseRepository.findByTenantIdAndTestCode(tenantId, testCode);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgentTestCase> getTestCasesByStatus(Long tenantId, Integer status) {
+        return testCaseRepository.findByTenantIdAndStatus(tenantId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgentTestCase> getTestCasesByType(Long tenantId, String testType) {
+        return testCaseRepository.findByTenantIdAndTestType(tenantId, testType);
+    }
+
+    @Transactional(readOnly = true)
+    public long countTestCasesByTenant(Long tenantId) {
+        return testCaseRepository.countByTenantId(tenantId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countTestCasesByAgent(Long agentId) {
+        return testCaseRepository.countByAgentId(agentId);
+    }
+}

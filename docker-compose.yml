@@ -1,0 +1,291 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 数据库
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai-agent-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ai_agent_platform
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_agent_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Redis (单机模式 - 默认)
+  redis:
+    image: redis:7-alpine
+    container_name: ai-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Redis Cluster (可选 - 需要时单独使用)
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-cluster
+    command: redis-cli --cluster create redis-1:7001 redis-2:7002 redis-3:7003 redis-4:7004 redis-5:7005 redis-6:7006 --cluster-replicas 1 --cluster-yes
+    depends_on:
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+      - redis-6
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-1:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-1
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./docker/redis/cluster/redis-1.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_1_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-2:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7002:7002"
+    volumes:
+      - ./docker/redis/cluster/redis-2.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_2_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-3:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-3
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7003:7003"
+    volumes:
+      - ./docker/redis/cluster/redis-3.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_3_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-4:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-4
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7004:7004"
+    volumes:
+      - ./docker/redis/cluster/redis-4.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_4_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-5:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-5
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7005:7005"
+    volumes:
+      - ./docker/redis/cluster/redis-5.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_5_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  redis-6:
+    image: redis:7-alpine
+    container_name: ai-agent-redis-6
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "7006:7006"
+    volumes:
+      - ./docker/redis/cluster/redis-6.conf:/usr/local/etc/redis/redis.conf
+      - redis_cluster_6_data:/data
+    networks:
+      - ai-agent-network
+    profiles:
+      - redis-cluster
+
+  # Prometheus 监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-agent-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Grafana 可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-agent-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - prometheus
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-agent-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ai_agent_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&stringtype=unspecified
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # Spring Boot configuration
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_SERVLET_CONTEXT_PATH: /api
+      SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only_change_in_production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+      # LLM Provider
+      LLM_DEFAULT_PROVIDER: ${LLM_DEFAULT_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_DEFAULT_MODEL: ${OPENAI_DEFAULT_MODEL:-gpt-4o}
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      QWEN_BASE_URL: ${QWEN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      QWEN_DEFAULT_MODEL: ${QWEN_DEFAULT_MODEL:-qwen-plus}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2:7b}
+      # LangChain4j
+      LANGCHAIN4J_MEMORY_SIZE: ${LANGCHAIN4J_MEMORY_SIZE:-20}
+      LANGCHAIN4J_MEMORY_STORE: ${LANGCHAIN4J_MEMORY_STORE:-redis}
+      LANGCHAIN4J_TOOL_CALLING: ${LANGCHAIN4J_TOOL_CALLING:-true}
+      LANGCHAIN4J_TOOL_MAX_ITERATIONS: ${LANGCHAIN4J_TOOL_MAX_ITERATIONS:-5}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # File Storage
+      APP_STORAGE_PATH: /app/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - backend_storage:/app/data/storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-agent-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  redis_cluster_1_data:
+  redis_cluster_2_data:
+  redis_cluster_3_data:
+  redis_cluster_4_data:
+  redis_cluster_5_data:
+  redis_cluster_6_data:
+  prometheus_data:
+  grafana_data:
+  backend_storage:
+
+networks:
+  ai-agent-network:
+    driver: bridge

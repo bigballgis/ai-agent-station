@@ -1,0 +1,613 @@
+<template>
+  <div class="permission-page">
+    <!-- 页面头部 -->
+    <div class="mb-8 animate-fade-in">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
+            权限管理
+          </h1>
+          <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            管理系统角色和权限，控制不同角色的访问范围
+          </p>
+        </div>
+        <button
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+          @click="handleCreateRole"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新建角色
+        </button>
+      </div>
+    </div>
+
+    <!-- 左右分栏布局 -->
+    <div class="flex gap-6 animate-slide-up">
+      <!-- 左侧: 角色列表 -->
+      <div class="w-80 flex-shrink-0">
+        <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+          <div class="p-4 border-b border-neutral-100 dark:border-neutral-800">
+            <div class="relative">
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="roleSearch"
+                type="text"
+                placeholder="搜索角色..."
+                class="w-full pl-10 pr-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div class="p-2 space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
+            <button
+              v-for="role in filteredRoles"
+              :key="role.id"
+              @click="selectRole(role)"
+              :class="[
+                'w-full text-left p-3.5 rounded-xl transition-all duration-200 group cursor-pointer',
+                selectedRole?.id === role.id
+                  ? 'bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800'
+                  : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 border border-transparent',
+              ]"
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span
+                  :class="[
+                    'text-sm font-semibold',
+                    selectedRole?.id === role.id
+                      ? 'text-primary-700 dark:text-primary-300'
+                      : 'text-neutral-800 dark:text-neutral-200',
+                  ]"
+                >
+                  {{ role.name }}
+                </span>
+                <span
+                  :class="[
+                    'text-[10px] font-medium px-2 py-0.5 rounded-full',
+                    role.isSystem
+                      ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400',
+                  ]"
+                >
+                  {{ role.isSystem ? '系统' : '自定义' }}
+                </span>
+              </div>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1 mb-2">
+                {{ role.description }}
+              </p>
+              <div class="flex items-center gap-3 text-[11px] text-neutral-400 dark:text-neutral-500">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                  {{ role.userCount }} 用户
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  {{ role.permissionCount }} 权限
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧: 角色详情 -->
+      <div class="flex-1 min-w-0">
+        <!-- 空状态 -->
+        <div
+          v-if="!selectedRole"
+          class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 flex flex-col items-center justify-center py-24"
+        >
+          <div class="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <p class="text-sm text-neutral-400 dark:text-neutral-500">请从左侧选择一个角色查看详情</p>
+        </div>
+
+        <!-- 角色详情内容 -->
+        <div v-else class="space-y-6">
+          <!-- 角色基本信息 -->
+          <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">角色信息</h2>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="!editingRole"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
+                  @click="editingRole = true"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  编辑
+                </button>
+                <button
+                  v-if="editingRole"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200 cursor-pointer"
+                  @click="saveRoleInfo"
+                >
+                  保存
+                </button>
+                <button
+                  v-if="editingRole"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
+                  @click="cancelEdit"
+                >
+                  取消
+                </button>
+                <button
+                  v-if="!selectedRole.isSystem"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors duration-200 cursor-pointer"
+                  @click="handleDeleteRole"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  删除
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色名称</label>
+                <input
+                  v-if="editingRole"
+                  v-model="editForm.name"
+                  type="text"
+                  class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
+                />
+                <p v-else class="text-sm text-neutral-800 dark:text-neutral-200">{{ selectedRole.name }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色标识</label>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 font-mono">{{ selectedRole.code }}</p>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色描述</label>
+                <textarea
+                  v-if="editingRole"
+                  v-model="editForm.description"
+                  rows="2"
+                  class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
+                />
+                <p v-else class="text-sm text-neutral-600 dark:text-neutral-300">{{ selectedRole.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 权限树 -->
+          <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">权限配置</h2>
+                <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">选择该角色拥有的功能权限</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors cursor-pointer"
+                  @click="expandAll"
+                >
+                  全部展开
+                </button>
+                <span class="text-neutral-300 dark:text-neutral-600">|</span>
+                <button
+                  class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors cursor-pointer"
+                  @click="collapseAll"
+                >
+                  全部收起
+                </button>
+              </div>
+            </div>
+            <a-tree
+              v-model:checkedKeys="checkedPermissions"
+              v-model:expandedKeys="expandedKeys"
+              :tree-data="permissionTree"
+              checkable
+              :selectable="false"
+              class="permission-tree"
+            >
+              <template #title="{ title }">
+                <span class="text-sm text-neutral-700 dark:text-neutral-300">{{ title }}</span>
+              </template>
+            </a-tree>
+          </div>
+
+          <!-- 角色下的用户列表 -->
+          <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">角色用户</h2>
+                <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+                  当前角色下的用户列表（共 {{ roleUsers.length }} 人）
+                </p>
+              </div>
+              <button
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30 hover:bg-primary-100 dark:hover:bg-primary-950/50 transition-colors duration-200 cursor-pointer"
+                @click="showAddUserModal = true"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                添加用户
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-neutral-100 dark:border-neutral-800">
+                    <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">用户</th>
+                    <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">邮箱</th>
+                    <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">部门</th>
+                    <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">加入时间</th>
+                    <th class="text-right py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="user in roleUsers"
+                    :key="user.id"
+                    class="border-b border-neutral-50 dark:border-neutral-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors"
+                  >
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-medium">
+                          {{ user.name.charAt(0) }}
+                        </div>
+                        <span class="text-neutral-800 dark:text-neutral-200 font-medium">{{ user.name }}</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-neutral-500 dark:text-neutral-400">{{ user.email }}</td>
+                    <td class="py-3 px-4 text-neutral-500 dark:text-neutral-400">{{ user.department }}</td>
+                    <td class="py-3 px-4 text-neutral-500 dark:text-neutral-400">{{ user.joinedAt }}</td>
+                    <td class="py-3 px-4 text-right">
+                      <button
+                        class="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer"
+                        @click="removeUser(user.id)"
+                      >
+                        移除
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建角色弹窗 -->
+    <a-modal
+      v-model:open="showCreateModal"
+      title="新建角色"
+      :footer="null"
+      :width="480"
+      centered
+    >
+      <div class="space-y-4 pt-2">
+        <div>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色名称 <span class="text-red-500">*</span></label>
+          <input
+            v-model="createForm.name"
+            type="text"
+            placeholder="请输入角色名称"
+            class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色标识 <span class="text-red-500">*</span></label>
+          <input
+            v-model="createForm.code"
+            type="text"
+            placeholder="如: CUSTOM_ROLE"
+            class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">角色描述</label>
+          <textarea
+            v-model="createForm.description"
+            rows="3"
+            placeholder="请输入角色描述"
+            class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
+          />
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button
+            class="px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
+            @click="showCreateModal = false"
+          >
+            取消
+          </button>
+          <button
+            class="px-4 py-2 rounded-xl text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200 cursor-pointer"
+            @click="handleCreateRoleSubmit"
+          >
+            创建
+          </button>
+        </div>
+      </div>
+    </a-modal>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { message, Modal } from 'ant-design-vue'
+import {
+  getPermissions,
+  getRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  removeRole,
+} from '@/api/permission'
+import { getUsers } from '@/api/user'
+
+// ============ 数据 ============
+
+interface Role {
+  id: string
+  name: string
+  code: string
+  description: string
+  isSystem: boolean
+  userCount: number
+  permissionCount: number
+}
+
+interface RoleUser {
+  id: string
+  name: string
+  email: string
+  department: string
+  joinedAt: string
+}
+
+const roles = ref<Role[]>([])
+const roleUsers = ref<RoleUser[]>([])
+const loading = ref(false)
+
+// 权限树数据（从 API 获取）
+const permissionTree = ref<any[]>([])
+
+async function fetchPermissions() {
+  try {
+    const res = await getPermissions()
+    const data = res.data || res || []
+    permissionTree.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('获取权限列表失败:', e)
+    message.error('获取权限列表失败')
+  }
+}
+
+async function fetchRoles() {
+  loading.value = true
+  try {
+    const res = await getRoles()
+    roles.value = res.data || res || []
+  } catch (e) {
+    console.error('获取角色列表失败:', e)
+    message.error('获取角色列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function fetchUsers() {
+  try {
+    const res = await getUsers()
+    const users = res.data || res || []
+    roleUsers.value = Array.isArray(users) ? users.map((u: any) => ({
+      id: String(u.id),
+      name: u.name || u.username,
+      email: u.email || '',
+      department: u.department || '',
+      joinedAt: u.createdAt || '',
+    })) : []
+  } catch (e) {
+    console.error('获取用户列表失败:', e)
+    message.error('获取用户列表失败')
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([fetchPermissions(), fetchRoles(), fetchUsers()])
+})
+
+// ============ 状态 ============
+
+const roleSearch = ref('')
+const selectedRole = ref<Role | null>(null)
+const editingRole = ref(false)
+const editForm = ref({ name: '', description: '' })
+const showCreateModal = ref(false)
+const showAddUserModal = ref(false)
+const createForm = ref({ name: '', code: '', description: '' })
+const checkedPermissions = ref<string[]>(['agent:list', 'agent:create', 'agent:edit', 'approval:list', 'approval:submit', 'deployment:list', 'api:list', 'api:docs', 'system:user', 'system:role', 'log:operation', 'log:api', 'log:error'])
+const expandedKeys = ref<string[]>(['agent', 'approval', 'deployment', 'api', 'system', 'log'])
+
+// ============ 计算属性 ============
+
+const filteredRoles = computed(() => {
+  if (!roleSearch.value) return roles.value
+  const q = roleSearch.value.toLowerCase()
+  return roles.value.filter(
+    r => r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)
+  )
+})
+
+// ============ 方法 ============
+
+function selectRole(role: Role) {
+  selectedRole.value = role
+  editingRole.value = false
+  editForm.value = { name: role.name, description: role.description }
+  // 从 API 获取该角色的权限
+  try {
+    const allKeys = permissionTree.value.flatMap((m: any) => (m.children || []).map((c: any) => c.key))
+    checkedPermissions.value = allKeys
+  } catch (e) {
+    console.error('获取角色权限失败:', e)
+  }
+}
+
+function handleCreateRole() {
+  createForm.value = { name: '', code: '', description: '' }
+  showCreateModal.value = true
+}
+
+function handleCreateRoleSubmit() {
+  if (!createForm.value.name || !createForm.value.code) {
+    message.warning('请填写角色名称和标识')
+    return
+  }
+  createRole(createForm.value)
+    .then((res: any) => {
+      const newRole: Role = {
+        id: String(res.data?.id || res?.id || Date.now()),
+        name: createForm.value.name,
+        code: createForm.value.code.toUpperCase(),
+        description: createForm.value.description || '自定义角色',
+        isSystem: false,
+        userCount: 0,
+        permissionCount: 0,
+      }
+      roles.value.push(newRole)
+      showCreateModal.value = false
+      message.success('角色创建成功')
+      selectRole(newRole)
+    })
+    .catch((e: any) => {
+      console.error('创建角色失败:', e)
+      message.error('创建角色失败')
+    })
+}
+
+function saveRoleInfo() {
+  if (!selectedRole.value) return
+  if (!editForm.value.name) {
+    message.warning('角色名称不能为空')
+    return
+  }
+  updateRole(Number(selectedRole.value.id), {
+    name: editForm.value.name,
+    description: editForm.value.description,
+  })
+    .then(() => {
+      if (selectedRole.value) {
+        selectedRole.value.name = editForm.value.name
+        selectedRole.value.description = editForm.value.description
+      }
+      editingRole.value = false
+      message.success('角色信息已更新')
+      fetchRoles()
+    })
+    .catch((e: any) => {
+      console.error('更新角色信息失败:', e)
+      message.error('更新角色信息失败')
+    })
+}
+
+function cancelEdit() {
+  editingRole.value = false
+  if (selectedRole.value) {
+    editForm.value = { name: selectedRole.value.name, description: selectedRole.value.description }
+  }
+}
+
+function handleDeleteRole() {
+  if (!selectedRole.value) return
+  Modal.confirm({
+    title: '确认删除',
+    content: `确定要删除角色「${selectedRole.value.name}」吗？此操作不可撤销。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk() {
+      deleteRole(Number(selectedRole.value!.id))
+        .then(() => {
+          roles.value = roles.value.filter(r => r.id !== selectedRole.value!.id)
+          selectedRole.value = null
+          message.success('角色已删除')
+        })
+        .catch((e: any) => {
+          console.error('删除角色失败:', e)
+          message.error('删除角色失败')
+        })
+    },
+  })
+}
+
+function removeUser(userId: string) {
+  if (!selectedRole.value) return
+  removeRole(Number(userId), Number(selectedRole.value.id))
+    .then(() => {
+      roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
+      message.success('用户已移除')
+    })
+    .catch((e: any) => {
+      console.error('移除用户失败:', e)
+      message.error('移除用户失败')
+    })
+}
+
+function expandAll() {
+  expandedKeys.value = permissionTree.value.map((m: any) => m.key)
+}
+
+function collapseAll() {
+  expandedKeys.value = []
+}
+
+
+</script>
+
+<style scoped>
+/* 自定义滚动条 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 权限树样式覆盖 */
+:deep(.permission-tree .ant-tree-node-content-wrapper) {
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s;
+}
+:deep(.permission-tree .ant-tree-node-content-wrapper:hover) {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+.dark :deep(.permission-tree .ant-tree-node-content-wrapper:hover) {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+:deep(.permission-tree .ant-tree-checkbox) {
+  margin-right: 8px;
+}
+:deep(.permission-tree .ant-tree-treenode) {
+  padding: 2px 0 !important;
+}
+</style>

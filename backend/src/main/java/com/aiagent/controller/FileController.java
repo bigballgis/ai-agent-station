@@ -1,0 +1,118 @@
+package com.aiagent.controller;
+
+import com.aiagent.common.result.Result;
+import com.aiagent.service.FileStorageService;
+import com.aiagent.service.FileStorageService.FileInfo;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/v1/files")
+@RequiredArgsConstructor
+public class FileController {
+
+    private final FileStorageService fileStorageService;
+
+    /**
+     * Upload a file.
+     *
+     * @param file   the multipart file to upload
+     * @param subDir optional sub-directory for organization
+     * @return FileInfo containing metadata about the stored file
+     */
+    @PostMapping("/upload")
+    public Result<FileInfo> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "subDir", required = false) String subDir) {
+        log.info("File upload request: name={}, size={}, subDir={}",
+                file.getOriginalFilename(), file.getSize(), subDir);
+        try {
+            FileInfo fileInfo = fileStorageService.upload(file, subDir);
+            return Result.success(fileInfo);
+        } catch (IllegalArgumentException e) {
+            log.warn("File upload validation failed: {}", e.getMessage());
+            return Result.fail(e.getMessage());
+        } catch (Exception e) {
+            log.error("File upload failed", e);
+            return Result.fail("File upload failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Download a file by its stored path.
+     *
+     * @param filePath the relative file path
+     * @return the file as a downloadable resource
+     */
+    @GetMapping("/download/{filePath}")
+    public ResponseEntity<Resource> download(@PathVariable String filePath) {
+        log.info("File download request: {}", filePath);
+        try {
+            Resource resource = fileStorageService.getFile(filePath);
+            String contentType = "application/octet-stream";
+            String encodedFileName = URLEncoder.encode(resource.getFilename(), StandardCharsets.UTF_8)
+                    .replace("+", "%20");
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename*=UTF-8''" + encodedFileName)
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("File download failed: {}", filePath, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * List files in a directory.
+     *
+     * @param subDir optional sub-directory to list files from
+     * @return list of FileInfo for all files in the directory
+     */
+    @GetMapping("/list")
+    public Result<List<FileInfo>> listFiles(
+            @RequestParam(value = "subDir", required = false) String subDir) {
+        log.info("List files request: subDir={}", subDir);
+        try {
+            List<FileInfo> files = fileStorageService.listFiles(subDir);
+            return Result.success(files);
+        } catch (Exception e) {
+            log.error("List files failed", e);
+            return Result.fail("Failed to list files: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Delete a file by its stored path.
+     *
+     * @param id the relative file path (used as identifier)
+     * @return success or failure result
+     */
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable String id) {
+        log.info("File delete request: {}", id);
+        try {
+            fileStorageService.delete(id);
+            return Result.success();
+        } catch (RuntimeException e) {
+            log.warn("File delete failed: {}", e.getMessage());
+            return Result.fail(e.getMessage());
+        } catch (Exception e) {
+            log.error("File delete failed", e);
+            return Result.fail("File delete failed: " + e.getMessage());
+        }
+    }
+}
