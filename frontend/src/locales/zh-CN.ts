@@ -131,7 +131,75 @@ export default {
     active: '活跃',
     draft: '草稿',
     published: '已发布',
-    disabled: '已禁用'
+    disabled: '已禁用',
+    list: 'Agent管理',
+    create: '创建Agent',
+    edit: '编辑Agent',
+    delete: '删除Agent',
+    copy: '复制Agent',
+    name: '名称',
+    description: '描述',
+    type: '类型',
+    category: '分类',
+    status: '状态',
+    version: '版本',
+    config: '配置',
+    tools: '工具',
+    types: {
+      chat: '对话型',
+      task: '任务型',
+      workflow: '工作流型'
+    },
+    categories: {
+      general: '通用',
+      customer: '客服',
+      document: '文档',
+      code: '编程'
+    },
+    statuses: {
+      draft: '草稿',
+      approved: '已审批',
+      published: '已发布',
+      archived: '已归档'
+    },
+    wizard: {
+      basicInfo: '基本信息',
+      modelConfig: '模型配置',
+      toolBinding: '工具绑定',
+      preview: '预览确认',
+      next: '下一步',
+      prev: '上一步',
+      submit: '提交创建',
+      model: 'AI模型',
+      temperature: '温度',
+      maxTokens: '最大Token数',
+      selectTools: '选择工具',
+      previewConfig: '配置预览'
+    },
+    designer: {
+      title: 'Agent设计器',
+      palette: '节点面板',
+      canvas: '画布',
+      config: '节点配置',
+      console: '控制台',
+      save: '保存',
+      run: '运行',
+      undo: '撤销',
+      redo: '重做',
+      zoomIn: '放大',
+      zoomOut: '缩小',
+      export: '导出',
+      import: '导入',
+      nodes: {
+        llm: 'LLM节点',
+        tool: '工具节点',
+        condition: '条件节点',
+        start: '开始节点',
+        end: '结束节点',
+        delay: '延迟节点',
+        notify: '通知节点'
+      }
+    }
   },
   approval: {
     management: '审批管理',
@@ -208,6 +276,108 @@ export default {
     runTest: '执行测试',
     high: '高',
     medium: '中',
-    low: '低'
+    low: '低',
+    cases: '测试用例',
+    executions: '测试执行',
+    results: '测试结果',
+    create: '创建用例',
+    execute: '执行测试',
+    passRate: '通过率',
+    status: {
+      pending: '待执行',
+      running: '执行中',
+      passed: '通过',
+      failed: '失败',
+      error: '错误'
+    }
+  },
+  log: {
+    center: '日志中心',
+    operation: '操作日志',
+    api: '调用日志',
+    exception: '异常日志',
+    module: '模块',
+    level: '级别',
+    time: '时间',
+    operator: '操作人',
+    action: '操作',
+    detail: '详情',
+    stackTrace: '技术详情',
+    noLogs: '暂无日志',
+    filters: {
+      all: '全部',
+      agent: 'Agent',
+      auth: '认证',
+      workflow: '工作流',
+      deploy: '部署',
+      system: '系统'
+    },
+    levels: {
+      all: '全部',
+      error: 'ERROR',
+      warn: 'WARN',
+      fatal: 'FATAL'
+    }
+  },
+  permission: {
+    management: '权限管理',
+    role: '角色',
+    user: '用户',
+    assign: '分配',
+    remove: '移除',
+    createRole: '新建角色',
+    editRole: '编辑角色',
+    deleteRole: '删除角色',
+    roleName: '角色名称',
+    roleCode: '角色标识',
+    permissions: '权限',
+    confirmRemove: '确认移除',
+    removeUserMsg: '确定要将该用户从角色中移除吗？'
+  },
+  alert: {
+    center: '告警中心',
+    rules: '告警规则',
+    records: '告警记录',
+    stats: '统计',
+    createRule: '新建规则',
+    editRule: '编辑规则',
+    ruleName: '规则名称',
+    type: '类型',
+    severity: '严重级别',
+    status: '状态',
+    resolve: '确认解决',
+    resolved: '已解决',
+    firing: '告警中',
+    confirmResolve: '确定要确认解决该告警吗？'
+  },
+  workflow: {
+    designer: '工作流设计器',
+    instances: '工作流实例',
+    create: '创建工作流',
+    publish: '发布',
+    start: '启动',
+    cancel: '取消',
+    approve: '审批通过',
+    reject: '审批拒绝',
+    statuses: {
+      draft: '草稿',
+      published: '已发布',
+      running: '运行中',
+      completed: '已完成',
+      failed: '失败',
+      cancelled: '已取消',
+      suspended: '已暂停'
+    }
+  },
+  i18n: {
+    settings: '国际化设置',
+    language: '语言',
+    chinese: '中文',
+    english: 'English',
+    searchPlaceholder: '搜索翻译键...',
+    missingTranslation: '翻译缺失',
+    preview: '预览',
+    total: '共',
+    keys: '个翻译键'
   }
 }

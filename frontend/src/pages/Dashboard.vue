@@ -3,6 +3,13 @@
     <!-- 页面标题 -->
     <PageHeader :title="t('dashboard.title') || 'Dashboard'" :subtitle="t('dashboard.subtitle')" />
 
+    <!-- 加载状态 -->
+    <div v-if="dashboardLoading" class="flex items-center justify-center py-20">
+      <a-spin size="large" />
+    </div>
+
+    <template v-else>
+
     <!-- 统计卡片区域 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       <StatCard
@@ -83,7 +90,10 @@
       <div class="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6 animate-slide-up" style="animation-delay: 200ms;">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">{{ t('dashboard.recentActivity') }}</h2>
-          <button class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors">
+          <button
+            class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"
+            @click="router.push('/system/log')"
+          >
             {{ t('dashboard.viewAll') }}
           </button>
         </div>
@@ -116,9 +126,15 @@
               </div>
             </div>
           </div>
+
+          <!-- 空状态 -->
+          <div v-if="activities.length === 0" class="text-center py-8">
+            <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('dashboard.noActivity') }}</p>
+          </div>
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -140,8 +156,9 @@ import {
 import { useTheme } from '@/composables/useTheme'
 import { getAllAgents } from '@/api/agent'
 import { getToolStats } from '@/api/tool'
-import { getAlertStats } from '@/api/alert'
+import { getAlertStats, getAlertRecords } from '@/api/alert'
 import { testApi } from '@/api/test'
+import { getLogs } from '@/api/log'
 import { PageHeader, StatCard, ChartContainer } from '@/components'
 
 const { t, locale } = useI18n()
@@ -152,7 +169,8 @@ const router = useRouter()
 const totalAgents = ref(0)
 const passRate = ref(0)
 const apiCalls = ref(0)
-const activeUsers = ref(0)
+const activeAlerts = ref(0)
+const dashboardLoading = ref(false)
 
 // StatCard 配置（响应式）
 const statCards = computed(() => [
@@ -161,7 +179,7 @@ const statCards = computed(() => [
     value: totalAgents.value,
     icon: RocketOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} +12%`,
+    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
     color: 'blue' as const,
     decimals: 0,
     suffix: '',
@@ -171,7 +189,7 @@ const statCards = computed(() => [
     value: passRate.value,
     icon: CheckCircleOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} +3.2%`,
+    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
     color: 'green' as const,
     decimals: 1,
     suffix: '%',
@@ -181,17 +199,17 @@ const statCards = computed(() => [
     value: apiCalls.value,
     icon: ApiOutlined,
     trend: 'down' as const,
-    trendValue: `${t('dashboard.comparedYesterday')} -5%`,
+    trendValue: `${t('dashboard.comparedYesterday')} N/A`,
     color: 'purple' as const,
     decimals: 0,
     suffix: '',
   },
   {
     title: t('dashboard.activeUsers'),
-    value: activeUsers.value,
+    value: activeAlerts.value,
     icon: ClockCircleOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} +8%`,
+    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
     color: 'orange' as const,
     decimals: 0,
     suffix: '',
@@ -231,38 +249,12 @@ const quickActions = ref([
 ])
 
 // ============ 最近活动数据 ============
-const activities = ref([
-  {
-    title: t('dashboard.activities.0'),
-    time: t('dashboard.activityTimes.0'),
-    operator: '张三',
-    dotClass: 'border-green-500'
-  },
-  {
-    title: t('dashboard.activities.1'),
-    time: t('dashboard.activityTimes.1'),
-    operator: '李四',
-    dotClass: 'border-blue-500'
-  },
-  {
-    title: t('dashboard.activities.2'),
-    time: t('dashboard.activityTimes.2'),
-    operator: '王五',
-    dotClass: 'border-amber-500'
-  },
-  {
-    title: t('dashboard.activities.3'),
-    time: t('dashboard.activityTimes.3'),
-    operator: '赵六',
-    dotClass: 'border-green-500'
-  },
-  {
-    title: t('dashboard.activities.4'),
-    time: t('dashboard.activityTimes.4'),
-    operator: '张三',
-    dotClass: 'border-purple-500'
-  }
-])
+const activities = ref<Array<{
+  title: string
+  time: string
+  operator: string
+  dotClass: string
+}>>([])
 
 // ============ Chart.js 图表数据（供 ChartContainer 使用） ============
 const agentDistribution = ref({ running: 0, stopped: 0, pending: 0, abnormal: 0 })
@@ -370,37 +362,95 @@ const doughnutChartOptions = computed(() => ({
 
 // ============ 获取仪表盘数据 ============
 
-async function fetchDashboardData() {
+const moduleDotColors: Record<string, string> = {
+  agent: 'border-blue-500',
+  approval: 'border-amber-500',
+  test: 'border-green-500',
+  api: 'border-purple-500',
+  system: 'border-red-500',
+  default: 'border-neutral-400',
+}
+
+function formatRelativeTime(dateStr: string): string {
+  if (!dateStr) return ''
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diff = now - then
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (minutes < 1) return t('dashboard.activityTimes.0').replace(/\d+/, '1')
+  if (minutes < 60) return `${minutes} ${locale.value === 'zh-CN' ? '分钟前' : 'min ago'}`
+  if (hours < 24) return `${hours} ${locale.value === 'zh-CN' ? '小时前' : 'hours ago'}`
+  return `${days} ${locale.value === 'zh-CN' ? '天前' : 'days ago'}`
+}
+
+async function loadRecentActivities() {
   try {
-    // Fetch agents
-    const agentsRes: any = await getAllAgents()
-    const agentsData = agentsRes?.data || agentsRes || []
-    const agentsList = Array.isArray(agentsData) ? agentsData : []
-    totalAgents.value = agentsList.length
-
-    // Calculate agent status distribution
-    let running = 0, stopped = 0, pending = 0, abnormal = 0
-    agentsList.forEach((agent: any) => {
-      const status = agent.status || agent.isActive
-      if (status === 'PUBLISHED' || status === true) running++
-      else if (status === 'DRAFT' || status === false) stopped++
-      else if (status === 'PENDING_APPROVAL') pending++
-      else abnormal++
-    })
-    agentDistribution.value = { running, stopped, pending, abnormal }
-
-    // Fetch test results for pass rate
-    const testRes: any = await testApi.getTestResults({ page: 1, size: 1000 })
-    const testData = testRes?.data || testRes || []
-    const testList = Array.isArray(testData) ? testData : []
-    if (testList.length > 0) {
-      const passed = testList.filter((r: any) => r.status === 'passed').length
-      passRate.value = (passed / testList.length) * 100
+    const res: any = await getLogs({ page: 1, size: 5 })
+    const logsData = res?.data || res || []
+    const logsList = Array.isArray(logsData) ? logsData : []
+    if (logsList.length > 0) {
+      activities.value = logsList.map((log: any) => ({
+        title: log.action || log.description || log.module || t('common.noData'),
+        time: formatRelativeTime(log.createdAt || log.createTime),
+        operator: log.operator || log.username || log.createdBy || (locale.value === 'zh-CN' ? '系统' : 'System'),
+        dotClass: moduleDotColors[log.module?.toLowerCase()] || moduleDotColors.default,
+      }))
     } else {
-      passRate.value = 0
+      activities.value = []
+    }
+  } catch {
+    activities.value = []
+  }
+}
+
+async function fetchDashboardData() {
+  dashboardLoading.value = true
+  try {
+    const [agentsRes, testRes, alertRecordsRes] = await Promise.all([
+      getAllAgents().catch(() => null),
+      testApi.getTestResults({ page: 1, size: 1000 }).catch(() => null),
+      getAlertRecords({ page: 1, size: 1 }).catch(() => null),
+    ])
+
+    // Agent count and distribution
+    if (agentsRes) {
+      const agentsData = agentsRes?.data || agentsRes || []
+      const agentsList = Array.isArray(agentsData) ? agentsData : []
+      totalAgents.value = agentsList.length
+
+      let running = 0, stopped = 0, pending = 0, abnormal = 0
+      agentsList.forEach((agent: any) => {
+        const status = agent.status || agent.isActive
+        if (status === 'PUBLISHED' || status === true) running++
+        else if (status === 'DRAFT' || status === false) stopped++
+        else if (status === 'PENDING_APPROVAL') pending++
+        else abnormal++
+      })
+      agentDistribution.value = { running, stopped, pending, abnormal }
     }
 
-    // Fetch tool stats for API calls
+    // Test pass rate
+    if (testRes) {
+      const testData = testRes?.data || testRes || []
+      const testList = Array.isArray(testData) ? testData : []
+      if (testList.length > 0) {
+        const passed = testList.filter((r: any) => r.status === 'passed').length
+        passRate.value = (passed / testList.length) * 100
+      } else {
+        passRate.value = 0
+      }
+    }
+
+    // Active alerts count
+    if (alertRecordsRes) {
+      const alertData = alertRecordsRes?.data || alertRecordsRes || {}
+      const alertList = Array.isArray(alertData) ? alertData : []
+      activeAlerts.value = alertList.length
+    }
+
+    // Fetch tool stats for API calls (non-critical)
     try {
       const toolRes: any = await getToolStats()
       const toolData = toolRes?.data || toolRes || {}
@@ -409,23 +459,16 @@ async function fetchDashboardData() {
       apiCalls.value = 0
     }
 
-    // Fetch alert stats for active users
-    try {
-      const alertRes: any = await getAlertStats()
-      const alertData = alertRes?.data || alertRes || {}
-      activeUsers.value = alertData.activeUsers || alertData.totalAlerts || 0
-    } catch {
-      activeUsers.value = 0
-    }
-
-    // Update display - statCards is reactive via computed
+    // Load recent activities
+    await loadRecentActivities()
   } catch (error: any) {
-    message.error('获取仪表盘数据失败: ' + (error.message || '未知错误'))
-    // Fallback to zero values - statCards is reactive via computed
+    message.error(t('dashboard.loadFailed') + ': ' + (error.message || ''))
+  } finally {
+    dashboardLoading.value = false
   }
 }
 
-// 监听语言变化，更新快捷操作和活动数据
+// 监听语言变化，更新快捷操作
 watch(locale, () => {
   // 更新响应式数据 - statCards 和 chart data are reactive via computed
   quickActions.value = [
@@ -459,39 +502,8 @@ watch(locale, () => {
     }
   ]
 
-  activities.value = [
-    {
-      title: t('dashboard.activities.0'),
-      time: t('dashboard.activityTimes.0'),
-      operator: '张三',
-      dotClass: 'border-green-500'
-    },
-    {
-      title: t('dashboard.activities.1'),
-      time: t('dashboard.activityTimes.1'),
-      operator: '李四',
-      dotClass: 'border-blue-500'
-    },
-    {
-      title: t('dashboard.activities.2'),
-      time: t('dashboard.activityTimes.2'),
-      operator: '王五',
-      dotClass: 'border-amber-500'
-    },
-    {
-      title: t('dashboard.activities.3'),
-      time: t('dashboard.activityTimes.3'),
-      operator: '赵六',
-      dotClass: 'border-green-500'
-    },
-    {
-      title: t('dashboard.activities.4'),
-      time: t('dashboard.activityTimes.4'),
-      operator: '张三',
-      dotClass: 'border-purple-500'
-    }
-  ]
-
+  // Re-format activity times for new locale
+  loadRecentActivities()
 })
 
 onMounted(() => {

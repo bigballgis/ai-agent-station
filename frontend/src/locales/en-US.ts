@@ -131,7 +131,75 @@ export default {
     active: 'Active',
     draft: 'Draft',
     published: 'Published',
-    disabled: 'Disabled'
+    disabled: 'Disabled',
+    list: 'Agent Management',
+    create: 'Create Agent',
+    edit: 'Edit Agent',
+    delete: 'Delete Agent',
+    copy: 'Copy Agent',
+    name: 'Name',
+    description: 'Description',
+    type: 'Type',
+    category: 'Category',
+    status: 'Status',
+    version: 'Version',
+    config: 'Configuration',
+    tools: 'Tools',
+    types: {
+      chat: 'Chat',
+      task: 'Task',
+      workflow: 'Workflow'
+    },
+    categories: {
+      general: 'General',
+      customer: 'Customer Service',
+      document: 'Document',
+      code: 'Code'
+    },
+    statuses: {
+      draft: 'Draft',
+      approved: 'Approved',
+      published: 'Published',
+      archived: 'Archived'
+    },
+    wizard: {
+      basicInfo: 'Basic Info',
+      modelConfig: 'Model Config',
+      toolBinding: 'Tool Binding',
+      preview: 'Preview & Confirm',
+      next: 'Next',
+      prev: 'Previous',
+      submit: 'Submit',
+      model: 'AI Model',
+      temperature: 'Temperature',
+      maxTokens: 'Max Tokens',
+      selectTools: 'Select Tools',
+      previewConfig: 'Config Preview'
+    },
+    designer: {
+      title: 'Agent Designer',
+      palette: 'Node Palette',
+      canvas: 'Canvas',
+      config: 'Node Config',
+      console: 'Console',
+      save: 'Save',
+      run: 'Run',
+      undo: 'Undo',
+      redo: 'Redo',
+      zoomIn: 'Zoom In',
+      zoomOut: 'Zoom Out',
+      export: 'Export',
+      import: 'Import',
+      nodes: {
+        llm: 'LLM Node',
+        tool: 'Tool Node',
+        condition: 'Condition Node',
+        start: 'Start Node',
+        end: 'End Node',
+        delay: 'Delay Node',
+        notify: 'Notify Node'
+      }
+    }
   },
   approval: {
     management: 'Approval Management',
@@ -208,6 +276,108 @@ export default {
     runTest: 'Run Test',
     high: 'High',
     medium: 'Medium',
-    low: 'Low'
+    low: 'Low',
+    cases: 'Test Cases',
+    executions: 'Test Executions',
+    results: 'Test Results',
+    create: 'Create Case',
+    execute: 'Execute Test',
+    passRate: 'Pass Rate',
+    status: {
+      pending: 'Pending',
+      running: 'Running',
+      passed: 'Passed',
+      failed: 'Failed',
+      error: 'Error'
+    }
+  },
+  log: {
+    center: 'Log Center',
+    operation: 'Operation Log',
+    api: 'API Log',
+    exception: 'Exception Log',
+    module: 'Module',
+    level: 'Level',
+    time: 'Time',
+    operator: 'Operator',
+    action: 'Action',
+    detail: 'Detail',
+    stackTrace: 'Stack Trace',
+    noLogs: 'No Logs',
+    filters: {
+      all: 'All',
+      agent: 'Agent',
+      auth: 'Auth',
+      workflow: 'Workflow',
+      deploy: 'Deploy',
+      system: 'System'
+    },
+    levels: {
+      all: 'All',
+      error: 'ERROR',
+      warn: 'WARN',
+      fatal: 'FATAL'
+    }
+  },
+  permission: {
+    management: 'Permission Management',
+    role: 'Role',
+    user: 'User',
+    assign: 'Assign',
+    remove: 'Remove',
+    createRole: 'Create Role',
+    editRole: 'Edit Role',
+    deleteRole: 'Delete Role',
+    roleName: 'Role Name',
+    roleCode: 'Role Code',
+    permissions: 'Permissions',
+    confirmRemove: 'Confirm Remove',
+    removeUserMsg: 'Are you sure you want to remove this user from the role?'
+  },
+  alert: {
+    center: 'Alert Center',
+    rules: 'Alert Rules',
+    records: 'Alert Records',
+    stats: 'Statistics',
+    createRule: 'Create Rule',
+    editRule: 'Edit Rule',
+    ruleName: 'Rule Name',
+    type: 'Type',
+    severity: 'Severity',
+    status: 'Status',
+    resolve: 'Resolve',
+    resolved: 'Resolved',
+    firing: 'Firing',
+    confirmResolve: 'Are you sure you want to resolve this alert?'
+  },
+  workflow: {
+    designer: 'Workflow Designer',
+    instances: 'Workflow Instances',
+    create: 'Create Workflow',
+    publish: 'Publish',
+    start: 'Start',
+    cancel: 'Cancel',
+    approve: 'Approve',
+    reject: 'Reject',
+    statuses: {
+      draft: 'Draft',
+      published: 'Published',
+      running: 'Running',
+      completed: 'Completed',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+      suspended: 'Suspended'
+    }
+  },
+  i18n: {
+    settings: 'I18n Settings',
+    language: 'Language',
+    chinese: 'Chinese',
+    english: 'English',
+    searchPlaceholder: 'Search translation keys...',
+    missingTranslation: 'Missing Translation',
+    preview: 'Preview',
+    total: 'Total',
+    keys: 'translation keys'
   }
 }

@@ -43,8 +43,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'agent/design',
         name: 'AgentDesign',
-        component: () => import('@/pages/Placeholder.vue'),
-        meta: { title: 'Agent Design' }
+        component: () => import('@/pages/AgentDesigner.vue'),
+        meta: { title: 'Agent 设计器' }
       },
       {
         path: 'mcp/tools',
@@ -109,7 +109,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'system/i18n',
         name: 'I18n',
-        component: () => import('@/pages/Placeholder.vue'),
+        component: () => import('@/pages/I18nSettings.vue'),
         meta: { title: 'I18n Settings' }
       },
       {
