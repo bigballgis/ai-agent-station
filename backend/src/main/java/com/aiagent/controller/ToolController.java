@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.service.tool.CompositeToolProvider;
 import com.aiagent.service.tool.FunctionToolRegistry;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 工具管理 Controller
@@ -18,6 +23,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/v1/tools")
 @RequiredArgsConstructor
+@Tag(name = "工具管理", description = "工具管理接口")
 public class ToolController {
 
     private final CompositeToolProvider compositeToolProvider;
@@ -27,6 +33,7 @@ public class ToolController {
      * 获取所有可用工具列表
      * GET /api/v1/tools
      */
+    @RequiresPermission("tool:view")
     @GetMapping
     public ResponseEntity<Map<String, Object>> listTools() {
         List<Map<String, Object>> tools = new ArrayList<>();
@@ -59,6 +66,7 @@ public class ToolController {
      * 获取工具统计信息
      * GET /api/v1/tools/stats
      */
+    @Operation(summary = "获取所有可用工具列表")
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getToolStats() {
         Map<String, Object> stats = new LinkedHashMap<>();
@@ -81,6 +89,7 @@ public class ToolController {
      * 查询工具来源
      * GET /api/v1/tools/{toolName}/source
      */
+    @Operation(summary = "获取工具统计信息")
     @GetMapping("/{toolName}/source")
     public ResponseEntity<Map<String, Object>> getToolSource(@PathVariable String toolName) {
         String source = compositeToolProvider.getToolSource(toolName);
@@ -95,6 +104,8 @@ public class ToolController {
      * 刷新工具缓存
      * POST /api/v1/tools/refresh
      */
+    @Operation(summary = "查询工具来源")
+    @RequiresPermission("tool:manage")
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, Object>> refreshTools() {
         compositeToolProvider.refreshCache();

@@ -19,7 +19,8 @@ public enum ResultCode {
     API_KEY_INVALID(1008, "API Key无效"),
     PERMISSION_DENIED(1009, "权限不足"),
     RESOURCE_ALREADY_EXISTS(1010, "资源已存在"),
-    OPERATION_FAILED(1011, "操作失败");
+    OPERATION_FAILED(1011, "操作失败"),
+    TOO_MANY_REQUESTS(429, "请求过于频繁");
 
     private final Integer code;
     private final String message;

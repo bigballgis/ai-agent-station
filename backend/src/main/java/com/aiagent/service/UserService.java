@@ -4,6 +4,7 @@ import com.aiagent.common.ResultCode;
 import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
+import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class UserService {
     }
 
     @Transactional
+    @Auditable(tableName = "user", description = "创建用户")
     public User createUser(User user) {
         Long tenantId = TenantContextHolder.getTenantId();
         
@@ -62,6 +64,7 @@ public class UserService {
     }
 
     @Transactional
+    @Auditable(tableName = "user", description = "更新用户")
     public User updateUser(Long id, User userDetails) {
         User user = getUserById(id);
         user.setEmail(userDetails.getEmail());
@@ -70,6 +73,7 @@ public class UserService {
     }
 
     @Transactional
+    @Auditable(tableName = "user", description = "删除用户")
     public void deleteUser(Long id) {
         User user = getUserById(id);
         user.setIsActive(false);
@@ -77,6 +81,7 @@ public class UserService {
     }
 
     @Transactional
+    @Auditable(tableName = "user", description = "重置密码")
     public void resetPassword(Long id, String newPassword) {
         User user = getUserById(id);
         user.setPassword(passwordEncoder.encode(newPassword));

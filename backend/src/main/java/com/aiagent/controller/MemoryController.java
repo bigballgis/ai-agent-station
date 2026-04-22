@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.AgentMemory;
@@ -19,8 +21,8 @@ public class MemoryController {
 
     private final MemoryService memoryService;
 
+    @RequiresPermission("agent:view")
     @PostMapping
-    @Operation(summary = "创建记忆")
     public Result<AgentMemory> createMemory(@RequestBody AgentMemory memory) {
         return Result.success(memoryService.createMemory(memory));
     }
@@ -38,20 +40,17 @@ public class MemoryController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "获取记忆详情")
     public Result<AgentMemory> getMemory(@PathVariable Long id) {
         return Result.success(memoryService.getMemory(id));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除记忆")
     public Result<Void> deleteMemory(@PathVariable Long id) {
         memoryService.deleteMemory(id);
         return Result.success();
     }
 
     @DeleteMapping("/agent/{agentId}/cleanup")
-    @Operation(summary = "清理过期记忆")
     public Result<Void> cleanupExpired(@PathVariable Long agentId) {
         memoryService.cleanupExpiredMemories();
         return Result.success();

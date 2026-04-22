@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.common.Result;
 import com.aiagent.entity.AgentTestCase;
 import com.aiagent.service.AgentTestCaseService;
@@ -7,20 +9,26 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/test-cases")
 @RequiredArgsConstructor
+@Tag(name = "测试用例管理", description = "Agent测试用例管理接口")
 public class AgentTestCaseController {
 
     private final AgentTestCaseService testCaseService;
 
+    @RequiresPermission("test:manage")
     @PostMapping
     public Result<AgentTestCase> createTestCase(@RequestBody AgentTestCase testCase) {
         AgentTestCase createdTestCase = testCaseService.createTestCase(testCase);
         return Result.success(createdTestCase);
     }
 
+    @RequiresPermission("test:view")
     @GetMapping("/{id}")
     public Result<AgentTestCase> getTestCaseById(@PathVariable Long id) {
         return testCaseService.getTestCaseById(id)

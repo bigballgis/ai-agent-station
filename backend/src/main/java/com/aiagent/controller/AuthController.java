@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.common.Result;
 import com.aiagent.service.AuthService;
 import jakarta.validation.Valid;
@@ -7,15 +8,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "认证管理", description = "认证管理接口")
 public class AuthController {
 
     private final AuthService authService;
 
     @PostMapping("/login")
+    @OperationLog(value = "用户登录", module = "认证")
     public Result<?> login(@Valid @RequestBody LoginRequest request) {
         return Result.success(authService.login(request.getUsername(), request.getPassword(), request.getTenantId()));
     }
@@ -25,6 +31,7 @@ public class AuthController {
      * 使用 Refresh Token 获取新的 Access Token
      */
     @PostMapping("/refresh")
+    @OperationLog(value = "刷新Token", module = "认证")
     public Result<?> refresh(@Valid @RequestBody RefreshRequest request) {
         return Result.success(authService.refreshToken(request.getRefreshToken()));
     }
@@ -33,6 +40,7 @@ public class AuthController {
      * 登出（使 Refresh Token 失效）
      */
     @PostMapping("/logout")
+    @OperationLog(value = "用户登出", module = "认证")
     public Result<?> logout(@RequestHeader(value = "X-User-ID", required = false) Long userId) {
         if (userId != null) {
             authService.logout(userId);

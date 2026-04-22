@@ -1,6 +1,8 @@
 package com.aiagent.controller;
 
-import com.aiagent.common.result.Result;
+import com.aiagent.annotation.RequiresPermission;
+
+import com.aiagent.common.Result;
 import com.aiagent.service.FileStorageService;
 import com.aiagent.service.FileStorageService.FileInfo;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +18,15 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @RestController
 @RequestMapping("/v1/files")
 @RequiredArgsConstructor
+@Tag(name = "文件管理", description = "文件管理接口")
 public class FileController {
 
     private final FileStorageService fileStorageService;
@@ -32,6 +38,7 @@ public class FileController {
      * @param subDir optional sub-directory for organization
      * @return FileInfo containing metadata about the stored file
      */
+    @RequiresPermission("file:upload")
     @PostMapping("/upload")
     public Result<FileInfo> upload(
             @RequestParam("file") MultipartFile file,
@@ -56,6 +63,7 @@ public class FileController {
      * @param filePath the relative file path
      * @return the file as a downloadable resource
      */
+    @RequiresPermission("file:view")
     @GetMapping("/download/{filePath}")
     public ResponseEntity<Resource> download(@PathVariable String filePath) {
         log.info("File download request: {}", filePath);
@@ -82,6 +90,7 @@ public class FileController {
      * @param subDir optional sub-directory to list files from
      * @return list of FileInfo for all files in the directory
      */
+    @Operation(summary = "下载文件")
     @GetMapping("/list")
     public Result<List<FileInfo>> listFiles(
             @RequestParam(value = "subDir", required = false) String subDir) {
@@ -101,6 +110,7 @@ public class FileController {
      * @param id the relative file path (used as identifier)
      * @return success or failure result
      */
+    @RequiresPermission("file:delete")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable String id) {
         log.info("File delete request: {}", id);

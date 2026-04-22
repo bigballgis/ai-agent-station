@@ -7,6 +7,7 @@ import com.aiagent.entity.UserRole;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.RoleRepository;
 import com.aiagent.repository.UserRoleRepository;
+import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class RoleService {
     }
 
     @Transactional
+    @Auditable(tableName = "role", description = "创建角色")
     public Role createRole(Role role) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -51,6 +53,7 @@ public class RoleService {
     }
 
     @Transactional
+    @Auditable(tableName = "role", description = "更新角色")
     public Role updateRole(Long id, Role roleDetails) {
         Role role = getRoleById(id);
         role.setName(roleDetails.getName());
@@ -59,6 +62,7 @@ public class RoleService {
     }
 
     @Transactional
+    @Auditable(tableName = "role", description = "删除角色")
     public void deleteRole(Long id) {
         roleRepository.deleteById(id);
     }

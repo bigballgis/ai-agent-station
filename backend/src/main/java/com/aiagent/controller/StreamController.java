@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.service.llm.LangChain4jService;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
@@ -12,6 +14,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * SSE 流式输出 Controller
@@ -28,6 +33,7 @@ import java.util.concurrent.Executor;
 @Slf4j
 @RestController
 @RequestMapping("/v1/stream")
+@Tag(name = "流式对话", description = "SSE流式对话接口")
 public class StreamController {
 
     private final LangChain4jService langChain4jService;
@@ -47,6 +53,7 @@ public class StreamController {
      * 
      * GET /api/v1/stream/chat?provider=openai&message=你好&sessionId=xxx
      */
+    @RequiresPermission("agent:invoke")
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(
             @RequestParam(defaultValue = "openai") String provider,
@@ -163,6 +170,7 @@ public class StreamController {
      * - event: node_end   / data: {"nodeId":"llm-1","status":"completed"}
      * - event: done       / data: {"content":"最终输出"}
      */
+    @Operation(summary = "SSE流式对话(POST)")
     @GetMapping(value = "/agent/{agentId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamAgentExecution(
             @PathVariable Long agentId,

@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.entity.User;
@@ -11,10 +12,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@Tag(name = "用户管理", description = "用户管理接口")
 public class UserController {
 
     private final UserService userService;
@@ -25,31 +30,39 @@ public class UserController {
         return Result.success(userService.getAllUsers());
     }
 
+    @Operation(summary = "获取所有用户列表")
     @GetMapping("/{id}")
     @RequiresRole("ADMIN")
     public Result<User> getUserById(@PathVariable Long id) {
         return Result.success(userService.getUserById(id));
     }
 
+    @Operation(summary = "根据ID获取用户详情")
     @PostMapping
     @RequiresRole("ADMIN")
+    @OperationLog(value = "创建用户", module = "用户管理")
     public Result<User> createUser(@RequestBody User user) {
         return Result.success(userService.createUser(user));
     }
 
+    @Operation(summary = "创建用户")
     @PutMapping("/{id}")
     @RequiresRole("ADMIN")
+    @OperationLog(value = "更新用户", module = "用户管理")
     public Result<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         return Result.success(userService.updateUser(id, user));
     }
 
+    @Operation(summary = "更新用户")
     @DeleteMapping("/{id}")
     @RequiresRole("ADMIN")
+    @OperationLog(value = "删除用户", module = "用户管理")
     public Result<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();
     }
 
+    @Operation(summary = "删除用户")
     @PostMapping("/{id}/reset-password")
     @RequiresRole("ADMIN")
     public Result<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {

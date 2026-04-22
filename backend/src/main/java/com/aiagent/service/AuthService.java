@@ -5,11 +5,14 @@ import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
 import com.aiagent.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +30,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
+    private final LoginRateLimitService loginRateLimitService;
 
     public Map<String, Object> login(String username, String password, Long tenantId) {
+        // 登录速率限制检查
+        String clientIp = getClientIp();
+        if (!loginRateLimitService.checkRateLimit(username, clientIp)) {
+            throw new BusinessException(ResultCode.TOO_MANY_REQUESTS.getCode(), "登录尝试次数过多，请稍后再试");
+        }
+
         User user;
 
         if (tenantId != null) {
@@ -44,11 +54,15 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            loginRateLimitService.recordFailedAttempt(username, clientIp);
             throw new BusinessException(ResultCode.INVALID_PASSWORD);
         }
 
+        // 登录成功，重置失败计数
+        loginRateLimitService.resetAttempts(username);
+
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getTenantId());
-        String refreshToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getTenantId());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername(), user.getTenantId());
 
         // Store refresh token in Redis with 7-day TTL
         String redisKey = REFRESH_TOKEN_PREFIX + user.getId();
@@ -91,7 +105,7 @@ public class AuthService {
 
         // Generate new access token and new refresh token
         String newAccessToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getTenantId());
-        String newRefreshToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getTenantId());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername(), user.getTenantId());
 
         // Update refresh token in Redis with new TTL
         redisTemplate.opsForValue().set(redisKey, newRefreshToken, REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
@@ -121,5 +135,25 @@ public class AuthService {
         userMap.put("phone", user.getPhone());
         userMap.put("tenantId", user.getTenantId());
         return userMap;
+    }
+
+    private String getClientIp() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return "unknown";
+        }
+        HttpServletRequest request = attributes.getRequest();
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 多级代理时取第一个IP
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 }

@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.service.DataExportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -8,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * REST controller for data export endpoints.
@@ -16,6 +21,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/export")
 @RequiredArgsConstructor
+@Tag(name = "数据导出", description = "数据导出接口")
 public class DataExportController {
 
     private final DataExportService dataExportService;
@@ -29,6 +35,7 @@ public class DataExportController {
      * @param startDate filter by creation date (start)
      * @param endDate   filter by creation date (end)
      */
+    @RequiresPermission("data:export")
     @GetMapping("/agents")
     public void exportAgents(
             @RequestParam(required = false) Long tenantId,
@@ -49,6 +56,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/users")
+    @Operation(summary = "导出Agent数据为CSV")
     public void exportUsers(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String keyword,
@@ -68,6 +76,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/logs")
+    @Operation(summary = "导出用户数据为CSV")
     public void exportLogs(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String module,
@@ -88,6 +97,7 @@ public class DataExportController {
      * @param endDate   filter by creation date (end)
      */
     @GetMapping("/test-results")
+    @Operation(summary = "导出系统日志为CSV")
     public void exportTestResults(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) Long agentId,
@@ -108,6 +118,7 @@ public class DataExportController {
      * @param endDate   filter by start date (end)
      */
     @GetMapping("/workflow-instances")
+    @Operation(summary = "导出测试结果为CSV")
     public void exportWorkflowInstances(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String status,

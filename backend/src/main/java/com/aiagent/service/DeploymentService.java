@@ -8,6 +8,7 @@ import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.repository.DeploymentHistoryRepository;
+import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class DeploymentService {
     }
 
     @Transactional
+    @Auditable(tableName = "deployment_history", description = "部署Agent")
     public DeploymentHistory deploy(Long agentId, Long versionId, Boolean isCanary, Integer canaryPercentage, String remark, Long deployerId) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -101,6 +103,7 @@ public class DeploymentService {
     }
 
     @Transactional
+    @Auditable(tableName = "deployment_history", description = "回滚部署")
     public DeploymentHistory rollback(Long deploymentId, Long deployerId) {
         Long tenantId = TenantContextHolder.getTenantId();
 

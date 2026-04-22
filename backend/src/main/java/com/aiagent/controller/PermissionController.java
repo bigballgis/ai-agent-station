@@ -11,16 +11,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/permissions")
 @RequiredArgsConstructor
+@Tag(name = "权限管理", description = "权限管理接口")
 public class PermissionController {
 
     private final PermissionService permissionService;
 
     @GetMapping
     @RequiresRole("ADMIN")
+    @Operation(summary = "获取所有权限列表")
     public Result<List<Permission>> getAllPermissions() {
         return Result.success(permissionService.getAllPermissions());
     }

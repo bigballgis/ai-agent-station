@@ -5,6 +5,7 @@ import com.aiagent.entity.Tenant;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.TenantRepository;
 import com.aiagent.security.ApiKeyService;
+import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class TenantService {
     }
 
     @Transactional
+    @Auditable(tableName = "tenant", description = "创建租户")
     public Tenant createTenant(Tenant tenant) {
         if (tenantRepository.findByName(tenant.getName()).isPresent()) {
             throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "租户名称已存在");
@@ -58,6 +60,7 @@ public class TenantService {
     }
 
     @Transactional
+    @Auditable(tableName = "tenant", description = "更新租户")
     public Tenant updateTenant(Long id, Tenant tenantDetails) {
         Tenant tenant = getTenantById(id);
         tenant.setName(tenantDetails.getName());
@@ -66,6 +69,7 @@ public class TenantService {
     }
 
     @Transactional
+    @Auditable(tableName = "tenant", description = "删除租户")
     public void deleteTenant(Long id) {
         Tenant tenant = getTenantById(id);
         tenant.setIsActive(false);

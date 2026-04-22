@@ -7,6 +7,7 @@ import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.security.UserPrincipal;
+import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class AgentService {
     }
 
     @Transactional
+    @Auditable(tableName = "agent", description = "创建Agent")
     public Agent createAgent(Agent agent) {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = getCurrentUserId();
@@ -72,6 +74,7 @@ public class AgentService {
     }
 
     @Transactional
+    @Auditable(tableName = "agent", description = "更新Agent")
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
         Long userId = getCurrentUserId();
@@ -89,12 +92,14 @@ public class AgentService {
     }
 
     @Transactional
+    @Auditable(tableName = "agent", description = "删除Agent")
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
         agentRepository.delete(agent);
     }
 
     @Transactional
+    @Auditable(tableName = "agent", description = "复制Agent")
     public Agent copyAgent(Long id, String newName) {
         Agent original = getAgentById(id);
         Long tenantId = TenantContextHolder.getTenantId();

@@ -1,10 +1,15 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.AgentApproval;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.AgentApprovalService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +25,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/approvals")
 @RequiredArgsConstructor
+@Tag(name = "审批管理", description = "审批管理接口")
 public class AgentApprovalController {
 
     private final AgentApprovalService agentApprovalService;
 
+    @RequiresPermission("approval:view")
     @GetMapping
+    @Operation(summary = "分页查询审批列表")
     public Result<PageResult<AgentApproval>> getApprovals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -39,6 +47,7 @@ public class AgentApprovalController {
     }
 
     @GetMapping("/pending")
+    @Operation(summary = "获取待审批列表")
     public Result<PageResult<AgentApproval>> getPendingApprovals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -50,18 +59,20 @@ public class AgentApprovalController {
     }
 
     @GetMapping("/{id}")
-    public Result<AgentApproval> getApprovalById(@PathVariable Long id) {
+    public Result<AgentApproval> getApprovalById(@Parameter(description = "审批ID") @PathVariable Long id) {
         AgentApproval approval = agentApprovalService.getApprovalById(id);
         return Result.success(approval);
     }
 
     @GetMapping("/agent/{agentId}")
-    public Result<List<AgentApproval>> getApprovalsByAgentId(@PathVariable Long agentId) {
+    public Result<List<AgentApproval>> getApprovalsByAgentId(@Parameter(description = "Agent ID") @PathVariable Long agentId) {
         List<AgentApproval> approvals = agentApprovalService.getApprovalsByAgentId(agentId);
         return Result.success(approvals);
     }
 
+    @RequiresPermission("approval:manage")
     @PostMapping("/submit")
+    @Operation(summary = "提交审批申请")
     public Result<AgentApproval> submitForApproval(
             @Valid @RequestBody SubmitApprovalRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -71,8 +82,9 @@ public class AgentApprovalController {
     }
 
     @PostMapping("/{id}/approve")
+    @Operation(summary = "审批通过")
     public Result<AgentApproval> approve(
-            @PathVariable Long id,
+            @Parameter(description = "审批ID") @PathVariable Long id,
             @Valid @RequestBody ApprovalActionRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         
@@ -81,8 +93,9 @@ public class AgentApprovalController {
     }
 
     @PostMapping("/{id}/reject")
+    @Operation(summary = "审批拒绝")
     public Result<AgentApproval> reject(
-            @PathVariable Long id,
+            @Parameter(description = "审批ID") @PathVariable Long id,
             @Valid @RequestBody ApprovalActionRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         

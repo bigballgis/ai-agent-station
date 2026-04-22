@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.dto.AgentInvokeRequest;
 import com.aiagent.dto.AgentInvokeResponse;
 import com.aiagent.engine.AgentExecutionEngine;
@@ -36,6 +37,7 @@ public class AgentApiController {
 
     @PostMapping("/agent/{agentId}/invoke")
     @Operation(summary = "调用Agent", description = "同步或异步调用已发布的Agent")
+    @RequiresPermission("agent:invoke")
     public ResponseEntity<AgentInvokeResponse> invokeAgent(
             @Parameter(description = "Agent ID") @PathVariable Long agentId,
             @RequestBody AgentInvokeRequest request,
@@ -70,6 +72,7 @@ public class AgentApiController {
 
     @GetMapping("/agent/{agentId}/status")
     @Operation(summary = "获取Agent状态", description = "查询Agent的当前状态和发布信息")
+    @RequiresPermission("agent:invoke")
     public ResponseEntity<?> getAgentStatus(
             @Parameter(description = "Agent ID") @PathVariable Long agentId) {
         Agent agent = agentRepository.findById(agentId).orElse(null);
@@ -100,6 +103,7 @@ public class AgentApiController {
 
     @GetMapping("/task/{taskId}")
     @Operation(summary = "查询异步任务状态", description = "获取异步执行的Agent任务状态")
+    @RequiresPermission("agent:invoke")
     public ResponseEntity<AgentInvokeResponse> getTaskStatus(
             @Parameter(description = "任务ID") @PathVariable String taskId) {
         AgentInvokeResponse response = agentExecutionEngine.getTaskStatus(taskId);

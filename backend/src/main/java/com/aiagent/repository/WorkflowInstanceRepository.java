@@ -16,7 +16,9 @@ public interface WorkflowInstanceRepository extends JpaRepository<WorkflowInstan
 
     Optional<WorkflowInstance> findByIdAndTenantId(Long id, Long tenantId);
 
-    List<WorkflowInstance> findByTenantIdAndStatus(Long tenantId, WorkflowInstance.InstanceStatus status);
+    Page<WorkflowInstance> findByTenantIdAndStatus(Long tenantId, WorkflowInstance.InstanceStatus status, Pageable pageable);
+
+    Page<WorkflowInstance> findByWorkflowDefinitionIdAndTenantId(Long definitionId, Long tenantId, Pageable pageable);
 
     List<WorkflowInstance> findByWorkflowDefinitionIdAndTenantId(Long definitionId, Long tenantId);
 

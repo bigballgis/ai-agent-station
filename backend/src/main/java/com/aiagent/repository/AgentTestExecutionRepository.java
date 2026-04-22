@@ -1,6 +1,7 @@
 package com.aiagent.repository;
 
 import com.aiagent.entity.AgentTestExecution;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +15,7 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      * @param tenantId 租户ID
      * @return 测试执行记录列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByTenantId(Long tenantId);
 
     /**
@@ -21,6 +23,7 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      * @param agentId Agent ID
      * @return 测试执行记录列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByAgentId(Long agentId);
 
     /**
@@ -36,6 +39,7 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      * @param status 状态
      * @return 测试执行记录列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByTenantIdAndStatus(Long tenantId, Integer status);
 
     /**
@@ -44,6 +48,7 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      * @param executionType 执行类型
      * @return 测试执行记录列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByTenantIdAndExecutionType(Long tenantId, String executionType);
 
     /**

@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -47,11 +49,11 @@ public class CacheService {
      * 按前缀批量删除缓存
      */
     public void deleteByPrefix(String prefix) {
-        var keys = redisTemplate.keys(prefix + "*");
+        Set<String> keys = redisTemplate.keys(prefix + "*");
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
-            log.info("按前缀清除缓存: prefix={}, count={}", prefix, keys.size());
         }
+        log.info("按前缀清除缓存: prefix={}, count={}", prefix, keys != null ? keys.size() : 0);
     }
 
     /**

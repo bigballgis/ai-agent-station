@@ -1,15 +1,21 @@
 package com.aiagent.controller;
 
-import com.aiagent.common.result.Result;
+import com.aiagent.annotation.RequiresRole;
+
+import com.aiagent.common.Result;
 import com.aiagent.service.QuotaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @RestController
 @RequestMapping("/v1/quotas")
 @RequiredArgsConstructor
+@Tag(name = "配额管理", description = "配额管理接口")
 public class QuotaController {
 
     private final QuotaService quotaService;
@@ -21,6 +27,7 @@ public class QuotaController {
      * @param headerTenantId the tenant ID from header for isolation
      * @return quota usage summary
      */
+    @RequiresRole("ADMIN")
     @GetMapping("/tenant/{tenantId}")
     public Result<?> getTenantQuota(
             @PathVariable String tenantId,
@@ -46,6 +53,7 @@ public class QuotaController {
      * @return detailed quota breakdown
      */
     @GetMapping("/tenant/{tenantId}/details")
+    @Operation(summary = "获取租户配额概要")
     public Result<?> getTenantQuotaDetails(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId) {
@@ -71,6 +79,7 @@ public class QuotaController {
      * @return updated quota information
      */
     @PutMapping("/tenant/{tenantId}")
+    @Operation(summary = "获取租户配额详情")
     public Result<?> updateTenantQuota(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId,

@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.ApiInterface;
@@ -12,14 +14,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/v1/api-interfaces")
 @RequiredArgsConstructor
+@Tag(name = "API接口管理", description = "API接口管理接口")
 public class ApiInterfaceController {
 
     private final ApiInterfaceService apiInterfaceService;
 
+    @RequiresPermission("api:view")
     @GetMapping
     public Result<PageResult<ApiInterface>> list(
             @RequestHeader("X-Tenant-ID") Long tenantId,
@@ -38,13 +45,16 @@ public class ApiInterfaceController {
     }
 
     @GetMapping("/agent/{agentId}")
+    @Operation(summary = "根据ID获取API接口详情")
     public Result<List<ApiInterface>> listByAgent(
             @PathVariable Long agentId,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
         return Result.success(apiInterfaceService.listByAgent(agentId, tenantId));
     }
 
+    @RequiresPermission("api:manage")
     @PostMapping
+    @Operation(summary = "根据Agent ID获取API接口列表")
     public Result<ApiInterface> create(
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestBody ApiInterface apiInterface) {
@@ -61,6 +71,7 @@ public class ApiInterfaceController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "更新API接口")
     public Result<Void> delete(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
@@ -69,6 +80,7 @@ public class ApiInterfaceController {
     }
 
     @PatchMapping("/{id}/toggle")
+    @Operation(summary = "删除API接口")
     public Result<ApiInterface> toggleActive(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,

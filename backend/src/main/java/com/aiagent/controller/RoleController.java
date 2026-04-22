@@ -11,10 +11,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/roles")
 @RequiredArgsConstructor
+@Tag(name = "角色管理", description = "角色管理接口")
 public class RoleController {
 
     private final RoleService roleService;
@@ -25,24 +29,28 @@ public class RoleController {
         return Result.success(roleService.getAllRoles());
     }
 
+    @Operation(summary = "获取所有角色列表")
     @GetMapping("/{id}")
     @RequiresRole("ADMIN")
     public Result<Role> getRoleById(@PathVariable Long id) {
         return Result.success(roleService.getRoleById(id));
     }
 
+    @Operation(summary = "根据ID获取角色详情")
     @PostMapping
     @RequiresRole("ADMIN")
     public Result<Role> createRole(@RequestBody Role role) {
         return Result.success(roleService.createRole(role));
     }
 
+    @Operation(summary = "创建角色")
     @PutMapping("/{id}")
     @RequiresRole("ADMIN")
     public Result<Role> updateRole(@PathVariable Long id, @RequestBody Role role) {
         return Result.success(roleService.updateRole(id, role));
     }
 
+    @Operation(summary = "更新角色")
     @DeleteMapping("/{id}")
     @RequiresRole("ADMIN")
     public Result<Void> deleteRole(@PathVariable Long id) {
@@ -50,6 +58,7 @@ public class RoleController {
         return Result.success();
     }
 
+    @Operation(summary = "删除角色")
     @PostMapping("/assign")
     @RequiresRole("ADMIN")
     public Result<Void> assignRoleToUser(@Valid @RequestBody AssignRoleRequest request) {
@@ -57,6 +66,7 @@ public class RoleController {
         return Result.success();
     }
 
+    @Operation(summary = "分配角色给用户")
     @DeleteMapping("/remove")
     @RequiresRole("ADMIN")
     public Result<Void> removeRoleFromUser(@RequestParam Long userId, @RequestParam Long roleId) {
@@ -64,6 +74,7 @@ public class RoleController {
         return Result.success();
     }
 
+    @Operation(summary = "从用户移除角色")
     @GetMapping("/user/{userId}")
     @RequiresRole("ADMIN")
     public Result<List<UserRole>> getUserRoles(@PathVariable Long userId) {

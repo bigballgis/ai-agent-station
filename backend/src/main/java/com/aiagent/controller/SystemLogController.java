@@ -10,10 +10,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/logs")
 @RequiredArgsConstructor
+@Tag(name = "系统日志", description = "系统日志管理接口")
 public class SystemLogController {
 
     private final SystemLogService systemLogService;
@@ -27,6 +31,7 @@ public class SystemLogController {
 
     @GetMapping("/date-range")
     @RequiresRole("ADMIN")
+    @Operation(summary = "分页查询系统日志")
     public Result<PageResult<SystemLog>> getLogsByDateRange(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,

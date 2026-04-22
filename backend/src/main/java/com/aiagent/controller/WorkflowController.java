@@ -1,5 +1,8 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
+import com.aiagent.annotation.RequiresPermission;
+
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.WorkflowDefinition;
@@ -10,23 +13,30 @@ import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.WorkflowEngine;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.vo.WorkflowDefinitionVO;
+import com.aiagent.vo.WorkflowInstanceVO;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/workflows")
 @RequiredArgsConstructor
+@Tag(name = "工作流管理", description = "工作流管理接口")
 public class WorkflowController {
 
     private final WorkflowEngine workflowEngine;
@@ -35,8 +45,9 @@ public class WorkflowController {
 
     // ==================== Workflow Definition APIs ====================
 
+    @RequiresPermission("workflow:view")
     @GetMapping("/definitions")
-    public Result<PageResult<WorkflowDefinition>> listDefinitions(
+    public Result<PageResult<WorkflowDefinitionVO>> listDefinitions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status) {
@@ -53,11 +64,14 @@ public class WorkflowController {
             result = definitionRepository.findByTenantId(tenantId, pageable);
         }
 
-        return Result.success(PageResult.from(result));
+        Page<WorkflowDefinitionVO> voPage = result.map(WorkflowDefinitionVO::fromEntity);
+        return Result.success(PageResult.from(voPage));
     }
 
+    @RequiresPermission("workflow:manage")
     @PostMapping("/definitions")
-    public Result<WorkflowDefinition> createDefinition(
+    @Operation(summary = "分页查询工作流定义列表")
+    public Result<WorkflowDefinitionVO> createDefinition(
             @Valid @RequestBody CreateDefinitionRequest request) {
 
         Long tenantId = TenantContextHolder.getTenantId();
@@ -72,19 +86,22 @@ public class WorkflowController {
         definition.setTriggers(request.getTriggers());
         definition.setTenantId(tenantId);
 
-        return Result.success(definitionRepository.save(definition));
+        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
     }
 
+    @RequiresPermission("workflow:view")
     @GetMapping("/definitions/{id}")
-    public Result<WorkflowDefinition> getDefinition(@PathVariable Long id) {
+    public Result<WorkflowDefinitionVO> getDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new com.aiagent.exception.BusinessException("工作流定义不存在"));
-        return Result.success(definition);
+        return Result.success(WorkflowDefinitionVO.fromEntity(definition));
     }
 
+    @Operation(summary = "根据ID获取工作流定义详情")
+    @RequiresPermission("workflow:manage")
     @PutMapping("/definitions/{id}")
-    public Result<WorkflowDefinition> updateDefinition(
+    public Result<WorkflowDefinitionVO> updateDefinition(
             @PathVariable Long id,
             @Valid @RequestBody UpdateDefinitionRequest request) {
 
@@ -113,9 +130,10 @@ public class WorkflowController {
             definition.setTriggers(request.getTriggers());
         }
 
-        return Result.success(definitionRepository.save(definition));
+        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
     }
 
+    @RequiresPermission("workflow:manage")
     @DeleteMapping("/definitions/{id}")
     public Result<Void> deleteDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -131,8 +149,10 @@ public class WorkflowController {
         return Result.success();
     }
 
+    @Operation(summary = "删除工作流定义")
+    @RequiresPermission("workflow:manage")
     @PostMapping("/definitions/{id}/publish")
-    public Result<WorkflowDefinition> publishDefinition(@PathVariable Long id) {
+    public Result<WorkflowDefinitionVO> publishDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
         WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
@@ -143,13 +163,15 @@ public class WorkflowController {
         }
 
         definition.setStatus(WorkflowDefinition.WorkflowStatus.PUBLISHED);
-        return Result.success(definitionRepository.save(definition));
+        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
     }
 
     // ==================== Workflow Instance APIs ====================
 
+    @Operation(summary = "发布工作流定义")
+    @RequiresPermission("workflow:view")
     @GetMapping("/instances")
-    public Result<PageResult<WorkflowInstance>> listInstances(
+    public Result<PageResult<WorkflowInstanceVO>> listInstances(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
@@ -161,37 +183,23 @@ public class WorkflowController {
 
         Page<WorkflowInstance> result;
         if (definitionId != null) {
-            result = instanceRepository.findByWorkflowDefinitionIdAndTenantId(definitionId, tenantId)
-                    .stream().collect(java.util.stream.Collectors.toList())
-                    .stream().skip((long) page * size).limit(size)
-                    .collect(java.util.stream.Collectors.toList())
-                    .stream().collect(java.util.stream.Collectors.collectingAndThen(
-                            java.util.stream.Collectors.toList(),
-                            list -> new org.springframework.data.domain.PageImpl<>(list, pageable, list.size())));
-            // Simplified pagination for list query
-            List<WorkflowInstance> all = instanceRepository.findByWorkflowDefinitionIdAndTenantId(definitionId, tenantId);
-            int total = all.size();
-            int fromIndex = Math.min(page * size, total);
-            int toIndex = Math.min(fromIndex + size, total);
-            List<WorkflowInstance> content = all.subList(fromIndex, toIndex);
-            result = new org.springframework.data.domain.PageImpl<>(content, pageable, total);
+            result = instanceRepository.findByWorkflowDefinitionIdAndTenantId(definitionId, tenantId, pageable);
         } else if (status != null && !status.isEmpty()) {
-            List<WorkflowInstance> all = instanceRepository.findByTenantIdAndStatus(tenantId,
-                    WorkflowInstance.InstanceStatus.valueOf(status));
-            int total = all.size();
-            int fromIndex = Math.min(page * size, total);
-            int toIndex = Math.min(fromIndex + size, total);
-            List<WorkflowInstance> content = all.subList(fromIndex, toIndex);
-            result = new org.springframework.data.domain.PageImpl<>(content, pageable, total);
+            result = instanceRepository.findByTenantIdAndStatus(tenantId,
+                    WorkflowInstance.InstanceStatus.valueOf(status), pageable);
         } else {
             result = instanceRepository.findByTenantId(tenantId, pageable);
         }
 
-        return Result.success(PageResult.from(result));
+        Page<WorkflowInstanceVO> voPage = result.map(WorkflowInstanceVO::fromEntity);
+        return Result.success(PageResult.from(voPage));
     }
 
+    @RequiresPermission("workflow:manage")
     @PostMapping("/instances/start")
-    public Result<WorkflowInstance> startWorkflow(
+    @OperationLog(value = "启动工作流", module = "工作流")
+    @Operation(summary = "分页查询工作流实例列表")
+    public Result<WorkflowInstanceVO> startWorkflow(
             @Valid @RequestBody StartWorkflowRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
@@ -200,31 +208,40 @@ public class WorkflowController {
                 request.getVariables(),
                 principal.getId()
         );
-        return Result.success(instance);
+        return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
 
+    @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}")
-    public Result<WorkflowInstance> getInstance(@PathVariable Long id) {
+    public Result<WorkflowInstanceVO> getInstance(@PathVariable Long id) {
         WorkflowInstance instance = workflowEngine.getWorkflowStatus(id);
-        return Result.success(instance);
+        return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
 
+    @Operation(summary = "获取工作流实例详情")
+    @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}/history")
     public Result<List<WorkflowNodeLog>> getInstanceHistory(@PathVariable Long id) {
         List<WorkflowNodeLog> history = workflowEngine.getWorkflowHistory(id);
         return Result.success(history);
     }
 
+    @Operation(summary = "获取工作流实例执行历史")
+    @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{id}/cancel")
-    public Result<WorkflowInstance> cancelWorkflow(
+    @OperationLog(value = "取消工作流", module = "工作流")
+    public Result<WorkflowInstanceVO> cancelWorkflow(
             @PathVariable Long id,
             @Valid @RequestBody CancelWorkflowRequest request) {
 
         WorkflowInstance instance = workflowEngine.cancelWorkflow(id, request.getReason());
-        return Result.success(instance);
+        return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
 
+    @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/approve")
+    @OperationLog(value = "审批工作流节点", module = "工作流")
+    @Operation(summary = "取消工作流")
     public Result<WorkflowNodeLog> approveNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
@@ -235,7 +252,9 @@ public class WorkflowController {
         return Result.success(nodeLog);
     }
 
+    @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/reject")
+    @Operation(summary = "审批工作流节点")
     public Result<WorkflowNodeLog> rejectNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
