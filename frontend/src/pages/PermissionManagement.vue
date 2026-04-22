@@ -1,16 +1,8 @@
 <template>
   <div class="permission-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            权限管理
-          </h1>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            管理系统角色和权限，控制不同角色的访问范围
-          </p>
-        </div>
+    <PageHeader title="权限管理" subtitle="管理系统角色和权限，控制不同角色的访问范围">
+      <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
           @click="handleCreateRole"
@@ -20,8 +12,8 @@
           </svg>
           新建角色
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- 左右分栏布局 -->
     <div class="flex gap-6 animate-slide-up">
@@ -288,6 +280,16 @@
       </div>
     </div>
 
+    <!-- 删除角色确认弹窗 -->
+    <ConfirmModal
+      v-model:visible="deleteVisible"
+      title="确认删除"
+      :content="`确定要删除角色「${selectedRole?.name}」吗？此操作不可撤销。`"
+      type="delete"
+      ok-text="删除"
+      @ok="confirmDeleteRole"
+    />
+
     <!-- 新建角色弹窗 -->
     <a-modal
       v-model:open="showCreateModal"
@@ -355,6 +357,7 @@ import {
   removeRole,
 } from '@/api/permission'
 import { getUsers } from '@/api/user'
+import { PageHeader, ConfirmModal } from '@/components'
 
 // ============ 数据 ============
 
@@ -436,6 +439,7 @@ const editingRole = ref(false)
 const editForm = ref({ name: '', description: '' })
 const showCreateModal = ref(false)
 const showAddUserModal = ref(false)
+const deleteVisible = ref(false)
 const createForm = ref({ name: '', code: '', description: '' })
 const checkedPermissions = ref<string[]>(['agent:list', 'agent:create', 'agent:edit', 'approval:list', 'approval:submit', 'deployment:list', 'api:list', 'api:docs', 'system:user', 'system:role', 'log:operation', 'log:api', 'log:error'])
 const expandedKeys = ref<string[]>(['agent', 'approval', 'deployment', 'api', 'system', 'log'])
@@ -531,25 +535,22 @@ function cancelEdit() {
 
 function handleDeleteRole() {
   if (!selectedRole.value) return
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除角色「${selectedRole.value.name}」吗？此操作不可撤销。`,
-    okText: '删除',
-    okType: 'danger',
-    cancelText: '取消',
-    onOk() {
-      deleteRole(Number(selectedRole.value!.id))
-        .then(() => {
-          roles.value = roles.value.filter(r => r.id !== selectedRole.value!.id)
-          selectedRole.value = null
-          message.success('角色已删除')
-        })
-        .catch((e: any) => {
-          console.error('删除角色失败:', e)
-          message.error('删除角色失败')
-        })
-    },
-  })
+  deleteVisible.value = true
+}
+
+async function confirmDeleteRole() {
+  if (!selectedRole.value) return
+  try {
+    await deleteRole(Number(selectedRole.value.id))
+    roles.value = roles.value.filter(r => r.id !== selectedRole.value!.id)
+    selectedRole.value = null
+    message.success('角色已删除')
+  } catch (e: any) {
+    console.error('删除角色失败:', e)
+    message.error('删除角色失败')
+  } finally {
+    deleteVisible.value = false
+  }
 }
 
 function removeUser(userId: string) {

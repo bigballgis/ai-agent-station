@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @RestController
-@RequestMapping("/experiences")
+@RequestMapping("/v1/experiences")
 @RequiredArgsConstructor
 @Tag(name = "经验管理", description = "Agent经验管理接口")
 public class ExperienceController {

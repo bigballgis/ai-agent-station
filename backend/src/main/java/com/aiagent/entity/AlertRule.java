@@ -12,6 +12,10 @@ public class AlertRule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "name", nullable = false)
     private String name;
 

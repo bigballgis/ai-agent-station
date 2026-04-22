@@ -31,6 +31,10 @@ public class DeploymentHistory extends BaseEntity {
     @Column(nullable = false)
     private DeploymentStatus status = DeploymentStatus.PENDING;
 
+    @Version
+    @Column(name = "optimistic_version")
+    private Long optimisticVersion;
+
     @Column(nullable = false, length = 50)
     private String version;
 

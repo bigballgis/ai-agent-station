@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/logs")
+@RequestMapping("/v1/logs")
 @RequiredArgsConstructor
 @Tag(name = "系统日志", description = "系统日志管理接口")
 public class SystemLogController {

@@ -1,60 +1,24 @@
 <template>
   <div class="dashboard-page">
     <!-- 页面标题 -->
-    <div class="mb-8 animate-fade-in">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-        {{ t('dashboard.title') || 'Dashboard' }}
-      </h1>
-      <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-        {{ t('dashboard.subtitle') }}
-      </p>
-    </div>
+    <PageHeader :title="t('dashboard.title') || 'Dashboard'" :subtitle="t('dashboard.subtitle')" />
 
     <!-- 统计卡片区域 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <div
-        v-for="(stat, index) in stats"
-        :key="stat.label"
-        class="stat-card rounded-2xl p-6 text-white relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-float group"
-        :class="stat.gradient"
+      <StatCard
+        v-for="(stat, index) in statCards"
+        :key="stat.title"
+        :title="stat.title"
+        :value="stat.value"
+        :icon="stat.icon"
+        :trend="stat.trend"
+        :trend-value="stat.trendValue"
+        :color="stat.color"
+        :decimals="stat.decimals"
+        :suffix="stat.suffix"
+        class="animate-slide-up"
         :style="{ animationDelay: `${index * 80}ms` }"
-      >
-        <!-- 背景装饰圆 -->
-        <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10 group-hover:scale-125 transition-transform duration-500"></div>
-        <div class="absolute -right-2 -bottom-6 w-16 h-16 rounded-full bg-white/5"></div>
-
-        <!-- 图标 -->
-        <div class="absolute right-5 top-5 w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-          <component :is="stat.icon" class="text-xl text-white/90" />
-        </div>
-
-        <!-- 内容 -->
-        <div class="relative z-10">
-          <p class="text-sm text-white/80 font-medium">{{ stat.label }}</p>
-          <p class="text-3xl font-bold mt-2 tracking-tight">{{ stat.displayValue }}</p>
-          <div class="flex items-center gap-1.5 mt-3">
-            <svg
-              v-if="stat.trendDirection === 'up'"
-              class="w-4 h-4 text-white/80"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            <svg
-              v-else
-              class="w-4 h-4 text-white/80"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            <span class="text-sm text-white/80">{{ stat.trend }}</span>
-          </div>
-        </div>
-      </div>
+      />
     </div>
 
     <!-- 图表区域 -->
@@ -77,9 +41,7 @@
             </span>
           </div>
         </div>
-        <div class="chart-container" style="height: 280px;">
-          <canvas ref="lineChartRef"></canvas>
-        </div>
+        <ChartContainer type="line" :data="lineChartData" :options="lineChartOptions" :height="280" />
       </div>
 
       <!-- Agent 状态分布环形图 -->
@@ -88,9 +50,7 @@
           <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">{{ t('dashboard.agentDistribution') }}</h2>
           <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{{ t('dashboard.agentDistributionDesc') }}</p>
         </div>
-        <div class="chart-container flex items-center justify-center" style="height: 280px;">
-          <canvas ref="doughnutChartRef"></canvas>
-        </div>
+        <ChartContainer type="doughnut" :data="doughnutChartData" :options="doughnutChartOptions" :height="280" />
       </div>
     </div>
 
@@ -162,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -180,30 +140,7 @@ import { getAllAgents } from '@/api/agent'
 import { getToolStats } from '@/api/tool'
 import { getAlertStats } from '@/api/alert'
 import { testApi } from '@/api/test'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+import { PageHeader, StatCard, ChartContainer } from '@/components'
 
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
@@ -214,85 +151,49 @@ const passRate = ref(0)
 const apiCalls = ref(0)
 const activeUsers = ref(0)
 
-const stats = ref([
+// StatCard 配置（响应式）
+const statCards = computed(() => [
   {
-    label: t('dashboard.totalAgents'),
-    value: 0,
-    displayValue: '0',
-    trend: `${t('dashboard.comparedLastMonth')} +12%`,
-    trendDirection: 'up' as const,
-    gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
-    icon: RocketOutlined
+    title: t('dashboard.totalAgents'),
+    value: totalAgents.value,
+    icon: RocketOutlined,
+    trend: 'up' as const,
+    trendValue: `${t('dashboard.comparedLastMonth')} +12%`,
+    color: 'blue' as const,
+    decimals: 0,
+    suffix: '',
   },
   {
-    label: t('dashboard.passRate'),
-    value: 0,
-    displayValue: '0%',
-    trend: `${t('dashboard.comparedLastMonth')} +3.2%`,
-    trendDirection: 'up' as const,
-    gradient: 'bg-gradient-to-br from-green-500 to-green-600',
-    icon: CheckCircleOutlined
+    title: t('dashboard.passRate'),
+    value: passRate.value,
+    icon: CheckCircleOutlined,
+    trend: 'up' as const,
+    trendValue: `${t('dashboard.comparedLastMonth')} +3.2%`,
+    color: 'green' as const,
+    decimals: 1,
+    suffix: '%',
   },
   {
-    label: t('dashboard.apiCalls'),
-    value: 0,
-    displayValue: '0',
-    trend: `${t('dashboard.comparedYesterday')} -5%`,
-    trendDirection: 'down' as const,
-    gradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
-    icon: ApiOutlined
+    title: t('dashboard.apiCalls'),
+    value: apiCalls.value,
+    icon: ApiOutlined,
+    trend: 'down' as const,
+    trendValue: `${t('dashboard.comparedYesterday')} -5%`,
+    color: 'purple' as const,
+    decimals: 0,
+    suffix: '',
   },
   {
-    label: t('dashboard.activeUsers'),
-    value: 0,
-    displayValue: '0',
-    trend: `${t('dashboard.comparedLastMonth')} +8%`,
-    trendDirection: 'up' as const,
-    gradient: 'bg-gradient-to-br from-orange-500 to-orange-600',
-    icon: ClockCircleOutlined
-  }
+    title: t('dashboard.activeUsers'),
+    value: activeUsers.value,
+    icon: ClockCircleOutlined,
+    trend: 'up' as const,
+    trendValue: `${t('dashboard.comparedLastMonth')} +8%`,
+    color: 'orange' as const,
+    decimals: 0,
+    suffix: '',
+  },
 ])
-
-function updateStatsDisplay() {
-  stats.value = [
-    {
-      label: t('dashboard.totalAgents'),
-      value: totalAgents.value,
-      displayValue: String(totalAgents.value),
-      trend: `${t('dashboard.comparedLastMonth')} +12%`,
-      trendDirection: 'up' as const,
-      gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      icon: RocketOutlined
-    },
-    {
-      label: t('dashboard.passRate'),
-      value: passRate.value,
-      displayValue: passRate.value.toFixed(1) + '%',
-      trend: `${t('dashboard.comparedLastMonth')} +3.2%`,
-      trendDirection: 'up' as const,
-      gradient: 'bg-gradient-to-br from-green-500 to-green-600',
-      icon: CheckCircleOutlined
-    },
-    {
-      label: t('dashboard.apiCalls'),
-      value: apiCalls.value,
-      displayValue: apiCalls.value.toLocaleString(),
-      trend: `${t('dashboard.comparedYesterday')} -5%`,
-      trendDirection: 'down' as const,
-      gradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
-      icon: ApiOutlined
-    },
-    {
-      label: t('dashboard.activeUsers'),
-      value: activeUsers.value,
-      displayValue: String(activeUsers.value),
-      trend: `${t('dashboard.comparedLastMonth')} +8%`,
-      trendDirection: 'up' as const,
-      gradient: 'bg-gradient-to-br from-orange-500 to-orange-600',
-      icon: ClockCircleOutlined
-    }
-  ]
-}
 
 // ============ 快捷操作数据 ============
 const quickActions = ref([
@@ -356,200 +257,109 @@ const activities = ref([
   }
 ])
 
-// ============ Chart.js 图表 ============
-const lineChartRef = ref<HTMLCanvasElement | null>(null)
-const doughnutChartRef = ref<HTMLCanvasElement | null>(null)
-let lineChartInstance: InstanceType<typeof ChartJS> | null = null
-let doughnutChartInstance: InstanceType<typeof ChartJS> | null = null
-
-// Agent status distribution for doughnut chart
+// ============ Chart.js 图表数据（供 ChartContainer 使用） ============
 const agentDistribution = ref({ running: 0, stopped: 0, pending: 0, abnormal: 0 })
 
-const getChartTextColor = () => (isDark.value ? '#a3a3a3' : '#737373')
-const getChartGridColor = () => (isDark.value ? 'rgba(163,163,163,0.1)' : 'rgba(0,0,0,0.06)')
-
-const createLineChart = () => {
-  if (!lineChartRef.value) return
-
-  if (lineChartInstance) {
-    lineChartInstance.destroy()
-  }
-
-  const ctx = lineChartRef.value.getContext('2d')
-  if (!ctx) return
-
-  // 创建渐变填充
-  const gradient = ctx.createLinearGradient(0, 0, 0, 280)
-  gradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)')
-  gradient.addColorStop(1, 'rgba(59, 130, 246, 0)')
-
-  const gradient2 = ctx.createLinearGradient(0, 0, 0, 280)
-  gradient2.addColorStop(0, 'rgba(34, 197, 94, 0.12)')
-  gradient2.addColorStop(1, 'rgba(34, 197, 94, 0)')
-
-  lineChartInstance = new ChartJS(ctx, {
-    type: 'line',
-    data: {
-      labels: (t('dashboard.weekDays') as unknown) as string[],
-      datasets: [
-        {
-          label: t('dashboard.callVolume'),
-          data: [3200, 4100, 3800, 5200, 4800, 3900, apiCalls.value || 4321],
-          borderColor: '#3b82f6',
-          backgroundColor: gradient,
-          borderWidth: 2.5,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#3b82f6',
-          pointHoverBorderColor: '#ffffff',
-          pointHoverBorderWidth: 2
-        },
-        {
-          label: t('dashboard.success'),
-          data: [3000, 3900, 3600, 5000, 4600, 3750, Math.floor((apiCalls.value || 4321) * (passRate.value || 94.8) / 100)],
-          borderColor: '#22c55e',
-          backgroundColor: gradient2,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: '#22c55e',
-          pointHoverBorderColor: '#ffffff',
-          pointHoverBorderWidth: 2
-        }
-      ]
+const lineChartData = computed(() => ({
+  labels: (t('dashboard.weekDays') as unknown) as string[],
+  datasets: [
+    {
+      label: t('dashboard.callVolume'),
+      data: [3200, 4100, 3800, 5200, 4800, 3900, apiCalls.value || 4321],
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+      borderWidth: 2.5,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: '#3b82f6',
+      pointHoverBorderColor: '#ffffff',
+      pointHoverBorderWidth: 2,
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          backgroundColor: isDark.value ? '#262626' : '#ffffff',
-          titleColor: isDark.value ? '#e5e5e5' : '#171717',
-          bodyColor: isDark.value ? '#a3a3a3' : '#737373',
-          borderColor: isDark.value ? '#404040' : '#e5e5e5',
-          borderWidth: 1,
-          cornerRadius: 12,
-          padding: 12,
-          boxPadding: 4,
-          usePointStyle: true,
-          titleFont: { size: 13, weight: 600 as const },
-          bodyFont: { size: 12 }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            color: getChartTextColor(),
-            font: { size: 12 }
-          },
-          border: { display: false }
-        },
-        y: {
-          grid: {
-            color: getChartGridColor(),
-          },
-          ticks: {
-            color: getChartTextColor(),
-            font: { size: 12 },
-            padding: 8
-          },
-          border: { display: false },
-          beginAtZero: true
-        }
-      }
-    }
-  })
-}
-
-const createDoughnutChart = () => {
-  if (!doughnutChartRef.value) return
-
-  if (doughnutChartInstance) {
-    doughnutChartInstance.destroy()
-  }
-
-  const ctx = doughnutChartRef.value.getContext('2d')
-  if (!ctx) return
-
-  const dist = agentDistribution.value
-
-  doughnutChartInstance = new ChartJS(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: [
-        t('dashboard.running'),
-        t('dashboard.stopped'),
-        t('dashboard.pendingApprovals'),
-        t('dashboard.abnormal')
-      ],
-      datasets: [
-        {
-          data: [dist.running, dist.stopped, dist.pending, dist.abnormal],
-          backgroundColor: ['#3b82f6', '#a3a3a3', '#f59e0b', '#ef4444'],
-          borderWidth: 0,
-          hoverOffset: 6
-        }
-      ]
+    {
+      label: t('dashboard.success'),
+      data: [3000, 3900, 3600, 5000, 4600, 3750, Math.floor((apiCalls.value || 4321) * (passRate.value || 94.8) / 100)],
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34, 197, 94, 0.12)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: '#22c55e',
+      pointHoverBorderColor: '#ffffff',
+      pointHoverBorderWidth: 2,
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '68%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: getChartTextColor(),
-            padding: 16,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            font: { size: 12 }
-          }
-        },
-        tooltip: {
-          backgroundColor: isDark.value ? '#262626' : '#ffffff',
-          titleColor: isDark.value ? '#e5e5e5' : '#171717',
-          bodyColor: isDark.value ? '#a3a3a3' : '#737373',
-          borderColor: isDark.value ? '#404040' : '#e5e5e5',
-          borderWidth: 1,
-          cornerRadius: 12,
-          padding: 12,
-          boxPadding: 4,
-          usePointStyle: true,
-          titleFont: { size: 13, weight: 600 as const },
-          bodyFont: { size: 12 },
-          callbacks: {
-            label: function (context) {
-              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
-              const value = context.parsed as number
-              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
-              return ` ${context.label}: ${value} (${percentage}%)`
-            }
-          }
-        }
-      }
-    }
-  })
-}
+  ],
+}))
 
-const initCharts = () => {
-  nextTick(() => {
-    createLineChart()
-    createDoughnutChart()
-  })
-}
+const lineChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { display: false },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: isDark.value ? '#a3a3a3' : '#737373', font: { size: 12 } },
+      border: { display: false },
+    },
+    y: {
+      grid: { color: isDark.value ? 'rgba(163,163,163,0.1)' : 'rgba(0,0,0,0.06)' },
+      ticks: { color: isDark.value ? '#a3a3a3' : '#737373', font: { size: 12 }, padding: 8 },
+      border: { display: false },
+      beginAtZero: true,
+    },
+  },
+}))
+
+const doughnutChartData = computed(() => ({
+  labels: [
+    t('dashboard.running'),
+    t('dashboard.stopped'),
+    t('dashboard.pendingApprovals'),
+    t('dashboard.abnormal'),
+  ],
+  datasets: [
+    {
+      data: [agentDistribution.value.running, agentDistribution.value.stopped, agentDistribution.value.pending, agentDistribution.value.abnormal],
+      backgroundColor: ['#3b82f6', '#a3a3a3', '#f59e0b', '#ef4444'],
+      borderWidth: 0,
+      hoverOffset: 6,
+    },
+  ],
+}))
+
+const doughnutChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '68%',
+  plugins: {
+    legend: {
+      position: 'bottom' as const,
+      labels: {
+        color: isDark.value ? '#a3a3a3' : '#737373',
+        padding: 16,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        font: { size: 12 },
+      },
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+          const value = context.parsed as number
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
+          return ` ${context.label}: ${value} (${percentage}%)`
+        },
+      },
+    },
+  },
+}))
 
 // ============ 获取仪表盘数据 ============
 
@@ -601,27 +411,16 @@ async function fetchDashboardData() {
       activeUsers.value = 0
     }
 
-    // Update display
-    updateStatsDisplay()
-    initCharts()
+    // Update display - statCards is reactive via computed
   } catch (error: any) {
     message.error('获取仪表盘数据失败: ' + (error.message || '未知错误'))
-    // Fallback to zero values
-    updateStatsDisplay()
-    initCharts()
+    // Fallback to zero values - statCards is reactive via computed
   }
 }
 
-// 监听暗色模式变化，重建图表以适配主题
-watch(isDark, () => {
-  initCharts()
-})
-
-// 监听语言变化，重建图表以适配翻译
+// 监听语言变化，更新快捷操作和活动数据
 watch(locale, () => {
-  // 更新响应式数据
-  updateStatsDisplay()
-
+  // 更新响应式数据 - statCards 和 chart data are reactive via computed
   quickActions.value = [
     {
       label: t('dashboard.createNewAgent'),
@@ -682,7 +481,6 @@ watch(locale, () => {
     }
   ]
 
-  initCharts()
 })
 
 onMounted(() => {
@@ -690,27 +488,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (lineChartInstance) lineChartInstance.destroy()
-  if (doughnutChartInstance) doughnutChartInstance.destroy()
+  // ChartContainer handles its own cleanup
 })
 </script>
 
 <style scoped>
 .dashboard-page {
   padding: 0;
-}
-
-.stat-card {
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.chart-container {
-  position: relative;
-  width: 100%;
-}
-
-/* 暗色模式下图表容器确保 canvas 正确渲染 */
-:deep(canvas) {
-  max-width: 100%;
 }
 </style>

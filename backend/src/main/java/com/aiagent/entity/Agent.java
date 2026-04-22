@@ -16,6 +16,10 @@ public class Agent extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "tenant_id", nullable = false)
     private Long tenantId;
 

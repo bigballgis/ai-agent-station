@@ -1,40 +1,22 @@
 <template>
   <div class="alert-notification-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-        告警中心
-      </h1>
-      <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-        统一管理和监控所有告警规则与告警记录，及时发现和处理系统异常
-      </p>
-    </div>
+    <PageHeader title="告警中心" subtitle="统一管理和监控所有告警规则与告警记录，及时发现和处理系统异常" />
 
     <!-- 统计概览卡片 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <div
-        v-for="(stat, index) in stats"
-        :key="stat.label"
-        class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-5 hover:-translate-y-1 hover:shadow-float transition-all duration-300 animate-slide-up"
+      <StatCard
+        v-for="(stat, index) in alertStatCards"
+        :key="stat.title"
+        :title="stat.title"
+        :value="stat.value"
+        :icon="stat.icon"
+        :trend="stat.trend"
+        :trend-value="stat.trendValue"
+        :color="stat.color"
+        class="animate-slide-up"
         :style="{ animationDelay: `${index * 80}ms` }"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center"
-            :class="stat.iconBg"
-          >
-            <component :is="stat.icon" class="text-lg" :class="stat.iconColor" />
-          </div>
-          <span
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-            :class="stat.trendBg"
-          >
-            {{ stat.trend }}
-          </span>
-        </div>
-        <p class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">{{ stat.value }}</p>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ stat.label }}</p>
-      </div>
+      />
     </div>
 
     <!-- Tab 切换 -->
@@ -218,15 +200,7 @@
                 </td>
                 <td class="px-4 py-3 text-neutral-600 dark:text-neutral-400 font-mono text-xs">{{ record.metricValue }}</td>
                 <td class="px-4 py-3">
-                  <span
-                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
-                    :class="record.status === 'firing'
-                      ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
-                      : 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'"
-                  >
-                    <span class="w-1.5 h-1.5 rounded-full" :class="record.status === 'firing' ? 'bg-red-500 animate-pulse' : 'bg-green-500'" />
-                    {{ record.status === 'firing' ? '触发中' : '已解决' }}
-                  </span>
+                  <StatusBadge :status="record.status" type="alert" :dot="true" />
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
@@ -355,6 +329,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, getAlertRecords, getAlertStats } from '@/api/alert'
+import { PageHeader, StatCard, StatusBadge, ConfirmModal } from '@/components'
 
 // Tab
 const tabs = ref([
@@ -400,6 +375,42 @@ const stats = ref([
     iconColor: 'text-blue-600 dark:text-blue-400',
     trendBg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400',
     icon: SettingOutlined,
+  },
+])
+
+// StatCard 配置（响应式）
+const alertStatCards = computed(() => [
+  {
+    title: stats.value[0].label,
+    value: stats.value[0].value,
+    icon: stats.value[0].icon,
+    trend: 'none' as const,
+    trendValue: stats.value[0].trend,
+    color: 'red' as const,
+  },
+  {
+    title: stats.value[1].label,
+    value: stats.value[1].value,
+    icon: stats.value[1].icon,
+    trend: 'none' as const,
+    trendValue: stats.value[1].trend,
+    color: 'orange' as const,
+  },
+  {
+    title: stats.value[2].label,
+    value: stats.value[2].value,
+    icon: stats.value[2].icon,
+    trend: 'none' as const,
+    trendValue: stats.value[2].trend,
+    color: 'green' as const,
+  },
+  {
+    title: stats.value[3].label,
+    value: stats.value[3].value,
+    icon: stats.value[3].icon,
+    trend: 'none' as const,
+    trendValue: stats.value[3].trend,
+    color: 'blue' as const,
   },
 ])
 

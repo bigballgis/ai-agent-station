@@ -18,6 +18,10 @@ public class WorkflowDefinition extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
+    @Version
+    @Column(name = "optimistic_version")
+    private Long optimisticVersion;
+
     @Column(nullable = false)
     private Integer version = 1;
 

@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * All endpoints return CSV file downloads with appropriate filter parameters.
  */
 @RestController
-@RequestMapping("/export")
+@RequestMapping("/v1/export")
 @RequiredArgsConstructor
 @Tag(name = "数据导出", description = "数据导出接口")
 public class DataExportController {

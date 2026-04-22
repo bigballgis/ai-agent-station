@@ -1,12 +1,11 @@
 package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
-
+import com.aiagent.common.Result;
 import com.aiagent.service.tool.CompositeToolProvider;
 import com.aiagent.service.tool.FunctionToolRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -16,7 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 工具管理 Controller
- * 
+ *
  * 提供工具查询 API，展示所有可用工具（MCP + Function Calling）
  */
 @Slf4j
@@ -35,7 +34,7 @@ public class ToolController {
      */
     @RequiresPermission("tool:view")
     @GetMapping
-    public ResponseEntity<Map<String, Object>> listTools() {
+    public Result<Map<String, Object>> listTools() {
         List<Map<String, Object>> tools = new ArrayList<>();
 
         // Function Calling 工具
@@ -59,7 +58,7 @@ public class ToolController {
         result.put("mcpTools", mcpCount);
         result.put("tools", tools);
 
-        return ResponseEntity.ok(result);
+        return Result.success(result);
     }
 
     /**
@@ -68,7 +67,7 @@ public class ToolController {
      */
     @Operation(summary = "获取所有可用工具列表")
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getToolStats() {
+    public Result<Map<String, Object>> getToolStats() {
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalTools", compositeToolProvider.getMcpToolCount() + compositeToolProvider.getFunctionToolCount());
         stats.put("mcpTools", compositeToolProvider.getMcpToolCount());
@@ -82,7 +81,7 @@ public class ToolController {
         }
         stats.put("groupCounts", groupCounts);
 
-        return ResponseEntity.ok(stats);
+        return Result.success(stats);
     }
 
     /**
@@ -91,13 +90,13 @@ public class ToolController {
      */
     @Operation(summary = "获取工具统计信息")
     @GetMapping("/{toolName}/source")
-    public ResponseEntity<Map<String, Object>> getToolSource(@PathVariable String toolName) {
+    public Result<Map<String, Object>> getToolSource(@PathVariable String toolName) {
         String source = compositeToolProvider.getToolSource(toolName);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("toolName", toolName);
         result.put("source", source);
         result.put("description", source.equals("function") ? "系统内置 Java 函数" : "外部 MCP 服务器工具");
-        return ResponseEntity.ok(result);
+        return Result.success(result);
     }
 
     /**
@@ -107,11 +106,11 @@ public class ToolController {
     @Operation(summary = "查询工具来源")
     @RequiresPermission("tool:manage")
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, Object>> refreshTools() {
+    public Result<Map<String, Object>> refreshTools() {
         compositeToolProvider.refreshCache();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "工具缓存已刷新");
         result.put("totalTools", compositeToolProvider.getMcpToolCount() + compositeToolProvider.getFunctionToolCount());
-        return ResponseEntity.ok(result);
+        return Result.success(result);
     }
 }

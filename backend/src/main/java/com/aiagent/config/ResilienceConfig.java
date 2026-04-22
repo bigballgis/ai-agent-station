@@ -10,6 +10,8 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.dao.TransientDataAccessException;
 
 import java.time.Duration;
 
@@ -97,6 +99,116 @@ public class ResilienceConfig {
                         log.warn("[Resilience4j] LLM 请求被限流"));
 
         return rl;
+    }
+
+    // ==================== 通知服务熔断器 ====================
+
+    @Bean
+    public CircuitBreaker notificationCircuitBreaker() {
+        CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofSeconds(30))
+                .slidingWindowSize(10)
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .build();
+
+        CircuitBreaker cb = CircuitBreaker.of("notification", config);
+
+        cb.getEventPublisher()
+                .onStateTransition(event ->
+                        log.warn("[Resilience4j] 通知服务熔断器状态变更: {}", event))
+                .onError(event ->
+                        log.warn("[Resilience4j] 通知服务调用失败: {}", event.getThrowable().getMessage()));
+
+        return cb;
+    }
+
+    // ==================== 文件存储熔断器 ====================
+
+    @Bean
+    public CircuitBreaker fileStorageCircuitBreaker() {
+        CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+                .failureRateThreshold(60)
+                .waitDurationInOpenState(Duration.ofSeconds(20))
+                .slidingWindowSize(8)
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .build();
+
+        CircuitBreaker cb = CircuitBreaker.of("fileStorage", config);
+
+        cb.getEventPublisher()
+                .onStateTransition(event ->
+                        log.warn("[Resilience4j] 文件存储熔断器状态变更: {}", event))
+                .onError(event ->
+                        log.warn("[Resilience4j] 文件存储调用失败: {}", event.getThrowable().getMessage()));
+
+        return cb;
+    }
+
+    // ==================== 数据导出重试器 ====================
+
+    @Bean
+    public Retry exportRetry() {
+        RetryConfig config = RetryConfig.custom()
+                .maxAttempts(2)
+                .waitDuration(Duration.ofSeconds(1))
+                .retryExceptions(Exception.class)
+                .build();
+
+        Retry retry = Retry.of("export", config);
+
+        retry.getEventPublisher()
+                .onRetry(event ->
+                        log.info("[Resilience4j] 数据导出重试 #{}: {}", event.getNumberOfRetryAttempts(),
+                                event.getLastThrowable().getMessage()))
+                .onError(event ->
+                        log.error("[Resilience4j] 数据导出重试耗尽: {}", event.getLastThrowable().getMessage()));
+
+        return retry;
+    }
+
+    // ==================== Redis 操作熔断器 ====================
+
+    @Bean
+    public CircuitBreaker redisCircuitBreaker() {
+        CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofSeconds(10))
+                .slidingWindowSize(10)
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .build();
+
+        CircuitBreaker cb = CircuitBreaker.of("redis", config);
+
+        cb.getEventPublisher()
+                .onStateTransition(event ->
+                        log.warn("[Resilience4j] Redis 熔断器状态变更: {}", event))
+                .onError(event ->
+                        log.warn("[Resilience4j] Redis 调用失败: {}", event.getThrowable().getMessage()));
+
+        return cb;
+    }
+
+    // ==================== 数据库操作重试器 ====================
+
+    @Bean
+    public Retry dbRetry() {
+        RetryConfig config = RetryConfig.custom()
+                .maxAttempts(3)
+                .waitDuration(Duration.ofMillis(500))
+                .retryExceptions(TransientDataAccessException.class, PessimisticLockingFailureException.class)
+                .build();
+
+        Retry retry = Retry.of("db", config);
+
+        retry.getEventPublisher()
+                .onRetry(event ->
+                        log.info("[Resilience4j] 数据库操作重试 #{}: {}", event.getNumberOfRetryAttempts(),
+                                event.getLastThrowable().getMessage()))
+                .onError(event ->
+                        log.error("[Resilience4j] 数据库操作重试耗尽: {}", event.getLastThrowable().getMessage()));
+
+        return retry;
     }
 
     /**

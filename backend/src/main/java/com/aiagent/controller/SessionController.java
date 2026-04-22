@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Provides endpoints to view online sessions, kick sessions, and manage multi-device access.
  */
 @RestController
-@RequestMapping("/sessions")
+@RequestMapping("/v1/sessions")
 @RequiredArgsConstructor
 @Tag(name = "会话管理", description = "会话管理接口")
 public class SessionController {

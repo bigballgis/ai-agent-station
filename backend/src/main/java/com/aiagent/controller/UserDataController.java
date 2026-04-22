@@ -16,7 +16,7 @@ import java.util.Map;
  * Provides user data export, deletion requests, and data retention reports.
  */
 @RestController
-@RequestMapping("/user-data")
+@RequestMapping("/v1/user-data")
 @RequiredArgsConstructor
 @Tag(name = "用户数据管理", description = "GDPR/隐私合规接口")
 public class UserDataController {

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/agents")
+@RequestMapping("/v1/agents")
 @RequiredArgsConstructor
 @Tag(name = "Agent管理", description = "Agent管理接口")
 public class AgentController {

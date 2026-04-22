@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * 数据字典管理接口
  */
 @RestController
-@RequestMapping("/dict-types")
+@RequestMapping("/v1/dict-types")
 @RequiredArgsConstructor
 @Tag(name = "数据字典", description = "数据字典管理接口")
 public class DictController {

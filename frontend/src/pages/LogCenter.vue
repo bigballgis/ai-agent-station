@@ -1,47 +1,20 @@
 <template>
   <div class="log-center-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-        日志中心
-      </h1>
-      <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-        查看系统操作日志、API 调用日志和异常日志，追踪系统运行状态
-      </p>
-    </div>
+    <PageHeader title="日志中心" subtitle="查看系统操作日志、API 调用日志和异常日志，追踪系统运行状态" />
 
     <!-- Tab 切换 -->
     <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden animate-slide-up">
       <!-- Tab 栏 -->
-      <div class="flex items-center gap-1 px-6 pt-5 pb-0 border-b border-neutral-100 dark:border-neutral-800">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          @click="activeTab = tab.key"
-          :class="[
-            'relative px-4 py-3 text-sm font-medium transition-colors duration-200 cursor-pointer',
-            activeTab === tab.key
-              ? 'text-primary-600 dark:text-primary-400'
-              : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300',
-          ]"
-        >
-          {{ tab.label }}
-          <span
-            v-if="activeTab === tab.key"
-            class="absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-primary-500"
-          />
-        </button>
+      <div class="px-6 pt-5 pb-0 border-b border-neutral-100 dark:border-neutral-800">
+        <TabNav :tabs="tabItems" :active-key="activeTab" @change="activeTab = $event" />
       </div>
 
       <!-- 操作日志 Tab -->
       <div v-if="activeTab === 'operation'" class="p-6">
         <!-- 筛选栏 -->
         <div class="flex flex-wrap items-center gap-3 mb-5">
-          <a-range-picker
-            v-model:value="operationFilters.dateRange"
-            :placeholder="['开始日期', '结束日期']"
-            class="log-range-picker"
-          />
+          <TimeRangePicker @change="handleOperationTimeRangeChange" />
           <select
             v-model="operationFilters.module"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
@@ -153,11 +126,7 @@
       <div v-if="activeTab === 'api'" class="p-6">
         <!-- 筛选栏 -->
         <div class="flex flex-wrap items-center gap-3 mb-5">
-          <a-range-picker
-            v-model:value="apiFilters.dateRange"
-            :placeholder="['开始日期', '结束日期']"
-            class="log-range-picker"
-          />
+          <TimeRangePicker @change="handleApiTimeRangeChange" />
           <select
             v-model="apiFilters.agent"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
@@ -349,6 +318,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { getLogs, getLogsByDateRange, getLogsByModule } from '@/api/log'
+import { PageHeader, TabNav, TimeRangePicker } from '@/components'
+import type { TabItem } from '@/components'
 
 // ============ Tab 配置 ============
 
@@ -359,6 +330,30 @@ const tabs = [
 ]
 const activeTab = ref('operation')
 const loading = ref(false)
+
+// TabNav items（响应式）
+const tabItems = computed<TabItem[]>(() => tabs.map(tab => ({ key: tab.key, label: tab.label })))
+
+// TimeRangePicker change handlers
+function handleOperationTimeRangeChange(range: { start: string; end: string } | null) {
+  if (range) {
+    operationFilters.value.dateRange = range
+  } else {
+    operationFilters.value.dateRange = null
+  }
+  operationPage.value = 1
+  fetchOperationLogs()
+}
+
+function handleApiTimeRangeChange(range: { start: string; end: string } | null) {
+  if (range) {
+    apiFilters.value.dateRange = range
+  } else {
+    apiFilters.value.dateRange = null
+  }
+  apiPage.value = 1
+  fetchApiLogs()
+}
 
 // ============ 操作日志 ============
 
@@ -412,10 +407,13 @@ async function fetchOperationLogs() {
   loading.value = true
   try {
     let res: any
-    if (operationFilters.value.dateRange && operationFilters.value.dateRange.length === 2) {
+    const dr = operationFilters.value.dateRange
+    if (dr && (dr.start || (Array.isArray(dr) && dr.length === 2))) {
+      const startTime = typeof dr === 'object' && dr.start ? dr.start : (Array.isArray(dr) && dr[0]?.format ? dr[0].format('YYYY-MM-DD HH:mm:ss') : '')
+      const endTime = typeof dr === 'object' && dr.end ? dr.end : (Array.isArray(dr) && dr[1]?.format ? dr[1].format('YYYY-MM-DD HH:mm:ss') : '')
       res = await getLogsByDateRange({
-        startTime: operationFilters.value.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
-        endTime: operationFilters.value.dateRange[1].format('YYYY-MM-DD HH:mm:ss'),
+        startTime,
+        endTime,
         page: operationPage.value,
         size: 100,
       })
@@ -495,10 +493,13 @@ async function fetchApiLogs() {
   loading.value = true
   try {
     let res: any
-    if (apiFilters.value.dateRange && apiFilters.value.dateRange.length === 2) {
+    const dr = apiFilters.value.dateRange
+    if (dr && (dr.start || (Array.isArray(dr) && dr.length === 2))) {
+      const startTime = typeof dr === 'object' && dr.start ? dr.start : (Array.isArray(dr) && dr[0]?.format ? dr[0].format('YYYY-MM-DD HH:mm:ss') : '')
+      const endTime = typeof dr === 'object' && dr.end ? dr.end : (Array.isArray(dr) && dr[1]?.format ? dr[1].format('YYYY-MM-DD HH:mm:ss') : '')
       res = await getLogsByDateRange({
-        startTime: apiFilters.value.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
-        endTime: apiFilters.value.dateRange[1].format('YYYY-MM-DD HH:mm:ss'),
+        startTime,
+        endTime,
         page: apiPage.value,
         size: 100,
       })

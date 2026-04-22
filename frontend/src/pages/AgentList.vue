@@ -1,16 +1,8 @@
 <template>
   <div class="agent-list-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            Agent 管理
-          </h1>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            管理和监控所有 AI Agent，支持创建、编辑、版本管理和发布
-          </p>
-        </div>
+    <PageHeader title="Agent管理" subtitle="管理和监控所有 AI Agent，支持创建、编辑、版本管理和发布">
+      <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
           @click="showCreateModal = true"
@@ -20,53 +12,12 @@
           </svg>
           创建 Agent
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- 搜索/筛选栏 -->
-    <div class="mb-6 flex flex-wrap items-center gap-3 animate-slide-up">
-      <!-- 搜索框 -->
-      <div class="relative flex-1 min-w-[240px] max-w-md">
-        <svg
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索 Agent 名称或描述..."
-          class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
-          @input="handleSearch"
-        />
-      </div>
-
-      <!-- 状态筛选 -->
-      <select
-        v-model="statusFilter"
-        class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
-        @change="handleSearch"
-      >
-        <option value="">全部状态</option>
-        <option value="DRAFT">草稿</option>
-        <option value="PENDING_APPROVAL">待审批</option>
-        <option value="APPROVED">已审批</option>
-        <option value="PUBLISHED">已发布</option>
-        <option value="ARCHIVED">已归档</option>
-      </select>
-
-      <!-- 类型筛选 -->
-      <select
-        v-model="activeFilter"
-        class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
-        @change="handleSearch"
-      >
-        <option value="">全部类型</option>
-        <option value="true">已启用</option>
-        <option value="false">已禁用</option>
-      </select>
+    <div class="mb-6 animate-slide-up">
+      <SearchBar :fields="searchFields" @search="handleSearch" @reset="handleReset" />
     </div>
 
     <!-- 加载状态 - 骨架屏 -->
@@ -98,28 +49,14 @@
     </div>
 
     <!-- 空状态 -->
-    <div
+    <EmptyState
       v-else-if="filteredAgents.length === 0"
-      class="flex flex-col items-center justify-center py-20 animate-fade-in"
-    >
-      <div class="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-5">
-        <svg class="w-10 h-10 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      </div>
-      <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">暂无 Agent</h3>
-      <p class="text-sm text-neutral-400 dark:text-neutral-500 mb-5">点击下方按钮创建您的第一个 Agent</p>
-      <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-        @click="showCreateModal = true"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        创建第一个 Agent
-      </button>
-    </div>
+      type="noData"
+      description="点击下方按钮创建您的第一个 Agent"
+      action-text="创建第一个 Agent"
+      class="py-20 animate-fade-in"
+      @action="showCreateModal = true"
+    />
 
     <!-- Agent 卡片网格 -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -144,12 +81,7 @@
                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <span
-            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-            :class="getStatusBadgeClass(agent)"
-          >
-            {{ getStatusLabel(agent) }}
-          </span>
+          <StatusBadge :status="agent.status || (agent.isActive ? 'PUBLISHED' : 'DRAFT')" type="agent" />
         </div>
 
         <!-- 标题 -->
@@ -299,6 +231,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
+import { PageHeader, SearchBar, StatusBadge, EmptyState, ConfirmModal } from '@/components'
+import type { SearchField } from '@/components'
 
 const router = useRouter()
 const agents = ref<Agent[]>([])
@@ -317,6 +251,39 @@ const currentAgent = ref<Agent | null>(null)
 const searchQuery = ref('')
 const statusFilter = ref('')
 const activeFilter = ref('')
+
+// SearchBar 字段配置
+const searchFields: SearchField[] = [
+  {
+    label: 'Agent 名称',
+    key: 'searchQuery',
+    type: 'input',
+    placeholder: '搜索 Agent 名称或描述...',
+  },
+  {
+    label: '状态',
+    key: 'statusFilter',
+    type: 'select',
+    placeholder: '全部状态',
+    options: [
+      { label: '草稿', value: 'DRAFT' },
+      { label: '待审批', value: 'PENDING_APPROVAL' },
+      { label: '已审批', value: 'APPROVED' },
+      { label: '已发布', value: 'PUBLISHED' },
+      { label: '已归档', value: 'ARCHIVED' },
+    ],
+  },
+  {
+    label: '类型',
+    key: 'activeFilter',
+    type: 'select',
+    placeholder: '全部类型',
+    options: [
+      { label: '已启用', value: 'true' },
+      { label: '已禁用', value: 'false' },
+    ],
+  },
+]
 
 // 分页
 const currentPage = ref(1)
@@ -373,7 +340,19 @@ async function loadAgents() {
   }
 }
 
-function handleSearch() {
+function handleSearch(params?: Record<string, any>) {
+  if (params) {
+    searchQuery.value = params.searchQuery || ''
+    statusFilter.value = params.statusFilter || ''
+    activeFilter.value = params.activeFilter || ''
+  }
+  currentPage.value = 1
+}
+
+function handleReset() {
+  searchQuery.value = ''
+  statusFilter.value = ''
+  activeFilter.value = ''
   currentPage.value = 1
 }
 

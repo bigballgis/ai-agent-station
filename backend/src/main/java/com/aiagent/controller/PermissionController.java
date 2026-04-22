@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/permissions")
+@RequestMapping("/v1/permissions")
 @RequiredArgsConstructor
 @Tag(name = "权限管理", description = "权限管理接口")
 public class PermissionController {

@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/deployments")
+@RequestMapping("/v1/deployments")
 @RequiredArgsConstructor
 @Tag(name = "部署管理", description = "部署管理接口")
 public class DeploymentController {

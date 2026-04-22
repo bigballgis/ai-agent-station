@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @RestController
-@RequestMapping("/suggestions")
+@RequestMapping("/v1/suggestions")
 @RequiredArgsConstructor
 @Tag(name = "建议管理", description = "Agent建议管理接口")
 public class SuggestionController {

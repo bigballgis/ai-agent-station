@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/roles")
+@RequestMapping("/v1/roles")
 @RequiredArgsConstructor
 @Tag(name = "角色管理", description = "角色管理接口")
 public class RoleController {

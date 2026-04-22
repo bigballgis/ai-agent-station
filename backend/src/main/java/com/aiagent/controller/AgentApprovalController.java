@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/approvals")
+@RequestMapping("/v1/approvals")
 @RequiredArgsConstructor
 @Tag(name = "审批管理", description = "审批管理接口")
 public class AgentApprovalController {

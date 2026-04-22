@@ -10,16 +10,93 @@ on:
         options:
           - staging
           - production
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: false
+        type: string
 
 jobs:
-  deploy:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      env_file: ${{ steps.env.outputs.env_file }}
+      compose_file: ${{ steps.env.outputs.compose_file }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Deploy with Docker Compose
+      - id: env
         run: |
           if [ "${{ github.event.inputs.environment }}" = "production" ]; then
-            docker compose -f docker-compose.yml up -d --build
+            echo "env_file=.env.production" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.prod.yml" >> $GITHUB_OUTPUT
           else
-            docker compose -f docker-compose.yml up -d --build
+            echo "env_file=.env.staging" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.yml" >> $GITHUB_OUTPUT
           fi
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create env file
+        run: |
+          cp ${{ needs.prepare.outputs.env_file }}.example .env 2>/dev/null || true
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "SPRING_PROFILES_ACTIVE=${{ github.event.inputs.environment }}" >> .env
+
+      - name: Pull latest images
+        run: docker compose pull 2>/dev/null || true
+
+      - name: Build and deploy
+        run: |
+          docker compose -f ${{ needs.prepare.outputs.compose_file }} \
+            --env-file .env \
+            up -d --build --remove-orphans
+
+      - name: Wait for health check
+        run: |
+          echo "Waiting for services to be healthy..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/api/actuator/health > /dev/null 2>&1; then
+              echo "Backend is healthy!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Health check failed after 60s"
+              docker compose logs backend --tail=50
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Run smoke tests
+        run: |
+          curl -sf http://localhost:8080/api/actuator/health | jq .
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "Deployment to ${{ github.event.inputs.environment }} succeeded"
+          else
+            echo "Deployment to ${{ github.event.inputs.environment }} failed"
+            echo "Rolling back..."
+            docker compose -f ${{ needs.prepare.outputs.compose_file }} down
+          fi
+
+  rollback:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rollback
+        run: |
+          echo "Rolling back deployment to previous version..."
+          docker compose down
+          docker image prune -f
+          echo "Rollback complete. Manual intervention may be required."

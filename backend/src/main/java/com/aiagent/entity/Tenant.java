@@ -11,6 +11,10 @@ public class Tenant extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 

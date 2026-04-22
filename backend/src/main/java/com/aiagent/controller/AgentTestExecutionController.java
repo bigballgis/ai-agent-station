@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/test-executions")
+@RequestMapping("/v1/test-executions")
 @RequiredArgsConstructor
 @Tag(name = "测试执行管理", description = "Agent测试执行管理接口")
 public class AgentTestExecutionController {

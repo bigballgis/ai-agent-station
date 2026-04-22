@@ -34,7 +34,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/workflows")
+@RequestMapping("/v1/workflows")
 @RequiredArgsConstructor
 @Tag(name = "工作流管理", description = "工作流管理接口")
 public class WorkflowController {
