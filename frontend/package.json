@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "check": "vue-tsc -b",
     "lint": "eslint . --ext .ts,.vue",
-    "lint:fix": "eslint . --ext .ts,.vue --fix"
+    "lint:fix": "eslint . --ext .ts,.vue --fix",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",
@@ -42,6 +45,11 @@
     "vite": "^5.0.12",
     "vite-plugin-trae-solo-badge": "^1.0.0",
     "vite-plugin-vue-inspector": "^5.4.0",
-    "vue-tsc": "^1.8.27"
+    "vue-tsc": "^1.8.27",
+    "vitest": "^2.1.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.0",
+    "@testing-library/vue": "^8.1.0",
+    "happy-dom": "^15.0.0"
   }
 }

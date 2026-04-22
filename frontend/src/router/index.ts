@@ -180,6 +180,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '测试执行结果' }
       },
       {
+        path: 'workflow/designer',
+        name: 'WorkflowDesigner',
+        component: () => import('@/pages/WorkflowDesigner.vue'),
+        meta: { title: '工作流设计器' }
+      },
+      {
+        path: 'workflow/instances',
+        name: 'WorkflowInstance',
+        component: () => import('@/pages/WorkflowInstance.vue'),
+        meta: { title: '工作流实例' }
+      },
+      {
         path: 'suggestions',
         name: 'SuggestionList',
         component: () => import('@/pages/SuggestionList.vue'),
