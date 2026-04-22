@@ -58,4 +58,36 @@ public class GraphDefinition {
         }
         return errors;
     }
+
+    /**
+     * 将图定义导出为前端期望的 JSON 友好格式
+     */
+    public Map<String, Object> toJson() {
+        Map<String, Object> json = new HashMap<>();
+        json.put("entryNodeId", entryNodeId);
+
+        List<Map<String, Object>> nodeJsons = new ArrayList<>();
+        for (GraphNode node : nodes.values()) {
+            Map<String, Object> nodeJson = new HashMap<>();
+            nodeJson.put("id", node.getId());
+            nodeJson.put("type", node.getType());
+            nodeJson.put("label", node.getLabel());
+            nodeJson.put("config", node.getConfig());
+            nodeJsons.add(nodeJson);
+        }
+        json.put("nodes", nodeJsons);
+
+        List<Map<String, Object>> edgeJsons = new ArrayList<>();
+        for (GraphEdge edge : edges) {
+            Map<String, Object> edgeJson = new HashMap<>();
+            edgeJson.put("sourceId", edge.getSourceNodeId());
+            edgeJson.put("sourcePort", edge.getSourcePort());
+            edgeJson.put("targetId", edge.getTargetNodeId());
+            edgeJson.put("targetPort", edge.getTargetPort());
+            edgeJsons.add(edgeJson);
+        }
+        json.put("connections", edgeJsons);
+
+        return json;
+    }
 }

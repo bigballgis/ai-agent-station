@@ -86,6 +86,11 @@ public class GraphExecutor {
                     case "exception" -> executeExceptionNode(node, state);
                     case "http" -> executeHttpNode(node, state);
                     case "end" -> { node.setStatus("completed"); state.setShouldTerminate(true); break; }
+                    // code 和 delay 是前端可视化类型，不需要后端执行，直接跳过
+                    case "code", "delay" -> {
+                        log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
+                        node.setStatus("skipped");
+                    }
                     default -> {
                         log.warn("未知节点类型: {}, 跳过", node.getType());
                         node.setStatus("skipped");

@@ -55,6 +55,17 @@ public class GraphParser {
                         node.setConfig(config);
                     }
 
+                    // 处理节点位置 — 兼容嵌套 position:{x,y} 和顶层 x,y 两种格式
+                    Object posObj = nodeData.get("position");
+                    if (posObj instanceof Map) {
+                        Map<String, Object> pos = (Map<String, Object>) posObj;
+                        // 嵌套格式：position 字段包含 x, y — 后端无需特殊处理，仅记录日志
+                        log.debug("节点 {} 位置（嵌套格式）: {}", node.getId(), pos);
+                    } else {
+                        // 旧格式：x, y 作为顶层字段 — 同样无需特殊处理
+                        log.debug("节点 {} 位置（顶层格式）: x={}, y={}", node.getId(), nodeData.get("x"), nodeData.get("y"));
+                    }
+
                     // 设置默认输出端口
                     node.getOutputPorts().add("output");
 
@@ -65,20 +76,84 @@ public class GraphParser {
                         node.getOutputPorts().add("false");
                     }
 
+                    // 工具节点端口
+                    if ("tool".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 记忆节点端口
+                    if ("memory".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 变量节点端口
+                    if ("variable".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 检索节点端口
+                    if ("retriever".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 异常处理节点端口
+                    if ("exception".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // HTTP 请求节点端口
+                    if ("http".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 代码节点端口（前端可视化类型，后端不执行，仅定义端口）
+                    if ("code".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 延时节点端口（前端可视化类型，后端不执行，仅定义端口）
+                    if ("delay".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
                     graph.getNodes().put(node.getId(), node);
                 }
             }
 
             // 解析连接（前端叫 connections，后端叫 edges）
+            // 兼容旧格式 (fromNodeId/toNodeId) 和新格式 (sourceId/targetId)
             List<Map<String, Object>> connections = (List<Map<String, Object>>) graphMap.get("connections");
             if (connections != null) {
                 for (Map<String, Object> connData : connections) {
                     GraphEdge edge = new GraphEdge();
                     edge.setId(UUID.randomUUID().toString());
-                    edge.setSourceNodeId((String) connData.get("sourceId"));
-                    edge.setSourcePort((String) connData.getOrDefault("sourcePort", "output"));
-                    edge.setTargetNodeId((String) connData.get("targetId"));
-                    edge.setTargetPort((String) connData.getOrDefault("targetPort", "input"));
+
+                    // 解析连接 — 兼容旧格式 (fromNodeId/toNodeId) 和新格式 (sourceId/targetId)
+                    String sourceId = (String) connData.get("sourceId");
+                    if (sourceId == null) sourceId = (String) connData.get("fromNodeId"); // 向后兼容
+                    String sourcePort = (String) connData.get("sourcePort");
+                    if (sourcePort == null) sourcePort = (String) connData.get("fromPort"); // 向后兼容
+                    String targetId = (String) connData.get("targetId");
+                    if (targetId == null) targetId = (String) connData.get("toNodeId"); // 向后兼容
+                    String targetPort = (String) connData.get("targetPort");
+                    if (targetPort == null) targetPort = (String) connData.get("toPort"); // 向后兼容
+
+                    // 规范化端口名称，处理前端不同格式
+                    sourcePort = normalizePortName(sourcePort);
+                    targetPort = normalizePortName(targetPort);
+
+                    edge.setSourceNodeId(sourceId);
+                    edge.setSourcePort(sourcePort != null ? sourcePort : "output");
+                    edge.setTargetNodeId(targetId);
+                    edge.setTargetPort(targetPort != null ? targetPort : "input");
                     graph.getEdges().add(edge);
                 }
             }
@@ -150,5 +225,16 @@ public class GraphParser {
         edge.setTargetNodeId(targetId);
         edge.setTargetPort(targetPort);
         return edge;
+    }
+
+    /**
+     * 规范化端口名称，处理前端不同格式的端口命名
+     * 例如: "output-true" -> "true", "output-false" -> "false", "output" -> "output"
+     */
+    private String normalizePortName(String portName) {
+        if (portName == null) return "output";
+        if ("output-true".equals(portName)) return "true";
+        if ("output-false".equals(portName)) return "false";
+        return portName;
     }
 }
