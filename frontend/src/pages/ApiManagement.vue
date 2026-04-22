@@ -319,7 +319,9 @@ function testApi(api: any) {
 }
 
 function viewLogDetail(log: any) {
-  console.log('Viewing log detail:', log)
+  if (import.meta.env.DEV) {
+    console.log('Viewing log detail:', log)
+  }
 }
 
 async function executeTest() {

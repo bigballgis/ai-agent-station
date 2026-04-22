@@ -154,8 +154,10 @@ function getTypeColor(type: string) {
 
 function fetchExperienceData() {
   // 模拟数据获取
-  console.log('Fetching experience data for agent:', selectedAgent.value)
-  console.log('Date range:', dateRange.value)
+  if (import.meta.env.DEV) {
+    console.log('Fetching experience data for agent:', selectedAgent.value)
+    console.log('Date range:', dateRange.value)
+  }
   // 这里可以添加实际的API调用
 }
 

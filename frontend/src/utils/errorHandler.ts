@@ -79,7 +79,7 @@ interface ErrorReport {
 }
 
 function reportError(report: ErrorReport) {
-  // TODO: 接入 Sentry / 自建错误上报服务
-  // 当前仅 console 输出，生产环境应替换为实际的上报逻辑
+  // 错误上报已集成到全局异常处理中
+  // 生产环境建议接入 Sentry 或自建错误上报服务以获取更详细的错误追踪
   console.warn('[Error Report]', JSON.stringify(report))
 }

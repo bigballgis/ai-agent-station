@@ -120,7 +120,7 @@ const loadSuggestions = async () => {
     })
     suggestions.value = response.data.data.content
   } catch (error) {
-    console.error('加载建议失败:', error)
+    console.warn('加载建议失败:', error)
   }
 }
 
@@ -143,13 +143,11 @@ const getPriorityLabel = (priority: number) => {
 }
 
 const viewSuggestion = (suggestion: any) => {
-  // 查看建议详情
-  console.log('查看建议:', suggestion)
+  // 查看建议详情 - TODO: 实现详情页面跳转
 }
 
 const editSuggestion = (suggestion: any) => {
-  // 编辑建议
-  console.log('编辑建议:', suggestion)
+  // 编辑建议 - TODO: 实现编辑页面跳转
 }
 
 const deleteSuggestion = async (id: number) => {
@@ -158,7 +156,7 @@ const deleteSuggestion = async (id: number) => {
       await suggestionApi.deleteSuggestion(id)
       loadSuggestions()
     } catch (error) {
-      console.error('删除建议失败:', error)
+      console.warn('删除建议失败:', error)
     }
   }
 }
@@ -173,7 +171,7 @@ const generateSuggestions = async () => {
     showGenerateModal.value = false
     loadSuggestions()
   } catch (error) {
-    console.error('生成建议失败:', error)
+    console.warn('生成建议失败:', error)
   }
 }
 </script>
