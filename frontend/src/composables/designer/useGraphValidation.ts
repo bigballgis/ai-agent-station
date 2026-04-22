@@ -12,6 +12,8 @@
  *   - 检查孤立节点（无连接）
  *   - 检查循环依赖（拓扑排序）
  *   - 检查 condition 节点的 true/false 分支
+ *   - 检查 switch 节点的分支规则和默认分支
+ *   - 检查 subgraph 节点的 Agent ID 配置
  *   - 检查 LLM 节点的 model 配置
  *   - 检查 HTTP 节点的 URL 配置
  *   - 检查 tool 节点的 toolId 配置
@@ -89,6 +91,12 @@ export function useGraphValidation() {
    *
    * 对有向无环图进行拓扑排序。如果图中存在环，返回 null。
    *
+   * 注意：并行节点（parallel）+ 合并节点（merge）形成的菱形（diamond）结构
+   * 是合法的 DAG 模式，不是循环。拓扑排序能正确处理这种结构，因为：
+   * - parallel 节点扇出到多个分支
+   * - 各分支最终汇聚到 merge 节点
+   * - merge 节点入度 > 1 但不影响 DAG 性质
+   *
    * @param nodes - 节点列表
    * @param connections - 连接列表
    * @returns 拓扑排序后的节点 ID 数组，如果存在环则返回 null
@@ -147,6 +155,10 @@ export function useGraphValidation() {
    * 获取从指定节点开始的执行顺序
    *
    * 基于 BFS 遍历，返回从 startNodeId 开始可达的所有节点的执行顺序。
+   *
+   * 注意：当遇到 parallel 节点时，其所有扇出目标会被列为同一层级的后续节点。
+   * parallel 节点的扇出分支在 BFS 中自然形成并行层级，merge 节点会在所有
+   * 前驱分支完成后才被处理（入度 > 1 的节点需等待所有前驱完成）。
    *
    * @param startNodeId - 起始节点 ID
    * @param nodes - 节点列表
@@ -409,6 +421,84 @@ export function useGraphValidation() {
         warnings.push(
           `异常处理节点「${node.label}」的降级处理未配置降级值（fallbackValue）`,
         )
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 15. 检查 human_approval 节点配置和连接
+    // ----------------------------------------------------------
+    for (const node of nodes) {
+      if (node.type !== 'human_approval') continue
+
+      if (!node.config?.title) {
+        warnings.push(`人工审批节点「${node.label}」建议设置审批标题`)
+      }
+      const outConns = connections.filter((c) => c.sourceId === node.id)
+      const hasApproved = outConns.some((c) => c.sourcePort === 'approved')
+      const hasRejected = outConns.some((c) => c.sourcePort === 'rejected')
+      if (!hasApproved) {
+        warnings.push(`人工审批节点「${node.label}」建议连接"已批准"输出`)
+      }
+      if (!hasRejected) {
+        warnings.push(`人工审批节点「${node.label}」建议连接"已拒绝"输出`)
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 15. 检查 switch 节点分支规则和默认分支
+    // ----------------------------------------------------------
+    for (const node of nodes) {
+      if (node.type !== 'switch') continue
+
+      const cases = node.config?.cases
+      if (Array.isArray(cases)) {
+        cases.forEach((c: any, i: number) => {
+          if (!c.expression) {
+            warnings.push(`多路分支节点「${node.label}」的分支 ${i + 1} 缺少条件表达式`)
+          }
+        })
+      }
+      const outConns = connections.filter((c) => c.sourceId === node.id)
+      const hasDefault = outConns.some((c) => c.sourcePort === 'default')
+      if (!hasDefault) {
+        warnings.push(`多路分支节点「${node.label}」建议连接默认分支`)
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 16. 检查 subgraph 节点 Agent ID 配置
+    // ----------------------------------------------------------
+    for (const node of nodes) {
+      if (node.type !== 'subgraph') continue
+
+      if (!node.config.agentId || node.config.agentId.trim() === '') {
+        errors.push(
+          `子图节点「${node.label}」未配置 Agent ID（agentId）`,
+        )
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 15. 检查 parallel 节点输出连接
+    // ----------------------------------------------------------
+    for (const node of nodes) {
+      if (node.type !== 'parallel') continue
+
+      const outConns = connections.filter((c) => c.sourceId === node.id)
+      if (outConns.length < 2) {
+        errors.push(`并行节点「${node.label}」至少需要2个输出连接`)
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 16. 检查 merge 节点输入连接
+    // ----------------------------------------------------------
+    for (const node of nodes) {
+      if (node.type !== 'merge') continue
+
+      const inConns = connections.filter((c) => c.targetId === node.id)
+      if (inConns.length < 2) {
+        errors.push(`合并节点「${node.label}」至少需要2个输入连接`)
       }
     }
 

@@ -124,6 +124,59 @@ public class GraphParser {
                         node.getOutputPorts().add("output");
                     }
 
+                    // 人工审批节点端口（approved/rejected 双输出）
+                    if ("human_approval".equals(node.getType())) {
+                        node.getInputPorts().clear();
+                        node.getInputPorts().add("input");
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("approved");
+                        node.getOutputPorts().add("rejected");
+                    }
+
+                    // 子图/Agent 调用节点端口
+                    if ("subgraph".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getInputPorts().clear();
+                        node.getInputPorts().add("input");
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 多路分支节点端口
+                    if ("switch".equals(node.getType())) {
+                        node.getOutputPorts().clear();
+                        node.getInputPorts().clear();
+                        node.getInputPorts().add("input");
+                        // 动态端口基于 cases 配置
+                        Object casesObj = node.getConfig().get("cases");
+                        if (casesObj instanceof List) {
+                            @SuppressWarnings("unchecked")
+                            List<Map<String, String>> cases = (List<Map<String, String>>) casesObj;
+                            for (Map<String, String> caseDef : cases) {
+                                String port = caseDef.getOrDefault("outputPort", "case_" + node.getOutputPorts().size());
+                                node.getOutputPorts().add(port);
+                            }
+                        }
+                        node.getOutputPorts().add("default");
+                    }
+
+                    // 并行执行节点端口
+                    if ("parallel".equals(node.getType())) {
+                        node.getInputPorts().clear();
+                        node.getInputPorts().add("input");
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
+                    // 合并节点端口
+                    if ("merge".equals(node.getType())) {
+                        node.getInputPorts().clear();
+                        node.getInputPorts().add("input_1");
+                        node.getInputPorts().add("input_2");
+                        node.getInputPorts().add("input_3");
+                        node.getOutputPorts().clear();
+                        node.getOutputPorts().add("output");
+                    }
+
                     graph.getNodes().put(node.getId(), node);
                 }
             }
@@ -159,7 +212,9 @@ public class GraphParser {
             }
 
             // 如果没有 start 节点，自动创建
-            if (!graph.getNodes().containsKey("start")) {
+            boolean hasStartNode = graph.getNodes().values().stream()
+                .anyMatch(n -> "start".equals(n.getType()));
+            if (!hasStartNode) {
                 GraphNode startNode = new GraphNode();
                 startNode.setId("start");
                 startNode.setType("start");

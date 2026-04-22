@@ -87,6 +87,8 @@ export interface NodeTypeDefinition {
   defaultInputs: PortDefinition[]
   /** 默认输出端口 */
   defaultOutputs: PortDefinition[]
+  /** 配置字段 Schema（用于 ConfigPanel 渲染） */
+  configSchema: ConfigFieldSchema[]
 }
 
 /** 配置字段 Schema（用于 ConfigPanel 渲染） */
@@ -96,7 +98,7 @@ export interface ConfigFieldSchema {
   /** 显示标签 */
   label: string
   /** 字段类型 */
-  type: 'text' | 'textarea' | 'number' | 'select' | 'json' | 'code'
+  type: 'text' | 'textarea' | 'number' | 'select' | 'slider' | 'json' | 'key-value' | 'code'
   /** 是否必填 */
   required: boolean
   /** 默认值 */

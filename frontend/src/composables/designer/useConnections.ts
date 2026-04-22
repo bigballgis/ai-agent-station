@@ -127,11 +127,23 @@ export function useConnections() {
 
     // 验证 3：检查目标端口是否已有连接
     // condition 节点允许 true/false 端口各有一条连接
+    // merge 节点允许每个输入端口各有一条连接（多输入合并）
+    // human_approval 节点只有一个输入端口，使用默认替换逻辑即可
     const targetNode = nodes.find((n) => n.id === targetId)
     const isConditionTarget = targetNode?.type === 'condition'
+    const isMergeTarget = targetNode?.type === 'merge'
+    const isSwitchTarget = targetNode?.type === 'switch'
 
-    if (!isConditionTarget) {
-      // 非 condition 节点：替换目标端口的已有连接
+    if (isMergeTarget) {
+      // merge 节点：仅替换同一输入端口上的已有连接，允许不同端口各有连接
+      const existingOnPort = connections.value.findIndex(
+        (conn) => conn.targetId === targetId && conn.targetPort === targetPort,
+      )
+      if (existingOnPort !== -1) {
+        connections.value.splice(existingOnPort, 1)
+      }
+    } else if (!isConditionTarget && !isSwitchTarget) {
+      // 非 condition/merge/switch 节点：替换目标端口的已有连接
       const existingIndex = connections.value.findIndex(
         (conn) => conn.targetId === targetId && conn.targetPort === targetPort,
       )

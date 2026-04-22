@@ -8,6 +8,10 @@
       :zoom="zoom"
       :validation-message="validationMessage"
       :validation-type="validationType"
+      :running="isRunning"
+      :debug-mode="debug.isDebugMode.value"
+      :can-step-next="debug.canStepNext.value"
+      :can-continue="debug.canContinue.value"
       @back="goBack"
       @undo="handleUndo"
       @redo="handleRedo"
@@ -20,7 +24,12 @@
       @validate="handleValidate"
       @auto-layout="handleAutoLayout"
       @run="runAgent"
+      @stop="stopExecution"
       @save="saveAgent"
+      @debug-toggle="debug.isDebugMode.value ? debug.exitDebugMode() : debug.enterDebugMode()"
+      @debug-step="debug.stepNext()"
+      @debug-continue="debug.continueExecution()"
+      @debug-stop="debug.stopDebug()"
     />
 
     <!-- Main Body -->
@@ -103,15 +112,31 @@
             :key="node.id"
             :node="node"
             :selected="selectedNodeId === node.id"
+            :multi-selected="selectedNodeIds.has(node.id) && selectedNodeId !== node.id"
             :running="runningNodeIds.has(node.id)"
             :completed="completedNodeIds.has(node.id)"
             :failed="failedNodeIds.has(node.id)"
+            :has-breakpoint="debug.hasBreakpoint(node.id)"
+            :is-debug-target="debug.currentDebugNodeId.value === node.id"
+            :debug-status="debug.getNodeDebugInfo(node.id)?.status"
             @select="onNodeSelect"
             @portmousedown="onPortMouseDown"
             @dblclick="editingNodeId = node.id"
             @contextmenu="onNodeContextMenu"
           />
         </div>
+
+        <!-- Rubber Band Selection -->
+        <div
+          v-if="isRubberBandSelecting"
+          class="rubber-band"
+          :style="{
+            left: Math.min(rubberBandStart.x, rubberBandEnd.x) + 'px',
+            top: Math.min(rubberBandStart.y, rubberBandEnd.y) + 'px',
+            width: Math.abs(rubberBandEnd.x - rubberBandStart.x) + 'px',
+            height: Math.abs(rubberBandEnd.y - rubberBandStart.y) + 'px',
+          }"
+        />
 
         <!-- Context Menu -->
         <div
@@ -131,6 +156,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               {{ t('designer.contextMenu.copyNode') }}
+            </div>
+            <div v-if="debug.isDebugMode.value" class="context-menu-item" @click="handleContextToggleBreakpoint">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ t('designer.debug.breakpoint') }}
+              <span v-if="contextMenu.targetNode && debug.hasBreakpoint(contextMenu.targetNode.id)" class="breakpoint-badge">ON</span>
             </div>
             <div class="context-menu-divider" />
             <div class="context-menu-item danger" @click="handleContextDeleteNode">
@@ -177,6 +209,7 @@
       <!-- Right Panel: Config -->
       <ConfigPanel
         :node="selectedNode"
+        :nodes="nodes"
         @close="selectedNodeId = null"
         @update-config="handleUpdateConfig"
         @update-label="handleUpdateLabel"
@@ -188,6 +221,11 @@
     <ConsolePanel
       :logs="consoleLogs"
       :collapsed="bottomPanelCollapsed"
+      :flow-state="flowState"
+      :debug-info="debug.debugInfo.value"
+      :current-debug-node-id="debug.currentDebugNodeId.value"
+      :breakpoints="debug.breakpoints.value"
+      :is-debug-mode="debug.isDebugMode.value"
       @toggle-collapse="bottomPanelCollapsed = !bottomPanelCollapsed"
       @clear="consoleLogs = []"
     />
@@ -213,6 +251,8 @@ import {
   useHistory,
   useGraphValidation,
   useAutoLayout,
+  useFlowState,
+  useDebugMode,
   getNodeTypeDefinition,
 } from '@/composables/designer'
 import type { CanvasNode, Connection, ConsoleLog, GraphData } from '@/composables/designer'
@@ -230,7 +270,7 @@ import MiniMap from '@/components/designer/MiniMap.vue'
 // ============================================================
 // API
 // ============================================================
-import { agentApi } from '@/api/agent'
+import { agentApi, executeAgentStream } from '@/api/agent'
 
 // ============================================================
 // Router
@@ -304,6 +344,20 @@ const { validate, getExecutionOrder } = useGraphValidation()
 // Auto Layout (no dependencies)
 const { autoLayout } = useAutoLayout()
 
+// Flow State (shared mutable state across nodes)
+const {
+  state: flowState,
+  initializeFromStartNode: _initializeFromStartNode,
+  setState: _setFlowState,
+  clearState: _clearFlowState,
+  resolveReferences: _resolveReferences,
+} = useFlowState()
+
+// flowState entries computed when needed for display
+
+// Debug Mode
+const debug = useDebugMode()
+
 // ============================================================
 // Local State
 // ============================================================
@@ -314,6 +368,8 @@ const consoleLogs = ref<ConsoleLog[]>([])
 const runningNodeIds = ref<Set<string>>(new Set())
 const completedNodeIds = ref<Set<string>>(new Set())
 const failedNodeIds = ref<Set<string>>(new Set())
+let isRunning = false
+let executionCancel: { cancel: () => void } | null = null
 const editingNodeId = ref<string | null>(null)
 const validationMessage = ref('')
 const validationType = ref<'success' | 'error' | 'warning'>('success')
@@ -339,6 +395,24 @@ let dragNodeStartX = 0
 let dragNodeStartY = 0
 let connectingMouseX = 0
 let connectingMouseY = 0
+
+// Grid snapping
+function snapToGrid(value: number, gridSize = 20): number {
+  return Math.round(value / gridSize) * gridSize
+}
+
+// Multi-select state
+const selectedNodeIds = ref<Set<string>>(new Set())
+const isRubberBandSelecting = ref(false)
+const rubberBandStart = reactive({ x: 0, y: 0 })
+const rubberBandEnd = reactive({ x: 0, y: 0 })
+
+// Space+drag panning
+let isSpaceHeld = false
+
+// Multi-node drag tracking
+let isDraggingMultiple = false
+let dragNodeStartPositions = new Map<string, { x: number; y: number }>()
 
 // ============================================================
 // Computed
@@ -377,11 +451,26 @@ const entryNodeId = computed(() => {
 // ============================================================
 function onCanvasMouseDown(event: MouseEvent) {
   hideContextMenu()
+
+  // Space+drag for panning
+  if (isSpaceHeld) {
+    startPan(event, canvasContainerRef)
+    return
+  }
+
+  // Start rubber band selection on empty canvas
   selectedNodeId.value = null
   selectedConnectionId.value = null
+  selectedNodeIds.value.clear()
 
-  // Start panning
-  startPan(event, canvasContainerRef)
+  isRubberBandSelecting.value = true
+  const rect = canvasContainerRef.value?.getBoundingClientRect()
+  if (rect) {
+    rubberBandStart.x = event.clientX - rect.left
+    rubberBandStart.y = event.clientY - rect.top
+    rubberBandEnd.x = rubberBandStart.x
+    rubberBandEnd.y = rubberBandStart.y
+  }
 }
 
 function onCanvasMouseMove(event: MouseEvent) {
@@ -391,7 +480,27 @@ function onCanvasMouseMove(event: MouseEvent) {
     return
   }
 
-  // Handle node dragging
+  // Handle rubber band selection
+  if (isRubberBandSelecting.value) {
+    const rect = canvasContainerRef.value?.getBoundingClientRect()
+    if (rect) {
+      rubberBandEnd.x = event.clientX - rect.left
+      rubberBandEnd.y = event.clientY - rect.top
+    }
+    return
+  }
+
+  // Handle multi-node dragging
+  if (isDraggingMultiple) {
+    const dx = (event.clientX - dragStartX) / zoom.value
+    const dy = (event.clientY - dragStartY) / zoom.value
+    dragNodeStartPositions.forEach((startPos, id) => {
+      updateNodePosition(id, startPos.x + dx, startPos.y + dy)
+    })
+    return
+  }
+
+  // Handle single node dragging
   if (isDraggingNode && selectedNodeId.value) {
     const node = nodes.value.find(n => n.id === selectedNodeId.value)
     if (node) {
@@ -419,9 +528,57 @@ function onCanvasMouseUp(event: MouseEvent) {
     endPan()
   }
 
-  // End node dragging
+  // End rubber band selection
+  if (isRubberBandSelecting.value) {
+    isRubberBandSelecting.value = false
+    // Select nodes within the rubber band
+    const rect = canvasContainerRef.value?.getBoundingClientRect()
+    if (rect) {
+      const bandLeft = Math.min(rubberBandStart.x, rubberBandEnd.x)
+      const bandTop = Math.min(rubberBandStart.y, rubberBandEnd.y)
+      const bandRight = Math.max(rubberBandStart.x, rubberBandEnd.x)
+      const bandBottom = Math.max(rubberBandStart.y, rubberBandEnd.y)
+
+      // Only select if the band has meaningful size (not just a click)
+      if (bandRight - bandLeft > 3 || bandBottom - bandTop > 3) {
+        for (const node of nodes.value) {
+          const nodeLeft = node.x * zoom.value + panX.value
+          const nodeTop = node.y * zoom.value + panY.value
+          const nodeRight = nodeLeft + 180 * zoom.value
+          const nodeBottom = nodeTop + 80 * zoom.value
+
+          if (nodeRight > bandLeft && nodeLeft < bandRight && nodeBottom > bandTop && nodeTop < bandBottom) {
+            selectedNodeIds.value.add(node.id)
+          }
+        }
+      }
+    }
+    return
+  }
+
+  // End multi-node dragging with grid snapping
+  if (isDraggingMultiple) {
+    isDraggingMultiple = false
+    pushHistory(nodes.value, connections.value)
+    dragNodeStartPositions.forEach((_, id) => {
+      const node = nodes.value.find(n => n.id === id)
+      if (node) {
+        updateNodePosition(id, snapToGrid(node.x), snapToGrid(node.y))
+      }
+    })
+    dragNodeStartPositions.clear()
+    return
+  }
+
+  // End single node dragging with grid snapping
   if (isDraggingNode) {
     isDraggingNode = false
+    if (selectedNodeId.value) {
+      const node = nodes.value.find(n => n.id === selectedNodeId.value)
+      if (node) {
+        updateNodePosition(node.id, snapToGrid(node.x), snapToGrid(node.y))
+      }
+    }
     pushHistory(nodes.value, connections.value)
   }
 
@@ -452,8 +609,8 @@ function onCanvasDrop(event: DragEvent) {
   const rect = canvasContainerRef.value?.getBoundingClientRect()
   if (!rect) return
 
-  const x = (event.clientX - rect.left - panX.value) / zoom.value
-  const y = (event.clientY - rect.top - panY.value) / zoom.value
+  const x = snapToGrid((event.clientX - rect.left - panX.value) / zoom.value)
+  const y = snapToGrid((event.clientY - rect.top - panY.value) / zoom.value)
 
   const node = addNode(nodeType, x - 90, y - 30)
   pushHistory(nodes.value, connections.value)
@@ -541,8 +698,38 @@ function handleConnectionEnd(event: MouseEvent) {
 
 function onNodeSelect(event: MouseEvent, node: CanvasNode) {
   hideContextMenu()
+
+  if (event.ctrlKey || event.metaKey) {
+    // Ctrl+Click: toggle node in multi-selection
+    if (selectedNodeIds.value.has(node.id)) {
+      selectedNodeIds.value.delete(node.id)
+    } else {
+      selectedNodeIds.value.add(node.id)
+    }
+    selectedNodeId.value = node.id
+    return
+  }
+
+  // If clicking on a node that is already in multi-selection, start multi-drag
+  if (selectedNodeIds.value.has(node.id)) {
+    selectedNodeId.value = node.id
+    isDraggingMultiple = true
+    dragStartX = event.clientX
+    dragStartY = event.clientY
+    dragNodeStartPositions.clear()
+    selectedNodeIds.value.forEach(id => {
+      const n = nodes.value.find(n => n.id === id)
+      if (n) {
+        dragNodeStartPositions.set(id, { x: n.x, y: n.y })
+      }
+    })
+    return
+  }
+
+  // Normal click: select only this node
   selectedNodeId.value = node.id
   selectedConnectionId.value = null
+  selectedNodeIds.value.clear()
 
   // Start node dragging
   isDraggingNode = true
@@ -582,6 +769,15 @@ function handleContextDuplicate() {
     duplicateNode(contextMenu.targetNode)
     pushHistory(nodes.value, connections.value)
     addLog('info', `${t('designer.messages.copyNode')}: ${contextMenu.targetNode.label}`)
+  }
+  hideContextMenu()
+}
+
+function handleContextToggleBreakpoint() {
+  if (contextMenu.targetNode) {
+    debug.toggleBreakpoint(contextMenu.targetNode.id)
+    const bpState = debug.hasBreakpoint(contextMenu.targetNode.id) ? 'ON' : 'OFF'
+    addLog('info', `${t('designer.debug.breakpoint')}: ${contextMenu.targetNode.label} [${bpState}]`)
   }
   hideContextMenu()
 }
@@ -681,16 +877,22 @@ function handleValidate() {
 
 function handleAutoLayout() {
   autoLayout(nodes.value, connections.value)
+  // Snap all node positions to grid after auto-layout
+  nodes.value.forEach(n => {
+    updateNodePosition(n.id, snapToGrid(n.x), snapToGrid(n.y))
+  })
   pushHistory(nodes.value, connections.value)
   addLog('info', t('designer.messages.autoLayoutComplete'))
   nextTick(() => fitView(nodes.value, canvasContainerRef))
 }
 
 function handleUpdateConfig(nodeId: string, key: string, value: any) {
+  pushHistory(nodes.value, connections.value)
   updateNodeConfig(nodeId, { [key]: value })
 }
 
 function handleUpdateLabel(nodeId: string, label: string) {
+  pushHistory(nodes.value, connections.value)
   updateNodeLabel(nodeId, label)
 }
 
@@ -829,47 +1031,109 @@ function handleImport(event: Event) {
 }
 
 // ============================================================
-// Run Agent (Simulated Execution)
+// Run Agent (SSE Streaming with Simulation Fallback)
 // ============================================================
-async function runAgent() {
-  if (nodes.value.length === 0) {
-    message.warning(t('designer.messages.noNodes'))
-    return
-  }
 
+/**
+ * Simulated execution fallback - used when backend SSE is unavailable
+ */
+async function runAgentSimulated() {
   const startNode = nodes.value.find(n => n.type === 'start')
   if (!startNode) {
-    message.warning(t('designer.messages.noStartNode'))
     addLog('warn', `${t('designer.messages.runFailed')}: missing start node`)
     return
   }
 
-  bottomPanelCollapsed.value = false
-  runningNodeIds.value.clear()
-  completedNodeIds.value.clear()
-  failedNodeIds.value.clear()
-
-  addLog('info', t('designer.messages.runStart'))
   addLog('info', `节点数量: ${nodes.value.length}, 连线数量: ${connections.value.length}`)
 
   const order = getExecutionOrder(startNode.id, nodes.value, connections.value)
-  for (const nodeId of order) {
+
+  // Debug mode: initialize debug info and set execution order
+  if (debug.isDebugMode.value) {
+    debug.initDebugInfo(nodes.value)
+    debug.debugExecutionOrder.value = order
+    debug.currentStepIndex.value = -1
+    debug.isStepping.value = false
+    addLog('info', t('designer.debug.running'))
+  }
+
+  for (let i = 0; i < order.length; i++) {
+    if (!isRunning) break // Check if stopped
+    const nodeId = order[i]
     const node = nodes.value.find(n => n.id === nodeId)
     if (!node) continue
+
+    // Debug mode: check for breakpoint or stepping
+    if (debug.isDebugMode.value) {
+      debug.currentStepIndex.value = i
+      debug.currentDebugNodeId.value = nodeId
+      debug.updateNodeDebugInfo(nodeId, {
+        status: 'running',
+        input: simulateNodeInput(node, connections.value, nodes.value),
+      })
+
+      // Simulate input data for the node
+      const simulatedInput = simulateNodeInput(node, connections.value, nodes.value)
+      debug.updateNodeDebugInfo(nodeId, { input: simulatedInput })
+
+      const hasBp = debug.hasBreakpoint(nodeId)
+
+      if (hasBp || debug.isStepping.value) {
+        debug.isPaused.value = true
+        debug.updateNodeDebugInfo(nodeId, { status: 'paused' })
+        addLog('info', `${t('designer.debug.paused')}: ${node.label}`)
+
+        // Wait for user to step or continue
+        await waitForDebugResume()
+
+        if (!isRunning || !debug.isDebugMode.value) break
+
+        debug.isPaused.value = false
+        debug.updateNodeDebugInfo(nodeId, { status: 'running' })
+      }
+    }
 
     runningNodeIds.value.add(nodeId)
     addLog('info', `${t('designer.messages.nodeRunning')}: ${node.label} (${node.type})`)
 
+    const startTime = Date.now()
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700))
+    const duration = Date.now() - startTime
+
+    if (!isRunning) break // Check again after delay
 
     runningNodeIds.value.delete(nodeId)
+
     if (Math.random() < 0.05) {
       failedNodeIds.value.add(nodeId)
       addLog('error', `${t('designer.messages.nodeFailed')}: ${node.label}`)
+      if (debug.isDebugMode.value) {
+        debug.updateNodeDebugInfo(nodeId, {
+          status: 'failed',
+          duration,
+          output: { error: 'Simulated failure' },
+          error: 'Simulated failure',
+        })
+      }
     } else {
       completedNodeIds.value.add(nodeId)
       addLog('success', `${t('designer.messages.nodeComplete')}: ${node.label}`)
+      if (debug.isDebugMode.value) {
+        const simulatedOutput = simulateNodeOutput(node)
+        debug.updateNodeDebugInfo(nodeId, {
+          status: 'completed',
+          duration,
+          output: simulatedOutput,
+        })
+      }
     }
+  }
+
+  if (!isRunning) {
+    if (debug.isDebugMode.value) {
+      debug.stopDebug()
+    }
+    return
   }
 
   const endNode = nodes.value.find(n => n.type === 'end')
@@ -883,14 +1147,203 @@ async function runAgent() {
     addLog('warn', t('designer.messages.runIncomplete'))
     message.warning(t('designer.messages.runIncomplete'))
   }
+
+  if (debug.isDebugMode.value) {
+    debug.currentDebugNodeId.value = null
+    debug.isPaused.value = false
+    debug.isStepping.value = false
+  }
+
+  isRunning = false
+  executionCancel = null
+}
+
+/**
+ * Simulate node input data based on connected upstream nodes
+ */
+function simulateNodeInput(node: CanvasNode, conns: Connection[], allNodes: CanvasNode[]): any {
+  const input: any = {}
+  for (const conn of conns) {
+    if (conn.targetId === node.id) {
+      const sourceNode = allNodes.find(n => n.id === conn.sourceId)
+      if (sourceNode) {
+        input[conn.targetPort] = {
+          from: sourceNode.label,
+          type: sourceNode.type,
+          data: `模拟数据来自 ${sourceNode.label}`,
+        }
+      }
+    }
+  }
+  return Object.keys(input).length > 0 ? input : { message: 'Hello World' }
+}
+
+/**
+ * Simulate node output data
+ */
+function simulateNodeOutput(node: CanvasNode): any {
+  switch (node.type) {
+    case 'llm':
+      return { response: `模拟 LLM 响应来自 ${node.label}`, tokens: Math.floor(Math.random() * 500) + 100 }
+    case 'condition':
+      return { result: Math.random() > 0.5, branch: Math.random() > 0.5 ? 'true' : 'false' }
+    case 'tool':
+      return { result: `模拟工具执行结果`, success: true }
+    case 'code':
+      return { output: `模拟代码输出`, exitCode: 0 }
+    case 'delay':
+      return { waited: node.config.delay || '1s' }
+    case 'notify':
+      return { sent: true, channel: node.config.channel || 'default' }
+    default:
+      return { status: 'completed', label: node.label }
+  }
+}
+
+/**
+ * Wait for debug resume (step or continue) using a polling approach
+ */
+function waitForDebugResume(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const check = () => {
+      if (!debug.isPaused.value || !isRunning || !debug.isDebugMode.value) {
+        resolve()
+        return
+      }
+      requestAnimationFrame(check)
+    }
+    check()
+  })
+}
+
+/**
+ * Run agent via real backend SSE, falling back to simulation on failure
+ */
+function runAgent() {
+  if (isRunning) return
+
+  if (nodes.value.length === 0) {
+    message.warning(t('designer.messages.noNodes'))
+    return
+  }
+
+  const startNode = nodes.value.find(n => n.type === 'start')
+  if (!startNode) {
+    message.warning(t('designer.messages.noStartNode'))
+    addLog('warn', `${t('designer.messages.runFailed')}: missing start node`)
+    return
+  }
+
+  // Clear previous state
+  bottomPanelCollapsed.value = false
+  runningNodeIds.value.clear()
+  completedNodeIds.value.clear()
+  failedNodeIds.value.clear()
+  isRunning = true
+
+  addLog('info', t('designer.messages.runStart'))
+
+  const agentId = route.params.id as string
+  const message_text = 'Hello' // Default message for agent execution
+
+  // Try real SSE execution first
+  if (agentId) {
+    addLog('info', `连接后端 SSE 端点 (agentId: ${agentId})...`)
+
+    executionCancel = executeAgentStream(
+      agentId,
+      message_text,
+      // onMessage
+      (event) => {
+        switch (event.type) {
+          case 'node_start': {
+            const nodeId = event.data.nodeId
+            const nodeType = event.data.nodeType
+            runningNodeIds.value.add(nodeId)
+            const node = nodes.value.find(n => n.id === nodeId)
+            const label = node?.label || nodeId
+            addLog('info', `${t('designer.messages.nodeRunning')}: ${label} (${nodeType})`)
+            break
+          }
+          case 'node_end': {
+            const nodeId = event.data.nodeId
+            const status = event.data.status
+            runningNodeIds.value.delete(nodeId)
+            const node = nodes.value.find(n => n.id === nodeId)
+            const label = node?.label || nodeId
+            if (status === 'failed') {
+              failedNodeIds.value.add(nodeId)
+              addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${event.data.error || ''}`)
+            } else {
+              completedNodeIds.value.add(nodeId)
+              addLog('success', `${t('designer.messages.nodeComplete')}: ${label}`)
+            }
+            break
+          }
+          case 'token': {
+            // LLM streaming token
+            addLog('info', event.data.content || '', false)
+            break
+          }
+          case 'done': {
+            addLog('success', t('designer.messages.runComplete'))
+            message.success(t('designer.messages.runComplete'))
+            isRunning = false
+            executionCancel = null
+            break
+          }
+          case 'error': {
+            addLog('error', `${t('designer.messages.runFailed')}: ${event.data.content || event.data.error || 'Unknown error'}`)
+            message.error(t('designer.messages.runFailed'))
+            isRunning = false
+            executionCancel = null
+            break
+          }
+        }
+      },
+      // onError
+      (error) => {
+        addLog('warn', `后端 SSE 连接失败: ${error.message}，切换到模拟执行...`)
+        // Fall back to simulation
+        isRunning = false
+        executionCancel = null
+        runAgentSimulated()
+      },
+      // onComplete
+      () => {
+        if (isRunning) {
+          addLog('success', t('designer.messages.runComplete'))
+          isRunning = false
+          executionCancel = null
+        }
+      }
+    )
+  } else {
+    // No agent ID - use simulation directly
+    addLog('info', '未关联 Agent ID，使用模拟执行...')
+    runAgentSimulated()
+  }
+}
+
+/**
+ * Stop the current execution
+ */
+function stopExecution() {
+  if (executionCancel) {
+    executionCancel.cancel()
+    executionCancel = null
+  }
+  isRunning = false
+  runningNodeIds.value.clear()
+  addLog('warn', t('designer.messages.executionStopped'))
 }
 
 // ============================================================
 // Console Helpers
 // ============================================================
-function addLog(level: ConsoleLog['level'], msg: string) {
+function addLog(level: ConsoleLog['level'], msg: string, withTimestamp = true) {
   consoleLogs.value.push({
-    time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+    time: withTimestamp ? new Date().toLocaleTimeString('zh-CN', { hour12: false }) : '',
     level,
     message: msg,
   })
@@ -901,19 +1354,136 @@ function addLog(level: ConsoleLog['level'], msg: string) {
 // ============================================================
 function onKeyDown(event: KeyboardEvent) {
   // Don't handle when editing text
-  if (editingNodeId.value) return
+  const isEditing = editingNodeId.value !== null
+  if (isEditing) return
   const tag = (event.target as HTMLElement).tagName
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
-  // Delete / Backspace
+  // Space held down for panning mode
+  if (event.key === ' ' && !isEditing) {
+    event.preventDefault()
+    isSpaceHeld = true
+    canvasContainerRef.value?.classList.add('panning-mode')
+    return
+  }
+
+  // Ctrl+A: Select all nodes
+  if (event.ctrlKey && event.key === 'a' && !isEditing) {
+    event.preventDefault()
+    selectedNodeIds.value.clear()
+    nodes.value.forEach(n => selectedNodeIds.value.add(n.id))
+    return
+  }
+
+  // Ctrl+D: Duplicate selected nodes
+  if (event.ctrlKey && event.key === 'd' && !isEditing) {
+    event.preventDefault()
+    if (selectedNodeIds.value.size > 0) {
+      pushHistory(nodes.value, connections.value)
+      const newIds = new Set<string>()
+      selectedNodeIds.value.forEach(id => {
+        const node = nodes.value.find(n => n.id === id)
+        if (node) {
+          const newNode = duplicateNode(node)
+          if (newNode) newIds.add(newNode.id)
+        }
+      })
+      selectedNodeIds.value = newIds
+    }
+    return
+  }
+
+  // Delete / Backspace: delete all selected nodes or connections
   if (event.key === 'Delete' || event.key === 'Backspace') {
-    if (selectedNodeId.value) {
+    if (selectedNodeIds.value.size > 0) {
+      pushHistory(nodes.value, connections.value)
+      selectedNodeIds.value.forEach(id => {
+        const node = nodes.value.find(n => n.id === id)
+        const label = node?.label || id
+        deleteNode(id)
+        addLog('info', `${t('designer.messages.deleteNode')}: ${label}`)
+      })
+      selectedNodeIds.value.clear()
+      selectedNodeId.value = null
+    } else if (selectedNodeId.value) {
       handleDeleteNode(selectedNodeId.value)
     } else if (selectedConnectionId.value) {
       deleteConnection(selectedConnectionId.value)
       pushHistory(nodes.value, connections.value)
       addLog('info', t('designer.messages.deleteConnection'))
     }
+    return
+  }
+
+  // Arrow keys: nudge selected nodes
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) && !isEditing) {
+    event.preventDefault()
+    const delta = event.shiftKey ? 10 : 1 // Shift+Arrow = 10px nudge
+    const dx = event.key === 'ArrowLeft' ? -delta : event.key === 'ArrowRight' ? delta : 0
+    const dy = event.key === 'ArrowUp' ? -delta : event.key === 'ArrowDown' ? delta : 0
+
+    if (selectedNodeIds.value.size > 0) {
+      pushHistory(nodes.value, connections.value)
+      selectedNodeIds.value.forEach(id => {
+        const node = nodes.value.find(n => n.id === id)
+        if (node) {
+          updateNodePosition(id, node.x + dx, node.y + dy)
+        }
+      })
+    } else if (selectedNodeId.value) {
+      const node = nodes.value.find(n => n.id === selectedNodeId.value)
+      if (node) {
+        pushHistory(nodes.value, connections.value)
+        updateNodePosition(selectedNodeId.value, node.x + dx, node.y + dy)
+      }
+    }
+    return
+  }
+
+  // Ctrl+Plus/Minus: Zoom
+  if (event.ctrlKey && (event.key === '=' || event.key === '+')) {
+    event.preventDefault()
+    zoomIn()
+    return
+  }
+  if (event.ctrlKey && event.key === '-') {
+    event.preventDefault()
+    zoomOut()
+    return
+  }
+
+  // Ctrl+0: Reset zoom
+  if (event.ctrlKey && event.key === '0') {
+    event.preventDefault()
+    resetZoom()
+    return
+  }
+
+  // Ctrl+F: Focus on selected node (zoom to fit selected)
+  if (event.ctrlKey && event.key === 'f' && !isEditing) {
+    event.preventDefault()
+    const targetNodes = selectedNodeIds.value.size > 0
+      ? nodes.value.filter(n => selectedNodeIds.value.has(n.id))
+      : selectedNodeId.value
+        ? nodes.value.filter(n => n.id === selectedNodeId.value)
+        : nodes.value
+    if (targetNodes.length > 0 && canvasContainerRef.value) {
+      fitView(targetNodes, canvasContainerRef)
+    }
+    return
+  }
+
+  // Tab: Cycle through nodes
+  if (event.key === 'Tab' && !isEditing) {
+    event.preventDefault()
+    const allIds = nodes.value.map(n => n.id)
+    if (allIds.length === 0) return
+    const currentIdx = allIds.indexOf(selectedNodeId.value || '')
+    const nextIdx = event.shiftKey
+      ? (currentIdx - 1 + allIds.length) % allIds.length
+      : (currentIdx + 1) % allIds.length
+    selectedNodeId.value = allIds[nextIdx]
+    selectedNodeIds.value.clear()
     return
   }
 
@@ -960,8 +1530,57 @@ function onKeyDown(event: KeyboardEvent) {
     hideContextMenu()
     selectedNodeId.value = null
     selectedConnectionId.value = null
+    selectedNodeIds.value.clear()
     if (isConnecting.value) cancelConnecting()
     return
+  }
+
+  // F5 - Continue execution (debug mode)
+  if (event.key === 'F5' && !event.shiftKey && debug.isDebugMode.value) {
+    event.preventDefault()
+    if (debug.canContinue.value) {
+      debug.continueExecution()
+    }
+    return
+  }
+
+  // Shift+F5 - Stop debugging
+  if (event.key === 'F5' && event.shiftKey && debug.isDebugMode.value) {
+    event.preventDefault()
+    debug.stopDebug()
+    if (isRunning) {
+      stopExecution()
+    }
+    return
+  }
+
+  // F10 - Step over (debug mode)
+  if (event.key === 'F10' && debug.isDebugMode.value) {
+    event.preventDefault()
+    if (debug.canStepNext.value) {
+      debug.stepNext()
+    }
+    return
+  }
+
+  // F9 - Toggle breakpoint on selected node
+  if (event.key === 'F9' && debug.isDebugMode.value && selectedNodeId.value) {
+    event.preventDefault()
+    debug.toggleBreakpoint(selectedNodeId.value)
+    const node = nodes.value.find(n => n.id === selectedNodeId.value)
+    const bpState = debug.hasBreakpoint(selectedNodeId.value) ? 'ON' : 'OFF'
+    addLog('info', `${t('designer.debug.breakpoint')}: ${node?.label || selectedNodeId.value} [${bpState}]`)
+    return
+  }
+}
+
+// ============================================================
+// Key Up Handler (for Space+drag panning)
+// ============================================================
+function onKeyUp(event: KeyboardEvent) {
+  if (event.key === ' ') {
+    isSpaceHeld = false
+    canvasContainerRef.value?.classList.remove('panning-mode')
   }
 }
 
@@ -1007,6 +1626,7 @@ function createDefaultGraph() {
 // ============================================================
 onMounted(async () => {
   window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
   window.addEventListener('click', onGlobalClick)
 
   setupResizeObserver()
@@ -1059,6 +1679,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
   window.removeEventListener('click', onGlobalClick)
   if (resizeObserver) {
     resizeObserver.disconnect()
@@ -1215,10 +1836,43 @@ onUnmounted(() => {
   margin: 4px 8px;
 }
 
+.breakpoint-badge {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
 /* ============================================================
    Utility
    ============================================================ */
 .rotate-180 {
   transform: rotate(180deg);
+}
+
+/* ============================================================
+   Rubber Band Selection
+   ============================================================ */
+.rubber-band {
+  position: absolute;
+  border: 1px dashed rgba(99, 102, 241, 0.6);
+  background: rgba(99, 102, 241, 0.1);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* ============================================================
+   Panning Mode (Space+Drag)
+   ============================================================ */
+.canvas-container.panning-mode {
+  cursor: grab;
+}
+
+.canvas-container.panning-mode:active {
+  cursor: grabbing;
 }
 </style>

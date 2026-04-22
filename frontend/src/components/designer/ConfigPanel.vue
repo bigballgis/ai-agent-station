@@ -67,6 +67,12 @@
         <div class="form-group">
           <label class="form-label">Prompt <span class="form-hint">支持 &#123;&#123;变量&#125;&#125; 模板</span></label>
           <textarea class="form-textarea" rows="3" :value="node.config.prompt" @input="updateConfig('prompt', ($event.target as HTMLTextAreaElement).value)" placeholder="请根据以下内容回答..." />
+          <div v-if="availableNodes.length > 0" class="variable-hint">
+            <span class="hint-label">可用变量:</span>
+            <span class="hint-text" v-for="avNode in availableNodes" :key="avNode.id" @click="insertVariable(avNode.id)" :title="`点击插入 {{${avNode.id}}.output}}`">
+              &#123;&#123;{{ avNode.id }}.output&#125;&#125;
+            </span>
+          </div>
         </div>
       </template>
 
@@ -239,6 +245,69 @@
         </div>
       </template>
 
+      <!-- Human Approval Node -->
+      <template v-if="node.type === 'human_approval'">
+        <div class="form-group">
+          <label class="form-label">审批类型</label>
+          <select class="form-select" :value="node.config.approvalType" @change="updateConfig('approvalType', ($event.target as HTMLSelectElement).value)">
+            <option value="approve_reject">批准 / 拒绝</option>
+            <option value="approve_reject_modify">批准 / 拒绝 / 修改</option>
+            <option value="input_required">需要输入</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">审批标题</label>
+          <input class="form-input" type="text" :value="node.config.title" @input="updateConfig('title', ($event.target as HTMLInputElement).value)" placeholder="请审批此步骤" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">审批说明</label>
+          <textarea class="form-textarea" rows="2" :value="node.config.description" @input="updateConfig('description', ($event.target as HTMLTextAreaElement).value)" placeholder="描述需要审批的内容..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">审批人</label>
+          <input class="form-input" type="text" :value="node.config.approvers" @input="updateConfig('approvers', ($event.target as HTMLInputElement).value)" placeholder="用户ID或角色，逗号分隔" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">超时时间（分钟）</label>
+          <input class="form-input" type="number" :value="node.config.timeoutMinutes" @input="updateConfig('timeoutMinutes', Number(($event.target as HTMLInputElement).value))" min="1" max="10080" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">超时处理</label>
+          <select class="form-select" :value="node.config.fallbackAction" @change="updateConfig('fallbackAction', ($event.target as HTMLSelectElement).value)">
+            <option value="reject">自动拒绝</option>
+            <option value="approve">自动批准</option>
+            <option value="escalate">升级处理</option>
+          </select>
+        </div>
+      </template>
+
+      <!-- Parallel Node -->
+      <template v-if="node.type === 'parallel'">
+        <div class="form-group">
+          <label class="form-label">最大并行数</label>
+          <input class="form-input" type="number" :value="node.config.maxParallelism" @input="updateConfig('maxParallelism', Number(($event.target as HTMLInputElement).value))" min="1" max="20" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">失败策略</label>
+          <select class="form-select" :value="node.config.failStrategy" @change="updateConfig('failStrategy', ($event.target as HTMLSelectElement).value)">
+            <option value="wait">等待全部完成</option>
+            <option value="fail_fast">快速失败</option>
+          </select>
+        </div>
+      </template>
+
+      <!-- Merge Node -->
+      <template v-if="node.type === 'merge'">
+        <div class="form-group">
+          <label class="form-label">合并策略</label>
+          <select class="form-select" :value="node.config.mergeStrategy" @change="updateConfig('mergeStrategy', ($event.target as HTMLSelectElement).value)">
+            <option value="append">追加 (Append)</option>
+            <option value="overwrite">覆盖 (Overwrite)</option>
+            <option value="first">取第一个 (First)</option>
+          </select>
+        </div>
+      </template>
+
       <!-- Start Node -->
       <template v-if="node.type === 'start'">
         <div class="form-group">
@@ -260,6 +329,43 @@
         <div class="form-group">
           <label class="form-label">输出模板</label>
           <textarea class="form-textarea" rows="3" :value="node.config.outputTemplate" @input="updateConfig('outputTemplate', ($event.target as HTMLTextAreaElement).value)" placeholder="输出模板..." />
+        </div>
+      </template>
+
+      <!-- Subgraph/Agent Call Node -->
+      <template v-if="node.type === 'subgraph'">
+        <div class="form-group">
+          <label class="form-label">Agent ID</label>
+          <input class="form-input" type="text" :value="node.config.agentId" @input="updateConfig('agentId', ($event.target as HTMLInputElement).value)" placeholder="选择或输入 Agent ID" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agent 名称</label>
+          <input class="form-input" type="text" :value="node.config.agentName" @input="updateConfig('agentName', ($event.target as HTMLInputElement).value)" placeholder="显示名称" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">输入映射 (JSON)</label>
+          <textarea class="form-textarea code-textarea" rows="3" :value="node.config.inputMapping" @input="updateConfig('inputMapping', ($event.target as HTMLTextAreaElement).value)" placeholder='{"key": "{{source.output}}"}' />
+        </div>
+        <div class="form-group">
+          <label class="form-label">输出变量名</label>
+          <input class="form-input" type="text" :value="node.config.outputVariable" @input="updateConfig('outputVariable', ($event.target as HTMLInputElement).value)" placeholder="subgraph_output" />
+        </div>
+      </template>
+
+      <!-- Switch/Router Node -->
+      <template v-if="node.type === 'switch'">
+        <div class="form-group">
+          <label class="form-label">分支规则</label>
+          <div v-for="(c, i) in (node.config.cases || [])" :key="i" class="kv-row">
+            <input class="kv-input" type="text" :value="c.expression" @input="updateCase(i, 'expression', ($event.target as HTMLInputElement).value)" placeholder="条件表达式" />
+            <input class="kv-input" type="text" :value="c.label" @input="updateCase(i, 'label', ($event.target as HTMLInputElement).value)" placeholder="分支名称" />
+            <button class="kv-remove-btn" @click="removeCase(i)" title="删除分支">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <button class="kv-add-btn" @click="addCase">+ 添加分支</button>
         </div>
       </template>
     </div>
@@ -286,6 +392,7 @@ const { t } = useI18n()
 
 const props = defineProps<{
   node: CanvasNode | null
+  nodes?: CanvasNode[]
 }>()
 
 const emit = defineEmits<{
@@ -300,6 +407,37 @@ const nodeDef = computed(() => (props.node ? getNodeTypeDefinition(props.node.ty
 const nodeIcon = computed(() => nodeDef.value?.icon ?? '📦')
 
 const typeName = computed(() => nodeDef.value?.name ?? '')
+
+// Nodes available for variable reference (exclude current node and start node)
+const availableNodes = computed(() => {
+  if (!props.node || !props.nodes) return []
+  return props.nodes.filter(n => n.id !== props.node!.id && n.type !== 'start')
+})
+
+// Insert a variable reference into the currently focused textarea
+function insertVariable(nodeId: string) {
+  const refText = `{{${nodeId}.output}}`
+  // Find the last focused textarea in the config panel
+  const panel = document.querySelector('.config-panel')
+  if (panel) {
+    const textarea = panel.querySelector('textarea:focus') as HTMLTextAreaElement
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const value = textarea.value
+      textarea.value = value.substring(0, start) + refText + value.substring(end)
+      textarea.selectionStart = textarea.selectionEnd = start + refText.length
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+      return
+    }
+  }
+  // Fallback: insert into the prompt field if node is LLM
+  if (props.node?.type === 'llm') {
+    const currentPrompt = props.node.config.prompt || ''
+    const newPrompt = currentPrompt + refText
+    emit('update-config', props.node.id, 'prompt', newPrompt)
+  }
+}
 
 function handleLabelUpdate(value: string) {
   if (!props.node) return
@@ -330,6 +468,29 @@ function removeKV(idx: number) {
   const mapping = [...(props.node.config.inputMapping || [])]
   mapping.splice(idx, 1)
   emit('update-config', props.node.id, 'inputMapping', mapping)
+}
+
+// Switch node case management
+function updateCase(index: number, field: string, value: string) {
+  if (!props.node) return
+  const cases = [...(props.node.config.cases || [])]
+  cases[index] = { ...cases[index], [field]: value }
+  emit('update-config', props.node.id, 'cases', cases)
+}
+
+function addCase() {
+  if (!props.node) return
+  const cases = [...(props.node.config.cases || [])]
+  const portIndex = cases.length + 1
+  cases.push({ expression: '', label: `分支 ${portIndex}`, outputPort: `case_${portIndex}` })
+  emit('update-config', props.node.id, 'cases', cases)
+}
+
+function removeCase(index: number) {
+  if (!props.node) return
+  const cases = [...(props.node.config.cases || [])]
+  cases.splice(index, 1)
+  emit('update-config', props.node.id, 'cases', cases)
 }
 </script>
 
@@ -640,5 +801,32 @@ function removeKV(idx: number) {
 
 .config-body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* Variable Hint */
+.variable-hint {
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.hint-label {
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.hint-text {
+  cursor: pointer;
+  color: #818cf8;
+  margin-right: 8px;
+  font-family: monospace;
+}
+
+.hint-text:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
 }
 </style>

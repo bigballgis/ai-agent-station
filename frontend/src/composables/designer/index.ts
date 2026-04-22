@@ -34,6 +34,8 @@ export { useConnections } from './useConnections'
 export { useHistory } from './useHistory'
 export { useGraphValidation } from './useGraphValidation'
 export { useAutoLayout } from './useAutoLayout'
+export { useFlowState } from './useFlowState'
+export { useDebugMode } from './useDebugMode'
 
 // ============================================================
 // 类型
@@ -53,6 +55,8 @@ export type {
   PortPosition,
   CanvasTransform,
 } from './types'
+
+export type { Breakpoint, NodeDebugInfo } from './useDebugMode'
 
 // ============================================================
 // 节点注册表

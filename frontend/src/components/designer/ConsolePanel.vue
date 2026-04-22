@@ -20,21 +20,51 @@
         <span class="console-title">{{ t('designer.console.title') }}</span>
         <span v-if="logs.length > 0" class="console-badge">{{ logs.length }}</span>
       </div>
+      <div class="console-header-right">
+        <button
+          v-if="logs.length > 0"
+          class="console-clear-btn"
+          @click.stop="$emit('clear')"
+          :title="t('designer.console.clear')"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          {{ t('designer.console.clear') }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div v-show="!collapsed" class="console-tabs">
       <button
-        v-if="logs.length > 0"
-        class="console-clear-btn"
-        @click.stop="$emit('clear')"
-        :title="t('designer.console.clear')"
+        class="console-tab"
+        :class="{ active: activeTab === 'console' }"
+        @click.stop="activeTab = 'console'"
       >
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        {{ t('designer.console.clear') }}
+        控制台
+      </button>
+      <button
+        class="console-tab"
+        :class="{ active: activeTab === 'state' }"
+        @click.stop="activeTab = 'state'"
+      >
+        状态
+        <span v-if="flowStateKeys.length > 0" class="console-badge">{{ flowStateKeys.length }}</span>
+      </button>
+      <button
+        v-if="isDebugMode"
+        class="console-tab"
+        :class="{ active: activeTab === 'debug' }"
+        @click.stop="activeTab = 'debug'"
+      >
+        调试
+        <span v-if="breakpointCount > 0" class="console-badge debug-badge">{{ breakpointCount }}</span>
       </button>
     </div>
 
-    <!-- Log Entries -->
-    <div v-show="!collapsed" ref="logContainerRef" class="console-body">
+    <!-- Console Tab Content -->
+    <div v-show="!collapsed && activeTab === 'console'" ref="logContainerRef" class="console-body">
       <div v-if="logs.length === 0" class="console-empty">
         {{ t('designer.console.empty') }}
       </div>
@@ -49,19 +79,98 @@
         <span class="log-message">{{ log.message }}</span>
       </div>
     </div>
+
+    <!-- Flow State Tab Content -->
+    <div v-show="!collapsed && activeTab === 'state'" class="console-body state-body">
+      <div v-if="flowStateKeys.length === 0" class="console-empty">
+        运行 Agent 后将在此显示共享状态变量
+      </div>
+      <div
+        v-for="key in flowStateKeys"
+        :key="key"
+        class="state-entry"
+      >
+        <span class="state-key">{{ key }}</span>
+        <span class="state-separator">:</span>
+        <span class="state-value" :title="String((flowState || {})[key])">{{ formatStateValue((flowState || {})[key]) }}</span>
+      </div>
+    </div>
+
+    <!-- Debug Tab Content -->
+    <div v-show="!collapsed && activeTab === 'debug'" class="console-body debug-body">
+      <div v-if="!currentDebugInfo" class="console-empty">
+        {{ t('designer.debug.noBreakpoint') }}
+      </div>
+      <template v-else>
+        <!-- Current Node Info -->
+        <div class="debug-section">
+          <div class="debug-section-header">
+            <span class="debug-node-label">{{ currentDebugInfo.label }}</span>
+            <span class="debug-status-badge" :class="`status-${currentDebugInfo.status}`">
+              {{ statusLabel(currentDebugInfo.status) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="debug-section">
+          <div class="debug-section-title">{{ t('designer.debug.input') }}</div>
+          <pre class="debug-json">{{ formatJson(currentDebugInfo.input) }}</pre>
+        </div>
+
+        <!-- Output -->
+        <div v-if="currentDebugInfo.output" class="debug-section">
+          <div class="debug-section-title">{{ t('designer.debug.output') }}</div>
+          <pre class="debug-json">{{ formatJson(currentDebugInfo.output) }}</pre>
+        </div>
+
+        <!-- Duration -->
+        <div class="debug-section">
+          <div class="debug-section-title">{{ t('designer.debug.duration') }}</div>
+          <span class="debug-duration">{{ currentDebugInfo.duration }}ms</span>
+        </div>
+
+        <!-- Error -->
+        <div v-if="currentDebugInfo.error" class="debug-section">
+          <div class="debug-section-title">Error</div>
+          <pre class="debug-json debug-error">{{ currentDebugInfo.error }}</pre>
+        </div>
+      </template>
+
+      <!-- Breakpoints List -->
+      <div v-if="breakpointCount > 0" class="debug-section debug-breakpoints-section">
+        <div class="debug-section-title">{{ t('designer.debug.breakpoint') }} ({{ breakpointCount }})</div>
+        <div
+          v-for="[nodeId] in breakpoints"
+          :key="nodeId"
+          class="debug-breakpoint-entry"
+        >
+          <svg width="10" height="10" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="5" fill="#ef4444" />
+          </svg>
+          <span class="debug-bp-node-id">{{ nodeId }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ConsoleLog } from '@/composables/designer/types'
+import type { NodeDebugInfo } from '@/composables/designer/useDebugMode'
 
 const { t } = useI18n()
 
 const props = defineProps<{
   logs: ConsoleLog[]
   collapsed?: boolean
+  flowState?: Record<string, any>
+  debugInfo?: Map<string, NodeDebugInfo>
+  currentDebugNodeId?: string | null
+  breakpoints?: Map<string, boolean>
+  isDebugMode?: boolean
 }>()
 
 defineEmits<{
@@ -69,7 +178,71 @@ defineEmits<{
   (e: 'clear'): void
 }>()
 
+const activeTab = ref<'console' | 'state' | 'debug'>('console')
 const logContainerRef = ref<HTMLElement>()
+
+// Flow state keys
+const flowStateKeys = computed(() => {
+  if (!props.flowState) return []
+  return Object.keys(props.flowState as Record<string, unknown>)
+})
+
+// Breakpoint count
+const breakpointCount = computed(() => {
+  if (!props.breakpoints) return 0
+  return Array.from(props.breakpoints.values()).filter(v => v).length
+})
+
+// Current debug info for the node being debugged
+const currentDebugInfo = computed(() => {
+  if (!props.currentDebugNodeId || !props.debugInfo) return null
+  return props.debugInfo.get(props.currentDebugNodeId) || null
+})
+
+// Auto-switch to debug tab when debug starts
+watch(() => props.isDebugMode, (val) => {
+  if (val) {
+    activeTab.value = 'debug'
+  }
+})
+
+// Auto-switch to debug tab when paused on a node
+watch(() => props.currentDebugNodeId, (val) => {
+  if (val && props.isDebugMode) {
+    activeTab.value = 'debug'
+  }
+})
+
+// Format state value for display
+function formatStateValue(value: any): string {
+  if (value === null || value === undefined) return 'null'
+  const str = String(value)
+  if (str.length > 120) return str.substring(0, 120) + '...'
+  return str
+}
+
+// Format JSON for display
+function formatJson(data: any): string {
+  if (data === null || data === undefined) return 'null'
+  try {
+    return JSON.stringify(data, null, 2)
+  } catch {
+    return String(data)
+  }
+}
+
+// Status label
+function statusLabel(status: string): string {
+  const map: Record<string, string> = {
+    pending: '待执行',
+    running: '运行中',
+    paused: '已暂停',
+    completed: '已完成',
+    failed: '失败',
+    skipped: '已跳过',
+  }
+  return map[status] ?? status
+}
 
 // Auto-scroll to bottom when new logs arrive
 watch(
@@ -285,5 +458,205 @@ function levelLabel(level: string): string {
 
 .console-body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tab Bar */
+.console-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.console-tab {
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  color: rgba(226, 232, 240, 0.35);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.console-tab:hover {
+  color: rgba(226, 232, 240, 0.6);
+}
+
+.console-tab.active {
+  color: rgba(226, 232, 240, 0.8);
+  border-bottom-color: #6366f1;
+}
+
+/* Header Right */
+.console-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Flow State Entries */
+.state-body {
+  padding: 8px 12px;
+}
+
+.state-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 3px 0;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.state-entry:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.state-key {
+  color: #818cf8;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.state-separator {
+  color: rgba(226, 232, 240, 0.25);
+  flex-shrink: 0;
+}
+
+.state-value {
+  color: rgba(226, 232, 240, 0.7);
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Debug Tab */
+.debug-body {
+  padding: 8px 12px;
+  max-height: 280px;
+}
+
+.debug-section {
+  margin-bottom: 12px;
+}
+
+.debug-section:last-child {
+  margin-bottom: 0;
+}
+
+.debug-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.debug-node-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.debug-status-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.debug-status-badge.status-pending {
+  color: rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.debug-status-badge.status-running {
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.12);
+}
+
+.debug-status-badge.status-paused {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.debug-status-badge.status-completed {
+  color: #52c41a;
+  background: rgba(82, 196, 26, 0.12);
+}
+
+.debug-status-badge.status-failed {
+  color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.12);
+}
+
+.debug-status-badge.status-skipped {
+  color: rgba(226, 232, 240, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.debug-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.debug-json {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(226, 232, 240, 0.7);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.debug-json.debug-error {
+  color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.08);
+}
+
+.debug-duration {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #818cf8;
+}
+
+.debug-breakpoints-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+  margin-top: 12px;
+}
+
+.debug-breakpoint-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 11px;
+}
+
+.debug-bp-node-id {
+  color: rgba(226, 232, 240, 0.5);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+}
+
+.debug-badge {
+  background: rgba(234, 179, 8, 0.3) !important;
+  color: #eab308 !important;
 }
 </style>

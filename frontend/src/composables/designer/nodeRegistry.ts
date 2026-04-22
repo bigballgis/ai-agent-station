@@ -1,11 +1,12 @@
 /**
  * 节点类型注册表
  *
- * 集中管理所有 12 种节点类型定义，采用 Flowise 风格的插件架构。
+ * 集中管理所有节点类型定义，采用 Flowise 风格的插件架构。
  * 所有配置字段与后端 GraphExecutor.java 保持一致。
  *
  * 节点类型列表：start, llm, condition, tool, memory, variable,
- *              retriever, exception, http, end, code, delay
+ *              retriever, exception, http, end, code, delay, subgraph,
+ *              switch, parallel, merge, human_approval
  */
 
 import type {
@@ -362,6 +363,58 @@ const codeConfigSchema: ConfigFieldSchema[] = [
   },
 ]
 
+/** Subgraph/Agent Call 节点配置 Schema */
+const subgraphConfigSchema: ConfigFieldSchema[] = [
+  {
+    key: 'agentId',
+    label: 'Agent ID',
+    type: 'text',
+    required: true,
+    defaultValue: '',
+    placeholder: '选择或输入 Agent ID',
+    tooltip: '要调用的子 Agent 唯一标识',
+  },
+  {
+    key: 'agentName',
+    label: 'Agent 名称',
+    type: 'text',
+    required: false,
+    defaultValue: '',
+    placeholder: '显示名称',
+    tooltip: '子 Agent 的显示名称',
+  },
+  {
+    key: 'inputMapping',
+    label: '输入映射 (JSON)',
+    type: 'json',
+    required: false,
+    defaultValue: '{}',
+    placeholder: '{"key": "{{source.output}}"}',
+    tooltip: '将当前工作流变量映射到子 Agent 输入，JSON 格式',
+  },
+  {
+    key: 'outputVariable',
+    label: '输出变量名',
+    type: 'text',
+    required: false,
+    defaultValue: 'subgraph_output',
+    placeholder: 'subgraph_output',
+    tooltip: '子 Agent 输出结果存储的变量名',
+  },
+]
+
+/** Switch/Router 节点配置 Schema */
+const switchConfigSchema: ConfigFieldSchema[] = [
+  {
+    key: 'cases',
+    label: '分支规则',
+    type: 'key-value',
+    required: true,
+    defaultValue: [],
+    tooltip: '配置条件表达式和分支标签，支持动态添加多个分支',
+  },
+]
+
 /** Delay 节点配置 Schema */
 const delayConfigSchema: ConfigFieldSchema[] = [
   {
@@ -373,6 +426,73 @@ const delayConfigSchema: ConfigFieldSchema[] = [
     min: 0.1,
     max: 3600,
     tooltip: '延迟等待的秒数',
+  },
+]
+
+/** Human Approval 节点配置 Schema */
+const humanApprovalConfigSchema: ConfigFieldSchema[] = [
+  {
+    key: 'approvalType',
+    label: '审批类型',
+    type: 'select',
+    required: true,
+    defaultValue: 'approve_reject',
+    options: [
+      { label: '批准/拒绝', value: 'approve_reject' },
+      { label: '批准/拒绝/修改', value: 'approve_reject_modify' },
+      { label: '需要输入', value: 'input_required' },
+    ],
+    tooltip: '选择审批操作类型',
+  },
+  {
+    key: 'title',
+    label: '审批标题',
+    type: 'text',
+    required: false,
+    defaultValue: '',
+    placeholder: '请审批此步骤',
+    tooltip: '审批请求的标题',
+  },
+  {
+    key: 'description',
+    label: '审批说明',
+    type: 'textarea',
+    required: false,
+    defaultValue: '',
+    placeholder: '描述需要审批的内容...',
+    tooltip: '详细描述需要审批的内容',
+  },
+  {
+    key: 'approvers',
+    label: '审批人',
+    type: 'text',
+    required: false,
+    defaultValue: '',
+    placeholder: '用户ID或角色，逗号分隔',
+    tooltip: '指定审批人，支持用户ID或角色，逗号分隔',
+  },
+  {
+    key: 'timeoutMinutes',
+    label: '超时时间（分钟）',
+    type: 'number',
+    required: false,
+    defaultValue: 60,
+    min: 1,
+    max: 10080,
+    tooltip: '等待审批的超时时间，超时后执行超时处理策略',
+  },
+  {
+    key: 'fallbackAction',
+    label: '超时处理',
+    type: 'select',
+    required: false,
+    defaultValue: 'reject',
+    options: [
+      { label: '自动拒绝', value: 'reject' },
+      { label: '自动批准', value: 'approve' },
+      { label: '升级处理', value: 'escalate' },
+    ],
+    tooltip: '超时后的自动处理策略',
   },
 ]
 
@@ -403,7 +523,7 @@ const endConfigSchema: ConfigFieldSchema[] = [
 ]
 
 // ============================================================
-// 节点类型定义（12 种，与 GraphExecutor.java 一致）
+// 节点类型定义（14 种，与 GraphExecutor.java 一致）
 // ============================================================
 
 const nodeTypeDefinitions: NodeTypeDefinition[] = [
@@ -421,7 +541,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: startConfigSchema,
   },
   {
@@ -446,7 +565,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: llmConfigSchema,
   },
   {
@@ -467,7 +585,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
       { name: 'true', label: 'True', index: 0 },
       { name: 'false', label: 'False', index: 1 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: conditionConfigSchema,
   },
   {
@@ -488,7 +605,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: toolConfigSchema,
   },
   {
@@ -510,7 +626,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: memoryConfigSchema,
   },
   {
@@ -529,7 +644,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: variableConfigSchema,
   },
   {
@@ -549,7 +663,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: retrieverConfigSchema,
   },
   {
@@ -570,7 +683,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
       { name: 'output', label: '输出', index: 0 },
       { name: 'error', label: '错误', index: 1 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: exceptionConfigSchema,
   },
   {
@@ -592,7 +704,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: httpConfigSchema,
   },
   {
@@ -610,7 +721,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
       { name: 'input', label: '输入', index: 0 },
     ],
     defaultOutputs: [],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: endConfigSchema,
   },
   {
@@ -630,7 +740,6 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: codeConfigSchema,
   },
   {
@@ -649,8 +758,128 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
     defaultOutputs: [
       { name: 'output', label: '输出', index: 0 },
     ],
-    // @ts-expect-error configSchema 不在基础接口中，作为扩展字段
     configSchema: delayConfigSchema,
+  },
+  {
+    type: 'subgraph',
+    name: '调用 Agent',
+    description: '嵌入另一个 Agent 工作流作为子图执行',
+    color: '#f59e0b',
+    icon: '\uD83D\uDD17',
+    category: 'advanced',
+    defaultConfig: {
+      agentId: '',
+      agentName: '',
+      inputMapping: '{}',
+      outputVariable: 'subgraph_output',
+    },
+    defaultInputs: [
+      { name: 'input', label: '输入', index: 0 },
+    ],
+    defaultOutputs: [
+      { name: 'output', label: '输出', index: 0 },
+    ],
+    configSchema: subgraphConfigSchema,
+  },
+  {
+    type: 'switch',
+    name: '多路分支',
+    description: '根据条件表达式路由到多个分支（支持3+路径）',
+    color: '#ec4899',
+    icon: '\u2142',
+    category: 'flow',
+    defaultConfig: {
+      cases: [
+        { expression: '', label: '分支 1', outputPort: 'case_1' },
+        { expression: '', label: '分支 2', outputPort: 'case_2' },
+      ],
+      defaultBranch: 'default',
+    },
+    defaultInputs: [
+      { name: 'input', label: '输入', index: 0 },
+    ],
+    defaultOutputs: [
+      { name: 'case_1', label: '分支 1', index: 0 },
+      { name: 'case_2', label: '分支 2', index: 1 },
+      { name: 'default', label: '默认', index: 2 },
+    ],
+    configSchema: switchConfigSchema,
+  },
+  {
+    type: 'parallel',
+    name: '并行执行',
+    description: '同时执行多个分支，等待全部完成后继续',
+    color: '#8b5cf6',
+    icon: '\u21C9',
+    category: 'flow',
+    defaultConfig: {
+      maxParallelism: 5,
+      failStrategy: 'wait',
+    },
+    defaultInputs: [
+      { name: 'input', label: '输入', index: 0 },
+    ],
+    defaultOutputs: [
+      { name: 'output', label: '输出', index: 0 },
+    ],
+    configSchema: [
+      { key: 'maxParallelism', label: '最大并行数', type: 'number', required: false, min: 1, max: 20, defaultValue: 5 },
+      { key: 'failStrategy', label: '失败策略', type: 'select', required: false, options: [
+        { label: '等待全部完成', value: 'wait' },
+        { label: '快速失败', value: 'fail_fast' },
+      ], defaultValue: 'wait' },
+    ],
+  },
+  {
+    type: 'merge',
+    name: '合并',
+    description: '合并多个分支的输出为一个结果',
+    color: '#06b6d4',
+    icon: '\u2442',
+    category: 'flow',
+    defaultConfig: {
+      mergeStrategy: 'append',
+      mergeExpression: '',
+    },
+    defaultInputs: [
+      { name: 'input_1', label: '输入 1', index: 0 },
+      { name: 'input_2', label: '输入 2', index: 1 },
+      { name: 'input_3', label: '输入 3', index: 2 },
+    ],
+    defaultOutputs: [
+      { name: 'output', label: '输出', index: 0 },
+    ],
+    configSchema: [
+      { key: 'mergeStrategy', label: '合并策略', type: 'select', required: false, options: [
+        { label: '追加 (Append)', value: 'append' },
+        { label: '覆盖 (Overwrite)', value: 'overwrite' },
+        { label: '取第一个 (First)', value: 'first' },
+      ], defaultValue: 'append' },
+    ],
+  },
+  {
+    type: 'human_approval',
+    name: '人工审批',
+    description: '暂停执行等待人工审批，支持批准/拒绝/修改',
+    color: '#f97316',
+    icon: '\uD83D\uDC64',
+    category: 'advanced',
+    defaultConfig: {
+      approvalType: 'approve_reject',
+      title: '请审批',
+      description: '',
+      approvers: '',
+      timeoutMinutes: 60,
+      fallbackAction: 'reject',
+    },
+    defaultInputs: [
+      { name: 'input', label: '输入', index: 0 },
+    ],
+    defaultOutputs: [
+      { name: 'approved', label: '已批准', index: 0 },
+      { name: 'rejected', label: '已拒绝', index: 1 },
+    ],
+    configSchema: humanApprovalConfigSchema,
   },
 ]
 
@@ -661,7 +890,7 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
 /**
  * 节点类型注册表
  *
- * 以 type 为 key 的映射表，包含所有 12 种节点类型的完整定义。
+ * 以 type 为 key 的映射表，包含所有节点类型的完整定义。
  */
 export const nodeTypeRegistry: NodeRegistry = nodeTypeDefinitions.reduce(
   (registry, def) => {

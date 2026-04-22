@@ -78,14 +78,65 @@
         </svg>
       </button>
 
+      <!-- Debug Controls -->
+      <button
+        class="toolbar-btn"
+        :class="{ active: debugMode }"
+        :title="debugMode ? t('designer.debug.toggle') : t('designer.debug.toggle')"
+        @click="$emit('debug-toggle')"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+      <template v-if="debugMode">
+        <button
+          class="toolbar-btn"
+          :disabled="!canStepNext"
+          :title="t('designer.debug.step') + ' (F10)'"
+          @click="$emit('debug-step')"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </button>
+        <button
+          class="toolbar-btn"
+          :disabled="!canContinue"
+          :title="t('designer.debug.continue') + ' (F5)'"
+          @click="$emit('debug-continue')"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+        <button
+          class="toolbar-btn"
+          :title="t('designer.debug.stop') + ' (Shift+F5)'"
+          @click="$emit('debug-stop')"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </template>
+
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn btn-run" :title="t('designer.toolbar.run')" @click="$emit('run')">
+      <button v-if="!running" class="toolbar-btn btn-run" :title="t('designer.toolbar.run')" @click="$emit('run')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         {{ t('designer.toolbar.run') }}
+      </button>
+      <button v-else class="toolbar-btn btn-stop" :title="t('designer.toolbar.stop')" @click="$emit('stop')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
+        </svg>
+        {{ t('designer.toolbar.stop') }}
       </button>
       <button class="toolbar-btn btn-save" :title="t('designer.toolbar.save') + ' (Ctrl+S)'" @click="$emit('save')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -114,6 +165,10 @@ defineProps<{
   zoom: number
   validationMessage?: string
   validationType?: 'success' | 'error' | 'warning'
+  running?: boolean
+  debugMode?: boolean
+  canStepNext?: boolean
+  canContinue?: boolean
 }>()
 
 defineEmits<{
@@ -129,7 +184,12 @@ defineEmits<{
   (e: 'validate'): void
   (e: 'auto-layout'): void
   (e: 'run'): void
+  (e: 'stop'): void
   (e: 'save'): void
+  (e: 'debug-toggle'): void
+  (e: 'debug-step'): void
+  (e: 'debug-continue'): void
+  (e: 'debug-stop'): void
 }>()
 </script>
 
@@ -239,6 +299,19 @@ defineEmits<{
   cursor: not-allowed;
 }
 
+/* Debug Mode Active State */
+.toolbar-btn.active {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.toolbar-btn.active:hover:not(:disabled) {
+  background: rgba(234, 179, 8, 0.3);
+  border-color: rgba(234, 179, 8, 0.45);
+  color: #facc15;
+}
+
 /* Run Button */
 .toolbar-btn.btn-run {
   background: rgba(82, 196, 26, 0.12);
@@ -251,6 +324,20 @@ defineEmits<{
   background: rgba(82, 196, 26, 0.2);
   border-color: rgba(82, 196, 26, 0.35);
   color: #73d13d;
+}
+
+/* Stop Button */
+.toolbar-btn.btn-stop {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 6px 12px;
+}
+
+.toolbar-btn.btn-stop:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 
 /* Save Button */

@@ -15,6 +15,7 @@ public class GraphNode {
     private String type;       // llm, condition, tool, memory, variable, retriever, exception, http, code, start, end
     private String label;
     private Map<String, Object> config = new HashMap<>();
+    private List<String> inputPorts = new ArrayList<>();   // 输入端口名称列表
     private List<String> outputPorts = new ArrayList<>();  // 输出端口名称列表
     private Map<String, String> portMappings = new HashMap<>();  // 端口名 -> 目标节点ID
     private int maxRetries = 1;

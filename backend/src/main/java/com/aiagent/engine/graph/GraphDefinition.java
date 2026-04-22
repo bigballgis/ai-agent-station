@@ -29,6 +29,16 @@ public class GraphDefinition {
         return result;
     }
 
+    public List<GraphEdge> getIncomingEdges(String nodeId) {
+        List<GraphEdge> result = new ArrayList<>();
+        for (GraphEdge edge : edges) {
+            if (edge.getTargetNodeId().equals(nodeId)) {
+                result.add(edge);
+            }
+        }
+        return result;
+    }
+
     public GraphEdge getEdgeBySourcePort(String nodeId, String portName) {
         for (GraphEdge edge : edges) {
             if (edge.getSourceNodeId().equals(nodeId) && portName.equals(edge.getSourcePort())) {

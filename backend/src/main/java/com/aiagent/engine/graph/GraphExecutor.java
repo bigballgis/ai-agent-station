@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * DAG 图执行引擎 — LangGraph 风格的状态图编排
@@ -52,6 +53,10 @@ public class GraphExecutor {
         String currentNodeId = graph.getEntryNodeId();
         state.setIterationCount(0);
 
+        // Track each node's output for {{nodeId.output}} variable resolution
+        Map<String, Object> nodeOutputs = new HashMap<>();
+
+        outerLoop:
         while (currentNodeId != null && !state.isShouldTerminate()) {
             if (state.isMaxIterationsReached()) {
                 log.warn("达到最大迭代次数 {}, 终止执行", state.getMaxIterations());
@@ -70,49 +75,75 @@ public class GraphExecutor {
             node.setStatus("running");
             node.setExecutionOrder(state.getIterationCount() + 1);
 
-            try {
-                log.info("执行节点 [{}] {} (类型: {}, 第 {} 步)",
-                    node.getId(), node.getLabel(), node.getType(), node.getExecutionOrder());
+            // 检查超时设置
+            int timeoutSeconds = node.getTimeoutSeconds() > 0 ? node.getTimeoutSeconds() : 30;
+            // TODO: 使用 CompletableFuture.orTimeout() 实现节点级超时控制
+            // 当前为同步执行，超时控制需异步化改造
+            log.debug("节点 {} 超时设置: {}秒", node.getId(), timeoutSeconds);
 
-                // 根据节点类型执行
-                switch (node.getType()) {
-                    case "start" -> executeStartNode(node, state);
-                    case "llm" -> executeLlmNode(node, state);
-                    case "condition" -> executeConditionNode(node, state);
-                    case "tool" -> executeToolNode(node, state);
-                    case "memory" -> executeMemoryNode(node, state);
-                    case "variable" -> executeVariableNode(node, state);
-                    case "retriever" -> executeRetrieverNode(node, state);
-                    case "exception" -> executeExceptionNode(node, state);
-                    case "http" -> executeHttpNode(node, state);
-                    case "end" -> { node.setStatus("completed"); state.setShouldTerminate(true); break; }
-                    // code 和 delay 是前端可视化类型，不需要后端执行，直接跳过
-                    case "code", "delay" -> {
-                        log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
-                        node.setStatus("skipped");
+            // 重试机制
+            int maxRetries = node.getMaxRetries() > 0 ? node.getMaxRetries() : 1;
+            int attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    log.info("执行节点 [{}] {} (类型: {}, 第 {} 步, 尝试 {}/{})",
+                        node.getId(), node.getLabel(), node.getType(), node.getExecutionOrder(), attempt + 1, maxRetries);
+
+                    // 根据节点类型执行
+                    switch (node.getType()) {
+                        case "start" -> executeStartNode(node, state);
+                        case "llm" -> executeLlmNode(node, state, nodeOutputs, graph);
+                        case "condition" -> executeConditionNode(node, state);
+                        case "tool" -> executeToolNode(node, state);
+                        case "memory" -> executeMemoryNode(node, state);
+                        case "variable" -> executeVariableNode(node, state);
+                        case "retriever" -> executeRetrieverNode(node, state, nodeOutputs, graph);
+                        case "exception" -> executeExceptionNode(node, state);
+                        case "http" -> executeHttpNode(node, state, nodeOutputs, graph);
+                        case "end" -> { node.setStatus("completed"); state.setShouldTerminate(true); break; }
+                        case "parallel" -> executeParallelNode(node, state, nodeOutputs, graph);
+                        case "merge" -> executeMergeNode(node, state, nodeOutputs, graph);
+                        case "switch" -> executeSwitchNode(node, state);
+                        case "subgraph" -> executeSubgraphNode(node, state);
+                        case "human_approval" -> executeHumanApprovalNode(node, state);
+                        // code 和 delay 是前端可视化类型，不需要后端执行，直接跳过
+                        case "code", "delay" -> {
+                            log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
+                            node.setStatus("skipped");
+                        }
+                        default -> {
+                            log.warn("未知节点类型: {}, 跳过", node.getType());
+                            node.setStatus("skipped");
+                        }
                     }
-                    default -> {
-                        log.warn("未知节点类型: {}, 跳过", node.getType());
-                        node.setStatus("skipped");
+
+                    if (!state.isShouldTerminate()) {
+                        node.setStatus("completed");
+                        // Store node output for variable resolution
+                        if (node.getOutput() != null) {
+                            nodeOutputs.put(currentNodeId, node.getOutput());
+                        }
+                        // 决定下一个节点
+                        currentNodeId = resolveNextNode(graph, node, state);
                     }
-                }
+                    break; // 成功，退出重试循环
 
-                if (!state.isShouldTerminate()) {
-                    node.setStatus("completed");
-                    // 决定下一个节点
-                    currentNodeId = resolveNextNode(graph, node, state);
-                }
+                } catch (Exception e) {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        log.error("节点 {} 执行失败（已重试 {} 次）: {}", node.getId(), maxRetries, e.getMessage(), e);
+                        node.setStatus("failed");
+                        node.setError(e.getMessage());
 
-            } catch (Exception e) {
-                log.error("节点 {} 执行失败: {}", node.getId(), e.getMessage(), e);
-                node.setStatus("failed");
-                node.setError(e.getMessage());
-
-                // 查找异常处理节点
-                currentNodeId = findExceptionHandler(graph, node);
-                if (currentNodeId == null) {
-                    state.setError("节点 " + node.getLabel() + " 执行失败: " + e.getMessage());
-                    break;
+                        // 查找异常处理节点
+                        currentNodeId = findExceptionHandler(graph, node);
+                        if (currentNodeId == null) {
+                            state.setError("节点 " + node.getLabel() + " 执行失败: " + e.getMessage());
+                            break outerLoop; // 跳出外层 while 循环
+                        }
+                        break; // 跳出重试循环，继续执行异常处理节点
+                    }
+                    log.warn("节点 {} 执行失败，重试 {}/{}", node.getId(), attempt, maxRetries);
                 }
             }
 
@@ -139,17 +170,25 @@ public class GraphExecutor {
         state.getProcessedInput().putAll(state.getInputs());
     }
 
-    private void executeLlmNode(GraphNode node, AgentState state) {
+    private void executeLlmNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
         Map<String, Object> nodeConfig = node.getConfig();
         String provider = (String) nodeConfig.getOrDefault("provider", "openai");
         String modelName = (String) nodeConfig.getOrDefault("model", null);
-        String systemPrompt = (String) nodeConfig.getOrDefault("systemPrompt", "你是一个 AI 助手。");
+        String systemPrompt = resolveVariableReferences((String) nodeConfig.getOrDefault("systemPrompt", "你是一个 AI 助手。"), nodeOutputs, graph);
 
         // 构建 langchain4j 配置
+        double temperature = 0.7;
+        Object tempObj = nodeConfig.get("temperature");
+        if (tempObj instanceof Number) {
+            temperature = ((Number) tempObj).doubleValue();
+        } else if (tempObj instanceof String) {
+            try { temperature = Double.parseDouble((String) tempObj); } catch (NumberFormatException e) { /* use default */ }
+        }
+
         LlmProviderConfig config = LlmProviderConfig.builder()
                 .provider(provider)
                 .modelName(modelName)
-                .temperature(nodeConfig.get("temperature") != null ? ((Number) nodeConfig.get("temperature")).doubleValue() : 0.7)
+                .temperature(temperature)
                 .topP(nodeConfig.get("topP") != null ? ((Number) nodeConfig.get("topP")).doubleValue() : 0.9)
                 .maxTokens(nodeConfig.get("maxTokens") != null ? ((Number) nodeConfig.get("maxTokens")).intValue() : 2048)
                 .build();
@@ -180,8 +219,8 @@ public class GraphExecutor {
         }
 
         // 添加用户输入（支持模板变量替换）
-        String promptTemplate = (String) nodeConfig.getOrDefault("prompt", "");
-        if (!promptTemplate.isEmpty()) {
+        String promptTemplate = resolveVariableReferences((String) nodeConfig.getOrDefault("prompt", ""), nodeOutputs, graph);
+        if (promptTemplate != null && !promptTemplate.isEmpty()) {
             String resolvedPrompt = promptTemplate;
             for (Map.Entry<String, Object> entry : state.getVariables().entrySet()) {
                 resolvedPrompt = resolvedPrompt.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
@@ -438,8 +477,8 @@ public class GraphExecutor {
         log.info("变量设置: {} = {}", varName, varValue);
     }
 
-    private void executeRetrieverNode(GraphNode node, AgentState state) {
-        String query = (String) node.getConfig().getOrDefault("query", "");
+    private void executeRetrieverNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
+        String query = resolveVariableReferences((String) node.getConfig().getOrDefault("query", ""), nodeOutputs, graph);
         String retrieverType = (String) node.getConfig().getOrDefault("retrieverType", "memory");
 
         if ("memory".equals(retrieverType) && state.getAgentId() != null) {
@@ -477,9 +516,9 @@ public class GraphExecutor {
         }
     }
 
-    private void executeHttpNode(GraphNode node, AgentState state) {
+    private void executeHttpNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
         Map<String, Object> nodeConfig = node.getConfig();
-        String url = (String) nodeConfig.getOrDefault("url", "");
+        String url = resolveVariableReferences((String) nodeConfig.getOrDefault("url", ""), nodeOutputs, graph);
         String method = (String) nodeConfig.getOrDefault("method", "GET");
         log.info("HTTP 节点: {} {}", method, url);
 
@@ -534,10 +573,117 @@ public class GraphExecutor {
         }
     }
 
+    private void executeSwitchNode(GraphNode node, AgentState state) {
+        Map<String, Object> config = node.getConfig();
+        Object casesObj = config.get("cases");
+
+        if (!(casesObj instanceof List) || ((List<?>) casesObj).isEmpty()) {
+            log.warn("Switch 节点 {} 没有配置分支规则", node.getId());
+            state.setConditionResult("default");
+            node.setOutput("default");
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> cases = (List<Map<String, String>>) casesObj;
+
+        // Evaluate each case expression against the current state
+        for (Map<String, String> caseDef : cases) {
+            String expression = caseDef.get("expression");
+            String outputPort = caseDef.get("outputPort");
+
+            if (expression != null && !expression.isEmpty() && evaluateExpression(expression, state)) {
+                log.info("Switch 节点 {} 匹配分支: {} -> {}", node.getId(), expression, outputPort);
+                state.setConditionResult(outputPort);
+                node.setOutput(outputPort);
+                return;
+            }
+        }
+
+        // No case matched, use default
+        log.info("Switch 节点 {} 无匹配分支，使用默认分支", node.getId());
+        state.setConditionResult("default");
+        node.setOutput("default");
+    }
+
+    private void executeSubgraphNode(GraphNode node, AgentState state) {
+        Map<String, Object> config = node.getConfig();
+        String agentId = (String) config.get("agentId");
+
+        if (agentId == null || agentId.isEmpty()) {
+            throw new RuntimeException("子图节点未配置 Agent ID");
+        }
+
+        // TODO: 实现子图执行 - 加载目标 Agent 的 GraphDefinition 并递归执行
+        // 当前为占位实现，返回提示信息
+        log.info("子图节点 {} 调用 Agent: {}", node.getId(), agentId);
+        String result = "[子图执行结果 - Agent: " + agentId + "]";
+        node.setOutput(result);
+    }
+
+    /**
+     * 执行人工审批节点
+     *
+     * 灵感来自 LangGraph 的 interrupt/resume 机制和 Flowise 的 checkpoint 持久化。
+     *
+     * 生产环境实现计划：
+     * 1. 保存执行状态为 checkpoint（包含当前节点 ID、状态变量等）
+     * 2. 向审批人发送通知（邮件/消息/WebSocket）
+     * 3. 抛出中断异常暂停执行，返回 checkpoint ID 给调用方
+     * 4. 提供 resume API，审批人通过 API 提交审批结果
+     * 5. resume 时从 checkpoint 恢复状态，继续执行
+     *
+     * 当前实现：自动批准（用于测试和开发阶段）
+     */
+    private void executeHumanApprovalNode(GraphNode node, AgentState state) {
+        Map<String, Object> config = node.getConfig();
+        String title = (String) config.getOrDefault("title", "请审批");
+        String approvalType = (String) config.getOrDefault("approvalType", "approve_reject");
+        String approvers = (String) config.getOrDefault("approvers", "");
+        int timeoutMinutes = config.get("timeoutMinutes") != null
+                ? ((Number) config.get("timeoutMinutes")).intValue()
+                : 60;
+        String fallbackAction = (String) config.getOrDefault("fallbackAction", "reject");
+
+        // 检查状态中是否已有审批结果（用于 resume 场景）
+        Object approvalResult = state.getVariables().get("__approval_" + node.getId());
+
+        if (approvalResult == null) {
+            // 无审批结果 - 创建 checkpoint 并等待审批
+            log.info("人工审批节点 {} 等待审批: {} (类型: {}, 审批人: {}, 超时: {}分钟, 超时处理: {})",
+                    node.getId(), title, approvalType, approvers, timeoutMinutes, fallbackAction);
+
+            // TODO: 生产环境 - 保存 checkpoint 到数据库
+            // TODO: 生产环境 - 发送审批通知给审批人
+            // TODO: 生产环境 - 抛出 ExecutionInterruptedException 暂停执行
+            // TODO: 生产环境 - 返回 checkpoint ID 给前端，前端轮询或 WebSocket 等待
+
+            // 记录审批等待状态
+            state.getVariables().put("__approval_pending_" + node.getId(), "true");
+            state.getVariables().put("__approval_title_" + node.getId(), title);
+            state.getVariables().put("__approval_type_" + node.getId(), approvalType);
+
+            // 当前自动批准（开发/测试阶段）
+            log.warn("人工审批节点 {} 当前自动批准（生产环境需实现 checkpoint/resume 暂停恢复机制）", node.getId());
+            approvalResult = "approved";
+        }
+
+        String result = String.valueOf(approvalResult);
+        state.setConditionResult(result);
+        state.getOutputs().put("approvalResult", result);
+        node.setOutput(result);
+        log.info("人工审批节点 {} 结果: {}", node.getId(), result);
+    }
+
     /**
      * 解析下一个要执行的节点
      */
     private String resolveNextNode(GraphDefinition graph, GraphNode node, AgentState state) {
+        // 并行节点：分支已在 executeParallelNode 内部执行完毕，跳过后续路由
+        if ("parallel".equals(node.getType())) {
+            return null;
+        }
+
         // 条件分支节点：根据结果选择端口
         if ("condition".equals(node.getType())) {
             String result = state.getConditionResult();
@@ -545,6 +691,34 @@ public class GraphExecutor {
             GraphEdge edge = graph.getEdgeBySourcePort(node.getId(), portName);
             if (edge != null) return edge.getTargetNodeId();
             // 回退：取第一个出边
+            List<GraphEdge> edges = graph.getOutgoingEdges(node.getId());
+            if (!edges.isEmpty()) return edges.get(0).getTargetNodeId();
+            return null;
+        }
+
+        // 人工审批节点：根据审批结果选择 approved/rejected 端口
+        if ("human_approval".equals(node.getType())) {
+            String result = state.getConditionResult();
+            String portName = "approved".equals(result) ? "approved" : "rejected";
+            GraphEdge edge = graph.getEdgeBySourcePort(node.getId(), portName);
+            if (edge != null) return edge.getTargetNodeId();
+            // 回退：取第一个出边
+            List<GraphEdge> edges = graph.getOutgoingEdges(node.getId());
+            if (!edges.isEmpty()) return edges.get(0).getTargetNodeId();
+            return null;
+        }
+
+        // 多路分支节点：根据条件结果选择对应端口
+        if ("switch".equals(node.getType())) {
+            String result = state.getConditionResult();
+            if (result != null && !result.isEmpty()) {
+                GraphEdge edge = graph.getEdgeBySourcePort(node.getId(), result);
+                if (edge != null) return edge.getTargetNodeId();
+            }
+            // 回退到 default 端口
+            GraphEdge defaultEdge = graph.getEdgeBySourcePort(node.getId(), "default");
+            if (defaultEdge != null) return defaultEdge.getTargetNodeId();
+            // 最终回退：取第一个出边
             List<GraphEdge> edges = graph.getOutgoingEdges(node.getId());
             if (!edges.isEmpty()) return edges.get(0).getTargetNodeId();
             return null;
@@ -589,6 +763,175 @@ public class GraphExecutor {
     }
 
     /**
+     * 解析模板中的变量引用 {{nodeId.output}} 或 {{nodeId.config.field}}
+     * 替换为实际执行结果或节点配置值
+     */
+    private String resolveVariableReferences(String template, Map<String, Object> nodeOutputs, GraphDefinition graph) {
+        if (template == null) return null;
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{\\{([^}]+)\\}\\}");
+        java.util.regex.Matcher matcher = pattern.matcher(template);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            String match = matcher.group(0);
+            String expr = matcher.group(1).trim();
+            String[] parts = expr.split("\\.", 2);
+            String replacement = match; // 默认保留原始占位符
+            if (parts.length >= 2) {
+                String nodeId = parts[0];
+                String field = parts[1];
+
+                // Check node outputs
+                if (nodeOutputs.containsKey(nodeId)) {
+                    Object output = nodeOutputs.get(nodeId);
+                    if ("output".equals(field) && output != null) {
+                        replacement = output.toString();
+                    }
+                    // Try to get nested field
+                    if (replacement.equals(match) && output instanceof Map) {
+                        Object value = ((Map<?, ?>) output).get(field);
+                        if (value != null) replacement = value.toString();
+                    }
+                }
+
+                // Check node config
+                if (replacement.equals(match)) {
+                    GraphNode graphNode = graph.getNode(nodeId);
+                    if (graphNode != null) {
+                        Object configValue = graphNode.getConfig().get(field);
+                        if (configValue != null) replacement = configValue.toString();
+                        if (replacement.equals(match) && "label".equals(field)) replacement = graphNode.getLabel();
+                    }
+                }
+            }
+            matcher.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * 执行并行节点 — 扇出执行多个分支，等待全部完成后合并结果
+     *
+     * TODO: 当前为顺序执行实现，收集所有分支输出。
+     * 未来应使用 CompletableFuture 实现真正的异步并行执行，
+     * 配合 maxParallelism 参数控制线程池大小。
+     */
+    private void executeParallelNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
+        Map<String, Object> config = node.getConfig();
+        int maxParallelism = config.containsKey("maxParallelism") ? ((Number) config.get("maxParallelism")).intValue() : 5;
+        String failStrategy = (String) config.getOrDefault("failStrategy", "wait");
+
+        // 获取所有出边（扇出目标）
+        List<GraphEdge> outEdges = graph.getOutgoingEdges(node.getId());
+
+        // TODO: 使用 CompletableFuture + ExecutorService 实现真正的并行执行
+        // 当前实现为顺序执行，但收集所有分支输出
+        Map<String, Object> branchResults = new LinkedHashMap<>();
+        List<String> errors = new ArrayList<>();
+
+        for (GraphEdge edge : outEdges) {
+            String targetId = edge.getTargetNodeId();
+            try {
+                GraphNode targetNode = graph.getNode(targetId);
+                if (targetNode != null) {
+                    executeNodeInternal(targetNode, state, nodeOutputs, graph);
+                    branchResults.put(targetId, nodeOutputs.getOrDefault(targetId, ""));
+                }
+            } catch (Exception e) {
+                errors.add(targetId + ": " + e.getMessage());
+                if ("fail_fast".equals(failStrategy)) {
+                    throw new RuntimeException("并行分支执行失败: " + targetId, e);
+                }
+            }
+        }
+
+        if (!errors.isEmpty() && "wait".equals(failStrategy)) {
+            log.warn("并行节点 {} 有 {} 个分支失败: {}", node.getId(), errors.size(), errors);
+        }
+
+        String result = branchResults.values().stream()
+            .map(Object::toString)
+            .collect(Collectors.joining("\n---\n"));
+        node.setOutput(result);
+        nodeOutputs.put(node.getId(), result);
+    }
+
+    /**
+     * 执行合并节点 — 收集所有输入连接的输出并按策略合并
+     */
+    private void executeMergeNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
+        Map<String, Object> config = node.getConfig();
+        String strategy = (String) config.getOrDefault("mergeStrategy", "append");
+
+        // 收集所有入边对应的上游输出
+        List<GraphEdge> inEdges = graph.getIncomingEdges(node.getId());
+        List<Object> inputs = new ArrayList<>();
+
+        for (GraphEdge edge : inEdges) {
+            String sourceId = edge.getSourceNodeId();
+            Object output = nodeOutputs.get(sourceId);
+            if (output != null) {
+                inputs.add(output);
+            }
+        }
+
+        String result;
+        switch (strategy) {
+            case "first":
+                result = inputs.isEmpty() ? "" : inputs.get(0).toString();
+                break;
+            case "overwrite":
+                result = inputs.isEmpty() ? "" : inputs.get(inputs.size() - 1).toString();
+                break;
+            case "append":
+            default:
+                result = inputs.stream().map(Object::toString).collect(Collectors.joining("\n"));
+                break;
+        }
+
+        node.setOutput(result);
+        nodeOutputs.put(node.getId(), result);
+    }
+
+    /**
+     * 内部节点执行方法（供 parallel 节点递归调用子分支）
+     * TODO: 与主循环逻辑合并，避免代码重复。当前为 parallel 节点的临时实现。
+     */
+    private void executeNodeInternal(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
+        node.setStatus("running");
+        log.info("执行并行分支节点 [{}] {} (类型: {})", node.getId(), node.getLabel(), node.getType());
+
+        switch (node.getType()) {
+            case "start" -> executeStartNode(node, state);
+            case "llm" -> executeLlmNode(node, state, nodeOutputs, graph);
+            case "condition" -> executeConditionNode(node, state);
+            case "tool" -> executeToolNode(node, state);
+            case "memory" -> executeMemoryNode(node, state);
+            case "variable" -> executeVariableNode(node, state);
+            case "retriever" -> executeRetrieverNode(node, state, nodeOutputs, graph);
+            case "exception" -> executeExceptionNode(node, state);
+            case "http" -> executeHttpNode(node, state, nodeOutputs, graph);
+            case "parallel" -> executeParallelNode(node, state, nodeOutputs, graph);
+            case "merge" -> executeMergeNode(node, state, nodeOutputs, graph);
+            case "code", "delay" -> {
+                log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
+                node.setStatus("skipped");
+                return;
+            }
+            default -> {
+                log.warn("未知节点类型: {}, 跳过", node.getType());
+                node.setStatus("skipped");
+                return;
+            }
+        }
+
+        node.setStatus("completed");
+        if (node.getOutput() != null) {
+            nodeOutputs.put(node.getId(), node.getOutput());
+        }
+    }
+
+    /**
      * 简化表达式求值
      */
     private boolean evaluateExpression(String expression, AgentState state) {
@@ -609,8 +952,18 @@ public class GraphExecutor {
                 case "==" -> leftStr.equals(right);
                 case "!=" -> !leftStr.equals(right);
                 case "contains" -> leftStr.contains(right);
-                case ">" -> Double.compare(Double.parseDouble(leftStr), Double.parseDouble(right)) > 0;
-                case "<" -> Double.compare(Double.parseDouble(leftStr), Double.parseDouble(right)) < 0;
+                case ">", "<" -> {
+                    try {
+                        double leftNum = Double.parseDouble(leftStr);
+                        double rightNum = Double.parseDouble(right);
+                        yield ">".equals(operator)
+                            ? Double.compare(leftNum, rightNum) > 0
+                            : Double.compare(leftNum, rightNum) < 0;
+                    } catch (NumberFormatException e) {
+                        log.warn("无法解析数值表达式: {} {} {}", leftStr, operator, right);
+                        yield false;
+                    }
+                }
                 default -> false;
             };
         }
