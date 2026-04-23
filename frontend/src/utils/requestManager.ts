@@ -24,7 +24,7 @@ const pendingMap = new Map<string, AbortController>()
 const DEDUP_METHODS = ['get', 'post', 'put', 'patch']
 
 // 需要去重的 URL 前缀（API 请求）
-const DEDUP_PREFIXES = ['/api/', '/auth/']
+const DEDUP_PREFIXES = ['/api/', '/v1/auth/']
 
 /**
  * 生成请求唯一 Key

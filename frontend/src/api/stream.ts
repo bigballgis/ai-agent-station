@@ -33,7 +33,6 @@ export function createSSEConnection(
 ): { close: () => void } {
   const controller = new AbortController()
   const token = getToken()
-  const tenantId = localStorage.getItem('tenantId')
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
   const fullUrl = `${baseUrl}${url}`
@@ -42,7 +41,6 @@ export function createSSEConnection(
     method: 'POST',
     headers: {
       'Authorization': token ? `Bearer ${token}` : '',
-      'X-Tenant-ID': tenantId || '',
       'Accept': 'text/event-stream',
       'Content-Type': 'application/json',
     },

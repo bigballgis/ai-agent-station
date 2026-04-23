@@ -7,7 +7,7 @@ services:
     container_name: ai-agent-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD环境变量必须设置}
       POSTGRES_DB: ai_agent_platform
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
@@ -29,13 +29,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ai-agent-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_dev_password}
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD环境变量必须设置}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_dev_password}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?REDIS_PASSWORD环境变量必须设置}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
