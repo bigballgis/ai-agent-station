@@ -62,6 +62,7 @@ export default {
     passwordPlaceholder: '请输入密码',
     loginSuccess: '登录成功',
     loginFailed: '登录失败',
+    forgotPassword: '忘记密码？',
     usernameRequired: '请输入用户名',
     passwordRequired: '请输入密码',
     passwordMinLength: '密码长度不能少于6个字符',
