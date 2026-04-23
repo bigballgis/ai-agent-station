@@ -594,20 +594,17 @@ function hasAnyRole(roles?: string[]): boolean {
 
 // 过滤菜单项（递归处理子菜单）
 function filterMenuItems(items: MenuItem[]): MenuItem[] {
-  return items.filter(item => {
-    if (!hasAnyRole(item.roles)) return false
-    if (item.children) {
+  return items
+    .map(item => {
+      if (!item.children) return item
       const filteredChildren = filterMenuItems(item.children)
-      if (filteredChildren.length === 0) return false
-      return { ...item, children: filteredChildren } as unknown as boolean
-    }
-    return true
-  }).map(item => {
-    if (item.children) {
-      return { ...item, children: filterMenuItems(item.children) }
-    }
-    return item
-  })
+      return { ...item, children: filteredChildren }
+    })
+    .filter(item => {
+      if (!hasAnyRole(item.roles)) return false
+      if (item.children && item.children.length === 0) return false
+      return true
+    })
 }
 
 // 根据用户角色过滤后的菜单分组

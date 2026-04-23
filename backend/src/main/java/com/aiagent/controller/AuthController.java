@@ -13,6 +13,7 @@ import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
 import com.aiagent.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -45,7 +46,10 @@ public class AuthController {
      */
     @GetMapping("/captcha")
     @Operation(summary = "获取数学验证码")
-    public Result<CaptchaResponseDTO> getCaptcha() {
+    public Result<CaptchaResponseDTO> getCaptcha(HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        checkRateLimit("captcha:" + clientIp, 10, 60);
+
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int a = random.nextInt(1, 21);
         int b = random.nextInt(1, 21);
@@ -94,7 +98,10 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "用户注册")
     @OperationLog(value = "用户注册", module = "认证")
-    public Result<?> register(@Valid @RequestBody RegisterRequestDTO request) {
+    public Result<?> register(@Valid @RequestBody RegisterRequestDTO request, HttpServletRequest httpRequest) {
+        String clientIp = getClientIp(httpRequest);
+        checkRateLimit("register:" + clientIp, 5, 60);
+
         return Result.success(authService.register(request));
     }
 
@@ -197,5 +204,42 @@ public class AuthController {
 
         public String getRefreshToken() { return refreshToken; }
         public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
+    }
+
+    // ==================== 速率限制辅助方法 ====================
+
+    /**
+     * 基于Redis计数器的IP速率限制
+     *
+     * @param key           Redis key 标识（含IP）
+     * @param maxAttempts   时间窗口内最大请求次数
+     * @param windowSeconds 时间窗口（秒）
+     */
+    private void checkRateLimit(String key, int maxAttempts, int windowSeconds) {
+        String redisKey = "rate_limit:" + key;
+        Long count = redisTemplate.opsForValue().increment(redisKey);
+        if (count != null && count == 1) {
+            redisTemplate.expire(redisKey, windowSeconds, TimeUnit.SECONDS);
+        }
+        if (count != null && count > maxAttempts) {
+            throw new RuntimeException("请求过于频繁，请稍后重试");
+        }
+    }
+
+    /**
+     * 从HttpServletRequest中获取客户端真实IP
+     * 优先读取 X-Forwarded-For header，其次使用 getRemoteAddr()
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            // X-Forwarded-For 可能包含多个IP，取第一个
+            int index = ip.indexOf(',');
+            if (index != -1) {
+                ip = ip.substring(0, index).trim();
+            }
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }

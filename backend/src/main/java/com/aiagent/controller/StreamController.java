@@ -8,12 +8,11 @@ import com.aiagent.engine.graph.GraphExecutor;
 import com.aiagent.engine.graph.GraphNode;
 import com.aiagent.engine.graph.GraphParser;
 import com.aiagent.entity.Agent;
-import com.aiagent.entity.ExecutionHistory;
 import com.aiagent.repository.AgentRepository;
-import com.aiagent.repository.ExecutionHistoryRepository;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
 import com.aiagent.security.UserPrincipal;
+import com.aiagent.service.ExecutionHistoryService;
 import com.aiagent.service.llm.LangChain4jService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executor;
-import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,7 +53,7 @@ public class StreamController {
     private final GraphParser graphParser;
     private final GraphExecutor graphExecutor;
     private final AgentRepository agentRepository;
-    private final ExecutionHistoryRepository executionHistoryRepository;
+    private final ExecutionHistoryService executionHistoryService;
     private final Executor sseExecutor;
     private final ObjectMapper objectMapper;
 
@@ -64,7 +62,7 @@ public class StreamController {
                             GraphParser graphParser,
                             GraphExecutor graphExecutor,
                             AgentRepository agentRepository,
-                            ExecutionHistoryRepository executionHistoryRepository,
+                            ExecutionHistoryService executionHistoryService,
                             @Qualifier("sseExecutor") Executor sseExecutor,
                             ObjectMapper objectMapper) {
         this.langChain4jService = langChain4jService;
@@ -72,7 +70,7 @@ public class StreamController {
         this.graphParser = graphParser;
         this.graphExecutor = graphExecutor;
         this.agentRepository = agentRepository;
-        this.executionHistoryRepository = executionHistoryRepository;
+        this.executionHistoryService = executionHistoryService;
         this.sseExecutor = sseExecutor;
         this.objectMapper = objectMapper;
     }
@@ -543,23 +541,16 @@ public class StreamController {
      * 保存执行历史记录到数据库
      */
     private void saveExecutionHistory(Long agentId, String messageContent, String role) {
-        try {
-            ExecutionHistory history = new ExecutionHistory();
-            history.setAgentId(agentId);
-            history.setMessage(messageContent);
-            history.setRole(role);
-            history.setTimestamp(LocalDateTime.now());
+        Long userId = null;
+        Long tenantId = null;
 
-            // 获取当前登录用户信息
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
-                history.setUserId(principal.getId());
-                history.setTenantId(principal.getTenantId());
-            }
-
-            executionHistoryRepository.save(history);
-        } catch (Exception e) {
-            log.warn("[SSE] 保存执行历史失败: {}", e.getMessage());
+        // 获取当前登录用户信息
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+            userId = principal.getId();
+            tenantId = principal.getTenantId();
         }
+
+        executionHistoryService.saveExecutionHistory(agentId, messageContent, role, userId, tenantId);
     }
 }

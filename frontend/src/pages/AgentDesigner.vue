@@ -369,6 +369,7 @@ const consoleLogs = ref<ConsoleLog[]>([])
 const editingNodeId = ref<string | null>(null)
 const validationMessage = ref('')
 const validationType = ref<'success' | 'error' | 'warning'>('success')
+let validationTimer: ReturnType<typeof setTimeout> | null = null
 const contextMenu = reactive({
   visible: false,
   x: 0,
@@ -877,7 +878,8 @@ function handleValidate() {
     }
   }
   // Auto-hide validation message after 5s
-  setTimeout(() => {
+  clearTimeout(validationTimer)
+  validationTimer = window.setTimeout(() => {
     validationMessage.value = ''
   }, 5000)
 }
@@ -1343,6 +1345,10 @@ onUnmounted(() => {
   if (resizeObserver) {
     resizeObserver.disconnect()
     resizeObserver = null
+  }
+  if (validationTimer) {
+    clearTimeout(validationTimer)
+    validationTimer = null
   }
 })
 </script>

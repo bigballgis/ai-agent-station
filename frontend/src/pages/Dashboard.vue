@@ -215,7 +215,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -629,10 +629,6 @@ onMounted(() => {
     message.warning(t('common.noPermission'))
     router.replace({ query: {} })
   }
-})
-
-onUnmounted(() => {
-  // ChartContainer handles its own cleanup
 })
 </script>
 

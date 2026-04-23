@@ -250,11 +250,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PageHeader, StatusBadge } from '@/components'
 import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNode, type WorkflowEdge } from '@/api/workflow'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const loading = ref(false)
 const creating = ref(false)
@@ -316,13 +318,13 @@ const instanceColumns = [
 
 const parsedNodes = computed<WorkflowNode[]>(() => {
   if (!selectedDefinition.value?.nodes) return []
-  const nodes = (selectedDefinition.value.nodes as any).nodes
+  const nodes = selectedDefinition.value.nodes?.nodes || []
   return Array.isArray(nodes) ? nodes : []
 })
 
 const parsedEdges = computed<WorkflowEdge[]>(() => {
   if (!selectedDefinition.value?.edges) return []
-  const edges = (selectedDefinition.value.edges as any).edges
+  const edges = selectedDefinition.value.edges?.edges || []
   return Array.isArray(edges) ? edges : []
 })
 
@@ -489,8 +491,7 @@ async function handleStart() {
 }
 
 function viewInstance(instance: WorkflowInstance) {
-  // Navigate to instance page
-  window.location.hash = `/workflow/instances?id=${instance.id}`
+  router.push({ path: '/workflow/instances', query: { id: String(instance.id) } })
 }
 
 onMounted(() => {

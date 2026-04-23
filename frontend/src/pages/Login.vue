@@ -406,7 +406,6 @@ const rememberMe = ref(false)
 // Captcha state
 const captchaId = ref('')
 const captchaQuestion = ref('')
-const captchaAnswer = ref('')
 const captchaLoading = ref(false)
 
 async function fetchCaptcha() {
@@ -416,7 +415,6 @@ async function fetchCaptcha() {
     if (res.code === 200 && res.data) {
       captchaId.value = res.data.captchaId
       captchaQuestion.value = res.data.question
-      captchaAnswer.value = ''
     }
   } catch {
     // silently fail

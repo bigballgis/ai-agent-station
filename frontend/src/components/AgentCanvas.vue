@@ -449,7 +449,7 @@
  * 保留此文件仅为向后兼容（AgentEdit.vue 历史引用）。
  * 计划在下一版本中移除。
  */
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onUnmounted } from 'vue'
 
 // ========== 类型定义 ==========
 
@@ -564,6 +564,7 @@ const collapsedCategories = reactive<Record<string, boolean>>({
 })
 const validationMessage = ref('')
 const validationType = ref<'success' | 'error' | 'warning'>('success')
+let validationTimer: ReturnType<typeof setTimeout> | null = null
 
 // 撤销栈
 const undoStack = ref<UndoState[]>([])
@@ -1190,7 +1191,8 @@ function handleValidate() {
   }
 
   // 5秒后自动清除
-  setTimeout(() => {
+  clearTimeout(validationTimer)
+  validationTimer = window.setTimeout(() => {
     validationMessage.value = ''
   }, 5000)
 }
@@ -1207,6 +1209,13 @@ function deleteSelectedNode() {
   selectedNodeId.value = null
   emitChange()
 }
+
+onUnmounted(() => {
+  if (validationTimer) {
+    clearTimeout(validationTimer)
+    validationTimer = null
+  }
+})
 </script>
 
 <style scoped>

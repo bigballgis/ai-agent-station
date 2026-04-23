@@ -101,10 +101,11 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            // issuer 验证（仅记录警告，不抛异常）
+            // issuer 验证：不匹配则拒绝 Token
             String issuer = claims.getIssuer();
             if (issuer != null && !ISSUER.equals(issuer)) {
                 log.warn("Token issuer 不匹配: expected={}, actual={}", ISSUER, issuer);
+                throw new IllegalArgumentException("Token issuer 不匹配，拒绝访问");
             }
             return claims;
         } catch (ExpiredJwtException e) {

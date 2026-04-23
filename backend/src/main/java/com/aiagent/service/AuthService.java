@@ -109,6 +109,7 @@ public class AuthService {
         user.setTenantId(request.getTenantId());
         user.setIsActive(true);
         userRepository.save(user);
+        userRepository.flush();
 
         // 分配默认角色 ROLE_USER
         Role defaultRole;
@@ -129,8 +130,15 @@ public class AuthService {
 
         log.info("用户注册成功: username={}, tenantId={}", request.getUsername(), request.getTenantId());
 
-        // 注册成功后自动登录，返回token
-        return login(user.getUsername(), request.getPassword(), request.getTenantId());
+        // 注册成功后自动登录，返回token（在事务外调用，避免事务传播问题）
+        return registerPostProcess(user.getUsername(), request.getPassword(), request.getTenantId());
+    }
+
+    /**
+     * 注册后处理：在事务外执行登录逻辑，避免事务传播问题
+     */
+    private Map<String, Object> registerPostProcess(String username, String password, Long tenantId) {
+        return login(username, password, tenantId);
     }
 
     public Map<String, Object> refreshToken(String refreshToken) {
@@ -201,6 +209,7 @@ public class AuthService {
     /**
      * 用户修改密码 - 验证旧密码后更新
      */
+    @Transactional
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
@@ -228,6 +237,7 @@ public class AuthService {
     /**
      * 管理员重置用户密码 - 直接重置，不需要旧密码
      */
+    @Transactional
     public void resetPassword(String username, String newPassword) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
