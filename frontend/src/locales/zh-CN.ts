@@ -48,6 +48,7 @@ export default {
     loginFailed: '登录失败',
     usernameRequired: '请输入用户名',
     passwordRequired: '请输入密码',
+    passwordMinLength: '密码长度不能少于6个字符',
     brandDescription: '智能体管理与编排平台，赋能团队高效构建、部署和管理 AI 智能体应用',
     welcomeBack: '欢迎回来',
     loginToStation: '登录到 AI Agent Station',

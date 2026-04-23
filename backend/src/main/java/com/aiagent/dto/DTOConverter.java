@@ -49,6 +49,31 @@ public class DTOConverter {
         return user;
     }
 
+    public static User toUserEntity(CreateUserDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setEmail(dto.getEmail());
+        user.setPhone(dto.getPhone());
+        user.setTenantId(dto.getTenantId());
+        return user;
+    }
+
+    public static void updateUserFromDTO(UpdateUserDTO dto, User user) {
+        if (dto == null || user == null) {
+            return;
+        }
+        if (dto.getEmail() != null) {
+            user.setEmail(dto.getEmail());
+        }
+        if (dto.getPhone() != null) {
+            user.setPhone(dto.getPhone());
+        }
+    }
+
     // ==================== Role conversions ====================
 
     public static RoleDTO toRoleDTO(Role role) {

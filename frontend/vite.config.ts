@@ -7,6 +7,8 @@ export default defineConfig({
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 500,
+    minify: 'esbuild',
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -67,6 +69,9 @@ export default defineConfig({
         },
       },
     },
+  },
+  esbuild: {
+    drop: ['console', 'debugger'],
   },
   plugins: [vue(), Inspector()],
   resolve: {

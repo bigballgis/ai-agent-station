@@ -5,6 +5,8 @@ import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.CreateUserDTO;
+import com.aiagent.dto.UpdateUserDTO;
 import com.aiagent.dto.UserDTO;
 import com.aiagent.dto.UserResponseDTO;
 import com.aiagent.entity.User;
@@ -55,7 +57,7 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "创建用户", module = "用户管理")
-    public Result<UserResponseDTO> createUser(@Valid @RequestBody UserDTO dto) {
+    public Result<UserResponseDTO> createUser(@Valid @RequestBody CreateUserDTO dto) {
         User user = DTOConverter.toUserEntity(dto);
         User created = userService.createUser(user);
         return Result.success(DTOConverter.toUserResponseDTO(created));
@@ -66,9 +68,10 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "更新用户", module = "用户管理")
-    public Result<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
-        User user = DTOConverter.toUserEntity(dto);
-        User updated = userService.updateUser(id, user);
+    public Result<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserDTO dto) {
+        User existingUser = userService.getUserById(id);
+        DTOConverter.updateUserFromDTO(dto, existingUser);
+        User updated = userService.updateUser(id, existingUser);
         return Result.success(DTOConverter.toUserResponseDTO(updated));
     }
 

@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.common.ResultCode;
+import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
@@ -35,8 +36,9 @@ public class AuthService {
     public Map<String, Object> login(String username, String password, Long tenantId) {
         // 登录速率限制检查
         String clientIp = getClientIp();
-        if (!loginRateLimitService.checkRateLimit(username, clientIp)) {
-            throw new BusinessException(ResultCode.TOO_MANY_REQUESTS.getCode(), "登录尝试次数过多，请稍后再试");
+        String rateLimitMessage = loginRateLimitService.checkRateLimit(username, clientIp);
+        if (rateLimitMessage != null) {
+            throw new BusinessException(ResultCode.TOO_MANY_REQUESTS.getCode(), rateLimitMessage);
         }
 
         User user;
@@ -155,14 +157,8 @@ public class AuthService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
-    private Map<String, Object> buildUserResponse(User user) {
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("id", user.getId());
-        userMap.put("username", user.getUsername());
-        userMap.put("email", user.getEmail());
-        userMap.put("phone", user.getPhone());
-        userMap.put("tenantId", user.getTenantId());
-        return userMap;
+    private Object buildUserResponse(User user) {
+        return DTOConverter.toUserResponseDTO(user);
     }
 
     private String getClientIp() {

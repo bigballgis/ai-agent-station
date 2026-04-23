@@ -218,7 +218,7 @@ const rules = {
   ],
   password: [
     { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
-    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
+    { min: 6, message: t('login.passwordMinLength'), trigger: 'blur' }
   ]
 }
 
@@ -227,7 +227,11 @@ async function handleLogin() {
     await loginFormRef.value.validate()
     loading.value = true
 
-    const success = await userStore.login(loginForm)
+    const success = await userStore.login({
+      username: loginForm.username,
+      password: loginForm.password,
+      remember: rememberMe.value
+    })
 
     if (success) {
       message.success(t('login.loginSuccess'))

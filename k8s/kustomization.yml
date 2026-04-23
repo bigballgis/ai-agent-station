@@ -10,9 +10,3 @@ resources:
   - redis.yml
   - backend.yml
   - frontend.yml
-
-secretGenerator:
-  - name: ai-agent-secrets
-    literals:
-      - openai-api-key=your-openai-api-key
-      - qwen-api-key=your-qwen-api-key

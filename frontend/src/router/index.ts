@@ -99,13 +99,13 @@ const routes: RouteRecordRaw[] = [
         path: 'tenant',
         name: 'TenantManagement',
         component: () => import('@/pages/TenantManagement.vue'),
-        meta: { title: 'tenantManagement' }
+        meta: { title: 'tenantManagement', roles: ['ADMIN', 'TENANT_ADMIN'] }
       },
       {
         path: 'system/permission',
         name: 'Permission',
         component: () => import('@/pages/PermissionManagement.vue'),
-        meta: { title: 'permission' }
+        meta: { title: 'permission', roles: ['ADMIN', 'TENANT_ADMIN'] }
       },
       {
         path: 'system/i18n',
@@ -117,7 +117,7 @@ const routes: RouteRecordRaw[] = [
         path: 'system/log',
         name: 'Log',
         component: () => import('@/pages/LogCenter.vue'),
-        meta: { title: 'logCenter' }
+        meta: { title: 'logCenter', roles: ['ADMIN', 'TENANT_ADMIN'] }
       },
       {
         path: 'system/alerts',
@@ -264,6 +264,16 @@ router.beforeEach(async (to, _from, next) => {
         // token格式无效
         userStore.logout()
         return next({ path: '/login', query: { redirect: to.fullPath } })
+      }
+    }
+
+    // 检查路由角色权限
+    const requiredRoles = to.meta.roles as string[] | undefined
+    if (requiredRoles && requiredRoles.length > 0) {
+      const userRoles = userStore.userInfo?.roles || []
+      const hasRole = userRoles.some((role: string) => requiredRoles.includes(role))
+      if (!hasRole) {
+        return next('/dashboard')
       }
     }
   } else {

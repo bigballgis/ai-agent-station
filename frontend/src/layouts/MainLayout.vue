@@ -33,7 +33,7 @@
       <!-- 右侧: 操作区 -->
       <div class="flex items-center gap-1">
         <!-- 通知铃铛 -->
-        <a-badge :count="5" :offset="[-4, 4]" size="small">
+        <a-badge :count="notificationStore.unreadCount" :offset="[-4, 4]" size="small">
           <button
             class="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
           >
@@ -78,15 +78,6 @@
           </button>
           <template #overlay>
             <a-menu @click="handleUserMenu">
-              <a-menu-item key="userCenter">
-                <UserOutlined class="mr-2" />
-                {{ t('header.userCenter') }}
-              </a-menu-item>
-              <a-menu-item key="settings">
-                <SettingOutlined class="mr-2" />
-                {{ t('header.settings') }}
-              </a-menu-item>
-              <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined class="mr-2" />
                 {{ t('header.logout') }}
@@ -310,7 +301,6 @@ import {
   GlobalOutlined,
   BellOutlined,
   UserOutlined,
-  SettingOutlined,
   LogoutOutlined,
   DashboardOutlined,
   FolderOutlined,
@@ -339,6 +329,7 @@ import {
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
+import { useNotificationStore } from '@/store/modules/notification'
 import { useTheme } from '@/composables/useTheme'
 import type { LocaleType } from '@/locales'
 
@@ -347,6 +338,7 @@ const route = useRoute()
 const { t, locale } = useI18n()
 const userStore = useUserStore()
 const appStore = useAppStore()
+const notificationStore = useNotificationStore()
 const { toggleTheme, isDark } = useTheme()
 
 const collapsed = ref(false)
@@ -627,11 +619,8 @@ async function handleUserMenu(e: { key: string }) {
         router.push('/login')
       },
     })
-  } else if (e.key === 'userCenter') {
-    router.push('/user/center')
-  } else if (e.key === 'settings') {
-    router.push('/system/settings')
   }
+  // userCenter 和 settings 路由暂未实现，已移除对应菜单项
 }
 
 // 监听路由变化，自动展开对应子菜单

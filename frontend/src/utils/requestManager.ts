@@ -1,22 +1,24 @@
-import type { AxiosRequestConfig, CancelTokenSource } from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 
 /**
  * 请求去重 + 取消管理器
- * 
+ *
  * 最佳实践:
  * - 相同请求在短时间内只发送一次（去重）
  * - 页面切换时自动取消未完成的请求（防数据覆盖）
- * - 支持 AbortController（现代浏览器标准）
- * 
+ * - 使用 AbortController（现代浏览器标准）
+ *
  * 使用方式:
  *   // 在请求拦截器中自动处理
  *   const pendingKey = generateKey(config)
  *   if (pendingMap.has(pendingKey)) return // 去重
- *   config.cancelToken = new CancelToken(c => pendingMap.set(pendingKey, c))
+ *   const controller = new AbortController()
+ *   config.signal = controller.signal
+ *   pendingMap.set(pendingKey, controller)
  */
 
-// 存储进行中的请求: key -> CancelTokenSource
-const pendingMap = new Map<string, CancelTokenSource>()
+// 存储进行中的请求: key -> AbortController
+const pendingMap = new Map<string, AbortController>()
 
 // 需要去重的请求方法
 const DEDUP_METHODS = ['get', 'post', 'put', 'patch']
@@ -62,10 +64,10 @@ export function addPendingRequest(config: AxiosRequestConfig): boolean {
     removePendingRequest(key)
   }
 
-  // 创建 CancelToken
-  const source = (await_import_axios_CancelToken())
-  config.cancelToken = source.token
-  pendingMap.set(key, source)
+  // 创建 AbortController
+  const controller = new AbortController()
+  config.signal = controller.signal
+  pendingMap.set(key, controller)
 
   return false
 }
@@ -77,9 +79,9 @@ export function removePendingRequest(config: AxiosRequestConfig | string): void 
   const key = typeof config === 'string'
     ? config
     : generateRequestKey(config)
-  const source = pendingMap.get(key)
-  if (source) {
-    source.cancel('请求被取消')
+  const controller = pendingMap.get(key)
+  if (controller) {
+    controller.abort()
     pendingMap.delete(key)
   }
 }
@@ -88,8 +90,8 @@ export function removePendingRequest(config: AxiosRequestConfig | string): void 
  * 取消所有进行中的请求（页面切换/登出时调用）
  */
 export function cancelAllPendingRequests(): void {
-  pendingMap.forEach((source) => {
-    source.cancel('页面切换，请求已取消')
+  pendingMap.forEach((controller) => {
+    controller.abort()
   })
   pendingMap.clear()
   console.debug('[RequestManager] 已取消所有进行中的请求')
@@ -103,13 +105,6 @@ export function getPendingRequestCount(): number {
 }
 
 // ==================== 辅助函数 ====================
-
-function await_import_axios_CancelToken() {
-  // 动态导入 CancelToken（避免硬依赖）
-  // 注意：实际使用时需确保 axios 已安装
-  const axios = require('axios')
-  return new axios.CancelToken((c: any) => c)
-}
 
 /**
  * 对对象键排序（确保相同参数生成相同的 key）

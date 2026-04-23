@@ -57,6 +57,7 @@ public class QuotaController {
      */
     @GetMapping("/tenant/{tenantId}/details")
     @RequiresPermission("quota:read")
+    @RequiresRole("ADMIN")
     @Operation(summary = "获取租户配额详情")
     public Result<?> getTenantQuotaDetails(
             @PathVariable String tenantId,
@@ -84,6 +85,7 @@ public class QuotaController {
      */
     @PutMapping("/tenant/{tenantId}")
     @RequiresPermission("quota:manage")
+    @RequiresRole("ADMIN")
     @Operation(summary = "更新租户配额限制")
     public Result<?> updateTenantQuota(
             @PathVariable String tenantId,

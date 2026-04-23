@@ -1,8 +1,8 @@
 package com.aiagent.tenant;
 
 public class TenantContextHolder {
-    private static final ThreadLocal<Long> TENANT_ID_HOLDER = new ThreadLocal<>();
-    private static final ThreadLocal<String> SCHEMA_NAME_HOLDER = new ThreadLocal<>();
+    private static final ThreadLocal<Long> TENANT_ID_HOLDER = new InheritableThreadLocal<>();
+    private static final ThreadLocal<String> SCHEMA_NAME_HOLDER = new InheritableThreadLocal<>();
 
     public static void setTenantId(Long tenantId) {
         TENANT_ID_HOLDER.set(tenantId);

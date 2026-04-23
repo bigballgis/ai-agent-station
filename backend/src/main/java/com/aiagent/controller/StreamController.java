@@ -211,6 +211,7 @@ public class StreamController {
      * - event: done       / data: {"type":"done","content":"最终输出"}
      * - event: error      / data: {"type":"error","content":"错误信息"}
      */
+    @RequiresPermission("agent:invoke")
     @Operation(summary = "SSE流式Agent执行")
     @GetMapping(value = "/agent/{agentId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamAgentExecution(

@@ -48,6 +48,7 @@ export default {
     loginFailed: 'Login failed',
     usernameRequired: 'Username is required',
     passwordRequired: 'Password is required',
+    passwordMinLength: 'Password must be at least 6 characters',
     brandDescription: 'AI Agent management and orchestration platform, empowering teams to build, deploy, and manage AI agent applications efficiently',
     welcomeBack: 'Welcome Back',
     loginToStation: 'Sign in to AI Agent Station',

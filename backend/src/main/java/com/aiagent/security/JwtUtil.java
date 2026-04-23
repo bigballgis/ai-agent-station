@@ -31,6 +31,8 @@ public class JwtUtil {
     @Value("${jwt.refresh-expiration:604800000}")
     private Long refreshExpiration;
 
+    private static final String ISSUER = "ai-agent-platform";
+
     @PostConstruct
     public void validateSecret() {
         if (secret == null || secret.length() < 32) {
@@ -50,6 +52,7 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
+                .issuer(ISSUER)
                 .subject(username)
                 .claim("userId", userId)
                 .claim("tenantId", tenantId)
@@ -68,6 +71,7 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + refreshExpiration);
 
         return Jwts.builder()
+                .issuer(ISSUER)
                 .subject(username)
                 .claim("userId", userId)
                 .claim("tenantId", tenantId)
@@ -92,11 +96,17 @@ public class JwtUtil {
 
     public Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+            // issuer 验证（仅记录警告，不抛异常）
+            String issuer = claims.getIssuer();
+            if (issuer != null && !ISSUER.equals(issuer)) {
+                log.warn("Token issuer 不匹配: expected={}, actual={}", ISSUER, issuer);
+            }
+            return claims;
         } catch (ExpiredJwtException e) {
             log.warn("Token已过期");
             throw e;

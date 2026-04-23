@@ -10,6 +10,9 @@ import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.DeploymentService;
 import com.aiagent.vo.DeploymentVO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -108,9 +111,13 @@ public class DeploymentController {
 
     @Data
     public static class DeployRequest {
+        @NotNull(message = "agentId不能为空")
         private Long agentId;
+        @NotNull(message = "versionId不能为空")
         private Long versionId;
         private Boolean isCanary = false;
+        @Min(value = 0, message = "canaryPercentage不能小于0")
+        @Max(value = 100, message = "canaryPercentage不能大于100")
         private Integer canaryPercentage = 100;
         private String remark;
     }

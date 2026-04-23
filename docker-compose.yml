@@ -22,24 +22,25 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - ai-agent-network
+      - backend-network
     restart: unless-stopped
 
   # Redis (单机模式 - 默认)
   redis:
     image: redis:7-alpine
     container_name: ai-agent-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_dev_password}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_dev_password}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - ai-agent-network
+      - backend-network
     restart: unless-stopped
 
   # Redis Cluster (可选 - 需要时单独使用)
@@ -55,7 +56,7 @@ services:
       - redis-5
       - redis-6
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -69,7 +70,7 @@ services:
       - ./docker/redis/cluster/redis-1.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_1_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -83,7 +84,7 @@ services:
       - ./docker/redis/cluster/redis-2.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_2_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -97,7 +98,7 @@ services:
       - ./docker/redis/cluster/redis-3.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_3_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -111,7 +112,7 @@ services:
       - ./docker/redis/cluster/redis-4.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_4_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -125,7 +126,7 @@ services:
       - ./docker/redis/cluster/redis-5.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_5_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -139,7 +140,7 @@ services:
       - ./docker/redis/cluster/redis-6.conf:/usr/local/etc/redis/redis.conf
       - redis_cluster_6_data:/data
     networks:
-      - ai-agent-network
+      - backend-network
     profiles:
       - redis-cluster
 
@@ -163,7 +164,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - ai-agent-network
+      - monitoring-network
     restart: unless-stopped
 
   # Grafana 可视化
@@ -174,7 +175,7 @@ services:
       - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD必须设置}
       GF_USERS_ALLOW_SIGN_UP: false
     volumes:
       - grafana_data:/var/lib/grafana
@@ -188,7 +189,7 @@ services:
     depends_on:
       - prometheus
     networks:
-      - ai-agent-network
+      - monitoring-network
     restart: unless-stopped
 
   # 后端服务
@@ -250,7 +251,8 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - ai-agent-network
+      - backend-network
+      - frontend-network
     restart: unless-stopped
 
   # 前端服务
@@ -270,7 +272,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - ai-agent-network
+      - frontend-network
     restart: unless-stopped
 
 volumes:
@@ -287,5 +289,9 @@ volumes:
   backend_storage:
 
 networks:
-  ai-agent-network:
+  backend-network:
+    driver: bridge
+  frontend-network:
+    driver: bridge
+  monitoring-network:
     driver: bridge

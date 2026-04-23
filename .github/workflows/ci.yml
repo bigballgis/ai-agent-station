@@ -55,6 +55,14 @@ jobs:
         run: cd frontend && npx vitest run --coverage
       - name: Build
         run: cd frontend && npm run build
+      - name: Security Audit (npm)
+        run: |
+          cd frontend
+          npm audit --audit-level=high --production || true
+      - name: Check for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   docker-build:
     needs: [backend-test, frontend-test]
