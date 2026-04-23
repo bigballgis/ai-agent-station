@@ -1,50 +1,31 @@
 <template>
   <div class="agent-canvas-container">
     <!-- 左侧节点面板 -->
-    <div class="node-panel">
-      <h3 class="panel-title">节点库</h3>
-      <div v-for="cat in categories" :key="cat.key" class="node-category">
-        <div class="category-header" @click="toggleCategory(cat.key)">
-          <span class="category-arrow" :class="{ collapsed: collapsedCategories[cat.key] }">▼</span>
-          <span>{{ cat.label }}</span>
-        </div>
-        <div v-show="!collapsedCategories[cat.key]" class="node-list">
-          <div
-            v-for="node in getNodeTypesByCategory(cat.key)"
-            :key="node.type"
-            class="node-item"
-            draggable="true"
-            @dragstart="handleDragStart($event, node.type)"
-            :title="node.label"
-          >
-            <span class="node-icon">{{ node.icon }}</span>
-            <span class="node-label">{{ node.label }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <NodePalette
+      :categories="categories"
+      :collapsedCategories="collapsedCategories"
+      :getNodeTypesByCategory="getNodeTypesByCategory"
+      @toggleCategory="toggleCategory"
+      @dragStart="handleDragStart"
+    />
 
     <!-- 中间画布区域 -->
     <div class="canvas-wrapper">
       <!-- 工具栏 -->
-      <div class="canvas-toolbar">
-        <button @click="handleSave" class="btn btn-primary" title="保存">保存</button>
-        <button @click="handleClear" class="btn btn-secondary" title="清空画布">清空</button>
-        <div class="toolbar-separator"></div>
-        <button @click="handleUndo" class="btn btn-secondary" title="撤销" :disabled="undoStack.length === 0">撤销</button>
-        <div class="toolbar-separator"></div>
-        <button @click="handleZoomIn" class="btn btn-icon" title="放大">+</button>
-        <span class="zoom-label">{{ Math.round(scale * 100) }}%</span>
-        <button @click="handleZoomOut" class="btn btn-icon" title="缩小">-</button>
-        <button @click="handleZoomReset" class="btn btn-secondary" title="重置缩放">重置</button>
-        <div class="toolbar-separator"></div>
-        <button @click="handleAutoLayout" class="btn btn-secondary" title="自动布局">自动布局</button>
-        <button @click="handleValidate" class="btn btn-secondary" title="验证图结构">验证</button>
-        <div class="toolbar-spacer"></div>
-        <span v-if="validationMessage" class="validation-msg" :class="validationType">
-          {{ validationMessage }}
-        </span>
-      </div>
+      <CanvasToolbar
+        :scale="scale"
+        :undoStackLength="undoStack.length"
+        :validationMessage="validationMessage"
+        :validationType="validationType"
+        @save="handleSave"
+        @clear="handleClear"
+        @undo="handleUndo"
+        @zoomIn="handleZoomIn"
+        @zoomOut="handleZoomOut"
+        @zoomReset="handleZoomReset"
+        @autoLayout="handleAutoLayout"
+        @validate="handleValidate"
+      />
 
       <!-- 画布 -->
       <div
@@ -166,279 +147,16 @@
     </div>
 
     <!-- 右侧属性面板 -->
-    <div class="properties-panel" v-if="selectedNode">
-      <h3 class="panel-title">
-        属性配置
-        <button class="btn-close" @click="selectedNodeId = null">&times;</button>
-      </h3>
-
-      <!-- 通用属性 -->
-      <div class="property-group">
-        <label>节点名称</label>
-        <input v-model="selectedNode.label" @input="pushUndo(); emitChange()" />
-      </div>
-
-      <!-- start 节点 -->
-      <template v-if="selectedNode.type === 'start'">
-        <div class="property-hint">开始节点，无特殊配置</div>
-      </template>
-
-      <!-- end 节点 -->
-      <template v-if="selectedNode.type === 'end'">
-        <div class="property-hint">结束节点，无特殊配置</div>
-      </template>
-
-      <!-- llm 节点 -->
-      <template v-if="selectedNode.type === 'llm'">
-        <div class="property-group">
-          <label>Provider</label>
-          <select v-model="selectedNode.data.provider" @change="pushUndo(); emitChange()">
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
-            <option value="google">Google</option>
-            <option value="ollama">Ollama</option>
-            <option value="azure">Azure OpenAI</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>模型</label>
-          <input v-model="selectedNode.data.model" @input="pushUndo(); emitChange()" placeholder="gpt-4 / claude-3" />
-        </div>
-        <div class="property-group">
-          <label>Temperature: {{ selectedNode.data.temperature ?? 0.7 }}</label>
-          <input
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            v-model.number="selectedNode.data.temperature"
-            @input="emitChange()"
-            class="slider"
-          />
-        </div>
-        <div class="property-group">
-          <label>Top P: {{ selectedNode.data.topP ?? 1.0 }}</label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            v-model.number="selectedNode.data.topP"
-            @input="emitChange()"
-            class="slider"
-          />
-        </div>
-        <div class="property-group">
-          <label>Max Tokens</label>
-          <input
-            type="number"
-            v-model.number="selectedNode.data.maxTokens"
-            @input="pushUndo(); emitChange()"
-            placeholder="2048"
-          />
-        </div>
-        <div class="property-group">
-          <label>System Prompt</label>
-          <textarea
-            v-model="selectedNode.data.systemPrompt"
-            @input="pushUndo(); emitChange()"
-            placeholder="系统提示词..."
-            rows="3"
-            class="textarea"
-          ></textarea>
-        </div>
-        <div class="property-group">
-          <label>Prompt (支持 &#123;&#123;变量&#125;&#125; 模板)</label>
-          <textarea
-            v-model="selectedNode.data.prompt"
-            @input="pushUndo(); emitChange()"
-            placeholder="请根据以下内容回答: {{input}}"
-            rows="3"
-            class="textarea"
-          ></textarea>
-        </div>
-      </template>
-
-      <!-- condition 节点 -->
-      <template v-if="selectedNode.type === 'condition'">
-        <div class="property-group">
-          <label>表达式</label>
-          <input v-model="selectedNode.data.expression" @input="pushUndo(); emitChange()" placeholder="value > 0" />
-        </div>
-        <div class="property-group">
-          <label>变量</label>
-          <input v-model="selectedNode.data.variable" @input="pushUndo(); emitChange()" placeholder="result" />
-        </div>
-      </template>
-
-      <!-- tool 节点 -->
-      <template v-if="selectedNode.type === 'tool'">
-        <div class="property-group">
-          <label>工具 ID</label>
-          <select v-model="selectedNode.data.toolId" @change="pushUndo(); emitChange()">
-            <option value="">请选择...</option>
-            <option value="web_search">Web 搜索</option>
-            <option value="calculator">计算器</option>
-            <option value="weather">天气查询</option>
-            <option value="database">数据库查询</option>
-            <option value="email">邮件发送</option>
-            <option value="file_read">文件读取</option>
-            <option value="file_write">文件写入</option>
-            <option value="custom">自定义工具</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>工具名称</label>
-          <input v-model="selectedNode.data.toolName" @input="pushUndo(); emitChange()" placeholder="my_tool" />
-        </div>
-        <div class="property-group">
-          <label>输入映射 (Key-Value)</label>
-          <div v-for="(kv, idx) in (selectedNode.data.inputMapping || [])" :key="idx" class="kv-row">
-            <input v-model="kv.key" @input="emitChange()" placeholder="key" class="kv-input" />
-            <input v-model="kv.value" @input="emitChange()" placeholder="value" class="kv-input" />
-            <button class="btn btn-remove" @click="removeKV(idx)">-</button>
-          </div>
-          <button class="btn btn-add-kv" @click="addKV">+ 添加映射</button>
-        </div>
-      </template>
-
-      <!-- memory 节点 -->
-      <template v-if="selectedNode.type === 'memory'">
-        <div class="property-group">
-          <label>操作</label>
-          <select v-model="selectedNode.data.action" @change="pushUndo(); emitChange()">
-            <option value="load">加载 (Load)</option>
-            <option value="save">保存 (Save)</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>记忆类型</label>
-          <select v-model="selectedNode.data.memoryType" @change="pushUndo(); emitChange()">
-            <option value="SHORT_TERM">短期记忆</option>
-            <option value="LONG_TERM">长期记忆</option>
-            <option value="BUSINESS">业务记忆</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>查询</label>
-          <input v-model="selectedNode.data.query" @input="pushUndo(); emitChange()" placeholder="查询内容..." />
-        </div>
-        <div class="property-group">
-          <label>摘要</label>
-          <textarea
-            v-model="selectedNode.data.summary"
-            @input="pushUndo(); emitChange()"
-            placeholder="记忆摘要..."
-            rows="2"
-            class="textarea"
-          ></textarea>
-        </div>
-      </template>
-
-      <!-- retriever 节点 -->
-      <template v-if="selectedNode.type === 'retriever'">
-        <div class="property-group">
-          <label>查询</label>
-          <input v-model="selectedNode.data.query" @input="pushUndo(); emitChange()" placeholder="检索查询..." />
-        </div>
-        <div class="property-group">
-          <label>检索类型</label>
-          <select v-model="selectedNode.data.retrieverType" @change="pushUndo(); emitChange()">
-            <option value="memory">记忆检索</option>
-            <option value="vector_db">向量数据库</option>
-          </select>
-        </div>
-      </template>
-
-      <!-- variable 节点 -->
-      <template v-if="selectedNode.type === 'variable'">
-        <div class="property-group">
-          <label>变量名</label>
-          <input v-model="selectedNode.data.name" @input="pushUndo(); emitChange()" placeholder="variable_name" />
-        </div>
-        <div class="property-group">
-          <label>值</label>
-          <input v-model="selectedNode.data.value" @input="pushUndo(); emitChange()" placeholder="value" />
-        </div>
-        <div class="property-group">
-          <label>来源</label>
-          <input v-model="selectedNode.data.source" @input="pushUndo(); emitChange()" placeholder="来源节点/表达式" />
-        </div>
-      </template>
-
-      <!-- exception 节点 -->
-      <template v-if="selectedNode.type === 'exception'">
-        <div class="property-group">
-          <label>处理方式</label>
-          <select v-model="selectedNode.data.action" @change="pushUndo(); emitChange()">
-            <option value="log">记录日志</option>
-            <option value="retry">重试</option>
-            <option value="fallback">降级处理</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>降级值</label>
-          <input v-model="selectedNode.data.fallbackValue" @input="pushUndo(); emitChange()" placeholder="默认降级值" />
-        </div>
-      </template>
-
-      <!-- http 节点 -->
-      <template v-if="selectedNode.type === 'http'">
-        <div class="property-group">
-          <label>URL</label>
-          <input v-model="selectedNode.data.url" @input="pushUndo(); emitChange()" placeholder="https://api.example.com" />
-        </div>
-        <div class="property-group">
-          <label>Method</label>
-          <select v-model="selectedNode.data.method" @change="pushUndo(); emitChange()">
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="DELETE">DELETE</option>
-          </select>
-        </div>
-      </template>
-
-      <!-- code 节点 -->
-      <template v-if="selectedNode.type === 'code'">
-        <div class="property-group">
-          <label>语言</label>
-          <select v-model="selectedNode.data.language" @change="pushUndo(); emitChange()">
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-          </select>
-        </div>
-        <div class="property-group">
-          <label>代码</label>
-          <textarea
-            v-model="selectedNode.data.code"
-            @input="pushUndo(); emitChange()"
-            placeholder="// 在此编写代码..."
-            rows="8"
-            class="textarea code-area"
-          ></textarea>
-        </div>
-      </template>
-
-      <!-- delay 节点 -->
-      <template v-if="selectedNode.type === 'delay'">
-        <div class="property-group">
-          <label>等待时间 (秒)</label>
-          <input
-            type="number"
-            v-model.number="selectedNode.data.seconds"
-            @input="pushUndo(); emitChange()"
-            placeholder="1"
-            min="0"
-          />
-        </div>
-      </template>
-
-      <!-- 删除按钮 -->
-      <div class="property-actions">
-        <button @click="deleteSelectedNode" class="btn btn-danger">删除节点</button>
-      </div>
-    </div>
+    <NodePropertyPanel
+      v-if="selectedNode"
+      :node="selectedNode"
+      @close="selectedNodeId = null"
+      @updateLabel="handleUpdateLabel"
+      @updateData="handleUpdateData"
+      @addKV="addKV"
+      @removeKV="removeKV"
+      @deleteNode="deleteSelectedNode"
+    />
   </div>
 </template>
 
@@ -450,6 +168,9 @@
  * 计划在下一版本中移除。
  */
 import { ref, computed, reactive, watch, onUnmounted } from 'vue'
+import CanvasToolbar from './agent-canvas/CanvasToolbar.vue'
+import NodePalette from './agent-canvas/NodePalette.vue'
+import NodePropertyPanel from './agent-canvas/NodePropertyPanel.vue'
 
 // ========== 类型定义 ==========
 
@@ -665,6 +386,22 @@ function emitChange() {
     nodes: nodes.value,
     connections: connections.value,
   })
+}
+
+// ========== 属性面板回调 ==========
+
+function handleUpdateLabel(value: string) {
+  if (!selectedNode.value) return
+  pushUndo()
+  selectedNode.value.label = value
+  emitChange()
+}
+
+function handleUpdateData(key: string, value: any) {
+  if (!selectedNode.value) return
+  pushUndo()
+  selectedNode.value.data[key] = value
+  emitChange()
 }
 
 // ========== 拖拽节点到画布 ==========
@@ -1228,101 +965,6 @@ onUnmounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
-/* ========== 左侧节点面板 ========== */
-.node-panel {
-  width: 220px;
-  background: #16213e;
-  border-right: 1px solid #2a2a4a;
-  padding: 16px 12px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.panel-title {
-  margin: 0 0 16px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.node-category {
-  margin-bottom: 8px;
-}
-
-.category-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #8888aa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  border-radius: 4px;
-  user-select: none;
-}
-
-.category-header:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #b0b0cc;
-}
-
-.category-arrow {
-  font-size: 10px;
-  transition: transform 0.2s;
-  display: inline-block;
-}
-
-.category-arrow.collapsed {
-  transform: rotate(-90deg);
-}
-
-.node-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 0;
-}
-
-.node-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  cursor: grab;
-  transition: all 0.2s;
-  font-size: 13px;
-}
-
-.node-item:hover {
-  background: rgba(24, 144, 255, 0.1);
-  border-color: rgba(24, 144, 255, 0.3);
-  color: #fff;
-}
-
-.node-item:active {
-  cursor: grabbing;
-}
-
-.node-icon {
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.node-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ========== 画布区域 ========== */
 .canvas-wrapper {
   flex: 1;
@@ -1330,63 +972,6 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-}
-
-/* ========== 工具栏 ========== */
-.canvas-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #16213e;
-  border-bottom: 1px solid #2a2a4a;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.toolbar-separator {
-  width: 1px;
-  height: 24px;
-  background: #2a2a4a;
-}
-
-.toolbar-spacer {
-  flex: 1;
-}
-
-.zoom-label {
-  font-size: 12px;
-  color: #8888aa;
-  min-width: 40px;
-  text-align: center;
-}
-
-.validation-msg {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  max-width: 400px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.validation-msg.success {
-  background: rgba(82, 196, 26, 0.15);
-  color: #52c41a;
-  border: 1px solid rgba(82, 196, 26, 0.3);
-}
-
-.validation-msg.error {
-  background: rgba(255, 77, 79, 0.15);
-  color: #ff4d4f;
-  border: 1px solid rgba(255, 77, 79, 0.3);
-}
-
-.validation-msg.warning {
-  background: rgba(250, 173, 20, 0.15);
-  color: #faad14;
-  border: 1px solid rgba(250, 173, 20, 0.3);
 }
 
 /* ========== 画布 ========== */
@@ -1645,288 +1230,22 @@ onUnmounted(() => {
   color: #ff4d4f;
 }
 
-/* ========== 右侧属性面板 ========== */
-.properties-panel {
-  width: 300px;
-  background: #16213e;
-  border-left: 1px solid #2a2a4a;
-  padding: 16px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  color: #8888aa;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-}
-
-.btn-close:hover {
-  color: #e0e0e0;
-}
-
-.property-group {
-  margin-bottom: 14px;
-}
-
-.property-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #8888aa;
-  font-weight: 500;
-}
-
-.property-group input[type="text"],
-.property-group input[type="number"],
-.property-group input[type="url"],
-.property-group select {
-  width: 100%;
-  padding: 7px 10px;
-  background: #0f0f23;
-  border: 1px solid #3a3a5c;
-  border-radius: 4px;
-  color: #e0e0e0;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.property-group input:focus,
-.property-group select:focus {
-  border-color: #1890ff;
-}
-
-.property-group input::placeholder {
-  color: #555577;
-}
-
-.textarea {
-  width: 100%;
-  padding: 7px 10px;
-  background: #0f0f23;
-  border: 1px solid #3a3a5c;
-  border-radius: 4px;
-  color: #e0e0e0;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-  resize: vertical;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-.textarea:focus {
-  border-color: #1890ff;
-}
-
-.textarea::placeholder {
-  color: #555577;
-}
-
-.code-area {
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  tab-size: 2;
-}
-
-.slider {
-  width: 100%;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: #3a3a5c;
-  border-radius: 2px;
-  outline: none;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #1890ff;
-  cursor: pointer;
-  border: 2px solid #0f0f23;
-}
-
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #1890ff;
-  cursor: pointer;
-  border: 2px solid #0f0f23;
-}
-
-.property-hint {
-  font-size: 12px;
-  color: #555577;
-  padding: 12px 0;
-  text-align: center;
-}
-
-/* Key-Value 编辑器 */
-.kv-row {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.kv-input {
-  flex: 1;
-  padding: 5px 8px;
-  background: #0f0f23;
-  border: 1px solid #3a3a5c;
-  border-radius: 4px;
-  color: #e0e0e0;
-  font-size: 12px;
-  outline: none;
-  min-width: 0;
-}
-
-.kv-input:focus {
-  border-color: #1890ff;
-}
-
-.kv-input::placeholder {
-  color: #555577;
-}
-
-.property-actions {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #2a2a4a;
-}
-
-/* ========== 按钮 ========== */
-.btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #1890ff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #40a9ff;
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.06);
-  color: #c0c0d0;
-  border: 1px solid #3a3a5c;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #5a5a7c;
-}
-
-.btn-icon {
-  background: rgba(255, 255, 255, 0.06);
-  color: #c0c0d0;
-  border: 1px solid #3a3a5c;
-  padding: 6px 10px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.btn-icon:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.btn-danger {
-  background: rgba(255, 77, 79, 0.15);
-  color: #ff4d4f;
-  border: 1px solid rgba(255, 77, 79, 0.3);
-  width: 100%;
-}
-
-.btn-danger:hover {
-  background: rgba(255, 77, 79, 0.25);
-}
-
-.btn-remove {
-  background: rgba(255, 77, 79, 0.1);
-  color: #ff4d4f;
-  border: 1px solid rgba(255, 77, 79, 0.2);
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.btn-remove:hover {
-  background: rgba(255, 77, 79, 0.2);
-}
-
-.btn-add-kv {
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
-  border: 1px solid rgba(24, 144, 255, 0.2);
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 4px;
-}
-
-.btn-add-kv:hover {
-  background: rgba(24, 144, 255, 0.2);
-}
-
 /* ========== 滚动条 ========== */
-.node-panel::-webkit-scrollbar,
-.properties-panel::-webkit-scrollbar,
 .canvas::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.node-panel::-webkit-scrollbar-track,
-.properties-panel::-webkit-scrollbar-track,
 .canvas::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.node-panel::-webkit-scrollbar-thumb,
-.properties-panel::-webkit-scrollbar-thumb,
 .canvas::-webkit-scrollbar-thumb {
   background: #3a3a5c;
   border-radius: 3px;
 }
 
-.node-panel::-webkit-scrollbar-thumb:hover,
-.properties-panel::-webkit-scrollbar-thumb:hover,
 .canvas::-webkit-scrollbar-thumb:hover {
   background: #5a5a7c;
-}
-
-/* ========== select 下拉样式 ========== */
-select option {
-  background: #16213e;
-  color: #e0e0e0;
 }
 </style>

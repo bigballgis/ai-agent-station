@@ -9,6 +9,7 @@ import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -74,7 +75,7 @@ public class AgentService {
     @Auditable(tableName = "agent", description = "创建Agent")
     public Agent createAgent(Agent agent) {
         Long tenantId = TenantContextHolder.getTenantId();
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         if (tenantId != null) {
             agent.setTenantId(tenantId);
@@ -102,7 +103,7 @@ public class AgentService {
     @Auditable(tableName = "agent", description = "更新Agent")
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         agent.setName(agentDetails.getName());
         agent.setDescription(agentDetails.getDescription());
@@ -128,7 +129,7 @@ public class AgentService {
     public Agent copyAgent(Long id, String newName) {
         Agent original = getAgentById(id);
         Long tenantId = TenantContextHolder.getTenantId();
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         if (agentRepository.existsByNameAndTenantId(newName, tenantId)) {
             throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "Agent名称已存在");
@@ -162,7 +163,7 @@ public class AgentService {
     public Agent rollbackToVersion(Long agentId, Integer versionNumber) {
         Agent agent = getAgentById(agentId);
         AgentVersion version = getAgentVersion(agentId, versionNumber);
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         agent.setConfig(new HashMap<>(version.getConfig()));
         agent.setUpdatedBy(userId);
@@ -179,7 +180,7 @@ public class AgentService {
         version.setTenantId(agent.getTenantId());
         version.setConfig(new HashMap<>(agent.getConfig()));
         version.setChangeLog(changeLog);
-        version.setCreatedBy(getCurrentUserId());
+        version.setCreatedBy(SecurityUtils.getCurrentUserId());
 
         Integer latestVersion = agentVersionRepository.findFirstByAgentIdOrderByVersionNumberDesc(agent.getId())
                 .map(AgentVersion::getVersionNumber)
@@ -189,11 +190,4 @@ public class AgentService {
         agentVersionRepository.save(version);
     }
 
-    private Long getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getId();
-        }
-        return null;
-    }
 }

@@ -3,6 +3,7 @@ package com.aiagent.service;
 import com.aiagent.entity.UserSession;
 import com.aiagent.entity.UserSession.SessionStatus;
 import com.aiagent.repository.UserSessionRepository;
+import com.aiagent.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class SessionService {
         session.setUserId(userId);
         session.setUsername(username);
         session.setSessionId(sessionId);
-        session.setIpAddress(getClientIpAddress(request));
+        session.setIpAddress(SecurityUtils.getClientIp(request));
         session.setUserAgent(truncateUserAgent(request.getHeader("User-Agent")));
         session.setBrowser(parseBrowser(request.getHeader("User-Agent")));
         session.setOs(parseOs(request.getHeader("User-Agent")));
@@ -211,24 +212,6 @@ public class SessionService {
     }
 
     // ==================== Private Helpers ====================
-
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // X-Forwarded-For may contain multiple IPs; take the first one
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 
     private String truncateUserAgent(String userAgent) {
         if (userAgent == null) {

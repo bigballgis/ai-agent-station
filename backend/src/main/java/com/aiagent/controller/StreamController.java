@@ -134,7 +134,9 @@ public class StreamController {
                                     emitter.send(SseEmitter.event()
                                             .name("error")
                                             .data(objectMapper.writeValueAsString(eventData)));
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                    log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                                }
                                 emitter.complete();
                             }
 
@@ -147,7 +149,9 @@ public class StreamController {
                                     emitter.send(SseEmitter.event()
                                             .name("done")
                                             .data(objectMapper.writeValueAsString(eventData)));
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                    log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                                }
                                 emitter.complete();
                             }
                         });
@@ -197,7 +201,9 @@ public class StreamController {
                         .name("error")
                         .data(objectMapper.writeValueAsString(eventData)));
                 emitter.complete();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+            }
             return emitter;
         }
 
@@ -229,7 +235,9 @@ public class StreamController {
                         .name("error")
                         .data(objectMapper.writeValueAsString(eventData)));
                 emitter.complete();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+            }
             return emitter;
         }
 
@@ -427,7 +435,9 @@ public class StreamController {
                             emitter.send(SseEmitter.event()
                                     .name("node_end")
                                     .data(objectMapper.writeValueAsString(nodeFailData)));
-                        } catch (Exception ignored) {}
+                        } catch (Exception e) {
+                            log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                        }
 
                         // 查找异常处理节点
                         currentNodeId = findExceptionHandler(graph, node);
@@ -465,7 +475,9 @@ public class StreamController {
                             .name("error")
                             .data(objectMapper.writeValueAsString(errorData)));
                     emitter.complete();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                }
             }
         });
 

@@ -3,6 +3,8 @@ package com.aiagent.controller;
 import com.aiagent.dto.CaptchaResponseDTO;
 import com.aiagent.dto.ChangePasswordRequestDTO;
 import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.LoginRequest;
+import com.aiagent.dto.RefreshRequestDTO;
 import com.aiagent.dto.RegisterRequestDTO;
 import com.aiagent.dto.ResetPasswordRequestDTO;
 import com.aiagent.dto.UserResponseDTO;
@@ -14,12 +16,12 @@ import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.service.AuthService;
+import com.aiagent.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,7 +50,7 @@ public class AuthController {
     @GetMapping("/captcha")
     @Operation(summary = "获取数学验证码")
     public Result<CaptchaResponseDTO> getCaptcha(HttpServletRequest request) {
-        String clientIp = getClientIp(request);
+        String clientIp = SecurityUtils.getClientIp(request);
         checkRateLimit("captcha:" + clientIp, 10, 60);
 
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -100,7 +102,7 @@ public class AuthController {
     @Operation(summary = "用户注册")
     @OperationLog(value = "用户注册", module = "认证")
     public Result<?> register(@Valid @RequestBody RegisterRequestDTO request, HttpServletRequest httpRequest) {
-        String clientIp = getClientIp(httpRequest);
+        String clientIp = SecurityUtils.getClientIp(httpRequest);
         checkRateLimit("register:" + clientIp, 5, 60);
 
         return Result.success(authService.register(request));
@@ -113,7 +115,7 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "刷新Token")
     @OperationLog(value = "刷新Token", module = "认证")
-    public Result<?> refresh(@Valid @RequestBody RefreshRequest request) {
+    public Result<?> refresh(@Valid @RequestBody RefreshRequestDTO request) {
         return Result.success(authService.refreshToken(request.getRefreshToken()));
     }
 
@@ -173,40 +175,6 @@ public class AuthController {
         return Result.success("密码重置成功");
     }
 
-    // ==================== Request DTOs ====================
-
-    public static class LoginRequest {
-        @NotBlank(message = "用户名不能为空")
-        @Size(min = 3, max = 50, message = "用户名长度为3-50个字符")
-        private String username;
-
-        @NotBlank(message = "密码不能为空")
-        @Size(min = 6, max = 100, message = "密码长度为6-100个字符")
-        private String password;
-        private Long tenantId;
-        private String captchaId;
-        private String captchaAnswer;
-
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-        public Long getTenantId() { return tenantId; }
-        public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
-        public String getCaptchaId() { return captchaId; }
-        public void setCaptchaId(String captchaId) { this.captchaId = captchaId; }
-        public String getCaptchaAnswer() { return captchaAnswer; }
-        public void setCaptchaAnswer(String captchaAnswer) { this.captchaAnswer = captchaAnswer; }
-    }
-
-    public static class RefreshRequest {
-        @NotBlank(message = "refreshToken 不能为空")
-        private String refreshToken;
-
-        public String getRefreshToken() { return refreshToken; }
-        public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
-    }
-
     // ==================== 速率限制辅助方法 ====================
 
     /**
@@ -225,22 +193,5 @@ public class AuthController {
         if (count != null && count > maxAttempts) {
             throw new BusinessException("请求过于频繁，请稍后重试");
         }
-    }
-
-    /**
-     * 从HttpServletRequest中获取客户端真实IP
-     * 优先读取 X-Forwarded-For header，其次使用 getRemoteAddr()
-     */
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-            // X-Forwarded-For 可能包含多个IP，取第一个
-            int index = ip.indexOf(',');
-            if (index != -1) {
-                ip = ip.substring(0, index).trim();
-            }
-            return ip;
-        }
-        return request.getRemoteAddr();
     }
 }

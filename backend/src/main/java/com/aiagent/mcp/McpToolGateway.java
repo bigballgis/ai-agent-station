@@ -361,7 +361,9 @@ public class McpToolGateway {
                 if (configNode.has("serverUrl")) {
                     return configNode.get("serverUrl").asText();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Failed to parse MCP server URL from tool config: {}", e.getMessage());
+            }
         }
         return null;
     }
@@ -387,7 +389,9 @@ public class McpToolGateway {
                         headers.set(field.getKey(), field.getValue().asText());
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Failed to parse HTTP headers from tool config: {}", e.getMessage());
+            }
         }
 
         String httpMethod = "POST";
@@ -397,7 +401,9 @@ public class McpToolGateway {
                 if (configNode.has("method")) {
                     httpMethod = configNode.get("method").asText("POST");
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Failed to parse HTTP method from tool config: {}", e.getMessage());
+            }
         }
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(parameters, headers);

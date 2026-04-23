@@ -43,12 +43,7 @@ public class QuotaController {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
             return Result.fail("Tenant ID mismatch");
         }
-        try {
-            return Result.success(quotaService.getTenantQuota(tenantId));
-        } catch (Exception e) {
-            log.error("Failed to get quota for tenant: {}", tenantId, e);
-            return Result.fail("Failed to get quota: " + e.getMessage());
-        }
+        return Result.success(quotaService.getTenantQuota(tenantId));
     }
 
     /**
@@ -70,12 +65,7 @@ public class QuotaController {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
             return Result.fail("Tenant ID mismatch");
         }
-        try {
-            return Result.success(quotaService.getTenantQuotaDetails(tenantId));
-        } catch (Exception e) {
-            log.error("Failed to get quota details for tenant: {}", tenantId, e);
-            return Result.fail("Failed to get quota details: " + e.getMessage());
-        }
+        return Result.success(quotaService.getTenantQuotaDetails(tenantId));
     }
 
     /**
@@ -99,11 +89,6 @@ public class QuotaController {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
             return Result.fail("Tenant ID mismatch");
         }
-        try {
-            return Result.success(quotaService.updateTenantQuota(tenantId, quotaUpdate));
-        } catch (Exception e) {
-            log.error("Failed to update quota for tenant: {}", tenantId, e);
-            return Result.fail("Failed to update quota: " + e.getMessage());
-        }
+        return Result.success(quotaService.updateTenantQuota(tenantId, quotaUpdate));
     }
 }

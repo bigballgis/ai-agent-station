@@ -5,6 +5,10 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.WorkflowCancelDTO;
+import com.aiagent.dto.WorkflowDefinitionDTO;
+import com.aiagent.dto.WorkflowNodeActionDTO;
+import com.aiagent.dto.WorkflowStartDTO;
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.entity.WorkflowNodeLog;
@@ -15,9 +19,6 @@ import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.vo.WorkflowDefinitionVO;
 import com.aiagent.vo.WorkflowInstanceVO;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -71,7 +72,7 @@ public class WorkflowController {
     @PostMapping("/definitions")
     @Operation(summary = "创建工作流定义")
     public Result<WorkflowDefinitionVO> createDefinition(
-            @Valid @RequestBody CreateDefinitionRequest request) {
+            @Valid @RequestBody WorkflowDefinitionDTO request) {
 
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -102,7 +103,7 @@ public class WorkflowController {
     @Operation(summary = "更新工作流定义")
     public Result<WorkflowDefinitionVO> updateDefinition(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateDefinitionRequest request) {
+            @Valid @RequestBody WorkflowDefinitionDTO request) {
 
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -196,7 +197,7 @@ public class WorkflowController {
     @OperationLog(value = "启动工作流", module = "工作流")
     @Operation(summary = "启动工作流")
     public Result<WorkflowInstanceVO> startWorkflow(
-            @Valid @RequestBody StartWorkflowRequest request,
+            @Valid @RequestBody WorkflowStartDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         WorkflowInstance instance = workflowEngine.startWorkflow(
@@ -229,7 +230,7 @@ public class WorkflowController {
     @Operation(summary = "取消工作流")
     public Result<WorkflowInstanceVO> cancelWorkflow(
             @PathVariable Long id,
-            @Valid @RequestBody CancelWorkflowRequest request) {
+            @Valid @RequestBody WorkflowCancelDTO request) {
 
         WorkflowInstance instance = workflowEngine.cancelWorkflow(id, request.getReason());
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
@@ -242,7 +243,7 @@ public class WorkflowController {
     public Result<WorkflowNodeLog> approveNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
-            @RequestBody(required = false) NodeActionRequest request) {
+            @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
         WorkflowNodeLog nodeLog = workflowEngine.approveNode(instanceId, true, comment);
@@ -255,49 +256,10 @@ public class WorkflowController {
     public Result<WorkflowNodeLog> rejectNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
-            @RequestBody(required = false) NodeActionRequest request) {
+            @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
         WorkflowNodeLog nodeLog = workflowEngine.approveNode(instanceId, false, comment);
         return Result.success(nodeLog);
-    }
-
-    // ==================== Request DTOs ====================
-
-    @Data
-    public static class CreateDefinitionRequest {
-        @NotBlank(message = "工作流名称不能为空")
-        private String name;
-        private String description;
-        private Map<String, Object> nodes;
-        private Map<String, Object> edges;
-        private Map<String, Object> triggers;
-    }
-
-    @Data
-    public static class UpdateDefinitionRequest {
-        @NotBlank(message = "工作流名称不能为空")
-        private String name;
-        private String description;
-        private Map<String, Object> nodes;
-        private Map<String, Object> edges;
-        private Map<String, Object> triggers;
-    }
-
-    @Data
-    public static class StartWorkflowRequest {
-        @NotNull(message = "工作流定义ID不能为空")
-        private Long definitionId;
-        private Map<String, Object> variables;
-    }
-
-    @Data
-    public static class CancelWorkflowRequest {
-        private String reason;
-    }
-
-    @Data
-    public static class NodeActionRequest {
-        private String comment;
     }
 }

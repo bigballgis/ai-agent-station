@@ -1,6 +1,7 @@
 package com.aiagent.util;
 
 import com.aiagent.security.UserPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -38,5 +39,20 @@ public final class SecurityUtils {
             return ((UserPrincipal) authentication.getPrincipal()).getTenantId();
         }
         return null;
+    }
+
+    /**
+     * 从HttpServletRequest中获取客户端真实IP
+     * 优先读取 X-Forwarded-For header，其次 X-Real-IP，最后使用 getRemoteAddr()
+     */
+    public static String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip != null && ip.contains(",") ? ip.split(",")[0].trim() : ip;
     }
 }

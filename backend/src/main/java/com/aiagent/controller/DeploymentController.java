@@ -5,6 +5,7 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DeploymentDeployDTO;
 import com.aiagent.entity.DeploymentHistory;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.DeploymentService;
@@ -76,7 +77,7 @@ public class DeploymentController {
     @Operation(summary = "部署Agent")
     @OperationLog(value = "部署Agent", module = "部署管理")
     public Result<DeploymentVO> deploy(
-            @Valid @RequestBody DeployRequest request,
+            @Valid @RequestBody DeploymentDeployDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         DeploymentHistory deployment = deploymentService.deploy(
@@ -109,16 +110,4 @@ public class DeploymentController {
         return Result.success(comparison);
     }
 
-    @Data
-    public static class DeployRequest {
-        @NotNull(message = "agentId不能为空")
-        private Long agentId;
-        @NotNull(message = "versionId不能为空")
-        private Long versionId;
-        private Boolean isCanary = false;
-        @Min(value = 0, message = "canaryPercentage不能小于0")
-        @Max(value = 100, message = "canaryPercentage不能大于100")
-        private Integer canaryPercentage = 100;
-        private String remark;
-    }
 }

@@ -4,6 +4,7 @@ import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.AgentCopyDTO;
 import com.aiagent.dto.AgentDTO;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.Agent;
@@ -101,7 +102,7 @@ public class AgentController {
     @PostMapping("/{id}/copy")
     @RequiresPermission("agent:create")
     @Operation(summary = "复制Agent")
-    public Result<AgentVO> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody CopyAgentRequest request) {
+    public Result<AgentVO> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentCopyDTO request) {
         return Result.success(DTOConverter.toAgentVO(agentService.copyAgent(id, request.getNewName())));
     }
 
@@ -126,17 +127,4 @@ public class AgentController {
         return Result.success(DTOConverter.toAgentVO(agentService.rollbackToVersion(id, versionNumber)));
     }
 
-    public static class CopyAgentRequest {
-        @NotBlank(message = "名称不能为空")
-        @Size(max = 200, message = "名称长度不能超过200个字符")
-        private String newName;
-
-        public String getNewName() {
-            return newName;
-        }
-
-        public void setNewName(String newName) {
-            this.newName = newName;
-        }
-    }
 }

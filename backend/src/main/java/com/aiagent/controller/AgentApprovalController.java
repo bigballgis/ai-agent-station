@@ -4,6 +4,8 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.ApprovalActionDTO;
+import com.aiagent.dto.ApprovalSubmitDTO;
 import com.aiagent.entity.AgentApproval;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.AgentApprovalService;
@@ -79,7 +81,7 @@ public class AgentApprovalController {
     @PostMapping("/submit")
     @Operation(summary = "提交审批申请")
     public Result<AgentApproval> submitForApproval(
-            @Valid @RequestBody SubmitApprovalRequest request,
+            @Valid @RequestBody ApprovalSubmitDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
         
         AgentApproval approval = agentApprovalService.submitForApproval(request.getAgentId(), request.getVersionId(), request.getRemark(), principal.getId());
@@ -91,7 +93,7 @@ public class AgentApprovalController {
     @Operation(summary = "审批通过")
     public Result<AgentApproval> approve(
             @Parameter(description = "审批ID") @PathVariable Long id,
-            @Valid @RequestBody ApprovalActionRequest request,
+            @Valid @RequestBody ApprovalActionDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
         
         AgentApproval approval = agentApprovalService.approve(id, request.getApprovalRemark(), principal.getId());
@@ -103,22 +105,11 @@ public class AgentApprovalController {
     @Operation(summary = "审批拒绝")
     public Result<AgentApproval> reject(
             @Parameter(description = "审批ID") @PathVariable Long id,
-            @Valid @RequestBody ApprovalActionRequest request,
+            @Valid @RequestBody ApprovalActionDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
         
         AgentApproval approval = agentApprovalService.reject(id, request.getApprovalRemark(), principal.getId());
         return Result.success(approval);
     }
 
-    @Data
-    public static class SubmitApprovalRequest {
-        private Long agentId;
-        private Long versionId;
-        private String remark;
-    }
-
-    @Data
-    public static class ApprovalActionRequest {
-        private String approvalRemark;
-    }
 }

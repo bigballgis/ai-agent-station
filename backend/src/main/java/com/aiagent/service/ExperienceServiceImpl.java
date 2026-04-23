@@ -6,6 +6,7 @@ import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.AgentEvolutionExperienceRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionExperience createExperience(AgentEvolutionExperience experience) {
         Long tenantId = TenantContextHolder.getTenantId();
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         if (tenantId != null) {
             experience.setTenantId(tenantId);
@@ -54,7 +55,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionExperience updateExperience(Long id, AgentEvolutionExperience experienceDetails) {
         AgentEvolutionExperience experience = getExperienceById(id);
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         experience.setTitle(experienceDetails.getTitle());
         experience.setDescription(experienceDetails.getDescription());
@@ -285,11 +286,4 @@ public class ExperienceServiceImpl implements ExperienceService {
         experienceRepository.save(experience);
     }
 
-    private Long getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getId();
-        }
-        return null;
-    }
 }
