@@ -24,7 +24,7 @@
         :body-style="{ padding: '20px' }"
       >
         <a-statistic
-          title="Agent 数量"
+          :title="t('quota.agentCount')"
           :value="stats.agentUsed"
           :suffix="`/ ${stats.agentLimit}`"
           class="text-neutral-900 dark:text-neutral-50"
@@ -51,7 +51,7 @@
         :body-style="{ padding: '20px' }"
       >
         <a-statistic
-          title="API 调用次数"
+          :title="t('quota.apiCalls')"
           :value="stats.apiUsed"
           :suffix="`/ ${formatNumber(stats.apiLimit)}`"
           class="text-neutral-900 dark:text-neutral-50"
@@ -78,7 +78,7 @@
         :body-style="{ padding: '20px' }"
       >
         <a-statistic
-          title="Token 消耗"
+          :title="t('quota.tokenUsage')"
           :value="stats.tokenUsed"
           :suffix="`/ ${formatNumber(stats.tokenLimit)}`"
           class="text-neutral-900 dark:text-neutral-50"
@@ -105,7 +105,7 @@
         :body-style="{ padding: '20px' }"
       >
         <a-statistic
-          title="存储空间"
+          :title="t('quota.storage')"
           :value="stats.storageUsed"
           :suffix="`/ ${stats.storageLimit} GB`"
           class="text-neutral-900 dark:text-neutral-50"
@@ -193,12 +193,12 @@
     <!-- 编辑配额弹窗 -->
     <a-modal
       v-model:open="editModalVisible"
-      title="编辑配额"
+      :title="t('quota.editQuota')"
       :confirm-loading="submitting"
       @ok="handleEditSubmit"
       @cancel="editModalVisible = false"
-      ok-text="保存"
-      cancel-text="取消"
+      :ok-text="t('common.save')"
+      :cancel-text="t('common.cancel')"
       width="560px"
     >
       <a-form
@@ -207,16 +207,16 @@
         :wrapper-col="{ span: 16 }"
         class="mt-4"
       >
-        <a-form-item label="Agent 数量限制">
+        <a-form-item :label="t('quota.agentLimit')">
           <a-input-number v-model:value="editForm.agentLimit" :min="1" :max="1000" class="w-full" />
         </a-form-item>
-        <a-form-item label="API 调用次数限制">
+        <a-form-item :label="t('quota.apiCallLimit')">
           <a-input-number v-model:value="editForm.apiLimit" :min="1000" :max="10000000" :step="1000" class="w-full" />
         </a-form-item>
-        <a-form-item label="Token 消耗限制">
+        <a-form-item :label="t('quota.tokenLimit')">
           <a-input-number v-model:value="editForm.tokenLimit" :min="10000" :max="100000000" :step="10000" class="w-full" />
         </a-form-item>
-        <a-form-item label="存储空间限制 (GB)">
+        <a-form-item :label="t('quota.storageLimit')">
           <a-input-number v-model:value="editForm.storageLimit" :min="1" :max="10000" class="w-full" />
         </a-form-item>
       </a-form>
@@ -226,6 +226,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { updateTenantQuota } from '@/api/quota'
 import { getTenants } from '@/api/tenant'
@@ -243,6 +244,8 @@ interface TenantQuota {
   storageUsed: number
   storageLimit: number
 }
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -291,13 +294,13 @@ const stats = computed(() => {
 const filteredTenants = computed(() => tenants.value)
 
 const columns = [
-  { title: '租户名称', key: 'tenantName', dataIndex: 'name', width: 180 },
-  { title: 'Agent 数量', key: 'agentCount', width: 140 },
-  { title: 'API 调用次数', key: 'apiCalls', width: 180 },
-  { title: 'Token 消耗', key: 'tokenUsage', width: 200 },
-  { title: '存储空间', key: 'storage', width: 160 },
-  { title: '状态', key: 'status', width: 100, align: 'center' as const },
-  { title: '操作', key: 'action', width: 120, align: 'center' as const },
+  { title: t('quota.tenantName'), key: 'tenantName', dataIndex: 'name', width: 180 },
+  { title: t('quota.agentCount'), key: 'agentCount', width: 140 },
+  { title: t('quota.apiCalls'), key: 'apiCalls', width: 180 },
+  { title: t('quota.tokenUsage'), key: 'tokenUsage', width: 200 },
+  { title: t('quota.storage'), key: 'storage', width: 160 },
+  { title: t('common.status'), key: 'status', width: 100, align: 'center' as const },
+  { title: t('common.actions'), key: 'action', width: 120, align: 'center' as const },
 ]
 
 function formatNumber(num: number): string {
@@ -334,9 +337,9 @@ function getStatusText(record: TenantQuota): string {
     record.storageUsed / record.storageLimit,
   ]
   const maxRatio = Math.max(...checks)
-  if (maxRatio >= 1) return '超限'
-  if (maxRatio >= 0.7) return '预警'
-  return '正常'
+  if (maxRatio >= 1) return t('quota.exceeded')
+  if (maxRatio >= 0.7) return t('quota.warning')
+  return t('quota.normal')
 }
 
 function openEditModal(record: TenantQuota) {
@@ -353,13 +356,13 @@ async function handleEditSubmit() {
   try {
     if (currentEditId.value !== null) {
       await updateTenantQuota(currentEditId.value, { ...editForm })
-      message.success('配额更新成功')
+      message.success(t('quota.updateSuccess'))
       editModalVisible.value = false
       await fetchQuotas()
     }
   } catch (e) {
     console.error('配额更新失败:', e)
-    message.error('配额更新失败')
+    message.error(t('quota.updateFailed'))
   } finally {
     submitting.value = false
   }
@@ -367,6 +370,6 @@ async function handleEditSubmit() {
 
 async function refreshData() {
   await fetchQuotas()
-  message.success('数据已刷新')
+  message.success(t('quota.refreshSuccess'))
 }
 </script>

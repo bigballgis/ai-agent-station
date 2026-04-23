@@ -33,7 +33,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs text-neutral-400 dark:text-neutral-500">工具总数</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('mcpTool.totalTools') }}</p>
             <p class="text-xl font-bold text-neutral-800 dark:text-neutral-100">{{ tools.length }}</p>
           </div>
         </div>
@@ -46,7 +46,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs text-neutral-400 dark:text-neutral-500">已启用</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('mcpTool.enabled') }}</p>
             <p class="text-xl font-bold text-neutral-800 dark:text-neutral-100">{{ enabledCount }}</p>
           </div>
         </div>
@@ -59,7 +59,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs text-neutral-400 dark:text-neutral-500">平均成功率</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('mcpTool.avgSuccessRate') }}</p>
             <p class="text-xl font-bold text-neutral-800 dark:text-neutral-100">{{ avgSuccessRate }}%</p>
           </div>
         </div>
@@ -103,7 +103,7 @@
             ]"
           >
             <span :class="['w-1.5 h-1.5 rounded-full', tool.enabled ? 'bg-green-500' : 'bg-neutral-400']" />
-            {{ tool.enabled ? '已启用' : '已禁用' }}
+            {{ tool.enabled ? t('mcpTool.enabled') : t('mcpTool.disabled') }}
           </span>
         </div>
 
@@ -118,7 +118,7 @@
             <svg class="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatNumber(tool.callCount) }} 调用</span>
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatNumber(tool.callCount) }} {{ t('mcpTool.calls') }}</span>
           </div>
           <div class="flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,11 +164,11 @@
             <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {{ tool.enabled ? '禁用' : '启用' }}
+            {{ tool.enabled ? t('mcpTool.disable') : t('mcpTool.enable') }}
           </button>
           <button
             class="inline-flex items-center justify-center p-2 rounded-xl text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors duration-200 cursor-pointer"
-            title="删除"
+            title="t('common.delete')"
             @click="handleDeleteTool(tool)"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,33 +182,33 @@
     <!-- 接入工具弹窗 -->
     <a-modal
       v-model:open="showConnectModal"
-      title="接入工具"
+      :title="t('mcpTool.connectTool')"
       :footer="null"
       :width="520"
       centered
     >
       <div class="space-y-4 pt-2">
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">工具名称 <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.toolName') }} <span class="text-red-500">*</span></label>
           <input
             v-model="connectForm.name"
             type="text"
-            placeholder="请输入工具名称"
+            :placeholder="t('mcpTool.toolNamePlaceholder')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">类型 <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('common.type') }} <span class="text-red-500">*</span></label>
           <select
             v-model="connectForm.type"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >
             <option value="HTTP">HTTP</option>
-            <option value="自定义">自定义</option>
+            <option value="custom">{{ t('common.custom') }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">服务地址 <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.serviceUrl') }} <span class="text-red-500">*</span></label>
           <input
             v-model="connectForm.url"
             type="text"
@@ -217,7 +217,7 @@
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">鉴权方式</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.authType') }}</label>
           <select
             v-model="connectForm.authType"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
@@ -240,7 +240,7 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">超时设置 (ms)</label>
+            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.timeoutSetting') }}</label>
             <input
               v-model.number="connectForm.timeout"
               type="number"
@@ -252,11 +252,11 @@
           <div />
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">描述</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('common.description') }}</label>
           <textarea
             v-model="connectForm.description"
             rows="2"
-            placeholder="请输入工具描述"
+            :placeholder="t('mcpTool.toolDescPlaceholder')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
           />
         </div>
@@ -280,7 +280,7 @@
     <!-- 配置弹窗 -->
     <a-modal
       v-model:open="showConfigModal"
-      title="工具配置"
+      :title="t('mcpTool.toolConfig')"
       :footer="null"
       :width="480"
       centered
@@ -308,7 +308,7 @@
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">鉴权方式</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.authType') }}</label>
           <select
             v-model="configForm.authType"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
@@ -319,7 +319,7 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">超时设置 (ms)</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('mcpTool.timeoutSetting') }}</label>
           <input
             v-model.number="configForm.timeout"
             type="number"
@@ -350,8 +350,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getTools, refreshTools } from '@/api/tool'
+
+const { t } = useI18n()
 
 // ============ 数据 ============
 
@@ -379,8 +382,8 @@ async function fetchTools() {
     const res = await getTools()
     tools.value = res.data || res || []
   } catch (e) {
-    console.error('获取工具列表失败:', e)
-    message.error('获取工具列表失败')
+    console.error('Failed to fetch tools:', e)
+    message.error(t('mcpTool.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -437,16 +440,16 @@ function openConnectModal() {
 
 function connectTool() {
   if (!connectForm.value.name || !connectForm.value.url) {
-    message.warning('请填写工具名称和服务地址')
+    message.warning(t('mcpTool.nameAndUrlRequired'))
     return
   }
   showConnectModal.value = false
-  message.success('工具接入请求已提交，正在刷新工具列表...')
+  message.success(t('mcpTool.connectSubmitted'))
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: any) => {
     console.error('刷新工具失败:', e)
-    message.error('工具接入失败')
+    message.error(t('mcpTool.connectFailed'))
   })
 }
 
@@ -463,12 +466,12 @@ function openConfigModal(tool: McpTool) {
 function saveConfig() {
   if (!configTool.value) return
   showConfigModal.value = false
-  message.success('配置已保存，正在刷新工具列表...')
+  message.success(t('mcpTool.configSaved'))
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: any) => {
     console.error('刷新工具失败:', e)
-    message.error('配置保存失败')
+    message.error(t('mcpTool.configSaveFailed'))
   })
 }
 
@@ -483,7 +486,7 @@ function toggleTool(tool: McpTool) {
 }
 
 function handleDeleteTool(_tool: McpTool) {
-  message.info('工具删除需要通过后端配置')
+  message.info(t('mcpTool.deleteViaBackend'))
 }
 
 

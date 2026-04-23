@@ -10,7 +10,6 @@ import com.aiagent.repository.WorkflowNodeLogRepository;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +24,7 @@ public class WorkflowEngine {
     private final WorkflowDefinitionRepository definitionRepository;
     private final WorkflowInstanceRepository instanceRepository;
     private final WorkflowNodeLogRepository nodeLogRepository;
+    private final WorkflowAsyncExecutor workflowAsyncExecutor;
 
     /**
      * Start a workflow instance from a published definition
@@ -64,8 +64,8 @@ public class WorkflowEngine {
         // Log the start node
         createNodeLog(instance.getId(), startNodeId, "START", "开始节点", variables);
 
-        // Execute the first node asynchronously
-        executeNodeAsync(instance.getId());
+        // Execute the first node asynchronously via separate bean
+        workflowAsyncExecutor.executeNodeAsync(instance.getId());
 
         return instance;
     }
@@ -126,8 +126,8 @@ public class WorkflowEngine {
                 instance.setCurrentStep((instance.getCurrentStep() != null ? instance.getCurrentStep() : 0) + 1);
                 instanceRepository.save(instance);
 
-                // Continue execution asynchronously
-                executeNodeAsync(instance.getId());
+                // Continue execution asynchronously via separate bean
+                workflowAsyncExecutor.executeNodeAsync(instance.getId());
             }
 
             return nodeLog;
@@ -202,7 +202,7 @@ public class WorkflowEngine {
         instanceRepository.save(instance);
 
         if (nextNodeId != null) {
-            executeNodeAsync(instance.getId());
+            workflowAsyncExecutor.executeNodeAsync(instance.getId());
         } else {
             completeWorkflow(instance, null);
         }
@@ -246,19 +246,6 @@ public class WorkflowEngine {
     }
 
     // ==================== Private Helper Methods ====================
-
-    @Async
-    public void executeNodeAsync(Long instanceId) {
-        try {
-            Thread.sleep(100); // Small delay to ensure transaction is committed
-            executeNode(instanceId);
-        } catch (BusinessException e) {
-            log.error("Async node execution failed: instanceId={}, error={}", instanceId, e.getMessage());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Async node execution interrupted: instanceId={}", instanceId);
-        }
-    }
 
     private void completeWorkflow(WorkflowInstance instance, Map<String, Object> finalOutput) {
         instance.setStatus(WorkflowInstance.InstanceStatus.COMPLETED);

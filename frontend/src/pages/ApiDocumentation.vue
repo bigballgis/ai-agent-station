@@ -2,8 +2,8 @@
   <div class="api-documentation">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">API文档</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">查看和测试已发布Agent的API接口</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('routes.apiDocs') }}</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ t('apiDocs.desc') }}</p>
       </div>
       <div class="flex space-x-4">
         <a
@@ -26,11 +26,11 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索API..."
+          :placeholder="t('apiDocs.searchPlaceholder')"
           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
         />
         <select v-model="selectedAgent" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
-          <option value="">所有Agent</option>
+          <option value="">{{ t('apiDocs.allAgents') }}</option>
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </option>
@@ -89,14 +89,14 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- 请求参数 -->
             <div>
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">请求参数</h4>
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ t('apiDocs.requestParams') }}</h4>
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestExample }}</pre>
               </div>
             </div>
             <!-- 响应示例 -->
             <div>
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">响应示例</h4>
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ t('apiDocs.responseExample') }}</h4>
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseExample }}</pre>
               </div>
@@ -107,11 +107,11 @@
         <!-- 测试区域 -->
         <div v-if="expandedApis.includes(api.id)" class="p-6">
           <div class="flex items-center justify-between mb-4">
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white">在线测试</h4>
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('apiDocs.onlineTest') }}</h4>
           </div>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">请求体 (JSON)</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiDocs.requestBody') }}</label>
               <textarea
                 v-model="api.testRequest"
                 rows="6"
@@ -119,7 +119,7 @@
               />
             </div>
             <div v-if="api.testResponse">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">测试结果</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiDocs.testResult') }}</label>
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.testResponse }}</pre>
               </div>
@@ -134,7 +134,7 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ api.isLoading ? '发送中...' : '发送请求' }}
+                {{ api.isLoading ? t('apiDocs.sending') : t('apiDocs.sendRequest') }}
               </button>
             </div>
           </div>
@@ -146,8 +146,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getApiInterfaces, getApiInterfaceById } from '@/api/apiInterface'
+
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const selectedAgent = ref<number | ''>('')
@@ -191,7 +194,7 @@ async function fetchApiInterfaces() {
     })
     agents.value = Array.from(agentMap.entries()).map(([id, name]) => ({ id, name }))
   } catch (error: any) {
-    message.error('获取API接口列表失败: ' + (error.message || '未知错误'))
+    message.error(t('apiDocs.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -239,14 +242,14 @@ async function executeApiTest(api: any) {
     api.testResponse = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'SUCCESS',
-      outputs: data.responseExample || data.responseBody || { message: 'API调用成功' },
+      outputs: data.responseExample || data.responseBody || { message: t('apiDocs.callSuccess') },
       executionTime: Math.floor(Math.random() * 1000) + 200,
     }, null, 2)
   } catch (error: any) {
     api.testResponse = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'FAILED',
-      errorMessage: error.message || 'API调用失败',
+      errorMessage: error.message || t('apiDocs.callFailed'),
     }, null, 2)
   } finally {
     api.isLoading = false

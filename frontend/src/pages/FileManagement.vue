@@ -58,7 +58,7 @@
     <div class="mb-6 flex flex-wrap items-center gap-3 animate-slide-up">
       <a-input
         v-model:value="searchQuery"
-        placeholder="搜索文件名..."
+        :placeholder="t('fileMgmt.searchPlaceholder')"
         allow-clear
         class="flex-1 min-w-[240px] max-w-md"
       >
@@ -70,21 +70,21 @@
       </a-input>
       <a-select
         v-model:value="typeFilter"
-        placeholder="文件类型"
+        :placeholder="t('fileMgmt.fileType')"
         allow-clear
         class="min-w-[140px]"
         @change="handleTypeFilterChange"
       >
-        <a-select-option value="">全部类型</a-select-option>
+        <a-select-option value="">{{ t('fileMgmt.allTypes') }}</a-select-option>
         <a-select-option value="pdf">PDF</a-select-option>
         <a-select-option value="word">Word</a-select-option>
         <a-select-option value="excel">Excel</a-select-option>
-        <a-select-option value="image">图片</a-select-option>
-        <a-select-option value="code">代码</a-select-option>
-        <a-select-option value="other">其他</a-select-option>
+        <a-select-option value="image">{{ t('fileMgmt.image') }}</a-select-option>
+        <a-select-option value="code">{{ t('fileMgmt.code') }}</a-select-option>
+        <a-select-option value="other">{{ t('fileMgmt.other') }}</a-select-option>
       </a-select>
       <a-space>
-        <a-button @click="resetFilters">重置</a-button>
+        <a-button @click="resetFilters">{{ t('common.reset') }}</a-button>
       </a-space>
     </div>
 
@@ -136,12 +136,12 @@
                 下载
               </a-button>
               <a-popconfirm
-                title="确定要删除该文件吗？"
-                ok-text="确定"
-                cancel-text="取消"
+                :title="t('fileMgmt.deleteConfirm')"
+                :ok-text="t('common.confirm')"
+                :cancel-text="t('common.cancel')"
                 @confirm="handleDelete(record)"
               >
-                <a-button type="link" size="small" danger>删除</a-button>
+                <a-button type="link" size="small" danger>{{ t('common.delete') }}</a-button>
               </a-popconfirm>
             </a-space>
           </template>
@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import type { UploadFile } from 'ant-design-vue'
 import { uploadFile, downloadFile, getFileList, deleteFile } from '@/api/file'
@@ -165,6 +166,8 @@ interface FileItem {
   type: string
   uploadTime: string
 }
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const searchQuery = ref('')
@@ -203,11 +206,11 @@ const filteredFiles = computed(() => {
 })
 
 const columns = [
-  { title: '文件名', key: 'fileName', dataIndex: 'name', width: 280 },
-  { title: '大小', key: 'size', width: 120 },
-  { title: '类型', key: 'type', width: 100, align: 'center' as const },
-  { title: '上传时间', key: 'uploadTime', dataIndex: 'uploadTime', width: 180 },
-  { title: '操作', key: 'action', width: 150, align: 'center' as const },
+  { title: t('fileMgmt.fileName'), key: 'fileName', dataIndex: 'name', width: 280 },
+  { title: t('fileMgmt.size'), key: 'size', width: 120 },
+  { title: t('common.type'), key: 'type', width: 100, align: 'center' as const },
+  { title: t('fileMgmt.uploadTime'), key: 'uploadTime', dataIndex: 'uploadTime', width: 180 },
+  { title: t('common.actions'), key: 'action', width: 150, align: 'center' as const },
 ]
 
 function formatFileSize(bytes: number): string {
@@ -267,16 +270,16 @@ function getFileIconClass(type: string): string {
 async function handleBeforeUpload(file: File) {
   const isLt50M = file.size / 1024 / 1024 < 50
   if (!isLt50M) {
-    message.error('文件大小不能超过 50MB')
+    message.error(t('fileMgmt.fileTooLarge'))
     return false
   }
   try {
     await uploadFile(file)
-    message.success(`${file.name} 上传成功`)
+    message.success(`${file.name} ${t('fileMgmt.uploadSuccess')}`)
     await fetchFiles()
   } catch (e) {
     console.error('文件上传失败:', e)
-    message.error('文件上传失败')
+    message.error(t('fileMgmt.uploadFailed'))
   }
   return false
 }
@@ -295,21 +298,21 @@ async function handleDownload(record: FileItem) {
     link.download = `${record.name}${record.ext}`
     link.click()
     window.URL.revokeObjectURL(url)
-    message.success(`开始下载: ${record.name}${record.ext}`)
+    message.success(`${t('fileMgmt.downloadStart')}: ${record.name}${record.ext}`)
   } catch (e) {
     console.error('文件下载失败:', e)
-    message.error('文件下载失败')
+    message.error(t('fileMgmt.downloadFailed'))
   }
 }
 
 async function handleDelete(record: FileItem) {
   try {
     await deleteFile(record.id)
-    message.success(`已删除: ${record.name}`)
+    message.success(`${t('fileMgmt.deleted')}: ${record.name}`)
     await fetchFiles()
   } catch (e) {
     console.error('文件删除失败:', e)
-    message.error('文件删除失败')
+    message.error(t('fileMgmt.deleteFailed'))
   }
 }
 

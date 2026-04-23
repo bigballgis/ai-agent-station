@@ -1,13 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type {
-  WorkflowDefinition,
-  WorkflowInstance,
-  WorkflowNodeLog,
-  PageRequest,
-  PageResult,
-} from '@/types'
-import request from '@/utils/request'
+import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNodeLog } from '@/api/workflow'
 
 export const useWorkflowStore = defineStore('workflow', () => {
   // State
@@ -28,30 +21,30 @@ export const useWorkflowStore = defineStore('workflow', () => {
     )
   )
 
-  // Actions
-  async function fetchDefinitions(params?: PageRequest) {
+  // Actions - delegate API calls to api/workflow.ts
+  async function fetchDefinitions(page = 0, size = 10, status?: string) {
     loading.value = true
     try {
-      const res = await request.get<PageResult<WorkflowDefinition>>(
-        '/v1/workflows/definitions',
-        { params }
-      )
-      definitions.value = res.data.records
-      return res.data
+      const res = await workflowApi.getDefinitions(page, size, status)
+      const data = res.data
+      if (data && 'records' in data) {
+        definitions.value = data.records
+      }
+      return data
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchInstances(params?: PageRequest & { definitionId?: number }) {
+  async function fetchInstances(page = 0, size = 10, filters?: { status?: string; definitionId?: number }) {
     loading.value = true
     try {
-      const res = await request.get<PageResult<WorkflowInstance>>(
-        '/v1/workflows/instances',
-        { params }
-      )
-      instances.value = res.data.records
-      return res.data
+      const res = await workflowApi.getInstances(page, size, filters)
+      const data = res.data
+      if (data && 'records' in data) {
+        instances.value = data.records
+      }
+      return data
     } finally {
       loading.value = false
     }
@@ -60,9 +53,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function fetchInstanceById(id: number) {
     loading.value = true
     try {
-      const res = await request.get<WorkflowInstance>(
-        `/v1/workflows/instances/${id}`
-      )
+      const res = await workflowApi.getInstance(id)
       currentInstance.value = res.data
       return res.data
     } finally {
@@ -72,14 +63,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   async function startWorkflow(
     definitionId: number,
-    variables?: Record<string, any>
+    variables?: Record<string, unknown>
   ) {
-    const res = await request.post<WorkflowInstance>(
-      '/v1/workflows/instances/start',
-      { definitionId, variables }
-    )
-    instances.value.unshift(res.data)
-    return res.data
+    const res = await workflowApi.startWorkflow(definitionId, variables)
+    const instance = res.data
+    instances.value.unshift(instance)
+    return instance
   }
 
   async function approveNode(
@@ -88,23 +77,23 @@ export const useWorkflowStore = defineStore('workflow', () => {
     approved: boolean,
     comment?: string
   ) {
-    const res = await request.post<WorkflowNodeLog>(
-      `/v1/workflows/instances/${instanceId}/nodes/${nodeId}/approve`,
-      { approved, comment }
-    )
-    return res.data
+    if (approved) {
+      const res = await workflowApi.approveNode(instanceId, nodeId, comment)
+      return res.data
+    } else {
+      const res = await workflowApi.rejectNode(instanceId, nodeId, comment)
+      return res.data
+    }
   }
 
   async function fetchNodeLogs(instanceId: number) {
-    const res = await request.get<WorkflowNodeLog[]>(
-      `/v1/workflows/instances/${instanceId}/logs`
-    )
+    const res = await workflowApi.getInstanceHistory(instanceId)
     nodeLogs.value = res.data || []
     return res.data
   }
 
   async function cancelInstance(instanceId: number) {
-    await request.post(`/v1/workflows/instances/${instanceId}/cancel`)
+    await workflowApi.cancelWorkflow(instanceId)
     const instance = instances.value.find((i) => i.id === instanceId)
     if (instance) {
       instance.status = 'CANCELLED'

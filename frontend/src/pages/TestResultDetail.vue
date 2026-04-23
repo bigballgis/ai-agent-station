@@ -33,20 +33,22 @@
         </a-descriptions-item>
       </a-descriptions>
 
-      <a-divider>Details</a-divider>
+      <a-divider>{{ t('testResultDetail.details') }}</a-divider>
       <pre v-if="testResult.details">{{ JSON.stringify(testResult.details, null, 2) }}</pre>
-      <p v-else>No details available</p>
+      <p v-else>{{ t('testResultDetail.noDetails') }}</p>
     </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { testApi } from '@/api/test'
 import type { TestResult } from '@/api/test'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const loading = ref(false)

@@ -46,66 +46,60 @@ public class UserDataService {
     public Map<String, Object> exportUserData(Long userId) {
         log.info("导出用户数据: userId={}", userId);
 
+        // 一次性获取用户信息，避免重复查询
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在: userId=" + userId));
+
         Map<String, Object> userData = new LinkedHashMap<>();
         userData.put("exportTime", LocalDateTime.now().toString());
         userData.put("userId", userId);
 
         // 用户基本信息
-        userRepository.findById(userId).ifPresent(user -> {
-            Map<String, Object> userInfo = new LinkedHashMap<>();
-            userInfo.put("id", user.getId());
-            userInfo.put("username", user.getUsername());
-            userInfo.put("email", user.getEmail());
-            userInfo.put("phone", user.getPhone());
-            userInfo.put("tenantId", user.getTenantId());
-            userInfo.put("isActive", user.getIsActive());
-            userInfo.put("createdAt", user.getCreatedAt());
-            userInfo.put("updatedAt", user.getUpdatedAt());
-            userData.put("userInfo", userInfo);
-        });
+        Map<String, Object> userInfo = new LinkedHashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("username", user.getUsername());
+        userInfo.put("email", user.getEmail());
+        userInfo.put("phone", user.getPhone());
+        userInfo.put("tenantId", user.getTenantId());
+        userInfo.put("isActive", user.getIsActive());
+        userInfo.put("createdAt", user.getCreatedAt());
+        userInfo.put("updatedAt", user.getUpdatedAt());
+        userData.put("userInfo", userInfo);
+
+        Long tenantId = user.getTenantId();
 
         // 用户创建的Agent (通过tenantId查询后过滤)
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                userData.put("agents", agentRepository.findByTenantId(user.getTenantId()).stream()
-                        .filter(a -> userId.equals(a.getCreatedBy()))
-                        .map(this::agentToMap).toList());
-            }
-        });
+        if (tenantId != null) {
+            userData.put("agents", agentRepository.findByTenantId(tenantId).stream()
+                    .filter(a -> userId.equals(a.getCreatedBy()))
+                    .map(this::agentToMap).toList());
+        }
 
         // 测试用例 (通过tenantId查询后过滤)
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                userData.put("testCases", testCaseRepository.findByTenantId(user.getTenantId()).stream()
-                        .filter(tc -> userId.equals(tc.getCreatedBy()))
-                        .map(this::testCaseToMap).toList());
-            }
-        });
+        if (tenantId != null) {
+            userData.put("testCases", testCaseRepository.findByTenantId(tenantId).stream()
+                    .filter(tc -> userId.equals(tc.getCreatedBy()))
+                    .map(this::testCaseToMap).toList());
+        }
 
         // 测试执行记录 (通过tenantId查询)
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                userData.put("testExecutions", testExecutionRepository.findByTenantId(user.getTenantId()).stream()
-                        .map(this::executionToMap).toList());
-            }
-        });
+        if (tenantId != null) {
+            userData.put("testExecutions", testExecutionRepository.findByTenantId(tenantId).stream()
+                    .map(this::executionToMap).toList());
+        }
 
         // 测试结果 (通过tenantId查询)
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                userData.put("testResults", testResultRepository.findByTenantId(user.getTenantId()).stream()
-                        .map(this::testResultToMap).toList());
-            }
-        });
+        if (tenantId != null) {
+            userData.put("testResults", testResultRepository.findByTenantId(tenantId).stream()
+                    .map(this::testResultToMap).toList());
+        }
 
         // 系统日志 (通过tenantId查询)
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                userData.put("systemLogs", systemLogRepository.findByTenantId(user.getTenantId()).stream()
-                        .filter(l -> userId.equals(l.getUserId()))
-                        .map(this::systemLogToMap).toList());
-            }
-        });
+        if (tenantId != null) {
+            userData.put("systemLogs", systemLogRepository.findByTenantId(tenantId).stream()
+                    .filter(l -> userId.equals(l.getUserId()))
+                    .map(this::systemLogToMap).toList());
+        }
 
         // 登录日志
         userData.put("loginLogs", loginLogRepository.findByUserIdOrderByLoginTimeDesc(userId).stream()
@@ -138,15 +132,16 @@ public class UserDataService {
     public void anonymizeUser(Long userId) {
         log.info("匿名化用户数据: userId={}", userId);
 
-        userRepository.findById(userId).ifPresent(user -> {
-            String anonymizedPrefix = "anonymized_" + userId + "_";
-            user.setUsername(anonymizedPrefix + UUID.randomUUID().toString().substring(0, 8));
-            user.setEmail(anonymizedPrefix + "email");
-            user.setPhone(null);
-            user.setIsActive(false);
-            userRepository.save(user);
-            log.info("用户基本信息已匿名化: userId={}", userId);
-        });
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在: userId=" + userId));
+
+        String anonymizedPrefix = "anonymized_" + userId + "_";
+        user.setUsername(anonymizedPrefix + UUID.randomUUID().toString().substring(0, 8));
+        user.setEmail(anonymizedPrefix + "email");
+        user.setPhone(null);
+        user.setIsActive(false);
+        userRepository.save(user);
+        log.info("用户基本信息已匿名化: userId={}", userId);
 
         // 清理会话
         userSessionRepository.findByUserId(userId).forEach(session -> {
@@ -164,16 +159,15 @@ public class UserDataService {
         });
 
         // 清理系统日志中的IP
-        userRepository.findById(userId).ifPresent(user -> {
-            if (user.getTenantId() != null) {
-                systemLogRepository.findByTenantId(user.getTenantId()).stream()
-                        .filter(l -> userId.equals(l.getUserId()))
-                        .forEach(sysLog -> {
-                            sysLog.setIp("0.0.0.0");
-                            systemLogRepository.save(sysLog);
-                        });
-            }
-        });
+        Long tenantId = user.getTenantId();
+        if (tenantId != null) {
+            systemLogRepository.findByTenantId(tenantId).stream()
+                    .filter(l -> userId.equals(l.getUserId()))
+                    .forEach(sysLog -> {
+                        sysLog.setIp("0.0.0.0");
+                        systemLogRepository.save(sysLog);
+                    });
+        }
 
         log.info("用户数据匿名化完成: userId={}", userId);
     }

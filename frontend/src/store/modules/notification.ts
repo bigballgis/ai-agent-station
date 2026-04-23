@@ -1,18 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { ApiResponse, PageResult } from '@/types/common'
-import request from '@/utils/request'
-
-interface Notification {
-  id: number
-  title: string
-  content: string
-  type: string
-  read: boolean
-  sender?: string
-  link?: string
-  createdAt: string
-}
+import { notificationApi, type Notification } from '@/api/notification'
 
 export const useNotificationStore = defineStore('notification', () => {
   // State
@@ -36,9 +24,9 @@ export const useNotificationStore = defineStore('notification', () => {
     )
   )
 
-  // Actions
+  // Actions - delegate REST API calls to api/notification.ts
   async function fetchNotifications(params?: { page?: number; size?: number }) {
-    const res = await request.get('/v1/notifications', { params }) as ApiResponse<PageResult<Notification> | Notification[]>
+    const res = await notificationApi.getNotifications(params)
     // 兼容分页和非分页两种返回格式
     const data = res.data
     if (Array.isArray(data)) {
@@ -51,7 +39,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   async function markAsRead(id: number) {
-    await request.put(`/v1/notifications/${id}/read`)
+    await notificationApi.markAsRead(id)
     const notification = notifications.value.find((n) => n.id === id)
     if (notification && !notification.read) {
       notification.read = true
@@ -60,7 +48,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   async function markAllAsRead() {
-    await request.put('/v1/notifications/read-all')
+    await notificationApi.markAllAsRead()
     notifications.value.forEach((n) => {
       n.read = true
     })

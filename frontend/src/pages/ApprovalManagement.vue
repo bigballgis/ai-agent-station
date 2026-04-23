@@ -244,9 +244,9 @@ function getStatusColor(status: string) {
 
 function getStatusText(status: string) {
   const texts: Record<string, string> = {
-    PENDING: '待审批',
-    APPROVED: '已通过',
-    REJECTED: '已驳回'
+    PENDING: t('approval.pending'),
+    APPROVED: t('approval.approved'),
+    REJECTED: t('approval.rejected')
   }
   return texts[status] || status
 }

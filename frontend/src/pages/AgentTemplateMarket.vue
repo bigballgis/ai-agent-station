@@ -36,7 +36,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索模板名称或描述..."
+          :placeholder="t('tplMarket.searchPlaceholder')"
           class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
           @input="handleSearch"
         />
@@ -67,8 +67,8 @@
             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
       </div>
-      <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">暂无匹配模板</h3>
-      <p class="text-sm text-neutral-400 dark:text-neutral-500">尝试调整搜索关键词或筛选条件</p>
+      <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">{{ t('tplMarket.noMatch') }}</h3>
+      <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('tplMarket.adjustSearch') }}</p>
     </div>
 
     <!-- 模板卡片网格 -->
@@ -178,7 +178,7 @@
     <!-- 模板预览弹窗 -->
     <a-modal
       v-model:open="showPreviewModal"
-      :title="previewTemplateData?.name || '模板预览'"
+      :title="previewTemplateData?.name || t('tplMarket.preview')"
       :footer="null"
       width="640px"
       :ok-button-props="{ class: '!rounded-xl' }"
@@ -198,26 +198,26 @@
         <!-- 基本信息 -->
         <div class="space-y-4 mb-6">
           <div>
-            <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">模板名称</h3>
+            <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('tplMarket.templateName') }}</h3>
             <p class="text-base font-semibold text-neutral-900 dark:text-neutral-50">{{ previewTemplateData.name }}</p>
           </div>
           <div>
-            <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">描述</h3>
+            <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('common.description') }}</h3>
             <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{{ previewTemplateData.description }}</p>
           </div>
           <div class="flex items-center gap-6">
             <div>
-              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">分类</h3>
+              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('common.category') }}</h3>
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400">
                 {{ previewTemplateData.category }}
               </span>
             </div>
             <div>
-              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">创建者</h3>
+              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('tplMarket.creator') }}</h3>
               <p class="text-sm text-neutral-700 dark:text-neutral-300">{{ previewTemplateData.creator }}</p>
             </div>
             <div>
-              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">使用次数</h3>
+              <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('tplMarket.usageCount') }}</h3>
               <p class="text-sm text-neutral-700 dark:text-neutral-300">{{ previewTemplateData.usageCount }}</p>
             </div>
           </div>
@@ -225,7 +225,7 @@
 
         <!-- Agent 图结构概览 -->
         <div class="mb-6">
-          <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">Agent 图结构概览</h3>
+          <h3 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">{{ t('tplMarket.graphOverview') }}</h3>
           <div class="bg-neutral-50 dark:bg-neutral-800/60 rounded-xl p-4">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
@@ -233,7 +233,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">主 Agent 节点</span>
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ t('tplMarket.mainAgentNode') }}</span>
             </div>
             <div class="ml-4 border-l-2 border-neutral-200 dark:border-neutral-700 pl-4 space-y-2">
               <div
@@ -268,30 +268,30 @@
     <!-- 保存为模板弹窗 -->
     <a-modal
       v-model:open="showSaveModal"
-      title="保存为模板"
+      :title="t('tplMarket.saveAsTemplate')"
       :ok-button-props="{ class: '!rounded-xl' }"
       :cancel-button-props="{ class: '!rounded-xl' }"
       @ok="handleSaveTemplate"
       @cancel="showSaveModal = false"
     >
       <a-form layout="vertical" class="mt-4">
-        <a-form-item label="模板名称">
-          <a-input v-model:value="newTemplate.name" placeholder="请输入模板名称" />
+        <a-form-item :label="t('tplMarket.templateName')">
+          <a-input v-model:value="newTemplate.name" :placeholder="t('tplMarket.templateNamePlaceholder')" />
         </a-form-item>
-        <a-form-item label="描述">
+        <a-form-item :label="t('common.description')">
           <a-textarea
             v-model:value="newTemplate.description"
-            placeholder="请输入模板描述"
+            :placeholder="t('tplMarket.templateDescPlaceholder')"
             :rows="3"
           />
         </a-form-item>
-        <a-form-item label="分类">
-          <a-select v-model:value="newTemplate.category" placeholder="请选择分类">
-            <a-select-option value="客服">客服</a-select-option>
-            <a-select-option value="数据分析">数据分析</a-select-option>
-            <a-select-option value="代码生成">代码生成</a-select-option>
-            <a-select-option value="文档处理">文档处理</a-select-option>
-            <a-select-option value="自动化">自动化</a-select-option>
+        <a-form-item :label="t('common.category')">
+          <a-select v-model:value="newTemplate.category" :placeholder="t('tplMarket.selectCategory')">
+            <a-select-option value="customer_service">{{ t('tplMarket.customerService') }}</a-select-option>
+            <a-select-option value="data_analysis">{{ t('tplMarket.dataAnalysis') }}</a-select-option>
+            <a-select-option value="code_generation">{{ t('tplMarket.codeGeneration') }}</a-select-option>
+            <a-select-option value="document_processing">{{ t('tplMarket.documentProcessing') }}</a-select-option>
+            <a-select-option value="automation">{{ t('tplMarket.automation') }}</a-select-option>
           </a-select>
         </a-form-item>
       </a-form>
@@ -301,6 +301,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -308,16 +309,17 @@ import {
 } from '@ant-design/icons-vue'
 import { agentApi } from '@/api/agent'
 
+const { t } = useI18n()
 const router = useRouter()
 
 // 分类
 const categories = [
-  { label: '全部', value: '' },
-  { label: '客服', value: '客服' },
-  { label: '数据分析', value: '数据分析' },
-  { label: '代码生成', value: '代码生成' },
-  { label: '文档处理', value: '文档处理' },
-  { label: '自动化', value: '自动化' },
+  { label: t('tplMarket.all'), value: '' },
+  { label: t('tplMarket.customerService'), value: 'customer_service' },
+  { label: t('tplMarket.dataAnalysis'), value: 'data_analysis' },
+  { label: t('tplMarket.codeGeneration'), value: 'code_generation' },
+  { label: t('tplMarket.documentProcessing'), value: 'document_processing' },
+  { label: t('tplMarket.automation'), value: 'automation' },
 ]
 
 const activeCategory = ref('')
@@ -347,7 +349,7 @@ async function fetchTemplates() {
       }))
   } catch (e) {
     console.error('获取模板列表失败:', e)
-    message.error('获取模板列表失败')
+    message.error(t('tplMarket.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -393,18 +395,18 @@ async function useTemplate(tpl: typeof templates.value[0]) {
       description: tpl.description,
       config: tpl.config || tpl.graphDefinition || {},
     })
-    message.success(`已使用模板 "${tpl.name}" 创建 Agent`)
+    message.success(`${t('tplMarket.useSuccess')} "${tpl.name}"`)
     router.push('/agents')
   } catch (e) {
     console.error('使用模板失败:', e)
-    message.error('使用模板失败')
+    message.error(t('tplMarket.useFailed'))
   }
 }
 
 // 收藏
 function toggleFavorite(tpl: typeof templates.value[0]) {
   tpl.favorited = !tpl.favorited
-  message.success(tpl.favorited ? '已收藏' : '已取消收藏')
+  message.success(tpl.favorited ? t('tplMarket.favorited') : t('tplMarket.unfavorited'))
 }
 
 // 保存为模板
@@ -413,7 +415,7 @@ const newTemplate = ref({ name: '', description: '', category: undefined as stri
 
 async function handleSaveTemplate() {
   if (!newTemplate.value.name) {
-    message.error('请输入模板名称')
+    message.error(t('tplMarket.nameRequired'))
     return
   }
   try {
@@ -422,13 +424,13 @@ async function handleSaveTemplate() {
       isTemplate: true,
       config: {},
     })
-    message.success('模板保存成功')
+    message.success(t('tplMarket.saveSuccess'))
     showSaveModal.value = false
     newTemplate.value = { name: '', description: '', category: undefined }
     await fetchTemplates()
   } catch (e) {
     console.error('保存模板失败:', e)
-    message.error('保存模板失败')
+    message.error(t('tplMarket.saveFailed'))
   }
 }
 </script>

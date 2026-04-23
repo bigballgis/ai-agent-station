@@ -206,28 +206,28 @@ const pagination = ref({
   pageSize: 10,
   total: 0,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`
+  showTotal: (total: number) => t('workflow.totalItems', { total })
 })
 
 const statusMap: Record<string, { text: string; color: string }> = {
-  PENDING: { text: '待执行', color: 'default' },
-  RUNNING: { text: '运行中', color: 'blue' },
-  COMPLETED: { text: '已完成', color: 'green' },
-  FAILED: { text: '失败', color: 'red' },
-  CANCELLED: { text: '已取消', color: 'orange' },
-  SUSPENDED: { text: '已挂起', color: 'purple' }
+  PENDING: { text: t('workflow.instanceStatuses.PENDING'), color: 'default' },
+  RUNNING: { text: t('workflow.instanceStatuses.RUNNING'), color: 'blue' },
+  COMPLETED: { text: t('workflow.instanceStatuses.COMPLETED'), color: 'green' },
+  FAILED: { text: t('workflow.instanceStatuses.FAILED'), color: 'red' },
+  CANCELLED: { text: t('workflow.instanceStatuses.CANCELLED'), color: 'orange' },
+  SUSPENDED: { text: t('workflow.instanceStatuses.SUSPENDED'), color: 'purple' }
 }
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-  { title: '工作流名称', dataIndex: 'workflowName', key: 'workflowName', ellipsis: true },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '当前节点', dataIndex: 'currentNodeId', key: 'currentNodeId', width: 120, ellipsis: true },
-  { title: '步骤', dataIndex: 'currentStep', key: 'currentStep', width: 60 },
-  { title: '启动时间', key: 'startedAt', width: 170 },
-  { title: '完成时间', key: 'completedAt', width: 170 },
-  { title: '错误', key: 'error', ellipsis: true },
-  { title: '操作', key: 'actions', width: 180, fixed: 'right' as const }
+  { title: t('workflow.instanceColumns.workflowName'), dataIndex: 'workflowName', key: 'workflowName', ellipsis: true },
+  { title: t('common.status'), key: 'status', width: 100 },
+  { title: t('workflow.instanceColumns.currentNode'), dataIndex: 'currentNodeId', key: 'currentNodeId', width: 120, ellipsis: true },
+  { title: t('workflow.instanceColumns.step'), dataIndex: 'currentStep', key: 'currentStep', width: 60 },
+  { title: t('workflow.instanceColumns.startTime'), key: 'startedAt', width: 170 },
+  { title: t('workflow.instanceColumns.endTime'), key: 'completedAt', width: 170 },
+  { title: t('workflow.instanceColumns.error'), key: 'error', ellipsis: true },
+  { title: t('workflow.instanceColumns.actions'), key: 'actions', width: 180, fixed: 'right' as const }
 ]
 
 const filteredInstances = computed(() => {
@@ -280,7 +280,7 @@ async function loadInstances() {
     instances.value = res.data?.data?.records || []
     pagination.value.total = res.data?.data?.total || 0
   } catch (error) {
-    message.error('加载实例列表失败')
+    message.error(t('workflow.loadInstancesFailed'))
   } finally {
     loading.value = false
   }
@@ -305,7 +305,7 @@ async function viewDetail(instance: WorkflowInstance) {
     const res = await workflowApi.getInstanceHistory(instance.id)
     nodeLogs.value = res.data?.data || []
   } catch (error) {
-    message.error('加载执行历史失败')
+    message.error(t('workflow.loadHistoryFailed'))
     nodeLogs.value = []
   }
 }
@@ -319,7 +319,7 @@ function showApproveAction(instance: WorkflowInstance) {
 
 async function handleApproveAction() {
   if (!currentInstance.value || !currentInstance.value.currentNodeId) {
-    message.warning('当前没有待审批节点')
+    message.warning(t('workflow.noPendingNode'))
     return
   }
   approving.value = true
@@ -330,14 +330,14 @@ async function handleApproveAction() {
         currentInstance.value.currentNodeId,
         approveComment.value || undefined
       )
-      message.success('审批通过')
+      message.success(t('workflow.approvalSuccess'))
     } else {
       await workflowApi.rejectNode(
         currentInstance.value.id,
         currentInstance.value.currentNodeId,
         approveComment.value || undefined
       )
-      message.success('已拒绝')
+      message.success(t('workflow.rejected'))
     }
     showApproveModal.value = false
     loadInstances()
@@ -349,7 +349,7 @@ async function handleApproveAction() {
       nodeLogs.value = histRes.data?.data || []
     }
   } catch (error) {
-    message.error('操作失败')
+    message.error(t('workflow.actionFailed'))
   } finally {
     approving.value = false
   }
@@ -358,10 +358,10 @@ async function handleApproveAction() {
 async function handleCancel(instance: WorkflowInstance) {
   try {
     await workflowApi.cancelWorkflow(instance.id, '用户手动取消')
-    message.success('工作流已取消')
+    message.success(t('workflow.workflowCancelled'))
     loadInstances()
   } catch (error) {
-    message.error('取消失败')
+    message.error(t('workflow.cancelFailed'))
   }
 }
 

@@ -2,8 +2,8 @@
   <div class="api-management">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">API管理</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">管理已发布Agent的API接口和调用日志</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('routes.apiManagement') }}</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ t('apiMgmt.desc') }}</p>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
                       ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                       : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                   ]">
-                    {{ api.isActive ? '启用' : '禁用' }}
+                    {{ api.isActive ? t('apiMgmt.enabled') : t('apiMgmt.disabled') }}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -107,14 +107,14 @@
           <div class="flex space-x-4">
             <input
               type="text"
-              placeholder="搜索API调用搜索..."
+              :placeholder="t('apiMgmt.searchPlaceholder')"
               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             />
             <select class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
-              <option value="">所有状态</option>
-              <option value="SUCCESS">成功</option>
-              <option value="FAILED">失败</option>
-              <option value="RATE_LIMITED">限流</option>
+              <option value="">{{ t('apiMgmt.allStatus') }}</option>
+              <option value="SUCCESS">{{ t('apiMgmt.success') }}</option>
+              <option value="FAILED">{{ t('apiMgmt.failed') }}</option>
+              <option value="RATE_LIMITED">{{ t('apiMgmt.rateLimited') }}</option>
             </select>
           </div>
           <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
@@ -185,7 +185,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">测试API</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ t('apiMgmt.testApi') }}</h3>
             <button @click="showTestModal = false" class="text-gray-400 hover:text-gray-500">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -196,13 +196,13 @@
         <div class="p-6">
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">请求URL</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestUrl') }}</label>
               <code class="block text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded">
                 {{ selectedApi?.path }}
               </code>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">请求参数 (JSON)</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestParams') }}</label>
               <textarea
                 v-model="testRequest"
                 rows="6"
@@ -211,7 +211,7 @@
               />
             </div>
             <div v-if="testResponse">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">响应结果</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.responseResult') }}</label>
               <pre class="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-4 rounded overflow-x-auto">
                 {{ testResponse }}
               </pre>
@@ -233,8 +233,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getApiInterfaces } from '@/api/apiInterface'
+
+const { t } = useI18n()
 
 const activeTab = ref('apis')
 const showTestModal = ref(false)
@@ -244,8 +247,8 @@ const testResponse = ref('')
 const loading = ref(false)
 
 const tabs = [
-  { key: 'apis', label: 'API列表' },
-  { key: 'logs', label: '调用日志' },
+  { key: 'apis', label: t('apiMgmt.apiList') },
+  { key: 'logs', label: t('apiMgmt.callLogs') },
 ]
 
 const mockApis = ref<any[]>([])
@@ -265,7 +268,7 @@ async function fetchApiInterfaces() {
       callCount: item.callCount || item.callCount === 0 ? item.callCount : 0,
     })) : []
   } catch (error: any) {
-    message.error('获取API列表失败: ' + (error.message || '未知错误'))
+    message.error(t('apiMgmt.fetchApiFailed'))
   } finally {
     loading.value = false
   }
@@ -286,7 +289,7 @@ async function fetchApiLogs() {
       executionTime: item.executionTime || Math.floor(Math.random() * 1000) + 100,
     })) : []
   } catch (error: any) {
-    message.error('获取调用日志失败: ' + (error.message || '未知错误'))
+    message.error(t('apiMgmt.fetchLogsFailed'))
   } finally {
     loading.value = false
   }
@@ -333,14 +336,14 @@ async function executeTest() {
     testResponse.value = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'SUCCESS',
-      outputs: found ? { name: found.name, path: found.path } : { message: '测试成功' },
+      outputs: found ? { name: found.name, path: found.path } : { message: t('apiMgmt.testSuccess') },
       executionTime: 456,
     }, null, 2)
   } catch (error: any) {
     testResponse.value = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'FAILED',
-      errorMessage: error.message || '测试失败',
+      errorMessage: error.message || t('apiMgmt.testFailed'),
     }, null, 2)
   }
 }

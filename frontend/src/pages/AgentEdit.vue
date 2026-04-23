@@ -1,42 +1,42 @@
 <template>
   <div class="agent-edit-page">
     <div class="edit-header">
-      <button @click="goBack" class="btn btn-secondary">返回</button>
-      <h1>编辑Agent</h1>
+      <button @click="goBack" class="btn btn-secondary">{{ t('common.back') }}</button>
+      <h1>{{ t('agent.editAgent') }}</h1>
       <div class="header-actions">
-        <button @click="submitForApproval" class="btn btn-secondary">提交审批</button>
-        <button @click="deployAgent" class="btn btn-success">发布</button>
-        <button @click="saveAgent" class="btn btn-primary">保存</button>
+        <button @click="submitForApproval" class="btn btn-secondary">{{ t('agent.submitApproval') }}</button>
+        <button @click="deployAgent" class="btn btn-success">{{ t('agent.publish') }}</button>
+        <button @click="saveAgent" class="btn btn-primary">{{ t('common.save') }}</button>
       </div>
     </div>
 
     <div class="info-section">
       <div class="info-item">
-        <label>名称:</label>
-        <input v-model="agent.name" placeholder="请输入Agent名称" />
+        <label>{{ t('agent.agentName') }}:</label>
+        <input v-model="agent.name" :placeholder="t('agent.inputNamePlaceholder')" />
       </div>
       <div class="info-item">
-        <label>描述:</label>
-        <textarea v-model="agent.description" placeholder="请输入Agent描述" rows="2"></textarea>
+        <label>{{ t('agent.agentDescription') }}:</label>
+        <textarea v-model="agent.description" :placeholder="t('agent.inputDescPlaceholder')" rows="2"></textarea>
       </div>
       <div class="info-item">
-        <label>状态:</label>
+        <label>{{ t('common.status') }}:</label>
         <select v-model="agent.isActive">
-          <option :value="true">启用</option>
-          <option :value="false">禁用</option>
+          <option :value="true">{{ t('agent.statusEnabled') }}</option>
+          <option :value="false">{{ t('agent.statusDisabled') }}</option>
         </select>
       </div>
       <div class="info-item">
-        <label>当前状态:</label>
+        <label>{{ t('agentEdit.currentStatus') }}:</label>
         <span class="status-tag" :class="getAgentStatusClass(agent.status || '')">{{ getAgentStatusText(agent.status || '') }}</span>
       </div>
     </div>
 
     <div class="canvas-section">
       <div class="designer-redirect">
-        <p>请使用可视化设计器编辑 Agent 工作流</p>
+        <p>{{ t('agentEdit.useDesignerHint') }}</p>
         <router-link :to="`/agents/design/${route.params.id}`" class="btn btn-primary">
-          打开设计器
+          {{ t('agentEdit.openDesigner') }}
         </router-link>
       </div>
     </div>
@@ -46,11 +46,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { approvalApi } from '@/api/approval'
 import { deploymentApi } from '@/api/deployment'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const agent = ref<Agent>({
@@ -68,7 +70,7 @@ async function loadAgent() {
     const res = await agentApi.getAgentById(route.params.id as string)
     agent.value = res.data
   } catch (error) {
-    message.error('加载Agent失败')
+    message.error(t('agentEdit.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -76,16 +78,16 @@ async function loadAgent() {
 
 async function saveAgent() {
   if (!agent.value.name) {
-    message.error('请输入Agent名称')
+    message.error(t('agent.inputAgentNameWarning'))
     return
   }
 
   loading.value = true
   try {
     await agentApi.updateAgent(route.params.id as string, agent.value)
-    message.success('保存成功')
+    message.success(t('common.success'))
   } catch (error) {
-    message.error('保存失败')
+    message.error(t('agentEdit.saveFailed'))
   } finally {
     loading.value = false
   }
@@ -93,17 +95,17 @@ async function saveAgent() {
 
 async function submitForApproval() {
   Modal.confirm({
-    title: '提交审批',
-    content: '确定要提交此Agent进行审批吗？',
+    title: t('agent.submitApproval'),
+    content: t('agentEdit.submitApprovalConfirm'),
     onOk: async () => {
       loading.value = true
       try {
-        await approvalApi.submitForApproval(Number(route.params.id), agent.value.latestVersionId || 0, '提交审批')
-        message.success('提交审批成功')
+        await approvalApi.submitForApproval(Number(route.params.id), agent.value.latestVersionId || 0, t('agent.submitApproval'))
+        message.success(t('agentEdit.submitApprovalSuccess'))
         // 重新加载Agent状态
         await loadAgent()
       } catch (error) {
-        message.error('提交审批失败')
+        message.error(t('agentEdit.submitApprovalFailed'))
       } finally {
         loading.value = false
       }
@@ -113,17 +115,17 @@ async function submitForApproval() {
 
 async function deployAgent() {
   Modal.confirm({
-    title: '发布Agent',
-    content: '确定要发布此Agent吗？',
+    title: t('agent.publish'),
+    content: t('agentEdit.deployConfirm'),
     onOk: async () => {
       loading.value = true
       try {
-        await deploymentApi.deploy(Number(route.params.id), agent.value.latestVersionId || 0, false, 100, '发布Agent')
-        message.success('发布成功')
+        await deploymentApi.deploy(Number(route.params.id), agent.value.latestVersionId || 0, false, 100, t('agent.publish'))
+        message.success(t('agentEdit.deploySuccess'))
         // 重新加载Agent状态
         await loadAgent()
       } catch (error) {
-        message.error('发布失败')
+        message.error(t('agentEdit.deployFailed'))
       } finally {
         loading.value = false
       }
@@ -149,13 +151,13 @@ function getAgentStatusClass(status: string) {
 function getAgentStatusText(status: string) {
   switch (status) {
     case 'DRAFT':
-      return '草稿'
+      return t('agent.statusDraft')
     case 'PENDING_APPROVAL':
-      return '待审批'
+      return t('agent.statusPendingApproval')
     case 'APPROVED':
-      return '已审批'
+      return t('agent.statusApproved')
     case 'PUBLISHED':
-      return '已发布'
+      return t('agent.statusPublished')
     default:
       return status
   }

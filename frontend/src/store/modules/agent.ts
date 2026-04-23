@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Agent, PageRequest, PageResult } from '@/types'
-import request from '@/utils/request'
+import type { PageRequest, PageResult } from '@/types'
+import { agentApi, type Agent } from '@/api/agent'
 
 export const useAgentStore = defineStore('agent', () => {
   // State
@@ -22,7 +22,7 @@ export const useAgentStore = defineStore('agent', () => {
 
   const agentById = computed(() => {
     const map = new Map<string | number, Agent>()
-    agents.value.forEach((a) => map.set(a.id, a))
+    agents.value.forEach((a) => map.set(a.id!, a))
     return (id: string | number) => map.get(id)
   })
 
@@ -51,19 +51,24 @@ export const useAgentStore = defineStore('agent', () => {
     return result
   })
 
-  // Actions
+  // Actions - delegate API calls to api/agent.ts
   async function fetchAgents(params?: PageRequest & typeof filters.value) {
     loading.value = true
     try {
       if (params) {
         filters.value = { ...filters.value, ...params }
       }
-      const res = await request.get<PageResult<Agent>>(
-        '/v1/agents',
-        { params: { ...filters.value, ...params } }
-      )
-      agents.value = res.data.records
-      return res.data
+      const res = await agentApi.getAllAgents()
+      const data = res.data
+      // Handle both paginated and array responses
+      if (Array.isArray(data)) {
+        agents.value = data
+      } else if (data && 'records' in data) {
+        agents.value = (data as PageResult<Agent>).records
+      } else {
+        agents.value = []
+      }
+      return data
     } finally {
       loading.value = false
     }
@@ -72,7 +77,7 @@ export const useAgentStore = defineStore('agent', () => {
   async function fetchAgentById(id: string | number) {
     loading.value = true
     try {
-      const res = await request.get<Agent>(`/v1/agents/${id}`)
+      const res = await agentApi.getAgentById(id)
       currentAgent.value = res.data
       return res.data
     } finally {
@@ -81,25 +86,26 @@ export const useAgentStore = defineStore('agent', () => {
   }
 
   async function createAgent(data: Partial<Agent>) {
-    const res = await request.post<Agent>('/v1/agents', data)
-    agents.value.push(res.data)
+    const res = await agentApi.createAgent(data as Record<string, unknown>)
+    agents.value.push(res.data as Agent)
     return res.data
   }
 
   async function updateAgent(id: string | number, data: Partial<Agent>) {
-    const res = await request.put<Agent>(`/v1/agents/${id}`, data)
+    const res = await agentApi.updateAgent(id, data as Record<string, unknown>)
+    const updated = res.data as Agent
     const index = agents.value.findIndex((a) => a.id === id)
     if (index !== -1) {
-      agents.value[index] = res.data
+      agents.value[index] = updated
     }
     if (currentAgent.value?.id === id) {
-      currentAgent.value = res.data
+      currentAgent.value = updated
     }
-    return res.data
+    return updated
   }
 
   async function deleteAgent(id: string | number) {
-    await request.delete(`/v1/agents/${id}`)
+    await agentApi.deleteAgent(id)
     agents.value = agents.value.filter((a) => a.id !== id)
     if (currentAgent.value?.id === id) {
       currentAgent.value = null

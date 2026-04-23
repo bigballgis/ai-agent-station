@@ -1,8 +1,8 @@
 <template>
   <div class="agent-versions-page">
     <div class="page-header">
-      <button @click="goBack" class="btn btn-secondary">返回</button>
-      <h1>版本管理 - {{ agentName }}</h1>
+      <button @click="goBack" class="btn btn-secondary">{{ t('common.back') }}</button>
+      <h1>{{ t('common.versions') }} - {{ agentName }}</h1>
     </div>
 
     <div class="versions-list">
@@ -16,29 +16,31 @@
           <div class="version-date">{{ formatDate(version.createdAt) }}</div>
         </div>
         <div class="version-content">
-          <p class="change-log">{{ version.changeLog || '暂无变更记录' }}</p>
+          <p class="change-log">{{ version.changeLog || t('agentVersions.noChangeLog') }}</p>
         </div>
         <div class="version-actions">
-          <button @click="rollbackToVersion(version)" class="btn btn-secondary">回滚到此版本</button>
-          <button @click="submitForApproval(version)" class="btn btn-primary">提交审批</button>
+          <button @click="rollbackToVersion(version)" class="btn btn-secondary">{{ t('agentVersions.rollbackToVersion') }}</button>
+          <button @click="submitForApproval(version)" class="btn btn-primary">{{ t('agent.submitApproval') }}</button>
         </div>
       </div>
     </div>
 
     <div v-if="versions.length === 0" class="empty-state">
-      <p>暂无版本记录</p>
+      <p>{{ t('agentVersions.noVersions') }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { agentApi, type AgentVersion } from '@/api/agent'
 import { approvalApi } from '@/api/approval'
 import { testApi } from '@/api/test'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const versions = ref<AgentVersion[]>([])
@@ -55,7 +57,7 @@ async function loadVersions() {
     agentName.value = agentRes.data.name
     versions.value = versionsRes.data || []
   } catch (error) {
-    message.error('加载版本失败')
+    message.error(t('agentVersions.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -63,15 +65,15 @@ async function loadVersions() {
 
 function rollbackToVersion(version: AgentVersion) {
   Modal.confirm({
-    title: '确认回滚',
-    content: `确定要回滚到版本 v${version.versionNumber} 吗？`,
+    title: t('agentVersions.confirmRollback'),
+    content: `${t('agentVersions.rollbackConfirm')} v${version.versionNumber}?`,
     onOk: async () => {
       try {
         await agentApi.rollbackToVersion(route.params.id as string, version.versionNumber)
-        message.success('回滚成功')
+        message.success(t('agentVersions.rollbackSuccess'))
         loadVersions()
       } catch (error) {
-        message.error('回滚失败')
+        message.error(t('agentVersions.rollbackFailed'))
       }
     }
   })
@@ -84,8 +86,8 @@ function formatDate(date: string | undefined) {
 
 function submitForApproval(version: AgentVersion) {
   Modal.confirm({
-    title: '提交审批',
-    content: '确定要提交此版本进行审批吗？系统将检查测试结果。',
+    title: t('agent.submitApproval'),
+    content: t('agentVersions.submitApprovalConfirm'),
     onOk: async () => {
       try {
         // 检查测试结果
@@ -95,15 +97,15 @@ function submitForApproval(version: AgentVersion) {
         })
         
         if (testResults.data.length === 0) {
-          message.warning('请先运行测试并确保测试通过后再提交审批')
+          message.warning(t('agentVersions.runTestFirst'))
           return
         }
         
         // 提交审批
         await approvalApi.submitForApproval(Number(route.params.id), version.versionNumber)
-        message.success('提交审批成功')
+        message.success(t('agentVersions.submitApprovalSuccess'))
       } catch (error) {
-        message.error('提交审批失败')
+        message.error(t('agentVersions.submitApprovalFailed'))
       }
     }
   })
