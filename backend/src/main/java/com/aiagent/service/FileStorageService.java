@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.exception.BusinessException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -76,7 +77,7 @@ public class FileStorageService {
             Files.createDirectories(rootLocation);
             log.info("File storage initialized at: {}", rootLocation);
         } catch (IOException e) {
-            throw new RuntimeException("Could not initialize file storage location: " + rootLocation, e);
+            throw new BusinessException("Could not initialize file storage location: " + rootLocation, e);
         }
     }
 
@@ -135,7 +136,7 @@ public class FileStorageService {
                     .build();
         } catch (IOException e) {
             log.error("Failed to store file: {}", originalName, e);
-            throw new RuntimeException("Failed to store file: " + originalName, e);
+            throw new BusinessException("Failed to store file: " + originalName, e);
         }
     }
 
@@ -160,11 +161,11 @@ public class FileStorageService {
                 log.info("File deleted successfully: {}", filePath);
             } else {
                 log.warn("File not found for deletion: {}", filePath);
-                throw new RuntimeException("File not found: " + filePath);
+                throw new BusinessException("File not found: " + filePath);
             }
         } catch (IOException e) {
             log.error("Failed to delete file: {}", filePath, e);
-            throw new RuntimeException("Failed to delete file: " + filePath, e);
+            throw new BusinessException("Failed to delete file: " + filePath, e);
         }
     }
 
@@ -190,11 +191,11 @@ public class FileStorageService {
                 return resource;
             } else {
                 log.warn("File not found or not readable: {}", filePath);
-                throw new RuntimeException("File not found: " + filePath);
+                throw new BusinessException("File not found: " + filePath);
             }
         } catch (MalformedURLException e) {
             log.error("Failed to load file: {}", filePath, e);
-            throw new RuntimeException("Failed to load file: " + filePath, e);
+            throw new BusinessException("Failed to load file: " + filePath, e);
         }
     }
 
@@ -248,7 +249,7 @@ public class FileStorageService {
                     .collect(Collectors.toList());
         } catch (IOException e) {
             log.error("Failed to list files in directory: {}", targetDir, e);
-            throw new RuntimeException("Failed to list files in directory: " + targetDir, e);
+            throw new BusinessException("Failed to list files in directory: " + targetDir, e);
         }
     }
 

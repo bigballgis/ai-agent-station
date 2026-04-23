@@ -52,7 +52,7 @@ public class DeploymentService {
                 .orElseThrow(() -> new BusinessException("发布记录不存在"));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "deployment_history", description = "部署Agent")
     public DeploymentHistory deploy(Long agentId, Long versionId, Boolean isCanary, Integer canaryPercentage, String remark, Long deployerId) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -102,7 +102,7 @@ public class DeploymentService {
         return deploymentHistoryRepository.save(deployment);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "deployment_history", description = "回滚部署")
     public DeploymentHistory rollback(Long deploymentId, Long deployerId) {
         Long tenantId = TenantContextHolder.getTenantId();

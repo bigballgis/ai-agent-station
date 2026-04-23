@@ -36,7 +36,7 @@ public class TenantService {
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "创建租户")
     public Tenant createTenant(Tenant tenant) {
         if (tenantRepository.findByName(tenant.getName()).isPresent()) {
@@ -59,7 +59,7 @@ public class TenantService {
         return savedTenant;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "更新租户")
     public Tenant updateTenant(Long id, Tenant tenantDetails) {
         Tenant tenant = getTenantById(id);
@@ -68,7 +68,7 @@ public class TenantService {
         return tenantRepository.save(tenant);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "删除租户")
     public void deleteTenant(Long id) {
         Tenant tenant = getTenantById(id);
@@ -76,7 +76,7 @@ public class TenantService {
         tenantRepository.save(tenant);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Tenant regenerateApiKey(Long id) {
         Tenant tenant = getTenantById(id);
         

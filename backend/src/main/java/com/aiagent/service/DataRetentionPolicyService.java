@@ -58,7 +58,7 @@ public class DataRetentionPolicyService {
      * 执行保留策略清理（定时任务，每天凌晨3点执行）
      */
     @Scheduled(cron = "0 0 3 * * ?")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void executeRetentionCleanup() {
         log.info("开始执行数据保留策略清理...");
 

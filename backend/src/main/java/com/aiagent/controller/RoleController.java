@@ -8,6 +8,7 @@ import com.aiagent.dto.RoleDTO;
 import com.aiagent.entity.Role;
 import com.aiagent.entity.UserRole;
 import com.aiagent.service.RoleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +50,7 @@ public class RoleController {
     @Operation(summary = "创建角色")
     @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
-    public Result<RoleDTO> createRole(@RequestBody RoleDTO roleDTO) {
+    public Result<RoleDTO> createRole(@Valid @RequestBody RoleDTO roleDTO) {
         Role role = DTOConverter.toRoleEntity(roleDTO);
         Role created = roleService.createRole(role);
         return Result.success(DTOConverter.toRoleDTO(created));
@@ -59,7 +60,7 @@ public class RoleController {
     @Operation(summary = "更新角色信息")
     @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
-    public Result<RoleDTO> updateRole(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
+    public Result<RoleDTO> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDTO roleDTO) {
         Role role = DTOConverter.toRoleEntity(roleDTO);
         Role updated = roleService.updateRole(id, role);
         return Result.success(DTOConverter.toRoleDTO(updated));

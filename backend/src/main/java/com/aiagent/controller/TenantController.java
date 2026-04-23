@@ -9,6 +9,7 @@ import com.aiagent.dto.UpdateTenantRequestDTO;
 import com.aiagent.entity.Tenant;
 import com.aiagent.service.TenantService;
 import com.aiagent.vo.TenantVO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,7 +46,7 @@ public class TenantController {
     @Operation(summary = "创建租户")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<TenantVO> createTenant(@RequestBody CreateTenantRequestDTO requestDTO) {
+    public Result<TenantVO> createTenant(@Valid @RequestBody CreateTenantRequestDTO requestDTO) {
         Tenant tenant = DTOConverter.toTenantEntity(requestDTO);
         return Result.success(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
     }
@@ -54,7 +55,7 @@ public class TenantController {
     @Operation(summary = "更新租户信息")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<TenantVO> updateTenant(@PathVariable Long id, @RequestBody UpdateTenantRequestDTO requestDTO) {
+    public Result<TenantVO> updateTenant(@PathVariable Long id, @Valid @RequestBody UpdateTenantRequestDTO requestDTO) {
         Tenant existing = tenantService.getTenantById(id);
         DTOConverter.updateTenantFromDTO(requestDTO, existing);
         return Result.success(DTOConverter.toTenantVO(tenantService.updateTenant(id, existing)));

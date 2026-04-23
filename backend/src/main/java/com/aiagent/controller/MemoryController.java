@@ -11,6 +11,7 @@ import com.aiagent.entity.AgentMemory;
 import com.aiagent.service.MemoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class MemoryController {
     @RequiresPermission("memory:manage")
     @PostMapping
     @Operation(summary = "创建Agent记忆")
-    public Result<MemoryResponseDTO> createMemory(@RequestBody CreateMemoryRequestDTO requestDTO) {
+    public Result<MemoryResponseDTO> createMemory(@Valid @RequestBody CreateMemoryRequestDTO requestDTO) {
         AgentMemory memory = DTOConverter.toMemoryEntity(requestDTO);
         return Result.success(DTOConverter.toMemoryResponseDTO(memoryService.createMemory(memory)));
     }

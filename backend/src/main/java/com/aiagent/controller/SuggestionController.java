@@ -10,6 +10,7 @@ import com.aiagent.dto.SuggestionResponseDTO;
 import com.aiagent.dto.UpdateSuggestionRequestDTO;
 import com.aiagent.entity.AgentEvolutionSuggestion;
 import com.aiagent.service.SuggestionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -46,7 +47,7 @@ public class SuggestionController {
     @RequiresPermission("suggestion:manage")
     @Operation(summary = "创建建议")
     @PostMapping
-    public Result<SuggestionResponseDTO> createSuggestion(@RequestBody CreateSuggestionRequestDTO requestDTO) {
+    public Result<SuggestionResponseDTO> createSuggestion(@Valid @RequestBody CreateSuggestionRequestDTO requestDTO) {
         AgentEvolutionSuggestion suggestion = DTOConverter.toSuggestionEntity(requestDTO);
         AgentEvolutionSuggestion createdSuggestion = suggestionService.createSuggestion(suggestion);
         return Result.success(DTOConverter.toSuggestionResponseDTO(createdSuggestion));
@@ -56,7 +57,7 @@ public class SuggestionController {
     @RequiresPermission("suggestion:manage")
     @Operation(summary = "更新建议")
     @PutMapping("/{id}")
-    public Result<SuggestionResponseDTO> updateSuggestion(@PathVariable Long id, @RequestBody UpdateSuggestionRequestDTO requestDTO) {
+    public Result<SuggestionResponseDTO> updateSuggestion(@PathVariable Long id, @Valid @RequestBody UpdateSuggestionRequestDTO requestDTO) {
         AgentEvolutionSuggestion existing = suggestionService.getSuggestionById(id);
         DTOConverter.updateSuggestionFromDTO(requestDTO, existing);
         AgentEvolutionSuggestion updatedSuggestion = suggestionService.updateSuggestion(id, existing);

@@ -20,13 +20,13 @@ public class ApiInterfaceService {
 
     private final ApiInterfaceRepository apiInterfaceRepository;
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApiInterface create(ApiInterface apiInterface) {
         log.info("Creating API interface for agentId={}, tenantId={}", apiInterface.getAgentId(), apiInterface.getTenantId());
         return apiInterfaceRepository.save(apiInterface);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApiInterface update(Long id, Long tenantId, ApiInterface apiInterface) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
@@ -54,7 +54,7 @@ public class ApiInterfaceService {
         return apiInterfaceRepository.save(existing);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long id, Long tenantId) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
@@ -63,23 +63,23 @@ public class ApiInterfaceService {
         log.info("Deleted API interface id={}, tenantId={}", id, tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ApiInterface getById(Long id, Long tenantId) {
         return apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<ApiInterface> listByAgent(Long agentId, Long tenantId) {
         return apiInterfaceRepository.findByAgentIdAndTenantId(agentId, tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public Page<ApiInterface> listByTenant(Long tenantId, Pageable pageable) {
         return apiInterfaceRepository.findByTenantId(tenantId, pageable);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApiInterface toggleActive(Long id, Long tenantId, Boolean isActive) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));

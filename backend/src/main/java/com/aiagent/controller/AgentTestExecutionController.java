@@ -42,7 +42,7 @@ public class AgentTestExecutionController {
         return Result.success(DTOConverter.toExecutionResponseDTO(execution));
     }
 
-    @RequiresPermission("test:read")
+    @RequiresPermission("test:view")
     @Operation(summary = "执行测试")
     @GetMapping("/{id}")
     public Result<ExecutionResponseDTO> getExecutionById(@PathVariable Long id) {
@@ -52,6 +52,7 @@ public class AgentTestExecutionController {
                 .orElse(Result.fail("Test execution not found"));
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "根据ID获取测试执行详情")
     @GetMapping("/tenant/{tenantId}")
     public Result<List<ExecutionResponseDTO>> getExecutionsByTenantId(@PathVariable Long tenantId) {
@@ -62,6 +63,7 @@ public class AgentTestExecutionController {
         return Result.success(dtoList);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "根据租户ID获取测试执行列表")
     @GetMapping("/agent/{agentId}")
     public Result<List<ExecutionResponseDTO>> getExecutionsByAgentId(@PathVariable Long agentId) {
@@ -72,6 +74,7 @@ public class AgentTestExecutionController {
         return Result.success(dtoList);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "根据Agent ID获取测试执行列表")
     @GetMapping("/test-case/{testCaseId}")
     public Result<List<ExecutionResponseDTO>> getExecutionsByTestCaseId(@PathVariable Long testCaseId) {
@@ -82,6 +85,7 @@ public class AgentTestExecutionController {
         return Result.success(dtoList);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "根据测试用例ID获取执行列表")
     @GetMapping("/status/{tenantId}/{status}")
     public Result<List<ExecutionResponseDTO>> getExecutionsByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
@@ -92,6 +96,7 @@ public class AgentTestExecutionController {
         return Result.success(dtoList);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "根据状态获取测试执行列表")
     @GetMapping("/type/{tenantId}/{executionType}")
     public Result<List<ExecutionResponseDTO>> getExecutionsByType(@PathVariable Long tenantId, @PathVariable String executionType) {
@@ -102,6 +107,7 @@ public class AgentTestExecutionController {
         return Result.success(dtoList);
     }
 
+    @RequiresPermission("test:execute")
     @Operation(summary = "根据类型获取测试执行列表")
     @PostMapping("/{id}/cancel")
     public Result<Void> cancelExecution(@PathVariable Long id) {
@@ -109,6 +115,7 @@ public class AgentTestExecutionController {
         return Result.success();
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "取消测试执行")
     @GetMapping("/count/tenant/{tenantId}")
     public Result<Long> countExecutionsByTenant(@PathVariable Long tenantId) {
@@ -116,6 +123,7 @@ public class AgentTestExecutionController {
         return Result.success(count);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "统计租户下测试执行数量")
     @GetMapping("/count/agent/{agentId}")
     public Result<Long> countExecutionsByAgent(@PathVariable Long agentId) {
@@ -123,6 +131,7 @@ public class AgentTestExecutionController {
         return Result.success(count);
     }
 
+    @RequiresPermission("test:view")
     @Operation(summary = "统计Agent下测试执行数量")
     @GetMapping("/count/test-case/{testCaseId}")
     public Result<Long> countExecutionsByTestCase(@PathVariable Long testCaseId) {

@@ -10,6 +10,7 @@ import com.aiagent.dto.ExperienceResponseDTO;
 import com.aiagent.dto.UpdateExperienceRequestDTO;
 import com.aiagent.entity.AgentEvolutionExperience;
 import com.aiagent.service.ExperienceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,7 +38,7 @@ public class ExperienceController {
     @RequiresPermission("experience:manage")
     @PostMapping
     @Operation(summary = "创建经验")
-    public Result<ExperienceResponseDTO> createExperience(@RequestBody CreateExperienceRequestDTO requestDTO) {
+    public Result<ExperienceResponseDTO> createExperience(@Valid @RequestBody CreateExperienceRequestDTO requestDTO) {
         AgentEvolutionExperience experience = DTOConverter.toExperienceEntity(requestDTO);
         AgentEvolutionExperience createdExperience = experienceService.createExperience(experience);
         return Result.success(DTOConverter.toExperienceResponseDTO(createdExperience));
@@ -47,7 +48,7 @@ public class ExperienceController {
     @RequiresPermission("experience:manage")
     @Operation(summary = "更新经验")
     @PutMapping("/{id}")
-    public Result<ExperienceResponseDTO> updateExperience(@PathVariable Long id, @RequestBody UpdateExperienceRequestDTO requestDTO) {
+    public Result<ExperienceResponseDTO> updateExperience(@PathVariable Long id, @Valid @RequestBody UpdateExperienceRequestDTO requestDTO) {
         AgentEvolutionExperience existing = experienceService.getExperienceById(id);
         DTOConverter.updateExperienceFromDTO(requestDTO, existing);
         AgentEvolutionExperience updatedExperience = experienceService.updateExperience(id, existing);

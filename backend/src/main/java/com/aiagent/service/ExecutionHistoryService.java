@@ -36,7 +36,7 @@ public class ExecutionHistoryService {
     /**
      * 根据 Agent ID 删除执行历史
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteHistoryByAgentId(Long agentId) {
         executionHistoryRepository.deleteByAgentId(agentId);
         log.info("已清除Agent执行历史: agentId={}", agentId);
@@ -45,7 +45,7 @@ public class ExecutionHistoryService {
     /**
      * 保存执行历史记录
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void saveExecutionHistory(Long agentId, String messageContent, String role, Long userId, Long tenantId) {
         try {
             ExecutionHistory history = new ExecutionHistory();

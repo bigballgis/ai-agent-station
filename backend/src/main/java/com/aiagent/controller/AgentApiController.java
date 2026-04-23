@@ -6,13 +6,13 @@ import com.aiagent.dto.AgentInvokeResponse;
 import com.aiagent.engine.AgentExecutionEngine;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.ApiCallLog;
-import com.aiagent.repository.AgentRepository;
-import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.security.UserPrincipal;
+import com.aiagent.service.AgentService;
 import com.aiagent.service.ApiCallLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,41 +32,40 @@ public class AgentApiController {
 
     private final AgentExecutionEngine agentExecutionEngine;
     private final ApiCallLogService apiCallLogService;
-    private final AgentRepository agentRepository;
-    private final AgentVersionRepository agentVersionRepository;
+    private final AgentService agentService;
 
     @PostMapping("/agent/{agentId}/invoke")
     @Operation(summary = "调用Agent", description = "同步或异步调用已发布的Agent")
     @RequiresPermission("agent:invoke")
     public ResponseEntity<AgentInvokeResponse> invokeAgent(
             @Parameter(description = "Agent ID") @PathVariable Long agentId,
-            @RequestBody AgentInvokeRequest request,
+            @Valid @RequestBody AgentInvokeRequest request,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        
+
         if (requestId == null || requestId.isEmpty()) {
             requestId = java.util.UUID.randomUUID().toString();
         }
-        
+
         Long tenantId = principal.getTenantId();
         Long userId = principal.getUserId();
-        
+
         long startTime = System.currentTimeMillis();
         AgentInvokeResponse response = agentExecutionEngine.invokeAgent(agentId, request, requestId, tenantId);
         int executionTime = (int) (System.currentTimeMillis() - startTime);
         response.setExecutionTime(executionTime);
-        
+
         // 记录API调用日志
-        HttpStatus status = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus()) 
+        HttpStatus status = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())
                 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
-        
+
         apiCallLogService.logApiCall(
-                requestId, agentId, tenantId, userId, "POST", 
+                requestId, agentId, tenantId, userId, "POST",
                 "/api/v1/agent/" + agentId + "/invoke", null,
                 request, response, status.value(), null,
                 mapStatus(response.getStatus()), executionTime, request.getAsync(), response.getTaskId()
         );
-        
+
         return ResponseEntity.status(status).body(response);
     }
 
@@ -75,7 +74,7 @@ public class AgentApiController {
     @RequiresPermission("agent:invoke")
     public ResponseEntity<?> getAgentStatus(
             @Parameter(description = "Agent ID") @PathVariable Long agentId) {
-        Agent agent = agentRepository.findById(agentId).orElse(null);
+        Agent agent = agentService.findAgentById(agentId).orElse(null);
         if (agent == null) {
             return ResponseEntity.notFound().build();
         }
@@ -92,7 +91,7 @@ public class AgentApiController {
         }
 
         if (agent.getPublishedVersionId() != null) {
-            agentVersionRepository.findById(agent.getPublishedVersionId()).ifPresent(version -> {
+            agentService.findVersionById(agent.getPublishedVersionId()).ifPresent(version -> {
                 statusInfo.put("publishedVersionId", version.getId());
                 statusInfo.put("publishedVersionNumber", version.getVersionNumber());
             });

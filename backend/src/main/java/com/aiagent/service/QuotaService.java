@@ -33,21 +33,21 @@ public class QuotaService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void incrementApiCallCount() {
         Tenant tenant = getCurrentTenant();
         tenant.setUsedApiCallsToday(tenant.getUsedApiCallsToday() + 1);
         tenantRepository.save(tenant);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void incrementAgentCount() {
         Tenant tenant = getCurrentTenant();
         tenant.setUsedAgents(tenant.getUsedAgents() + 1);
         tenantRepository.save(tenant);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void decrementAgentCount() {
         Tenant tenant = getCurrentTenant();
         tenant.setUsedAgents(Math.max(0, tenant.getUsedAgents() - 1));
@@ -144,7 +144,7 @@ public class QuotaService {
     /**
      * 更新租户配额限制
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> updateTenantQuota(Object tenantIdParam, Object params) {
         Long tenantId = parseTenantId(tenantIdParam);
         Tenant tenant = getTenantById(tenantId);

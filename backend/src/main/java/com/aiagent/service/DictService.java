@@ -56,7 +56,7 @@ public class DictService {
     /**
      * 创建字典类型
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public DictType createDictType(DictType dictType) {
         if (dictTypeRepository.existsByDictType(dictType.getDictType())) {
@@ -72,7 +72,7 @@ public class DictService {
     /**
      * 更新字典类型
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public DictType updateDictType(DictType dictType) {
         DictType existing = getDictType(dictType.getId());
@@ -91,7 +91,7 @@ public class DictService {
     /**
      * 删除字典类型（同时删除关联的字典项）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public void deleteDictType(Long id) {
         DictType dictType = getDictType(id);
@@ -128,7 +128,7 @@ public class DictService {
     /**
      * 创建字典项
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public DictItem createDictItem(DictItem dictItem) {
         // 验证字典类型是否存在
@@ -151,7 +151,7 @@ public class DictService {
     /**
      * 更新字典项
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public DictItem updateDictItem(DictItem dictItem) {
         DictItem existing = dictItemRepository.findById(dictItem.getId())
@@ -175,7 +175,7 @@ public class DictService {
     /**
      * 删除字典项
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dictItemsMap", allEntries = true)
     public void deleteDictItem(Long id) {
         DictItem existing = dictItemRepository.findById(id)

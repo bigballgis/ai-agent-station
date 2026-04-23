@@ -29,7 +29,7 @@ public class WorkflowEngine {
     /**
      * Start a workflow instance from a published definition
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowInstance startWorkflow(Long definitionId, Map<String, Object> variables, Long userId) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -73,7 +73,7 @@ public class WorkflowEngine {
     /**
      * Execute the current node of a workflow instance
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowNodeLog executeNode(Long instanceId) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
                 .orElseThrow(() -> new BusinessException("工作流实例不存在"));
@@ -151,7 +151,7 @@ public class WorkflowEngine {
     /**
      * Complete an approval node
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowNodeLog approveNode(Long instanceId, boolean approved, String comment) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
                 .orElseThrow(() -> new BusinessException("工作流实例不存在"));
@@ -213,7 +213,7 @@ public class WorkflowEngine {
     /**
      * Cancel a running workflow
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowInstance cancelWorkflow(Long instanceId, String reason) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
                 .orElseThrow(() -> new BusinessException("工作流实例不存在"));

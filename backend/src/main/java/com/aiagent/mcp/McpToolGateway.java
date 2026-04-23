@@ -2,6 +2,7 @@ package com.aiagent.mcp;
 
 import com.aiagent.entity.McpTool;
 import com.aiagent.entity.McpToolCallLog;
+import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.McpToolCallLogRepository;
 import com.aiagent.repository.McpToolRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -147,10 +148,10 @@ public class McpToolGateway {
 
         try {
             McpTool tool = mcpToolRepository.findById(toolId)
-                    .orElseThrow(() -> new RuntimeException("Tool not found: " + toolId));
+                    .orElseThrow(() -> new BusinessException("Tool not found: " + toolId));
 
             if (!tool.getIsActive()) {
-                throw new RuntimeException("Tool is not active: " + toolId);
+                throw new BusinessException("Tool is not active: " + toolId);
             }
 
             callLog.setRequestParams(objectMapper.writeValueAsString(parameters));
@@ -164,7 +165,7 @@ public class McpToolGateway {
             } else if ("CUSTOM".equalsIgnoreCase(tool.getToolType())) {
                 result = executeCustomTool(tool, parameters);
             } else {
-                throw new RuntimeException("Unsupported tool type: " + tool.getToolType());
+                throw new BusinessException("Unsupported tool type: " + tool.getToolType());
             }
 
             callLog.setResponseResult(objectMapper.writeValueAsString(result));
@@ -175,7 +176,7 @@ public class McpToolGateway {
             log.error("[MCP Gateway] 工具调用失败: toolId={}", toolId, e);
             callLog.setErrorMessage(e.getMessage());
             callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.FAILED);
-            throw new RuntimeException("MCP tool invocation failed: " + e.getMessage(), e);
+            throw new BusinessException("MCP tool invocation failed: " + e.getMessage(), e);
         } finally {
             callLog.setExecutionTime((int) (System.currentTimeMillis() - startTime));
             mcpToolCallLogRepository.save(callLog);
@@ -190,7 +191,7 @@ public class McpToolGateway {
     private Object executeMcpToolCall(McpTool tool, Map<String, Object> parameters) {
         String serverUrl = resolveMcpServerUrl(tool);
         if (serverUrl == null) {
-            throw new RuntimeException("MCP server URL not configured for tool: " + tool.getToolName());
+            throw new BusinessException("MCP server URL not configured for tool: " + tool.getToolName());
         }
 
         // 确保 MCP 服务器已初始化
@@ -294,7 +295,7 @@ public class McpToolGateway {
             log.debug("[MCP Gateway] JSON-RPC 响应: {}", responseBody);
 
             if (responseBody == null || responseBody.isEmpty()) {
-                throw new RuntimeException("MCP server returned empty response");
+                throw new BusinessException("MCP server returned empty response");
             }
 
             // 解析 JSON-RPC 2.0 响应
@@ -305,7 +306,7 @@ public class McpToolGateway {
                 JsonNode error = responseNode.get("error");
                 int code = error.has("code") ? error.get("code").asInt() : -32603;
                 String message = error.has("message") ? error.get("message").asText() : "Unknown error";
-                throw new RuntimeException("JSON-RPC 2.0 Error [" + code + "]: " + message);
+                throw new BusinessException("JSON-RPC 2.0 Error [" + code + "]: " + message);
             }
 
             // 提取 result
@@ -331,7 +332,7 @@ public class McpToolGateway {
 
             return responseBody;
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("JSON-RPC 2.0 序列化失败: " + e.getMessage(), e);
+            throw new BusinessException("JSON-RPC 2.0 序列化失败: " + e.getMessage(), e);
         }
     }
 

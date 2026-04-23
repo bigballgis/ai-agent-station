@@ -29,7 +29,7 @@ public class SystemLogService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void saveLog(SystemLog systemLog) {
         try {
             systemLogRepository.save(systemLog);

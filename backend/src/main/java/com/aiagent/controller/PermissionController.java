@@ -8,6 +8,7 @@ import com.aiagent.dto.PermissionDTO;
 import com.aiagent.entity.Permission;
 import com.aiagent.entity.RolePermission;
 import com.aiagent.service.PermissionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +50,7 @@ public class PermissionController {
     @Operation(summary = "创建权限")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<PermissionDTO> createPermission(@RequestBody PermissionDTO permissionDTO) {
+    public Result<PermissionDTO> createPermission(@Valid @RequestBody PermissionDTO permissionDTO) {
         Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
         Permission created = permissionService.createPermission(permission);
         return Result.success(DTOConverter.toPermissionDTO(created));
@@ -59,7 +60,7 @@ public class PermissionController {
     @Operation(summary = "更新权限")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<PermissionDTO> updatePermission(@PathVariable Long id, @RequestBody PermissionDTO permissionDTO) {
+    public Result<PermissionDTO> updatePermission(@PathVariable Long id, @Valid @RequestBody PermissionDTO permissionDTO) {
         Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
         Permission updated = permissionService.updatePermission(id, permission);
         return Result.success(DTOConverter.toPermissionDTO(updated));

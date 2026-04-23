@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -45,7 +46,19 @@ public class AgentService {
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
     }
 
-    @Transactional
+    public Optional<Agent> findAgentById(Long id) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return agentRepository.findByIdAndTenantId(id, tenantId);
+        }
+        return agentRepository.findById(id);
+    }
+
+    public Optional<AgentVersion> findVersionById(Long id) {
+        return agentVersionRepository.findById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "创建Agent")
     public Agent createAgent(Agent agent) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -73,7 +86,7 @@ public class AgentService {
         return savedAgent;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "更新Agent")
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
@@ -91,14 +104,14 @@ public class AgentService {
         return savedAgent;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "删除Agent")
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
         agentRepository.delete(agent);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "复制Agent")
     public Agent copyAgent(Long id, String newName) {
         Agent original = getAgentById(id);
@@ -133,7 +146,7 @@ public class AgentService {
                 .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Agent rollbackToVersion(Long agentId, Integer versionNumber) {
         Agent agent = getAgentById(agentId);
         AgentVersion version = getAgentVersion(agentId, versionNumber);

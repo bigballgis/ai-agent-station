@@ -32,7 +32,7 @@ public class AgentTestExecutionService {
         this.testExecutionEngine = testExecutionEngine;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentTestExecution createExecution(AgentTestExecution execution) {
         log.info("Creating test execution for test case: {}", execution.getTestCaseId());
         execution.setStartTime(LocalDateTime.now());
@@ -40,7 +40,7 @@ public class AgentTestExecutionService {
         return executionRepository.save(execution);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentTestExecution executeTest(Long executionId) {
         AgentTestExecution execution = executionRepository.findById(executionId)
                 .orElseThrow(() -> new RuntimeException("Test execution not found"));
@@ -75,37 +75,37 @@ public class AgentTestExecutionService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public Optional<AgentTestExecution> getExecutionById(Long id) {
         return executionRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByTenantId(Long tenantId) {
         return executionRepository.findByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByAgentId(Long agentId) {
         return executionRepository.findByAgentId(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByTestCaseId(Long testCaseId) {
         return executionRepository.findByTestCaseId(testCaseId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByStatus(Long tenantId, Integer status) {
         return executionRepository.findByTenantIdAndStatus(tenantId, status);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByType(Long tenantId, String executionType) {
         return executionRepository.findByTenantIdAndExecutionType(tenantId, executionType);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cancelExecution(Long id) {
         AgentTestExecution execution = executionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Test execution not found"));
@@ -114,17 +114,17 @@ public class AgentTestExecutionService {
         executionRepository.save(execution);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countExecutionsByTenant(Long tenantId) {
         return executionRepository.countByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countExecutionsByAgent(Long agentId) {
         return executionRepository.countByAgentId(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countExecutionsByTestCase(Long testCaseId) {
         return executionRepository.countByTestCaseId(testCaseId);
     }

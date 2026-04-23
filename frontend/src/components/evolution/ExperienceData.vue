@@ -44,6 +44,7 @@
 import { ref, onMounted } from 'vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import Chart from 'chart.js/auto'
+import { getExperiences } from '@/api/experience'
 
 const selectedAgent = ref<string>('1')
 const dateRange = ref<any>(null)
@@ -51,64 +52,9 @@ const dateRange = ref<any>(null)
 const experienceChart = ref<HTMLCanvasElement | null>(null)
 const categoryChart = ref<HTMLCanvasElement | null>(null)
 
-const agents = [
-  { id: '1', name: '客服Agent' },
-  { id: '2', name: '销售Agent' },
-  { id: '3', name: '技术支持Agent' }
-]
+const agents = ref<Array<{ id: string; name: string }>>([])
 
-const experienceData = [
-  {
-    id: 1,
-    agentId: '1',
-    agentName: '客服Agent',
-    experienceType: '成功经验',
-    content: '成功解决了用户关于产品使用的复杂问题，用户满意度很高',
-    rating: 5,
-    tags: ['用户服务', '问题解决'],
-    createdAt: '2024-04-20 14:30:00'
-  },
-  {
-    id: 2,
-    agentId: '1',
-    agentName: '客服Agent',
-    experienceType: '失败经验',
-    content: '未能及时响应用户的紧急请求，导致用户投诉',
-    rating: 2,
-    tags: ['响应速度', '用户投诉'],
-    createdAt: '2024-04-19 10:15:00'
-  },
-  {
-    id: 3,
-    agentId: '1',
-    agentName: '客服Agent',
-    experienceType: '成功经验',
-    content: '通过耐心沟通，成功挽回了一位即将流失的客户',
-    rating: 5,
-    tags: ['客户挽留', '沟通技巧'],
-    createdAt: '2024-04-18 16:45:00'
-  },
-  {
-    id: 4,
-    agentId: '1',
-    agentName: '客服Agent',
-    experienceType: '学习经验',
-    content: '学习了新的产品知识，能够更好地解答用户问题',
-    rating: 4,
-    tags: ['知识学习', '自我提升'],
-    createdAt: '2024-04-17 09:30:00'
-  },
-  {
-    id: 5,
-    agentId: '1',
-    agentName: '客服Agent',
-    experienceType: '成功经验',
-    content: '快速处理了批量用户的咨询，提高了工作效率',
-    rating: 4,
-    tags: ['效率提升', '批量处理'],
-    createdAt: '2024-04-16 11:20:00'
-  }
-]
+const experienceData = ref<any[]>([])
 
 const experienceColumns = [
   {
@@ -152,16 +98,25 @@ function getTypeColor(type: string) {
   }
 }
 
-function fetchExperienceData() {
-  // 模拟数据获取
-  if (import.meta.env.DEV) {
-    console.log('Fetching experience data for agent:', selectedAgent.value)
-    console.log('Date range:', dateRange.value)
+async function fetchExperienceData() {
+  try {
+    const params: Record<string, unknown> = {}
+    if (selectedAgent.value) {
+      params.agentId = selectedAgent.value
+    }
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.startDate = dateRange.value[0].format('YYYY-MM-DD')
+      params.endDate = dateRange.value[1].format('YYYY-MM-DD')
+    }
+    const res = await getExperiences(params)
+    experienceData.value = res.data?.data || res.data || []
+  } catch (e) {
+    console.error('获取经验数据失败:', e)
   }
-  // 这里可以添加实际的API调用
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchExperienceData()
   // 初始化经验数据趋势图
   if (experienceChart.value) {
     new Chart(experienceChart.value, {

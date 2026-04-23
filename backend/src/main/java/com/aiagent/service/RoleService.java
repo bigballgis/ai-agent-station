@@ -37,7 +37,7 @@ public class RoleService {
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "角色不存在"));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "role", description = "创建角色")
     public Role createRole(Role role) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -52,7 +52,7 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "role", description = "更新角色")
     public Role updateRole(Long id, Role roleDetails) {
         Role role = getRoleById(id);
@@ -61,13 +61,13 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "role", description = "删除角色")
     public void deleteRole(Long id) {
         roleRepository.deleteById(id);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void assignRoleToUser(Long userId, Long roleId) {
         UserRole userRole = new UserRole();
         userRole.setUserId(userId);
@@ -75,7 +75,7 @@ public class RoleService {
         userRoleRepository.save(userRole);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void removeRoleFromUser(Long userId, Long roleId) {
         userRoleRepository.deleteByUserIdAndRoleId(userId, roleId);
     }

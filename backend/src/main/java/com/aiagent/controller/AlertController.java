@@ -6,13 +6,12 @@ import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.AlertRecord;
 import com.aiagent.entity.AlertRule;
-import com.aiagent.repository.AlertRecordRepository;
-import com.aiagent.repository.AlertRuleRepository;
-import com.aiagent.util.SecurityUtils;
+import com.aiagent.service.AlertService;
 import com.aiagent.vo.AlertRuleVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,10 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/alerts")
@@ -31,40 +28,35 @@ import java.util.stream.Collectors;
 @Tag(name = "告警管理", description = "告警管理接口")
 public class AlertController {
 
-    private final AlertRuleRepository ruleRepository;
-    private final AlertRecordRepository recordRepository;
+    private final AlertService alertService;
 
     // 告警规则 CRUD
     @RequiresPermission("alert:view")
     @GetMapping("/rules")
     @Operation(summary = "获取告警规则列表")
     public Result<List<AlertRuleVO>> getRules() {
-        List<AlertRuleVO> voList = ruleRepository.findByIsActiveTrue().stream()
-                .map(AlertRuleVO::fromEntity)
-                .collect(Collectors.toList());
-        return Result.success(voList);
+        return Result.success(alertService.getActiveRules());
     }
 
     @RequiresPermission("alert:manage")
     @PostMapping("/rules")
     @Operation(summary = "创建告警规则")
-    public Result<AlertRuleVO> createRule(@RequestBody AlertRule rule) {
-        return Result.success(AlertRuleVO.fromEntity(ruleRepository.save(rule)));
+    public Result<AlertRuleVO> createRule(@Valid @RequestBody AlertRule rule) {
+        return Result.success(alertService.createRule(rule));
     }
 
     @RequiresPermission("alert:manage")
     @PutMapping("/rules/{id}")
     @Operation(summary = "更新告警规则")
-    public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @RequestBody AlertRule rule) {
-        rule.setId(id);
-        return Result.success(AlertRuleVO.fromEntity(ruleRepository.save(rule)));
+    public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @Valid @RequestBody AlertRule rule) {
+        return Result.success(alertService.updateRule(id, rule));
     }
 
     @RequiresPermission("alert:manage")
     @DeleteMapping("/rules/{id}")
     @Operation(summary = "删除告警规则")
     public Result<Void> deleteRule(@Parameter(description = "规则ID") @PathVariable Long id) {
-        ruleRepository.deleteById(id);
+        alertService.deleteRule(id);
         return Result.success();
     }
 
@@ -75,9 +67,8 @@ public class AlertController {
     public Result<PageResult<AlertRecord>> getRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long tenantId = SecurityUtils.getCurrentTenantId();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "firedAt"));
-        Page<AlertRecord> result = recordRepository.findByTenantIdOrderByFiredAtDesc(tenantId, pageable);
+        Page<AlertRecord> result = alertService.getRecords(page, size, pageable);
         return Result.success(PageResult.from(result));
     }
 
@@ -85,18 +76,21 @@ public class AlertController {
     @GetMapping("/records/active")
     @Operation(summary = "获取活跃告警列表")
     public Result<List<AlertRecord>> getActiveAlerts() {
-        return Result.success(recordRepository.findByStatus("firing"));
+        return Result.success(alertService.getActiveAlerts());
     }
 
     @RequiresPermission("alert:view")
     @GetMapping("/stats")
     @Operation(summary = "获取告警统计信息")
     public Result<Map<String, Object>> getAlertStats() {
-        long activeCount = recordRepository.countByStatusAndFiredAtAfter("firing",
-            LocalDateTime.now().minusHours(24));
-        return Result.success(Map.of(
-            "activeIn24h", activeCount,
-            "totalRules", ruleRepository.count()
-        ));
+        return Result.success(alertService.getAlertStats());
+    }
+
+    @RequiresPermission("alert:manage")
+    @PostMapping("/{id}/resolve")
+    @Operation(summary = "解决告警记录")
+    public Result<Void> resolveAlertRecord(@PathVariable Long id) {
+        alertService.resolveAlertRecord(id);
+        return Result.success(null);
     }
 }

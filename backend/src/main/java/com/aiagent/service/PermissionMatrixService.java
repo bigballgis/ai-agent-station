@@ -136,7 +136,7 @@ public class PermissionMatrixService {
     /**
      * Grant a permission to a role
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public PermissionMatrix grantPermission(Long roleId, String resourceType, String resourceId,
                                             String permissionCode, String permissionName) {
         // Check if already exists
@@ -168,7 +168,7 @@ public class PermissionMatrixService {
     /**
      * Revoke a permission from a role
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void revokePermission(Long roleId, String resourceType, String resourceId, String permissionCode) {
         matrixRepository.deleteByRoleIdAndResourceTypeAndResourceIdAndPermissionCode(
                 roleId, resourceType, resourceId, permissionCode);
@@ -178,7 +178,7 @@ public class PermissionMatrixService {
     /**
      * Deny a permission for a role
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public PermissionMatrix denyPermission(Long roleId, String resourceType, String resourceId,
                                            String permissionCode, String permissionName) {
         Optional<PermissionMatrix> existing = matrixRepository
@@ -209,7 +209,7 @@ public class PermissionMatrixService {
      * Batch update permissions for a role
      * Replaces all existing permissions with the new set
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<PermissionMatrix> batchUpdatePermissions(Long roleId, List<PermissionMatrix> permissions) {
         // Delete all existing permissions for this role
         matrixRepository.deleteByRoleId(roleId);

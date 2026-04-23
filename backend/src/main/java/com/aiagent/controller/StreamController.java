@@ -8,13 +8,14 @@ import com.aiagent.engine.graph.GraphExecutor;
 import com.aiagent.engine.graph.GraphNode;
 import com.aiagent.engine.graph.GraphParser;
 import com.aiagent.entity.Agent;
-import com.aiagent.repository.AgentRepository;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.ExecutionHistoryService;
+import com.aiagent.service.StreamService;
 import com.aiagent.service.llm.LangChain4jService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -32,14 +33,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * SSE 流式输出 Controller
- * 
+ *
  * 基于 langchain4j StreamingChatLanguageModel + Spring MVC SseEmitter 实现
- * 
+ *
  * SSE 事件格式:
  * - event: token / data: {"type":"token","content":"你好"}
  * - event: done  / data: {"type":"done","content":""}
  * - event: error / data: {"type":"error","content":"错误信息"}
- * 
+ *
  * 前端使用 EventSource 或 fetch + ReadableStream 接收
  */
 @Slf4j
@@ -52,7 +53,7 @@ public class StreamController {
     private final PromptInjectionFilter promptInjectionFilter;
     private final GraphParser graphParser;
     private final GraphExecutor graphExecutor;
-    private final AgentRepository agentRepository;
+    private final StreamService streamService;
     private final ExecutionHistoryService executionHistoryService;
     private final Executor sseExecutor;
     private final ObjectMapper objectMapper;
@@ -61,7 +62,7 @@ public class StreamController {
                             PromptInjectionFilter promptInjectionFilter,
                             GraphParser graphParser,
                             GraphExecutor graphExecutor,
-                            AgentRepository agentRepository,
+                            StreamService streamService,
                             ExecutionHistoryService executionHistoryService,
                             @Qualifier("sseExecutor") Executor sseExecutor,
                             ObjectMapper objectMapper) {
@@ -69,7 +70,7 @@ public class StreamController {
         this.promptInjectionFilter = promptInjectionFilter;
         this.graphParser = graphParser;
         this.graphExecutor = graphExecutor;
-        this.agentRepository = agentRepository;
+        this.streamService = streamService;
         this.executionHistoryService = executionHistoryService;
         this.sseExecutor = sseExecutor;
         this.objectMapper = objectMapper;
@@ -77,7 +78,7 @@ public class StreamController {
 
     /**
      * SSE 流式对话（GET）
-     * 
+     *
      * GET /api/v1/stream/chat?provider=openai&message=你好&sessionId=xxx
      */
     @RequiresPermission("agent:invoke")
@@ -97,7 +98,7 @@ public class StreamController {
         sseExecutor.execute(() -> {
             try {
                 String sysPrompt = systemPrompt != null ? systemPrompt : "你是一个 AI 助手。";
-                
+
                 langChain4jService.chatStream(provider, sysPrompt, message,
                         new java.util.concurrent.Flow.Subscriber<>() {
                             private java.util.concurrent.Flow.Subscription subscription;
@@ -173,14 +174,14 @@ public class StreamController {
 
     /**
      * SSE 流式对话（POST，支持复杂参数）
-     * 
+     *
      * POST /api/v1/stream/chat
      * Body: { "provider": "openai", "systemPrompt": "...", "message": "...", "sessionId": "..." }
      */
     @RequiresPermission("agent:invoke")
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE流式对话(POST)")
-    public SseEmitter streamChatPost(@RequestBody Map<String, Object> request) {
+    public SseEmitter streamChatPost(@Valid @RequestBody Map<String, Object> request) {
         String provider = (String) request.getOrDefault("provider", "openai");
         String systemPrompt = (String) request.get("systemPrompt");
         String message = (String) request.get("message");
@@ -237,13 +238,13 @@ public class StreamController {
 
     /**
      * SSE Agent 执行流
-     * 
+     *
      * GET /api/v1/stream/agent/{agentId}?message=你好
-     * 
+     *
      * 通过 GraphParser 解析 Agent 的图定义，按拓扑顺序逐步执行节点。
      * 对 LLM 节点使用 langchain4j 流式输出（发送 token 事件），
      * 对非 LLM 节点使用 GraphExecutor 同步执行。
-     * 
+     *
      * 流式返回 Agent 图执行的每个节点状态:
      * - event: node_start / data: {"nodeId":"llm-1","nodeType":"llm"}
      * - event: token     / data: {"content":"..."}
@@ -269,8 +270,7 @@ public class StreamController {
         sseExecutor.execute(() -> {
             try {
                 // 1. 从数据库加载 Agent 配置
-                Agent agent = agentRepository.findById(agentId)
-                        .orElseThrow(() -> new RuntimeException("Agent not found: " + agentId));
+                Agent agent = streamService.getAgentById(agentId);
 
                 // 2. 解析图定义
                 Map<String, Object> config = new HashMap<>();

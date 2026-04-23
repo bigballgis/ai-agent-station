@@ -43,13 +43,13 @@ public class MemoryService {
         memoryRepository.deleteById(id);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredMemories() {
         memoryRepository.deleteByExpiresAtBefore(LocalDateTime.now());
     }
 
     @Scheduled(cron = "0 0 3 * * ?")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void scheduledCleanup() {
         cleanupExpiredMemories();
     }

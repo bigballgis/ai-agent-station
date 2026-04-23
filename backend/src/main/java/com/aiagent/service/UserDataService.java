@@ -123,7 +123,7 @@ public class UserDataService {
      *
      * @param userId 用户ID
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteUserData(Long userId) {
         log.info("删除用户数据(匿名化): userId={}", userId);
         anonymizeUser(userId);
@@ -134,7 +134,7 @@ public class UserDataService {
      *
      * @param userId 用户ID
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void anonymizeUser(Long userId) {
         log.info("匿名化用户数据: userId={}", userId);
 

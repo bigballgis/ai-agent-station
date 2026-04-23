@@ -47,7 +47,7 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "user", description = "创建用户")
     public User createUser(User user) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -71,7 +71,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "user", description = "更新用户")
     public User updateUser(Long id, User userDetails) {
         User user = getUserById(id);
@@ -80,7 +80,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "user", description = "删除用户")
     public void deleteUser(Long id) {
         User user = getUserById(id);
@@ -88,7 +88,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "user", description = "重置密码")
     public void resetPassword(Long id, String newPassword) {
         User user = getUserById(id);

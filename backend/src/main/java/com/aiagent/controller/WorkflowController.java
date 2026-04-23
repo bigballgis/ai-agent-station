@@ -8,10 +8,9 @@ import com.aiagent.common.Result;
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.entity.WorkflowNodeLog;
-import com.aiagent.repository.WorkflowDefinitionRepository;
-import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.WorkflowEngine;
+import com.aiagent.service.WorkflowService;
 import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.vo.WorkflowDefinitionVO;
 import com.aiagent.vo.WorkflowInstanceVO;
@@ -21,7 +20,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,8 +39,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class WorkflowController {
 
     private final WorkflowEngine workflowEngine;
-    private final WorkflowDefinitionRepository definitionRepository;
-    private final WorkflowInstanceRepository instanceRepository;
+    private final WorkflowService workflowService;
 
     // ==================== Workflow Definition APIs ====================
 
@@ -61,10 +57,10 @@ public class WorkflowController {
 
         Page<WorkflowDefinition> result;
         if (status != null && !status.isEmpty()) {
-            result = definitionRepository.findByTenantIdAndStatus(tenantId,
+            result = workflowService.listDefinitionsByStatus(tenantId,
                     WorkflowDefinition.WorkflowStatus.valueOf(status), pageable);
         } else {
-            result = definitionRepository.findByTenantId(tenantId, pageable);
+            result = workflowService.listDefinitions(tenantId, pageable);
         }
 
         Page<WorkflowDefinitionVO> voPage = result.map(WorkflowDefinitionVO::fromEntity);
@@ -89,7 +85,7 @@ public class WorkflowController {
         definition.setTriggers(request.getTriggers());
         definition.setTenantId(tenantId);
 
-        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
+        return Result.success(WorkflowDefinitionVO.fromEntity(workflowService.createDefinition(definition)));
     }
 
     @RequiresPermission("workflow:view")
@@ -97,8 +93,7 @@ public class WorkflowController {
     @Operation(summary = "根据ID获取工作流定义详情")
     public Result<WorkflowDefinitionVO> getDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
-        WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new com.aiagent.exception.BusinessException("工作流定义不存在"));
+        WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
         return Result.success(WorkflowDefinitionVO.fromEntity(definition));
     }
 
@@ -111,8 +106,7 @@ public class WorkflowController {
 
         Long tenantId = TenantContextHolder.getTenantId();
 
-        WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new com.aiagent.exception.BusinessException("工作流定义不存在"));
+        WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
 
         if (definition.getStatus() == WorkflowDefinition.WorkflowStatus.PUBLISHED) {
             throw new com.aiagent.exception.BusinessException("已发布的工作流定义不能直接修改，请先创建新版本");
@@ -134,7 +128,7 @@ public class WorkflowController {
             definition.setTriggers(request.getTriggers());
         }
 
-        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
+        return Result.success(WorkflowDefinitionVO.fromEntity(workflowService.updateDefinition(definition)));
     }
 
     @RequiresPermission("workflow:manage")
@@ -143,14 +137,13 @@ public class WorkflowController {
     public Result<Void> deleteDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
-        WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new com.aiagent.exception.BusinessException("工作流定义不存在"));
+        WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
 
         if (definition.getStatus() == WorkflowDefinition.WorkflowStatus.PUBLISHED) {
             throw new com.aiagent.exception.BusinessException("已发布的工作流定义不能删除，请先归档");
         }
 
-        definitionRepository.delete(definition);
+        workflowService.deleteDefinition(definition);
         return Result.success();
     }
 
@@ -160,15 +153,13 @@ public class WorkflowController {
     public Result<WorkflowDefinitionVO> publishDefinition(@PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
-        WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new com.aiagent.exception.BusinessException("工作流定义不存在"));
+        WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
 
         if (definition.getStatus() == WorkflowDefinition.WorkflowStatus.PUBLISHED) {
             throw new com.aiagent.exception.BusinessException("工作流定义已发布");
         }
 
-        definition.setStatus(WorkflowDefinition.WorkflowStatus.PUBLISHED);
-        return Result.success(WorkflowDefinitionVO.fromEntity(definitionRepository.save(definition)));
+        return Result.success(WorkflowDefinitionVO.fromEntity(workflowService.publishDefinition(definition)));
     }
 
     // ==================== Workflow Instance APIs ====================
@@ -188,12 +179,12 @@ public class WorkflowController {
 
         Page<WorkflowInstance> result;
         if (definitionId != null) {
-            result = instanceRepository.findByWorkflowDefinitionIdAndTenantId(definitionId, tenantId, pageable);
+            result = workflowService.listInstancesByDefinitionId(definitionId, tenantId, pageable);
         } else if (status != null && !status.isEmpty()) {
-            result = instanceRepository.findByTenantIdAndStatus(tenantId,
+            result = workflowService.listInstancesByStatus(tenantId,
                     WorkflowInstance.InstanceStatus.valueOf(status), pageable);
         } else {
-            result = instanceRepository.findByTenantId(tenantId, pageable);
+            result = workflowService.listInstances(tenantId, pageable);
         }
 
         Page<WorkflowInstanceVO> voPage = result.map(WorkflowInstanceVO::fromEntity);

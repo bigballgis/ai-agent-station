@@ -24,7 +24,7 @@ public class TestDataCleanupService {
      * 每天凌晨执行
      */
     @Scheduled(cron = "${ai-agent.test.cleanup.cron-expression:0 0 0 * * ?}")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredTestData() {
         logger.info("开始清理过期的测试数据");
 
@@ -63,7 +63,7 @@ public class TestDataCleanupService {
     /**
      * 手动触发测试数据清理
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void manualCleanup() {
         cleanupExpiredTestData();
     }
@@ -72,7 +72,7 @@ public class TestDataCleanupService {
      * 清理指定租户的测试数据
      * @param tenantId 租户ID
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupTenantTestData(Long tenantId) {
         logger.info("开始清理租户 " + tenantId + " 的测试数据");
 
@@ -107,7 +107,7 @@ public class TestDataCleanupService {
      * @param tenantId 租户ID
      * @param agentId Agent ID
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupTestData(Long tenantId, Long agentId) {
         logger.info("开始清理租户 " + tenantId + " Agent " + agentId + " 的测试数据");
 

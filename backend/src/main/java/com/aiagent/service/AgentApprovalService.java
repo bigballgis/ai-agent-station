@@ -50,7 +50,7 @@ public class AgentApprovalService {
         return agentApprovalRepository.findByAgentIdAndTenantId(agentId, tenantId);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentApproval submitForApproval(Long agentId, Long versionId, String remark, Long submitterId) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -85,7 +85,7 @@ public class AgentApprovalService {
         return agentApprovalRepository.save(approval);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentApproval approve(Long approvalId, String approvalRemark, Long approverId) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -109,7 +109,7 @@ public class AgentApprovalService {
         return agentApprovalRepository.save(approval);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentApproval reject(Long approvalId, String approvalRemark, Long approverId) {
         Long tenantId = TenantContextHolder.getTenantId();
 

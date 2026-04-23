@@ -29,7 +29,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     private final AgentEvolutionExperienceRepository experienceRepository;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionExperience createExperience(AgentEvolutionExperience experience) {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = getCurrentUserId();
@@ -51,7 +51,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionExperience updateExperience(Long id, AgentEvolutionExperience experienceDetails) {
         AgentEvolutionExperience experience = getExperienceById(id);
         Long userId = getCurrentUserId();
@@ -68,7 +68,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteExperience(Long id) {
         AgentEvolutionExperience experience = getExperienceById(id);
         experienceRepository.delete(experience);
@@ -209,7 +209,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deduplicateExperiences() {
         Long tenantId = TenantContextHolder.getTenantId();
         List<AgentEvolutionExperience> experiences;
@@ -256,7 +256,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredExperiences() {
         Long tenantId = TenantContextHolder.getTenantId();
         List<AgentEvolutionExperience> experiences;
@@ -278,7 +278,7 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void incrementUsageCount(Long id) {
         AgentEvolutionExperience experience = getExperienceById(id);
         experience.setUsageCount(experience.getUsageCount() + 1);

@@ -115,7 +115,7 @@ public class GraphExecutor {
                             String code = (String) config.get("code");
 
                             if (code == null || code.isBlank()) {
-                                throw new RuntimeException("Code 节点代码为空: " + node.getId());
+                                throw new BusinessException("Code 节点代码为空: " + node.getId());
                             }
 
                             String result;
@@ -136,10 +136,10 @@ public class GraphExecutor {
                                         result = "[JavaScript engine not available]";
                                     }
                                 } catch (ScriptException e) {
-                                    throw new RuntimeException("Code 节点执行失败: " + e.getMessage(), e);
+                                    throw new BusinessException("Code 节点执行失败: " + e.getMessage(), e);
                                 }
                             } else {
-                                throw new RuntimeException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
+                                throw new BusinessException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
                             }
 
                             node.setOutput(result);
@@ -161,7 +161,7 @@ public class GraphExecutor {
                                 Thread.sleep(seconds * 1000L);
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
-                                throw new RuntimeException("Delay 节点被中断: " + node.getId(), e);
+                                throw new BusinessException("Delay 节点被中断: " + node.getId(), e);
                             }
 
                             String result = "delayed_" + seconds + "s";
@@ -380,7 +380,7 @@ public class GraphExecutor {
                     response != null ? response.length() : 0, useToolCalling);
         } catch (Exception e) {
             log.error("[GraphExecutor] LLM 调用失败 (langchain4j): {}", e.getMessage());
-            throw new RuntimeException("LLM 调用失败: " + e.getMessage(), e);
+            throw new BusinessException("LLM 调用失败: " + e.getMessage(), e);
         }
     }
 
@@ -465,7 +465,7 @@ public class GraphExecutor {
             if (toolId != null) {
                 toolResult = mcpToolGateway.invokeTool(toolId, toolInput, state.getTenantId(), null);
             } else {
-                throw new RuntimeException("工具 ID 无效: " + toolIdStr);
+                throw new BusinessException("工具 ID 无效: " + toolIdStr);
             }
 
             Map<String, Object> resultMap = new HashMap<>();
@@ -483,7 +483,7 @@ public class GraphExecutor {
             log.info("工具节点 {} 调用成功", toolName);
         } catch (Exception e) {
             log.error("工具调用失败: {}", e.getMessage());
-            throw new RuntimeException("工具调用失败: " + e.getMessage(), e);
+            throw new BusinessException("工具调用失败: " + e.getMessage(), e);
         }
     }
 
@@ -638,7 +638,7 @@ public class GraphExecutor {
             log.error("HTTP 节点调用失败: {} {} - {}", method, url, e.getMessage());
             state.getOutputs().put("httpResponse", "");
             state.getOutputs().put("httpError", e.getMessage());
-            throw new RuntimeException("HTTP 调用失败: " + e.getMessage(), e);
+            throw new BusinessException("HTTP 调用失败: " + e.getMessage(), e);
         }
     }
 
@@ -680,7 +680,7 @@ public class GraphExecutor {
         String agentId = (String) config.get("agentId");
 
         if (agentId == null || agentId.isEmpty()) {
-            throw new RuntimeException("子图节点未配置 Agent ID");
+            throw new BusinessException("子图节点未配置 Agent ID");
         }
 
         // TODO: 实现子图执行 - 加载目标 Agent 的 GraphDefinition 并递归执行
@@ -909,7 +909,7 @@ public class GraphExecutor {
             } catch (Exception e) {
                 errors.add(targetId + ": " + e.getMessage());
                 if ("fail_fast".equals(failStrategy)) {
-                    throw new RuntimeException("并行分支执行失败: " + targetId, e);
+                    throw new BusinessException("并行分支执行失败: " + targetId, e);
                 }
             }
         }
@@ -988,7 +988,7 @@ public class GraphExecutor {
                 String code = (String) config.get("code");
 
                 if (code == null || code.isBlank()) {
-                    throw new RuntimeException("Code 节点代码为空: " + node.getId());
+                    throw new BusinessException("Code 节点代码为空: " + node.getId());
                 }
 
                 String result;
@@ -1008,10 +1008,10 @@ public class GraphExecutor {
                             result = "[JavaScript engine not available]";
                         }
                     } catch (ScriptException e) {
-                        throw new RuntimeException("Code 节点执行失败: " + e.getMessage(), e);
+                        throw new BusinessException("Code 节点执行失败: " + e.getMessage(), e);
                     }
                 } else {
-                    throw new RuntimeException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
+                    throw new BusinessException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
                 }
 
                 node.setOutput(result);
@@ -1033,7 +1033,7 @@ public class GraphExecutor {
                     Thread.sleep(seconds * 1000L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException("Delay 节点被中断: " + node.getId(), e);
+                    throw new BusinessException("Delay 节点被中断: " + node.getId(), e);
                 }
 
                 String result = "delayed_" + seconds + "s";
@@ -1100,24 +1100,24 @@ public class GraphExecutor {
             java.net.URI uri = java.net.URI.create(url);
             String scheme = uri.getScheme();
             if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-                throw new RuntimeException("HTTP节点仅允许http/https协议: " + scheme);
+                throw new BusinessException("HTTP节点仅允许http/https协议: " + scheme);
             }
             String host = uri.getHost();
             if (host == null) {
-                throw new RuntimeException("HTTP节点URL缺少主机名: " + url);
+                throw new BusinessException("HTTP节点URL缺少主机名: " + url);
             }
             // 检查内网地址
             java.net.InetAddress address = java.net.InetAddress.getByName(host);
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() ||
                 address.isLinkLocalAddress() || address.isAnyLocalAddress()) {
-                throw new RuntimeException("HTTP节点不允许访问内网地址: " + host);
+                throw new BusinessException("HTTP节点不允许访问内网地址: " + host);
             }
             // 检查169.254.x.x (云元数据)
             if (host.startsWith("169.254.")) {
-                throw new RuntimeException("HTTP节点不允许访问元数据服务: " + host);
+                throw new BusinessException("HTTP节点不允许访问元数据服务: " + host);
             }
         } catch (java.net.UnknownHostException e) {
-            throw new RuntimeException("HTTP节点无法解析主机名: " + url);
+            throw new BusinessException("HTTP节点无法解析主机名: " + url);
         }
     }
 }

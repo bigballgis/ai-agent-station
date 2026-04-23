@@ -20,28 +20,28 @@ public class AgentTestCaseService {
         this.testCaseRepository = testCaseRepository;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentTestCase createTestCase(AgentTestCase testCase) {
         log.info("Creating test case: {}", testCase.getTestName());
         return testCaseRepository.save(testCase);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public Optional<AgentTestCase> getTestCaseById(Long id) {
         return testCaseRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByTenantId(Long tenantId) {
         return testCaseRepository.findByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByAgentId(Long agentId) {
         return testCaseRepository.findByAgentId(agentId);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentTestCase updateTestCase(Long id, AgentTestCase updatedTestCase) {
         AgentTestCase existingTestCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Test case not found"));
@@ -57,7 +57,7 @@ public class AgentTestCaseService {
         return testCaseRepository.save(existingTestCase);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteTestCase(Long id) {
         AgentTestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Test case not found"));
@@ -65,27 +65,27 @@ public class AgentTestCaseService {
         testCaseRepository.delete(testCase);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public AgentTestCase getTestCaseByCode(Long tenantId, String testCode) {
         return testCaseRepository.findByTenantIdAndTestCode(tenantId, testCode);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByStatus(Long tenantId, Integer status) {
         return testCaseRepository.findByTenantIdAndStatus(tenantId, status);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByType(Long tenantId, String testType) {
         return testCaseRepository.findByTenantIdAndTestType(tenantId, testType);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countTestCasesByTenant(Long tenantId) {
         return testCaseRepository.countByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countTestCasesByAgent(Long agentId) {
         return testCaseRepository.countByAgentId(agentId);
     }

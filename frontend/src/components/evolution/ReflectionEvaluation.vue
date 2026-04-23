@@ -47,77 +47,13 @@
 import { ref, onMounted } from 'vue'
 import { CheckCircleOutlined, WarningOutlined } from '@ant-design/icons-vue'
 import Chart from 'chart.js/auto'
+import { getReflections, triggerEvaluation } from '@/api/reflection'
 
 const trendChart = ref<HTMLCanvasElement | null>(null)
 
-const evaluationMetrics = [
-  {
-    key: 'overallScore',
-    title: '总体评分',
-    value: 85.5,
-    icon: CheckCircleOutlined,
-    iconClass: 'text-green-500 dark:text-green-400'
-  },
-  {
-    key: 'accuracy',
-    title: '准确率',
-    value: 92.3,
-    icon: CheckCircleOutlined,
-    iconClass: 'text-green-500 dark:text-green-400'
-  },
-  {
-    key: 'efficiency',
-    title: '效率',
-    value: 78.9,
-    icon: WarningOutlined,
-    iconClass: 'text-yellow-500 dark:text-yellow-400'
-  },
-  {
-    key: 'reliability',
-    title: '可靠性',
-    value: 88.7,
-    icon: CheckCircleOutlined,
-    iconClass: 'text-green-500 dark:text-green-400'
-  }
-]
+const evaluationMetrics = ref<any[]>([])
 
-const evaluationData = [
-  {
-    id: 1,
-    category: '任务完成度',
-    score: 0.92,
-    trend: 5.2,
-    description: '任务完成率较高，能够准确理解用户需求'
-  },
-  {
-    id: 2,
-    category: '响应速度',
-    score: 0.75,
-    trend: -2.1,
-    description: '响应速度有所下降，需要优化处理逻辑'
-  },
-  {
-    id: 3,
-    category: '准确性',
-    score: 0.88,
-    trend: 3.5,
-    description: '回答准确性有明显提升'
-  },
-  {
-    id: 4,
-    category: '稳定性',
-    score: 0.95,
-    trend: 1.2,
-    description: '系统运行稳定，无异常情况'
-  },
-  {
-    id: 5,
-    category: '用户满意度',
-    score: 0.82,
-    trend: 4.7,
-    description: '用户反馈积极，满意度提升'
-  }
-]
+const evaluationData = ref<any[]>([])
 
 const evaluationColumns = [
   {
@@ -149,7 +85,24 @@ function getScoreStatus(score: number) {
   return 'exception'
 }
 
-onMounted(() => {
+async function fetchReflectionData() {
+  try {
+    const res = await getReflections()
+    const data = res.data?.data || res.data || {}
+    // 从后端响应中提取评估指标和评估数据
+    if (data.metrics) {
+      evaluationMetrics.value = data.metrics
+    }
+    if (data.evaluations) {
+      evaluationData.value = data.evaluations
+    }
+  } catch (e) {
+    console.error('获取反思评估数据失败:', e)
+  }
+}
+
+onMounted(async () => {
+  await fetchReflectionData()
   if (trendChart.value) {
     new Chart(trendChart.value, {
       type: 'line',

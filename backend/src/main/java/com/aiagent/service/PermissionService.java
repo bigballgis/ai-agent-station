@@ -40,7 +40,7 @@ public class PermissionService {
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "权限不存在"));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Permission createPermission(Permission permission) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -54,7 +54,7 @@ public class PermissionService {
         return permissionRepository.save(permission);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Permission updatePermission(Long id, Permission permissionDetails) {
         Permission permission = getPermissionById(id);
         permission.setName(permissionDetails.getName());
@@ -64,12 +64,12 @@ public class PermissionService {
         return permissionRepository.save(permission);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deletePermission(Long id) {
         permissionRepository.deleteById(id);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void assignPermissionToRole(Long roleId, Long permissionId) {
         RolePermission rolePermission = new RolePermission();
         rolePermission.setRoleId(roleId);
@@ -77,7 +77,7 @@ public class PermissionService {
         rolePermissionRepository.save(rolePermission);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void removePermissionFromRole(Long roleId, Long permissionId) {
         rolePermissionRepository.deleteByRoleIdAndPermissionId(roleId, permissionId);
     }

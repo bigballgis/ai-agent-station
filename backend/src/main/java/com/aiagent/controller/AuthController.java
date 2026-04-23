@@ -12,6 +12,7 @@ import com.aiagent.security.UserPrincipal;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
+import com.aiagent.exception.BusinessException;
 import com.aiagent.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -222,7 +223,7 @@ public class AuthController {
             redisTemplate.expire(redisKey, windowSeconds, TimeUnit.SECONDS);
         }
         if (count != null && count > maxAttempts) {
-            throw new RuntimeException("请求过于频繁，请稍后重试");
+            throw new BusinessException("请求过于频繁，请稍后重试");
         }
     }
 

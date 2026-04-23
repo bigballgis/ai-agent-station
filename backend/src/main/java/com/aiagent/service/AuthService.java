@@ -83,7 +83,7 @@ public class AuthService {
         return result;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> register(RegisterRequestDTO request) {
         // 检查密码和确认密码是否一致
         if (!request.getPassword().equals(request.getConfirmPassword())) {
@@ -209,7 +209,7 @@ public class AuthService {
     /**
      * 用户修改密码 - 验证旧密码后更新
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
@@ -237,7 +237,7 @@ public class AuthService {
     /**
      * 管理员重置用户密码 - 直接重置，不需要旧密码
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void resetPassword(String username, String newPassword) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));

@@ -46,7 +46,7 @@ public class SessionService {
      * @param request   HTTP request for extracting client info
      * @return the created UserSession entity
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public UserSession createSession(Long userId, String username, String sessionId, HttpServletRequest request) {
         UserSession session = new UserSession();
         session.setUserId(userId);
@@ -71,7 +71,7 @@ public class SessionService {
      *
      * @param sessionId session identifier
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void refreshSession(String sessionId) {
         Optional<UserSession> optional = sessionRepository.findBySessionId(sessionId);
         if (optional.isPresent()) {
@@ -89,7 +89,7 @@ public class SessionService {
      *
      * @param sessionId session identifier to invalidate
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void invalidateSession(String sessionId) {
         Optional<UserSession> optional = sessionRepository.findBySessionId(sessionId);
         if (optional.isPresent()) {
@@ -106,7 +106,7 @@ public class SessionService {
      * @param userId user ID
      * @return number of sessions invalidated
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int invalidateAllUserSessions(Long userId) {
         int count = sessionRepository.invalidateAllUserSessions(userId);
         log.info("All sessions invalidated for user: userId={}, count={}", userId, count);
@@ -118,7 +118,7 @@ public class SessionService {
      *
      * @param sessionId session identifier to kick
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void kickSession(String sessionId) {
         Optional<UserSession> optional = sessionRepository.findBySessionId(sessionId);
         if (optional.isPresent()) {
@@ -182,7 +182,7 @@ public class SessionService {
      * Runs every hour.
      */
     @Scheduled(fixedRate = 3600000) // 1 hour
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredSessions() {
         List<UserSession> expiredSessions = sessionRepository.findExpiredActiveSessions(LocalDateTime.now());
         if (!expiredSessions.isEmpty()) {

@@ -20,37 +20,37 @@ public class AgentTestResultService {
         this.resultRepository = resultRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public Optional<AgentTestResult> getResultById(Long id) {
         return resultRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByExecutionId(Long executionId) {
         return resultRepository.findByExecutionId(executionId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByTenantId(Long tenantId) {
         return resultRepository.findByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByAgentId(Long agentId) {
         return resultRepository.findByAgentId(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByTestCaseId(Long testCaseId) {
         return resultRepository.findByTestCaseId(testCaseId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByStatus(Long tenantId, String status) {
         return resultRepository.findByTenantIdAndStatus(tenantId, status);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentTestResult updateResult(Long id, AgentTestResult updatedResult) {
         AgentTestResult existingResult = resultRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Test result not found"));
@@ -65,27 +65,27 @@ public class AgentTestResultService {
         return resultRepository.save(existingResult);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByTenant(Long tenantId) {
         return resultRepository.countByTenantId(tenantId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByAgent(Long agentId) {
         return resultRepository.countByAgentId(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByTestCase(Long testCaseId) {
         return resultRepository.countByTestCaseId(testCaseId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByExecution(Long executionId) {
         return resultRepository.countByExecutionId(executionId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public double getPassRateByAgent(Long agentId) {
         long total = resultRepository.countByAgentId(agentId);
         if (total == 0) {
@@ -97,7 +97,7 @@ public class AgentTestResultService {
         return (double) passed / total * 100;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public double getPassRateByTestCase(Long testCaseId) {
         long total = resultRepository.countByTestCaseId(testCaseId);
         if (total == 0) {

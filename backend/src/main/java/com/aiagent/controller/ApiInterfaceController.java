@@ -6,6 +6,7 @@ import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.ApiInterface;
 import com.aiagent.service.ApiInterfaceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,7 +62,7 @@ public class ApiInterfaceController {
     @Operation(summary = "创建API接口")
     public Result<ApiInterface> create(
             @RequestHeader("X-Tenant-ID") Long tenantId,
-            @RequestBody ApiInterface apiInterface) {
+            @Valid @RequestBody ApiInterface apiInterface) {
         apiInterface.setTenantId(tenantId);
         return Result.success(apiInterfaceService.create(apiInterface));
     }
@@ -72,7 +73,7 @@ public class ApiInterfaceController {
     public Result<ApiInterface> update(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,
-            @RequestBody ApiInterface apiInterface) {
+            @Valid @RequestBody ApiInterface apiInterface) {
         return Result.success(apiInterfaceService.update(id, tenantId, apiInterface));
     }
 

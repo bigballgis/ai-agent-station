@@ -189,7 +189,7 @@ spring.servlet:
 # JWT配置
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:3600000}
+  expiration: ${JWT_EXPIRATION:1800000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 # 文件存储配置

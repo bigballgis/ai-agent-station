@@ -28,7 +28,7 @@ public class ApprovalChainService {
     /**
      * Create a new approval chain definition
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApprovalChain createChain(ApprovalChain chain) {
         Long tenantId = TenantContextHolder.getTenantId();
         chain.setTenantId(tenantId);
@@ -65,7 +65,7 @@ public class ApprovalChainService {
      * Start an approval process for a given chain and approval ID
      * Creates step records based on the chain definition
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<ApprovalChainStep> startApproval(Long chainId, Long approvalId) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -113,7 +113,7 @@ public class ApprovalChainService {
     /**
      * Approve the current pending step
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApprovalChainStep approveStep(Long stepId, Long userId, String comment) {
         ApprovalChainStep step = stepRepository.findById(stepId)
                 .orElseThrow(() -> new BusinessException("审批步骤不存在"));
@@ -142,7 +142,7 @@ public class ApprovalChainService {
     /**
      * Reject the current pending step
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApprovalChainStep rejectStep(Long stepId, Long userId, String comment) {
         ApprovalChainStep step = stepRepository.findById(stepId)
                 .orElseThrow(() -> new BusinessException("审批步骤不存在"));
@@ -213,7 +213,7 @@ public class ApprovalChainService {
     /**
      * Update chain definition
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ApprovalChain updateChain(Long id, ApprovalChain chainDetails) {
         ApprovalChain chain = getChainById(id);
 
@@ -236,7 +236,7 @@ public class ApprovalChainService {
     /**
      * Delete chain
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteChain(Long id) {
         ApprovalChain chain = getChainById(id);
         chain.setStatus(ApprovalChain.ChainStatus.ARCHIVED);

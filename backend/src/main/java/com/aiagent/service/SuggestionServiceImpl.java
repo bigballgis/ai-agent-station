@@ -32,7 +32,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     private final AgentEvolutionExperienceRepository experienceRepository;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<AgentEvolutionSuggestion> generateSuggestions(Long agentId) {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = getCurrentUserId();
@@ -193,7 +193,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionSuggestion createSuggestion(AgentEvolutionSuggestion suggestion) {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = getCurrentUserId();
@@ -210,7 +210,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionSuggestion updateSuggestion(Long id, AgentEvolutionSuggestion suggestionDetails) {
         AgentEvolutionSuggestion suggestion = getSuggestionById(id);
         Long userId = getCurrentUserId();
@@ -229,7 +229,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteSuggestion(Long id) {
         AgentEvolutionSuggestion suggestion = getSuggestionById(id);
         suggestionRepository.delete(suggestion);
@@ -328,7 +328,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionSuggestion updateSuggestionStatus(Long id, String status) {
         AgentEvolutionSuggestion suggestion = getSuggestionById(id);
         Long userId = getCurrentUserId();
@@ -340,7 +340,7 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionSuggestion updateImplementationStatus(Long id, String implementationStatus) {
         AgentEvolutionSuggestion suggestion = getSuggestionById(id);
         Long userId = getCurrentUserId();
