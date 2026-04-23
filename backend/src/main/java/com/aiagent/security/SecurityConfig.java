@@ -58,8 +58,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 认证接口：仅登录放行，其他（refresh/logout/userinfo）需要认证
-                        .requestMatchers("/v1/auth/login").permitAll()
+                        // 认证接口：仅登录和注册放行，其他（refresh/logout/userinfo）需要认证
+                        .requestMatchers("/v1/auth/login", "/v1/auth/register").permitAll()
                         // Actuator 端点需要 ADMIN 角色
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // 用户管理接口需要 ADMIN 或 TENANT_ADMIN 角色

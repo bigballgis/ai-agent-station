@@ -23,6 +23,7 @@
             type="text"
             :placeholder="t('common.search') + '...'"
             class="w-full h-9 pl-9 pr-4 rounded-xl bg-neutral-100/80 dark:bg-neutral-800/60 border border-transparent focus:border-primary-400 dark:focus:border-primary-500 text-sm text-neutral-700 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-500 outline-none transition-all duration-300 focus:shadow-glow focus:bg-white dark:focus:bg-neutral-800"
+            @keydown.enter="handleSearch"
           />
           <kbd class="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-neutral-200/60 dark:bg-neutral-700/40 border border-neutral-200/80 dark:border-neutral-700/60">
             <span class="text-xs">&#8984;</span>K
@@ -35,6 +36,8 @@
         <!-- 通知铃铛 -->
         <a-badge :count="notificationStore.unreadCount" :offset="[-4, 4]" size="small">
           <button
+            @click="router.push('/system/alerts')"
+            :aria-label="t('header.notifications')"
             class="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
           >
             <BellOutlined class="text-base" />
@@ -78,6 +81,11 @@
           </button>
           <template #overlay>
             <a-menu @click="handleUserMenu">
+              <a-menu-item key="changePassword">
+                <LockOutlined class="mr-2" />
+                {{ t('password.changePassword') }}
+              </a-menu-item>
+              <a-menu-divider />
               <a-menu-item key="logout">
                 <LogoutOutlined class="mr-2" />
                 {{ t('header.logout') }}
@@ -287,6 +295,12 @@
       </div>
       <span class="text-[11px] text-neutral-400 dark:text-neutral-500">v1.0.0</span>
     </footer>
+
+    <!-- 修改密码弹窗 -->
+    <ChangePasswordModal
+      v-model:visible="showChangePassword"
+      @success="handlePasswordChanged"
+    />
   </div>
 </template>
 
@@ -302,6 +316,7 @@ import {
   BellOutlined,
   UserOutlined,
   LogoutOutlined,
+  LockOutlined,
   DashboardOutlined,
   FolderOutlined,
   RobotOutlined,
@@ -331,6 +346,7 @@ import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
 import { useNotificationStore } from '@/store/modules/notification'
 import { useTheme } from '@/composables/useTheme'
+import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()
@@ -345,6 +361,16 @@ const collapsed = ref(false)
 const openKeys = ref<string[]>([])
 const searchQuery = ref('')
 const windowWidth = ref(window.innerWidth)
+const showChangePassword = ref(false)
+
+// 全局搜索：按关键词跳转到Agent列表并带上搜索参数
+const handleSearch = () => {
+  const query = searchQuery.value.trim()
+  if (query) {
+    router.push({ path: '/agents', query: { search: query } })
+    searchQuery.value = ''
+  }
+}
 
 const isMobile = computed(() => windowWidth.value < 768)
 
@@ -609,7 +635,9 @@ function changeLocale(e: { key: string }) {
 
 // 用户菜单操作
 async function handleUserMenu(e: { key: string }) {
-  if (e.key === 'logout') {
+  if (e.key === 'changePassword') {
+    showChangePassword.value = true
+  } else if (e.key === 'logout') {
     Modal.confirm({
       title: t('header.logout'),
       content: t('header.logoutConfirm'),
@@ -620,7 +648,13 @@ async function handleUserMenu(e: { key: string }) {
       },
     })
   }
-  // userCenter 和 settings 路由暂未实现，已移除对应菜单项
+}
+
+// 密码修改成功后跳转到登录页
+function handlePasswordChanged() {
+  message.info(t('password.passwordChangedRedirect'))
+  userStore.logout()
+  router.push('/login')
 }
 
 // 监听路由变化，自动展开对应子菜单

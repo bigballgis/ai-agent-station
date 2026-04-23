@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   RocketOutlined,
@@ -164,6 +164,7 @@ import { PageHeader, StatCard, ChartContainer } from '@/components'
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
 const router = useRouter()
+const route = useRoute()
 
 // ============ 统计卡片数据 ============
 const totalAgents = ref(0)
@@ -205,7 +206,7 @@ const statCards = computed(() => [
     suffix: '',
   },
   {
-    title: t('dashboard.activeUsers'),
+    title: t('dashboard.activeAlerts'),
     value: activeAlerts.value,
     icon: ClockCircleOutlined,
     trend: 'up' as const,
@@ -230,21 +231,21 @@ const quickActions = ref([
     icon: AuditOutlined,
     iconBg: 'bg-amber-100 dark:bg-amber-900/40',
     iconColor: 'text-amber-600 dark:text-amber-400',
-    route: '/approvals'
+    route: '/agent/approval'
   },
   {
     label: t('dashboard.checkApiUsage'),
     icon: FileTextOutlined,
     iconBg: 'bg-green-100 dark:bg-green-900/40',
     iconColor: 'text-green-600 dark:text-green-400',
-    route: '/logs'
+    route: '/system/log'
   },
   {
     label: t('dashboard.testManagement'),
     icon: ExperimentOutlined,
     iconBg: 'bg-purple-100 dark:bg-purple-900/40',
     iconColor: 'text-purple-600 dark:text-purple-400',
-    route: '/tests'
+    route: '/test-cases'
   }
 ])
 
@@ -484,21 +485,21 @@ watch(locale, () => {
       icon: AuditOutlined,
       iconBg: 'bg-amber-100 dark:bg-amber-900/40',
       iconColor: 'text-amber-600 dark:text-amber-400',
-      route: '/approvals'
+      route: '/agent/approval'
     },
     {
       label: t('dashboard.checkApiUsage'),
       icon: FileTextOutlined,
       iconBg: 'bg-green-100 dark:bg-green-900/40',
       iconColor: 'text-green-600 dark:text-green-400',
-      route: '/logs'
+      route: '/system/log'
     },
     {
       label: t('dashboard.testManagement'),
       icon: ExperimentOutlined,
       iconBg: 'bg-purple-100 dark:bg-purple-900/40',
       iconColor: 'text-purple-600 dark:text-purple-400',
-      route: '/tests'
+      route: '/test-cases'
     }
   ]
 
@@ -508,6 +509,11 @@ watch(locale, () => {
 
 onMounted(() => {
   fetchDashboardData()
+  // 检查是否因权限不足被重定向
+  if (route.query.noPermission) {
+    message.warning(t('common.noPermission'))
+    router.replace({ query: {} })
+  }
 })
 
 onUnmounted(() => {

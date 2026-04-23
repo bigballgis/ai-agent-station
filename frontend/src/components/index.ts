@@ -18,6 +18,7 @@ export { default as ConfirmModal } from './ConfirmModal.vue'
 export { default as DetailDrawer } from './DetailDrawer.vue'
 export { default as EmptyState } from './EmptyState.vue'
 export { default as LoadingSkeleton } from './LoadingSkeleton.vue'
+export { default as ChangePasswordModal } from './ChangePasswordModal.vue'
 
 // 数据可视化组件
 export { default as StatCard } from './StatCard.vue'

@@ -1,11 +1,16 @@
 import request from '@/utils/request'
 import type { ApiResponse } from '@/types/common'
-import type { LoginRequest, LoginResultData, User, UserInfo } from '@/types/user'
+import type { LoginRequest, LoginResultData, RegisterRequest, User, UserInfo } from '@/types/user'
 
 // ==================== Auth ====================
 
 export function login(data: LoginRequest): Promise<ApiResponse<LoginResultData>> {
   return request.post('/v1/auth/login', data)
+}
+
+/** 用户注册 */
+export function register(data: RegisterRequest): Promise<ApiResponse<LoginResultData>> {
+  return request.post('/v1/auth/register', data)
 }
 
 /** 获取当前登录用户信息 */
@@ -16,6 +21,16 @@ export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
 /** 登出 */
 export function logout(): Promise<ApiResponse<void>> {
   return request.post('/v1/auth/logout')
+}
+
+/** 修改密码 - 用户自行修改，需验证旧密码 */
+export function changePassword(data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<void>> {
+  return request.put('/v1/auth/password', data)
+}
+
+/** 管理员重置密码 */
+export function resetPassword(data: { username: string; newPassword: string }): Promise<ApiResponse<void>> {
+  return request.post('/v1/auth/reset-password', data)
 }
 
 // ==================== Users ====================

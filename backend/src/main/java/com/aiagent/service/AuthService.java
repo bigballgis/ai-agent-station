@@ -2,9 +2,14 @@ package com.aiagent.service;
 
 import com.aiagent.common.ResultCode;
 import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.RegisterRequestDTO;
 import com.aiagent.entity.User;
+import com.aiagent.entity.UserRole;
+import com.aiagent.entity.Role;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
+import com.aiagent.repository.UserRoleRepository;
+import com.aiagent.repository.RoleRepository;
 import com.aiagent.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -28,6 +34,8 @@ public class AuthService {
     private static final long REFRESH_TOKEN_TTL_DAYS = 7;
 
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
@@ -73,6 +81,56 @@ public class AuthService {
         result.put("user", buildUserResponse(user));
 
         return result;
+    }
+
+    @Transactional
+    public Map<String, Object> register(RegisterRequestDTO request) {
+        // 检查密码和确认密码是否一致
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "两次输入的密码不一致");
+        }
+
+        // 检查用户名是否已存在
+        if (request.getTenantId() != null) {
+            userRepository.findByUsernameAndTenantId(request.getUsername(), request.getTenantId()).ifPresent(u -> {
+                throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "该租户下用户名已存在");
+            });
+        } else {
+            userRepository.findByUsername(request.getUsername()).ifPresent(u -> {
+                throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "用户名已存在");
+            });
+        }
+
+        // 创建用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEmail(request.getEmail());
+        user.setTenantId(request.getTenantId());
+        user.setIsActive(true);
+        userRepository.save(user);
+
+        // 分配默认角色 ROLE_USER
+        Role defaultRole;
+        if (request.getTenantId() != null) {
+            defaultRole = roleRepository.findByNameAndTenantId("ROLE_USER", request.getTenantId())
+                    .or(() -> roleRepository.findByName("ROLE_USER"))
+                    .orElse(null);
+        } else {
+            defaultRole = roleRepository.findByName("ROLE_USER").orElse(null);
+        }
+
+        if (defaultRole != null) {
+            UserRole userRole = new UserRole();
+            userRole.setUserId(user.getId());
+            userRole.setRoleId(defaultRole.getId());
+            userRoleRepository.save(userRole);
+        }
+
+        log.info("用户注册成功: username={}, tenantId={}", request.getUsername(), request.getTenantId());
+
+        // 注册成功后自动登录，返回token
+        return login(user.getUsername(), request.getPassword(), request.getTenantId());
     }
 
     public Map<String, Object> refreshToken(String refreshToken) {
@@ -138,6 +196,55 @@ public class AuthService {
             }
         }
         log.info("用户登出，已清除 Refresh Token 并加入黑名单: userId={}", userId);
+    }
+
+    /**
+     * 用户修改密码 - 验证旧密码后更新
+     */
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
+
+        if (!user.getIsActive()) {
+            throw new BusinessException(ResultCode.USER_DISABLED);
+        }
+
+        // 验证旧密码
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new BusinessException(ResultCode.INVALID_PASSWORD);
+        }
+
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // 清除该用户的 Refresh Token，强制重新登录
+        String redisKey = REFRESH_TOKEN_PREFIX + userId;
+        redisTemplate.delete(redisKey);
+
+        log.info("用户修改密码成功: userId={}", userId);
+    }
+
+    /**
+     * 管理员重置用户密码 - 直接重置，不需要旧密码
+     */
+    public void resetPassword(String username, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
+
+        if (!user.getIsActive()) {
+            throw new BusinessException(ResultCode.USER_DISABLED);
+        }
+
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // 清除该用户的 Refresh Token，强制重新登录
+        String redisKey = REFRESH_TOKEN_PREFIX + user.getId();
+        redisTemplate.delete(redisKey);
+
+        log.info("管理员重置用户密码成功: username={}, operator={}", username, "admin");
     }
 
     private long getTokenRemainingSeconds(String token) {

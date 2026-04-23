@@ -18,6 +18,14 @@ export interface LoginRequest {
   tenantId?: string
 }
 
+export interface RegisterRequest {
+  username: string
+  password: string
+  confirmPassword: string
+  email?: string
+  tenantId?: number
+}
+
 /** 登录接口实际返回的 data 结构（与后端 /v1/auth/login 对齐） */
 export interface LoginResultData {
   token: string

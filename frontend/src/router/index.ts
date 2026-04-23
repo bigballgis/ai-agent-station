@@ -273,7 +273,8 @@ router.beforeEach(async (to, _from, next) => {
       const userRoles = userStore.userInfo?.roles || []
       const hasRole = userRoles.some((role: string) => requiredRoles.includes(role))
       if (!hasRole) {
-        return next('/dashboard')
+        // 使用 query 参数传递提示信息，避免直接操作 UI
+        return next({ path: '/dashboard', query: { noPermission: '1' } })
       }
     }
   } else {

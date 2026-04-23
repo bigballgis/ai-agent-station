@@ -1,11 +1,13 @@
 package com.aiagent.controller;
 
+import com.aiagent.dto.ChangePasswordRequestDTO;
 import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.RegisterRequestDTO;
+import com.aiagent.dto.ResetPasswordRequestDTO;
 import com.aiagent.dto.UserResponseDTO;
 import com.aiagent.entity.User;
 import com.aiagent.service.UserService;
 import com.aiagent.security.UserPrincipal;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
@@ -33,6 +35,13 @@ public class AuthController {
     @OperationLog(value = "用户登录", module = "认证")
     public Result<?> login(@Valid @RequestBody LoginRequest request) {
         return Result.success(authService.login(request.getUsername(), request.getPassword(), request.getTenantId()));
+    }
+
+    @PostMapping("/register")
+    @Operation(summary = "用户注册")
+    @OperationLog(value = "用户注册", module = "认证")
+    public Result<?> register(@Valid @RequestBody RegisterRequestDTO request) {
+        return Result.success(authService.register(request));
     }
 
     /**
@@ -74,6 +83,33 @@ public class AuthController {
         }
         User user = userService.getById(principal.getId());
         return Result.success(DTOConverter.toUserResponseDTO(user));
+    }
+
+    /**
+     * 修改密码 - 用户自行修改，需验证旧密码
+     */
+    @PutMapping("/password")
+    @Operation(summary = "修改密码")
+    @OperationLog(value = "修改密码", module = "认证")
+    public Result<?> changePassword(@AuthenticationPrincipal UserPrincipal principal,
+                                    @Valid @RequestBody ChangePasswordRequestDTO request) {
+        if (principal == null || principal.getId() == null) {
+            return Result.fail(401, "未认证");
+        }
+        authService.changePassword(principal.getId(), request.getOldPassword(), request.getNewPassword());
+        return Result.success("密码修改成功");
+    }
+
+    /**
+     * 管理员重置密码 - 直接重置指定用户的密码
+     */
+    @PostMapping("/reset-password")
+    @Operation(summary = "管理员重置密码")
+    @RequiresPermission("user:manage")
+    @OperationLog(value = "管理员重置密码", module = "认证")
+    public Result<?> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        authService.resetPassword(request.getUsername(), request.getNewPassword());
+        return Result.success("密码重置成功");
     }
 
     // ==================== Request DTOs ====================

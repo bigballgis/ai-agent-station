@@ -88,21 +88,43 @@
 
         <!-- 表单卡片 -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl dark:shadow-gray-900/50 p-8 lg:p-10">
+          <!-- Tab 切换 -->
+          <div class="auth-tabs mb-8">
+            <button
+              :class="['auth-tab', activeTab === 'login' ? 'auth-tab-active' : 'auth-tab-inactive']"
+              @click="switchTab('login')"
+            >
+              {{ t('login.login') }}
+            </button>
+            <button
+              :class="['auth-tab', activeTab === 'register' ? 'auth-tab-active' : 'auth-tab-inactive']"
+              @click="switchTab('register')"
+            >
+              {{ t('login.register') }}
+            </button>
+          </div>
+
           <!-- 标题 -->
           <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 v-if="activeTab === 'login'" class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {{ t('login.welcomeBack') || '欢迎回来' }}
             </h2>
+            <h2 v-else class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {{ t('login.createAccount') || '创建账号' }}
+            </h2>
             <p class="text-gray-500 dark:text-gray-400 text-base">
-              {{ t('login.loginToStation') || '登录到 AI Agent Station' }}
+              {{ activeTab === 'login'
+                ? (t('login.loginToStation') || '登录到 AI Agent Station')
+                : (t('login.registerToStation') || '注册 AI Agent Station 账号') }}
             </p>
           </div>
 
           <!-- 登录表单 -->
           <a-form
+            v-if="activeTab === 'login'"
             ref="loginFormRef"
             :model="loginForm"
-            :rules="rules"
+            :rules="loginRules"
             layout="vertical"
             @finish="handleLogin"
           >
@@ -141,6 +163,9 @@
               <a-checkbox v-model:checked="rememberMe" class="checkbox-custom">
                 {{ t('login.remember') }}
               </a-checkbox>
+              <a class="forgot-password-link" @click="showResetPassword = true">
+                {{ t('login.forgotPassword') }}
+              </a>
             </div>
 
             <!-- 登录按钮 -->
@@ -154,6 +179,90 @@
                 class="login-button"
               >
                 {{ t('login.login') }}
+              </a-button>
+            </a-form-item>
+          </a-form>
+
+          <!-- 注册表单 -->
+          <a-form
+            v-else
+            ref="registerFormRef"
+            :model="registerForm"
+            :rules="registerRules"
+            layout="vertical"
+            @finish="handleRegister"
+          >
+            <!-- 用户名 -->
+            <a-form-item name="username" class="form-item-custom">
+              <label class="form-label">{{ t('login.username') }}</label>
+              <a-input
+                v-model:value="registerForm.username"
+                size="large"
+                :placeholder="t('login.usernamePlaceholder')"
+                class="input-custom"
+              >
+                <template #prefix>
+                  <UserOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <!-- 邮箱（可选） -->
+            <a-form-item name="email" class="form-item-custom">
+              <label class="form-label">{{ t('login.email') }} <span class="text-gray-400 text-xs">({{ t('login.optional') }})</span></label>
+              <a-input
+                v-model:value="registerForm.email"
+                size="large"
+                :placeholder="t('login.emailPlaceholder')"
+                class="input-custom"
+              >
+                <template #prefix>
+                  <MailOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <!-- 密码 -->
+            <a-form-item name="password" class="form-item-custom">
+              <label class="form-label">{{ t('login.password') }}</label>
+              <a-input-password
+                v-model:value="registerForm.password"
+                size="large"
+                :placeholder="t('login.passwordPlaceholder')"
+                class="input-custom"
+              >
+                <template #prefix>
+                  <LockOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <!-- 确认密码 -->
+            <a-form-item name="confirmPassword" class="form-item-custom">
+              <label class="form-label">{{ t('login.confirmPassword') }}</label>
+              <a-input-password
+                v-model:value="registerForm.confirmPassword"
+                size="large"
+                :placeholder="t('login.confirmPasswordPlaceholder')"
+                class="input-custom"
+              >
+                <template #prefix>
+                  <LockOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <!-- 注册按钮 -->
+            <a-form-item class="mb-0">
+              <a-button
+                type="primary"
+                size="large"
+                html-type="submit"
+                block
+                :loading="loading"
+                class="login-button"
+              >
+                {{ t('login.register') }}
               </a-button>
             </a-form-item>
           </a-form>
@@ -184,6 +293,70 @@
           </div>
         </div>
       </div>
+
+      <!-- 忘记密码/重置密码弹窗 -->
+      <a-modal
+        :open="showResetPassword"
+        :title="t('password.resetPassword')"
+        :confirm-loading="resetLoading"
+        :ok-text="t('common.confirm')"
+        :cancel-text="t('common.cancel')"
+        @ok="handleResetPassword"
+        @cancel="showResetPassword = false"
+        :width="420"
+        destroyOnClose
+      >
+        <div class="mt-4 mb-2">
+          <a-alert
+            :message="t('password.resetPasswordHint')"
+            type="info"
+            show-icon
+            class="mb-4"
+          />
+          <a-form
+            ref="resetFormRef"
+            :model="resetForm"
+            :rules="resetRules"
+            layout="vertical"
+          >
+            <a-form-item :label="t('login.username')" name="username">
+              <a-input
+                v-model:value="resetForm.username"
+                :placeholder="t('login.usernamePlaceholder')"
+                size="large"
+              >
+                <template #prefix>
+                  <UserOutlined class="text-neutral-400" />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <a-form-item :label="t('password.newPassword')" name="newPassword">
+              <a-input-password
+                v-model:value="resetForm.newPassword"
+                :placeholder="t('password.newPasswordPlaceholder')"
+                size="large"
+              >
+                <template #prefix>
+                  <LockOutlined class="text-neutral-400" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item :label="t('password.confirmPassword')" name="confirmPassword">
+              <a-input-password
+                v-model:value="resetForm.confirmPassword"
+                :placeholder="t('password.confirmPasswordPlaceholder')"
+                size="large"
+              >
+                <template #prefix>
+                  <LockOutlined class="text-neutral-400" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+          </a-form>
+        </div>
+      </a-modal>
     </div>
   </div>
 </template>
@@ -193,9 +366,10 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
+import { register } from '@/api/user'
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()
@@ -203,7 +377,9 @@ const { t, locale } = useI18n()
 const userStore = useUserStore()
 const appStore = useAppStore()
 
+const activeTab = ref<'login' | 'register'>('login')
 const loginFormRef = ref()
+const registerFormRef = ref()
 const loading = ref(false)
 const rememberMe = ref(false)
 
@@ -212,7 +388,14 @@ const loginForm = reactive({
   password: ''
 })
 
-const rules = {
+const registerForm = reactive({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const loginRules = {
   username: [
     { required: true, message: t('login.usernameRequired'), trigger: 'blur' }
   ],
@@ -220,6 +403,36 @@ const rules = {
     { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
     { min: 6, message: t('login.passwordMinLength'), trigger: 'blur' }
   ]
+}
+
+const registerRules = {
+  username: [
+    { required: true, message: t('login.usernameRequired'), trigger: 'blur' },
+    { min: 3, max: 50, message: t('login.usernameLength'), trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email' as const, message: t('login.emailInvalid'), trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('login.passwordMinLength'), trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: t('login.confirmPasswordRequired'), trigger: 'blur' },
+    {
+      validator: (_rule: unknown, value: string) => {
+        if (value && value !== registerForm.password) {
+          return Promise.reject(t('login.passwordMismatch'))
+        }
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+function switchTab(tab: 'login' | 'register') {
+  activeTab.value = tab
 }
 
 async function handleLogin() {
@@ -249,6 +462,43 @@ async function handleLogin() {
   }
 }
 
+async function handleRegister() {
+  try {
+    await registerFormRef.value.validate()
+    loading.value = true
+
+    const res = await register({
+      username: registerForm.username,
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword,
+      email: registerForm.email || undefined
+    })
+
+    if (res.code === 200 || res.data) {
+      message.success(t('login.registerSuccess'))
+      // 注册成功后自动登录（后端已返回token），存储登录信息
+      if (res.data?.token) {
+        userStore.setToken(res.data.token)
+        router.push('/dashboard')
+      } else {
+        // 如果后端没有返回token，切换到登录tab
+        activeTab.value = 'login'
+        loginForm.username = registerForm.username
+        loginForm.password = ''
+      }
+    } else {
+      message.error(res.message || t('login.registerFailed'))
+    }
+  } catch (error: unknown) {
+    console.error('Register error:', error)
+    const errMessage = error instanceof Error ? error.message : undefined
+    const axiosError = error as { response?: { data?: { message?: string } } }
+    message.error(axiosError?.response?.data?.message || errMessage || t('login.registerFailed'))
+  } finally {
+    loading.value = false
+  }
+}
+
 function changeLocale(newLocale: LocaleType) {
   appStore.setLocale(newLocale)
   locale.value = newLocale
@@ -272,6 +522,63 @@ function particleStyle(_n: number) {
 </script>
 
 <style scoped>
+/* ===========================================
+   Tab 切换
+   =========================================== */
+
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+:deep(.dark) .auth-tabs {
+  background: #374151;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.auth-tab-active {
+  background: white;
+  color: #4f46e5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.dark) .auth-tab-active {
+  background: #1f2937;
+  color: #818cf8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.auth-tab-inactive {
+  background: transparent;
+  color: #6b7280;
+}
+
+.auth-tab-inactive:hover {
+  color: #4f46e5;
+}
+
+:deep(.dark) .auth-tab-inactive {
+  color: #9ca3af;
+}
+
+:deep(.dark) .auth-tab-inactive:hover {
+  color: #818cf8;
+}
+
 /* ===========================================
    入场动画
    =========================================== */
