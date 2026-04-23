@@ -1,7 +1,7 @@
 <template>
   <div class="alert-notification-page" aria-label="告警通知">
     <!-- 页面头部 -->
-    <PageHeader title="告警中心" subtitle="统一管理和监控所有告警规则与告警记录，及时发现和处理系统异常" />
+    <PageHeader :title="t('alert.pageTitle')" :subtitle="t('alert.pageSubtitle')" />
 
     <!-- 加载状态 -->
     <div v-if="pageLoading" class="flex items-center justify-center py-20">
@@ -21,7 +21,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
-        重新加载
+        {{ t('alert.reload') }}
       </button>
     </div>
 
@@ -78,7 +78,7 @@
       <div v-if="activeTab === 'rules'" class="p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <h3 class="text-base font-semibold text-neutral-800 dark:text-neutral-200">告警规则列表</h3>
+            <h3 class="text-base font-semibold text-neutral-800 dark:text-neutral-200">{{ t('alert.ruleList') }}</h3>
             <!-- 搜索框 -->
             <div class="relative">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@
               <input
                 v-model="ruleSearch"
                 type="text"
-                placeholder="搜索规则名称..."
+                :placeholder="t('alert.searchRulePlaceholder')"
                 class="pl-9 pr-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 w-56"
               />
             </div>
@@ -96,10 +96,10 @@
               v-model="ruleSeverityFilter"
               class="px-3 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
             >
-              <option value="">全部级别</option>
-              <option value="CRITICAL">严重</option>
-              <option value="WARNING">警告</option>
-              <option value="INFO">信息</option>
+              <option value="">{{ t('alert.allSeverity') }}</option>
+              <option value="CRITICAL">{{ t('alert.severityCritical') }}</option>
+              <option value="WARNING">{{ t('alert.severityWarning') }}</option>
+              <option value="INFO">{{ t('alert.severityInfo') }}</option>
             </select>
           </div>
           <button
@@ -109,7 +109,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            新建规则
+            {{ t('alert.createRule') }}
           </button>
         </div>
 
@@ -123,18 +123,18 @@
           <svg class="w-10 h-10 mb-2 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <p class="text-sm text-neutral-400 dark:text-neutral-500">暂无告警规则</p>
+          <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('alert.noRules') }}</p>
         </div>
 
         <div v-else class="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">规则名称</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">严重级别</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">状态</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">创建时间</th>
-                <th class="text-right px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">操作</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.ruleName') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.severity') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.status') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('common.createdAt') }}</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('common.operation') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -161,7 +161,7 @@
                     @click="toggleRule(rule)"
                   >
                     <span class="w-1.5 h-1.5 rounded-full" :class="rule.enabled ? 'bg-green-500' : 'bg-neutral-400'" />
-                    {{ rule.enabled ? '启用' : '禁用' }}
+                    {{ rule.enabled ? t('alert.enabled') : t('alert.disabled') }}
                   </span>
                 </td>
                 <td class="px-4 py-3 text-neutral-600 dark:text-neutral-400 text-xs whitespace-nowrap">{{ formatDateTime(rule.createdAt) }}</td>
@@ -171,7 +171,7 @@
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
                       role="button"
                       tabindex="0"
-                      title="编辑"
+                      :title="t('common.edit')"
                       @click="editRule(rule)"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +182,7 @@
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
                       role="button"
                       tabindex="0"
-                      title="删除"
+                      :title="t('common.delete')"
                       @click="deleteRule(rule)"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,19 +206,19 @@
             class="px-3 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
             @change="handleRecordFilterChange"
           >
-            <option value="">全部级别</option>
-            <option value="CRITICAL">严重</option>
-            <option value="WARNING">警告</option>
-            <option value="INFO">信息</option>
+            <option value="">{{ t('alert.allSeverity') }}</option>
+              <option value="CRITICAL">{{ t('alert.severityCritical') }}</option>
+              <option value="WARNING">{{ t('alert.severityWarning') }}</option>
+              <option value="INFO">{{ t('alert.severityInfo') }}</option>
           </select>
           <select
             v-model="recordFilter.status"
             class="px-3 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
             @change="handleRecordFilterChange"
           >
-            <option value="">全部状态</option>
-            <option value="firing">触发中</option>
-            <option value="resolved">已解决</option>
+            <option value="">{{ t('alert.allStatus') }}</option>
+            <option value="firing">{{ t('alert.firing') }}</option>
+            <option value="resolved">{{ t('alert.resolved') }}</option>
           </select>
         </div>
 
@@ -232,7 +232,7 @@
           <svg class="w-10 h-10 mb-2 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-sm text-neutral-400 dark:text-neutral-500">暂无告警记录</p>
+          <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('alert.noRecords') }}</p>
         </div>
 
         <template v-else>
@@ -240,12 +240,12 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">触发时间</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">规则名称</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">严重级别</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">指标值</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">状态</th>
-                <th class="text-right px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">操作</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.firedAt') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.ruleName') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.severity') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.metricValue') }}</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('alert.status') }}</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('common.operation') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -275,7 +275,7 @@
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 cursor-pointer"
                       role="button"
                       tabindex="0"
-                      title="确认解决"
+                      :title="t('alert.resolve')"
                       @click="resolveRecord(record)"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +286,7 @@
                       class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
                       role="button"
                       tabindex="0"
-                      title="查看详情"
+                      :title="t('alert.viewDetail')"
                       @click="viewRecordDetail(record)"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,7 +319,7 @@
     <!-- 新建规则弹窗 -->
     <a-modal
       v-model:open="showCreateRuleModal"
-      :title="editingRuleId ? '编辑告警规则' : '新建告警规则'"
+      :title="editingRuleId ? t('alert.editRule') : t('alert.createRule')"
       :ok-button-props="{ class: '!rounded-xl' }"
       :cancel-button-props="{ class: '!rounded-xl' }"
       :confirm-loading="ruleSubmitting"
@@ -327,61 +327,61 @@
       @cancel="handleCancelRuleModal"
     >
       <a-form layout="vertical" class="mt-4">
-        <a-form-item label="规则名称" required>
-          <a-input v-model:value="newRule.name" placeholder="请输入规则名称" />
+        <a-form-item :label="t('alert.ruleName')" required>
+          <a-input v-model:value="newRule.name" :placeholder="t('alert.ruleNamePlaceholder')" />
         </a-form-item>
-        <a-form-item label="描述">
-          <a-textarea v-model:value="newRule.description" placeholder="请输入规则描述" :rows="2" />
+        <a-form-item :label="t('common.description')">
+          <a-textarea v-model:value="newRule.description" :placeholder="t('alert.ruleDescPlaceholder')" :rows="2" />
         </a-form-item>
-        <a-form-item label="告警类型" required>
-          <a-select v-model:value="newRule.alertType" placeholder="请选择类型">
-            <a-select-option value="API_ERROR_RATE">API 错误率</a-select-option>
-            <a-select-option value="API_RESPONSE_TIME">响应时间</a-select-option>
-            <a-select-option value="JVM_CPU">CPU 使用率</a-select-option>
-            <a-select-option value="JVM_MEMORY">内存使用率</a-select-option>
-            <a-select-option value="DB_CONNECTION_POOL">数据库连接池</a-select-option>
-            <a-select-option value="AGENT_EXECUTION_FAILURE">Agent 执行失败</a-select-option>
-            <a-select-option value="QUOTA_EXCEEDED">配额超限</a-select-option>
+        <a-form-item :label="t('alert.alertType')" required>
+          <a-select v-model:value="newRule.alertType" :placeholder="t('alert.selectType')">
+            <a-select-option value="API_ERROR_RATE">{{ t('alert.typeApiErrorRate') }}</a-select-option>
+            <a-select-option value="API_RESPONSE_TIME">{{ t('alert.typeApiResponseTime') }}</a-select-option>
+            <a-select-option value="JVM_CPU">{{ t('alert.typeJvmCpu') }}</a-select-option>
+            <a-select-option value="JVM_MEMORY">{{ t('alert.typeJvmMemory') }}</a-select-option>
+            <a-select-option value="DB_CONNECTION_POOL">{{ t('alert.typeDbPool') }}</a-select-option>
+            <a-select-option value="AGENT_EXECUTION_FAILURE">{{ t('alert.typeAgentFailure') }}</a-select-option>
+            <a-select-option value="QUOTA_EXCEEDED">{{ t('alert.typeQuotaExceeded') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="指标名称" required>
-          <a-input v-model:value="newRule.metricName" placeholder="例如: api_error_rate" />
+        <a-form-item :label="t('alert.metricName')" required>
+          <a-input v-model:value="newRule.metricName" :placeholder="t('alert.metricNamePlaceholder')" />
         </a-form-item>
         <div class="grid grid-cols-2 gap-4">
-          <a-form-item label="阈值" required>
-            <a-input-number v-model:value="newRule.threshold" placeholder="阈值" :style="{ width: '100%' }" />
+          <a-form-item :label="t('alert.threshold')" required>
+            <a-input-number v-model:value="newRule.threshold" :placeholder="t('alert.threshold')" :style="{ width: '100%' }" />
           </a-form-item>
-          <a-form-item label="比较运算符">
-            <a-select v-model:value="newRule.comparisonOperator" placeholder="请选择">
-              <a-select-option value="gt">大于 (>)</a-select-option>
-              <a-select-option value="gte">大于等于 (>=)</a-select-option>
-              <a-select-option value="lt">小于 (<)</a-select-option>
-              <a-select-option value="lte">小于等于 (<=)</a-select-option>
-              <a-select-option value="eq">等于 (=)</a-select-option>
+          <a-form-item :label="t('alert.comparisonOperator')">
+            <a-select v-model:value="newRule.comparisonOperator" :placeholder="t('alert.selectOperator')">
+              <a-select-option value="gt">{{ t('alert.operatorGt') }}</a-select-option>
+              <a-select-option value="gte">{{ t('alert.operatorGte') }}</a-select-option>
+              <a-select-option value="lt">{{ t('alert.operatorLt') }}</a-select-option>
+              <a-select-option value="lte">{{ t('alert.operatorLte') }}</a-select-option>
+              <a-select-option value="eq">{{ t('alert.operatorEq') }}</a-select-option>
             </a-select>
           </a-form-item>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <a-form-item label="严重级别">
-            <a-select v-model:value="newRule.severity" placeholder="请选择级别">
-              <a-select-option value="INFO">信息</a-select-option>
-              <a-select-option value="WARNING">警告</a-select-option>
-              <a-select-option value="CRITICAL">严重</a-select-option>
+          <a-form-item :label="t('alert.severity')">
+            <a-select v-model:value="newRule.severity" :placeholder="t('alert.selectSeverity')">
+              <a-select-option value="INFO">{{ t('alert.severityInfo') }}</a-select-option>
+              <a-select-option value="WARNING">{{ t('alert.severityWarning') }}</a-select-option>
+              <a-select-option value="CRITICAL">{{ t('alert.severityCritical') }}</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="持续时间(秒)">
-            <a-input-number v-model:value="newRule.durationSeconds" placeholder="持续时间" :min="0" :style="{ width: '100%' }" />
+          <a-form-item :label="t('alert.durationSeconds')">
+            <a-input-number v-model:value="newRule.durationSeconds" :placeholder="t('alert.durationSeconds')" :min="0" :style="{ width: '100%' }" />
           </a-form-item>
         </div>
-        <a-form-item label="通知渠道">
-          <a-select v-model:value="newRule.notifyChannels" placeholder="请选择通知渠道">
-            <a-select-option value="email">邮件</a-select-option>
+        <a-form-item :label="t('alert.notifyChannels')">
+          <a-select v-model:value="newRule.notifyChannels" :placeholder="t('alert.selectChannel')">
+            <a-select-option value="email">{{ t('alert.channelEmail') }}</a-select-option>
             <a-select-option value="webhook">Webhook</a-select-option>
-            <a-select-option value="sms">短信</a-select-option>
+            <a-select-option value="sms">{{ t('alert.channelSms') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="通知目标">
-          <a-input v-model:value="newRule.notifyTargets" placeholder="请输入通知目标（邮箱、URL等）" />
+        <a-form-item :label="t('alert.notifyTargets')">
+          <a-input v-model:value="newRule.notifyTargets" :placeholder="t('alert.notifyTargetsPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -389,26 +389,26 @@
     <!-- 告警详情弹窗 -->
     <a-modal
       v-model:open="showDetailModal"
-      :title="'告警详情 - ' + detailRecord?.ruleName"
+      :title="t('alert.detailTitle') + ' - ' + detailRecord?.ruleName"
       :footer="null"
       width="560px"
     >
       <div v-if="detailRecord" class="mt-4 space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">触发时间</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.firedAt') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ formatDateTime(detailRecord.firedAt) }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">规则名称</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.ruleName') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ detailRecord.ruleName }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">告警类型</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.alertType') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ formatAlertType(detailRecord.alertType) }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">严重级别</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.severity') }}</h4>
             <span
               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
               :class="getSeverityBadgeClass(detailRecord.severity)"
@@ -417,31 +417,31 @@
             </span>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">指标值</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.metricValue') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200 font-mono">{{ detailRecord.metricValue }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">阈值</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.threshold') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200 font-mono">{{ detailRecord.threshold }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">状态</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.status') }}</h4>
             <span
               class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
               :class="detailRecord.status === 'firing'
                 ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
                 : 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'"
             >
-              {{ detailRecord.status === 'firing' ? '触发中' : '已解决' }}
+              {{ detailRecord.status === 'firing' ? t('alert.firing') : t('alert.resolved') }}
             </span>
           </div>
           <div v-if="detailRecord.resolvedAt">
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">解决时间</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.resolvedAt') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ formatDateTime(detailRecord.resolvedAt) }}</p>
           </div>
         </div>
         <div v-if="detailRecord.message">
-          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">告警描述</h4>
+          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.alertDescription') }}</h4>
           <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{{ detailRecord.message }}</p>
         </div>
       </div>
@@ -452,6 +452,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import {
   AlertOutlined,
@@ -470,6 +471,8 @@ import {
   getActiveAlerts,
 } from '@/api/alert'
 import { PageHeader, StatCard, StatusBadge } from '@/components'
+
+const { t } = useI18n()
 
 // ==================== 类型定义 ====================
 
@@ -513,9 +516,14 @@ interface AlertRuleForm {
 
 // ==================== Tab ====================
 
-const tabs = ref([
-  { key: 'rules', label: '告警规则', count: 0 },
-  { key: 'records', label: '告警记录', count: 0 },
+const tabKeys = ref([
+  { key: 'rules', count: 0 },
+  { key: 'records', count: 0 },
+])
+
+const tabs = computed(() => [
+  { key: 'rules', label: t('alert.rules'), count: tabKeys.value[0].count },
+  { key: 'records', label: t('alert.records'), count: tabKeys.value[1].count },
 ])
 const activeTab = ref('rules')
 
@@ -523,7 +531,7 @@ const activeTab = ref('rules')
 
 const stats = ref([
   {
-    label: '24h 活跃告警',
+    label: computed(() => t('alert.activeIn24h')),
     value: 0,
     trend: '-',
     iconBg: 'bg-red-100 dark:bg-red-900/40',
@@ -532,7 +540,7 @@ const stats = ref([
     icon: AlertOutlined,
   },
   {
-    label: '24h 告警总数',
+    label: computed(() => t('alert.totalIn24h')),
     value: 0,
     trend: '-',
     iconBg: 'bg-orange-100 dark:bg-orange-900/40',
@@ -541,7 +549,7 @@ const stats = ref([
     icon: WarningOutlined,
   },
   {
-    label: '已解决告警',
+    label: computed(() => t('alert.resolvedAlerts')),
     value: 0,
     trend: '-',
     iconBg: 'bg-green-100 dark:bg-green-900/40',
@@ -550,7 +558,7 @@ const stats = ref([
     icon: CheckCircleOutlined,
   },
   {
-    label: '告警规则数',
+    label: computed(() => t('alert.ruleCount')),
     value: 0,
     trend: '-',
     iconBg: 'bg-blue-100 dark:bg-blue-900/40',
@@ -663,7 +671,7 @@ async function fetchAlertData() {
     ])
   } catch (e: any) {
     console.error('获取告警数据失败:', e)
-    loadError.value = e?.message || '获取告警数据失败，请稍后重试'
+    loadError.value = e?.message || t('alert.fetchFailed')
   } finally {
     pageLoading.value = false
   }
@@ -675,7 +683,7 @@ async function fetchRules() {
     const res = await getAlertRules()
     const data = res.data
     alertRules.value = Array.isArray(data) ? data : (data?.records || [])
-    tabs.value[0].count = alertRules.value.length
+    tabKeys.value[0].count = alertRules.value.length
   } catch (e) {
     console.error('获取告警规则失败:', e)
     throw e
@@ -696,7 +704,7 @@ async function fetchRecords() {
     // PageResult 结构: { total, records, page, size, totalPages }
     alertRecords.value = pageData?.records || []
     recordsPagination.value.total = pageData?.total || 0
-    tabs.value[1].count = pageData?.total || 0
+    tabKeys.value[1].count = pageData?.total || 0
   } catch (e) {
     console.error('获取告警记录失败:', e)
     throw e
@@ -820,13 +828,13 @@ function formatMetricValue(metricValue: number | undefined, threshold: number | 
 
 function formatAlertType(alertType: string | undefined): string {
   const map: Record<string, string> = {
-    API_ERROR_RATE: 'API 错误率',
-    API_RESPONSE_TIME: 'API 响应时间',
-    JVM_CPU: 'JVM CPU',
-    JVM_MEMORY: 'JVM 内存',
-    DB_CONNECTION_POOL: '数据库连接池',
-    AGENT_EXECUTION_FAILURE: 'Agent 执行失败',
-    QUOTA_EXCEEDED: '配额超限',
+    API_ERROR_RATE: t('alert.typeApiErrorRate'),
+    API_RESPONSE_TIME: t('alert.typeApiResponseTime'),
+    JVM_CPU: t('alert.typeJvmCpu'),
+    JVM_MEMORY: t('alert.typeJvmMemory'),
+    DB_CONNECTION_POOL: t('alert.typeDbPool'),
+    AGENT_EXECUTION_FAILURE: t('alert.typeAgentFailure'),
+    QUOTA_EXCEEDED: t('alert.typeQuotaExceeded'),
   }
   return map[alertType || ''] || alertType || '-'
 }
@@ -845,12 +853,12 @@ function getSeverityBadgeClass(severity: string): string {
 
 function getSeverityLabel(severity: string): string {
   const map: Record<string, string> = {
-    critical: '严重',
-    CRITICAL: '严重',
-    warning: '警告',
-    WARNING: '警告',
-    info: '信息',
-    INFO: '信息',
+    critical: t('alert.severityCritical'),
+    CRITICAL: t('alert.severityCritical'),
+    warning: t('alert.severityWarning'),
+    WARNING: t('alert.severityWarning'),
+    info: t('alert.severityInfo'),
+    INFO: t('alert.severityInfo'),
   }
   return map[severity] || severity
 }
@@ -860,11 +868,11 @@ function getSeverityLabel(severity: string): string {
 async function toggleRule(rule: AlertRuleVO) {
   try {
     await updateAlertRule(rule.id, { isActive: !rule.enabled })
-    message.success(rule.enabled ? '规则已禁用' : '规则已启用')
+    message.success(rule.enabled ? t('alert.ruleDisabled') : t('alert.ruleEnabled'))
     await fetchRules()
   } catch (e) {
     console.error('切换规则状态失败:', e)
-    message.error('操作失败')
+    message.error(t('common.errorText'))
   }
 }
 
@@ -882,20 +890,20 @@ function editRule(rule: AlertRuleVO) {
 
 function deleteRule(rule: AlertRuleVO) {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除规则 "${rule.name}" 吗？`,
-    okText: '确认删除',
+    title: t('alert.confirmDelete'),
+    content: `${t('alert.confirmDeleteContent')} "${rule.name}"?`,
+    okText: t('alert.confirmDelete'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         await deleteAlertRule(rule.id)
-        message.success('删除成功')
+        message.success(t('alert.deleteSuccess'))
         await fetchRules()
         await fetchStats()
       } catch (e) {
         console.error('删除规则失败:', e)
-        message.error('删除失败')
+        message.error(t('alert.deleteFailed'))
       }
     },
   })
@@ -907,12 +915,12 @@ async function resolveRecord(record: AlertRecord) {
   try {
     await resolveAlertRecord(record.id)
     record.status = 'resolved'
-    message.success('告警已确认解决')
+    message.success(t('alert.resolveSuccess'))
     // 刷新统计
     await fetchStats()
   } catch (e) {
     console.error('解决告警失败:', e)
-    message.error('操作失败，请重试')
+    message.error(t('alert.operationFailed'))
   }
 }
 
@@ -925,19 +933,19 @@ function viewRecordDetail(record: AlertRecord) {
 
 async function handleCreateRule() {
   if (!newRule.value.name) {
-    message.error('请输入规则名称')
+    message.error(t('alert.ruleNameRequired'))
     return
   }
   if (!newRule.value.alertType) {
-    message.error('请选择告警类型')
+    message.error(t('alert.alertTypeRequired'))
     return
   }
   if (!newRule.value.metricName) {
-    message.error('请输入指标名称')
+    message.error(t('alert.metricNameRequired'))
     return
   }
   if (newRule.value.threshold == null) {
-    message.error('请输入阈值')
+    message.error(t('alert.thresholdRequired'))
     return
   }
 
@@ -945,10 +953,10 @@ async function handleCreateRule() {
   try {
     if (editingRuleId.value) {
       await updateAlertRule(Number(editingRuleId.value), newRule.value)
-      message.success('规则更新成功')
+      message.success(t('alert.ruleUpdateSuccess'))
     } else {
       await createAlertRule(newRule.value)
-      message.success('规则创建成功')
+      message.success(t('alert.ruleCreateSuccess'))
     }
     showCreateRuleModal.value = false
     editingRuleId.value = null
@@ -957,7 +965,7 @@ async function handleCreateRule() {
     await fetchStats()
   } catch (e) {
     console.error(editingRuleId.value ? '更新规则失败:' : '创建规则失败:', e)
-    message.error(editingRuleId.value ? '规则更新失败' : '规则创建失败')
+    message.error(editingRuleId.value ? t('alert.ruleUpdateFailed') : t('alert.ruleCreateFailed'))
   } finally {
     ruleSubmitting.value = false
   }

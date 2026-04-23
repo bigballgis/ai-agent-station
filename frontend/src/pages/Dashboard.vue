@@ -237,6 +237,38 @@ import { testApi } from '@/api/test'
 import { getLogs } from '@/api/log'
 import { PageHeader, StatCard, ChartContainer } from '@/components'
 
+// ============ 局部类型定义 ============
+interface LogItem {
+  id: number
+  action?: string
+  module?: string
+  operator?: string
+  createdAt?: string
+  message?: string
+  description?: string
+  username?: string
+  createdBy?: string
+  createTime?: string
+}
+
+interface AgentStatusItem {
+  id: number
+  name: string
+  status?: string
+  isActive?: boolean
+}
+
+interface TestResultItem {
+  id: number
+  status: string
+  passedRate?: number
+}
+
+interface ToolStatsResult {
+  totalCalls?: number
+  apiCalls?: number
+}
+
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
 const router = useRouter()
@@ -502,11 +534,11 @@ function formatRelativeTime(dateStr: string): string {
 
 async function loadRecentActivities() {
   try {
-    const res: any = await getLogs({ page: 1, size: 5 })
+    const res: { data?: LogItem[] } | LogItem[] = await getLogs({ page: 1, size: 5 })
     const logsData = res?.data || res || []
     const logsList = Array.isArray(logsData) ? logsData : []
     if (logsList.length > 0) {
-      activities.value = logsList.map((log: any) => ({
+      activities.value = logsList.map((log: LogItem) => ({
         title: log.action || log.description || log.module || t('common.noData'),
         time: formatRelativeTime(log.createdAt || log.createTime),
         operator: log.operator || log.username || log.createdBy || (locale.value === 'zh-CN' ? '系统' : 'System'),
@@ -536,7 +568,7 @@ async function fetchDashboardData() {
       totalAgents.value = agentsList.length
 
       let running = 0, stopped = 0, pending = 0, abnormal = 0
-      agentsList.forEach((agent: any) => {
+      agentsList.forEach((agent: AgentStatusItem) => {
         const status = agent.status || agent.isActive
         if (status === 'PUBLISHED' || status === true) running++
         else if (status === 'DRAFT' || status === false) stopped++
@@ -551,7 +583,7 @@ async function fetchDashboardData() {
       const testData = testRes?.data || testRes || []
       const testList = Array.isArray(testData) ? testData : []
       if (testList.length > 0) {
-        const passed = testList.filter((r: any) => r.status === 'passed').length
+        const passed = testList.filter((r: TestResultItem) => r.status === 'passed').length
         passRate.value = (passed / testList.length) * 100
       } else {
         passRate.value = 0
@@ -567,7 +599,7 @@ async function fetchDashboardData() {
 
     // Fetch tool stats for API calls (non-critical)
     try {
-      const toolRes: any = await getToolStats()
+      const toolRes: ToolStatsResult = await getToolStats()
       const toolData = toolRes?.data || toolRes || {}
       apiCalls.value = toolData.totalCalls || toolData.apiCalls || 0
     } catch {
@@ -576,8 +608,9 @@ async function fetchDashboardData() {
 
     // Load recent activities
     await loadRecentActivities()
-  } catch (error: any) {
-    message.error(t('dashboard.loadFailed') + ': ' + (error.message || ''))
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    message.error(t('dashboard.loadFailed') + ': ' + errMsg)
   } finally {
     dashboardLoading.value = false
   }
