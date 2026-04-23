@@ -250,6 +250,22 @@ router.beforeEach(async (to, _from, next) => {
       })
       return
     }
+
+    // 检查token是否过期
+    const token = userStore.token
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          userStore.logout()
+          return next({ path: '/login', query: { redirect: to.fullPath } })
+        }
+      } catch {
+        // token格式无效
+        userStore.logout()
+        return next({ path: '/login', query: { redirect: to.fullPath } })
+      }
+    }
   } else {
     // 不需要认证的页面
     if (to.path === '/login' && userStore.isLoggedIn) {

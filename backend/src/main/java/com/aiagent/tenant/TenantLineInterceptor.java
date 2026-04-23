@@ -13,7 +13,7 @@ public class TenantLineInterceptor implements StatementInspector {
     @Override
     public String inspect(String sql) {
         Long tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !isSchemaManagementQuery(sql)) {
+        if (tenantId != null && tenantId > 0 && !isSchemaManagementQuery(sql)) {
             String modifiedSql = addTenantCondition(sql, tenantId);
             log.debug("SQL添加租户过滤: {}", modifiedSql);
             return modifiedSql;
@@ -22,6 +22,9 @@ public class TenantLineInterceptor implements StatementInspector {
     }
 
     private String addTenantCondition(String sql, Long tenantId) {
+        if (tenantId == null || tenantId <= 0) {
+            return sql; // 无效租户ID，不添加过滤
+        }
         String lowerSql = sql.toLowerCase();
         
         if (lowerSql.startsWith("select")) {

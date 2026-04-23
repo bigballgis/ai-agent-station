@@ -56,6 +56,7 @@ public class DataExportController {
      * @param startDate filter by creation date (start)
      * @param endDate   filter by creation date (end)
      */
+    @RequiresPermission("data:export")
     @GetMapping("/users")
     @Operation(summary = "导出用户数据为CSV")
     public void exportUsers(
@@ -76,6 +77,7 @@ public class DataExportController {
      * @param startDate filter by creation date (start)
      * @param endDate   filter by creation date (end)
      */
+    @RequiresPermission("data:export")
     @GetMapping("/logs")
     @Operation(summary = "导出系统日志为CSV")
     public void exportLogs(
@@ -97,6 +99,7 @@ public class DataExportController {
      * @param startDate filter by creation date (start)
      * @param endDate   filter by creation date (end)
      */
+    @RequiresPermission("data:export")
     @GetMapping("/test-results")
     @Operation(summary = "导出测试结果为CSV")
     public void exportTestResults(
@@ -118,6 +121,7 @@ public class DataExportController {
      * @param startDate filter by start date (start)
      * @param endDate   filter by start date (end)
      */
+    @RequiresPermission("data:export")
     @GetMapping("/workflow-instances")
     @Operation(summary = "导出工作流实例为CSV")
     public void exportWorkflowInstances(

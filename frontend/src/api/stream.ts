@@ -34,18 +34,17 @@ export function createSSEConnection(
   const tenantId = localStorage.getItem('tenantId')
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
-  const fullUrl = new URL(`${baseUrl}${url}`)
-  Object.entries(params).forEach(([k, v]) => {
-    if (v) fullUrl.searchParams.set(k, v)
-  })
+  const fullUrl = `${baseUrl}${url}`
 
-  fetch(fullUrl.toString(), {
-    method: 'GET',
+  fetch(fullUrl, {
+    method: 'POST',
     headers: {
       'Authorization': token ? `Bearer ${token}` : '',
       'X-Tenant-ID': tenantId || '',
       'Accept': 'text/event-stream',
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify(params),
     signal: controller.signal,
   })
     .then(response => {

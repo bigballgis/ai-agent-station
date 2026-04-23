@@ -46,6 +46,7 @@ public class AgentApprovalController {
         return Result.success(PageResult.from(approvalPage));
     }
 
+    @RequiresPermission("approval:view")
     @GetMapping("/pending")
     @Operation(summary = "获取待审批列表")
     public Result<PageResult<AgentApproval>> getPendingApprovals(
@@ -58,6 +59,7 @@ public class AgentApprovalController {
         return Result.success(PageResult.from(approvalPage));
     }
 
+    @RequiresPermission("approval:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取审批详情")
     public Result<AgentApproval> getApprovalById(@Parameter(description = "审批ID") @PathVariable Long id) {
@@ -65,6 +67,7 @@ public class AgentApprovalController {
         return Result.success(approval);
     }
 
+    @RequiresPermission("approval:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取审批列表")
     public Result<List<AgentApproval>> getApprovalsByAgentId(@Parameter(description = "Agent ID") @PathVariable Long agentId) {
@@ -83,6 +86,7 @@ public class AgentApprovalController {
         return Result.success(approval);
     }
 
+    @RequiresPermission("approval:manage")
     @PostMapping("/{id}/approve")
     @Operation(summary = "审批通过")
     public Result<AgentApproval> approve(
@@ -94,6 +98,7 @@ public class AgentApprovalController {
         return Result.success(approval);
     }
 
+    @RequiresPermission("approval:manage")
     @PostMapping("/{id}/reject")
     @Operation(summary = "审批拒绝")
     public Result<AgentApproval> reject(

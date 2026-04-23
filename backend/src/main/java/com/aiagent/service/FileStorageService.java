@@ -103,6 +103,16 @@ public class FileStorageService {
         Path targetDir = rootLocation;
         if (subDir != null && !subDir.trim().isEmpty()) {
             targetDir = targetDir.resolve(subDir.trim());
+            // 路径遍历防护
+            Path normalizedDir = targetDir.normalize();
+            if (!normalizedDir.startsWith(rootLocation)) {
+                throw new SecurityException("非法的子目录路径: " + subDir);
+            }
+            // subDir字符白名单验证
+            if (!subDir.matches("^[a-zA-Z0-9_\\-/]+$")) {
+                throw new SecurityException("子目录包含非法字符: " + subDir);
+            }
+            targetDir = normalizedDir;
         }
         targetDir = targetDir.resolve(dateDir);
 

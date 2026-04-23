@@ -61,9 +61,9 @@ export const useNotificationStore = defineStore('notification', () => {
   function connectWebSocket(token: string) {
     if (ws && ws.readyState === WebSocket.OPEN) return
 
-    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/notifications?token=${token}`
+    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/notifications`
 
-    ws = new WebSocket(wsUrl)
+    ws = new WebSocket(wsUrl, [token])
 
     ws.onopen = () => {
       wsConnected.value = true

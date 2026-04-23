@@ -1,5 +1,7 @@
 package com.aiagent.security;
 
+import jakarta.annotation.PostConstruct;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -20,7 +22,7 @@ public class JwtUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${jwt.secret:ai-agent-platform-secret-key-2024-very-long-secret-key-for-jwt-signing}")
+    @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration:86400000}")
@@ -28,6 +30,13 @@ public class JwtUtil {
 
     @Value("${jwt.refresh-expiration:604800000}")
     private Long refreshExpiration;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT密钥未配置或长度不足(至少32字符)。请设置环境变量 jwt.secret");
+        }
+    }
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.security.UserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
@@ -47,9 +49,9 @@ public class AuthController {
     @Operation(summary = "用户登出")
     @RequiresPermission("auth:manage")
     @OperationLog(value = "用户登出", module = "认证")
-    public Result<?> logout(@RequestHeader(value = "X-User-ID", required = false) Long userId) {
-        if (userId != null) {
-            authService.logout(userId);
+    public Result<?> logout(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal != null && principal.getId() != null) {
+            authService.logout(principal.getId());
         }
         return Result.success("登出成功");
     }

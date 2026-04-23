@@ -26,6 +26,9 @@ COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+RUN addgroup -S nginx && adduser -S nginx -G nginx
+USER nginx
+
 EXPOSE 5173
 
 CMD ["nginx", "-g", "daemon off;"]

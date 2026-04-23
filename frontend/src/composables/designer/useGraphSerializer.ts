@@ -51,6 +51,28 @@ export function useGraphSerializer(
    * 兼容旧格式（fromNodeId -> sourceId, toNodeId -> targetId）
    */
   function fromGraphData(data: any): void {
+    // 数据验证
+    if (!data || !Array.isArray(data.nodes)) {
+      throw new Error('无效的图数据格式：nodes必须为数组')
+    }
+
+    // 限制导入文件大小（节点数量不超过200）
+    if (data.nodes.length > 200) {
+      throw new Error(`节点数量超出限制：最多允许200个节点，当前${data.nodes.length}个`)
+    }
+
+    // 已知节点类型列表
+    const knownNodeTypes = ['start', 'end', 'llm', 'code', 'http', 'if', 'variable', 'knowledge', 'mcp', 'template', 'memory', 'embedding']
+    for (const node of data.nodes) {
+      if (!knownNodeTypes.includes(node.type)) {
+        throw new Error(`未知的节点类型：${node.type}`)
+      }
+      // 对Code节点的code字段进行长度检查（不超过10000字符）
+      if (node.type === 'code' && node.config?.code && node.config.code.length > 10000) {
+        throw new Error(`Code节点"${node.label || node.id}"的代码长度超出限制：最多允许10000字符`)
+      }
+    }
+
     // Handle both old (fromNodeId) and new (sourceId) formats
     nodes.value = (data.nodes || []).map((n: any) => {
       const typeDef = getNodeTypeDefinition(n.type)
