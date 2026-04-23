@@ -3,6 +3,10 @@ package com.aiagent.dto;
 import com.aiagent.entity.Role;
 import com.aiagent.entity.Permission;
 import com.aiagent.entity.User;
+import com.aiagent.entity.Agent;
+import com.aiagent.entity.Tenant;
+import com.aiagent.vo.AgentVO;
+import com.aiagent.vo.TenantVO;
 
 /**
  * Utility class for converting between entities and DTOs.
@@ -101,5 +105,57 @@ public class DTOConverter {
         permission.setActionCode(dto.getActionCode());
         permission.setTenantId(dto.getTenantId());
         return permission;
+    }
+
+    // ==================== Agent conversions ====================
+
+    public static AgentVO toAgentVO(Agent agent) {
+        if (agent == null) {
+            return null;
+        }
+        AgentVO vo = new AgentVO();
+        vo.setId(agent.getId());
+        vo.setTenantId(agent.getTenantId());
+        vo.setName(agent.getName());
+        vo.setDescription(agent.getDescription());
+        vo.setStatus(agent.getStatus() != null ? agent.getStatus().name() : null);
+        vo.setCategory(agent.getCategory());
+        vo.setConfig(agent.getConfig());
+        vo.setIcon(agent.getIcon());
+        vo.setLanguage(agent.getLanguage());
+        vo.setTags(agent.getTags());
+        vo.setIsActive(agent.getIsActive());
+        vo.setVersion(agent.getVersion());
+        vo.setPublishedVersionId(agent.getPublishedVersionId());
+        vo.setPublishedAt(agent.getPublishedAt());
+        vo.setCreatedAt(agent.getCreatedAt());
+        vo.setUpdatedAt(agent.getUpdatedAt());
+        return vo;
+    }
+
+    // ==================== Tenant conversions ====================
+
+    public static TenantVO toTenantVO(Tenant tenant) {
+        if (tenant == null) {
+            return null;
+        }
+        TenantVO vo = new TenantVO();
+        vo.setId(tenant.getId());
+        vo.setName(tenant.getName());
+        vo.setDescription(tenant.getDescription());
+        vo.setSchemaName(tenant.getSchemaName());
+        vo.setStatus(tenant.getIsActive() != null && tenant.getIsActive() ? "active" : "inactive");
+        vo.setIsActive(tenant.getIsActive());
+        vo.setMaxAgents(tenant.getMaxAgents());
+        vo.setMaxApiCallsPerDay(tenant.getMaxApiCallsPerDay());
+        vo.setMaxTokensPerDay(tenant.getMaxTokensPerDay());
+        vo.setMaxMcpCallsPerDay(tenant.getMaxMcpCallsPerDay());
+        vo.setMaxStorageMb(tenant.getMaxStorageMb());
+        vo.setUsedAgents(tenant.getUsedAgents());
+        vo.setUsedApiCallsToday(tenant.getUsedApiCallsToday());
+        vo.setUsedTokensToday(tenant.getUsedTokensToday());
+        vo.setCreatedAt(tenant.getCreatedAt());
+        vo.setUpdatedAt(tenant.getUpdatedAt());
+        return vo;
     }
 }

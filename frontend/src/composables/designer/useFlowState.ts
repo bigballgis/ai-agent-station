@@ -53,8 +53,15 @@ export function useFlowState() {
   function resolveReferences(template: string, nodes: CanvasNode[], nodeOutputs: Record<string, any>): string {
     if (!template || typeof template !== 'string') return template
 
+    const DANGEROUS_PROPS = ['__proto__', 'constructor', 'prototype', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']
+
     return template.replace(/\{\{([^}]+)\}\}/g, (match, expression) => {
       const trimmed = expression.trim()
+
+      // 表达式长度限制
+      if (trimmed.length > 256) {
+        return match // 表达式过长，不替换
+      }
 
       // Handle state.variable references
       if (trimmed.startsWith('state.')) {
@@ -64,6 +71,10 @@ export function useFlowState() {
 
       // Handle node_id.output references
       const parts = trimmed.split('.')
+      // 原型链污染防护：检查危险属性
+      if (parts.some((p: string) => DANGEROUS_PROPS.includes(p.trim()))) {
+        return match // 不替换，保留原始模板
+      }
       if (parts.length >= 2) {
         const nodeId = parts[0]
         const field = parts.slice(1).join('.')

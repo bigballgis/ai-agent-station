@@ -241,7 +241,7 @@
           >
             <MenuFoldOutlined v-if="!collapsed" class="text-sm" />
             <MenuUnfoldOutlined v-else class="text-sm" />
-            <span v-if="!collapsed" class="text-xs font-medium">{{ collapsed ? '' : '收起菜单' }}</span>
+            <span v-if="!collapsed" class="text-xs font-medium">{{ collapsed ? '' : t('menu.collapseMenu') }}</span>
           </button>
         </div>
       </aside>
@@ -362,7 +362,7 @@ const currentLocale = computed(() => appStore.locale)
 // 菜单分组定义
 const menuGroups = [
   {
-    label: '工作台',
+    label: 'menu.workbench',
     items: [
       {
         key: '/dashboard',
@@ -373,7 +373,7 @@ const menuGroups = [
     ],
   },
   {
-    label: 'Agent 管理',
+    label: 'menu.agentManagement',
     items: [
       {
         key: '/agents',
@@ -391,53 +391,53 @@ const menuGroups = [
         key: '/mcp/tools',
         path: '/mcp/tools',
         icon: AppstoreOutlined,
-        label: 'MCP 工具',
+        label: 'menu.mcpTools',
       },
       {
         key: '/agent/templates',
         path: '/agent/templates',
         icon: AppstoreOutlined,
-        label: '模板市场',
+        label: 'menu.templateMarket',
       },
       {
         key: '/agent/debugger',
         path: '/agent/debugger',
         icon: BugOutlined,
-        label: '在线调试',
+        label: 'menu.onlineDebug',
       },
       {
         key: '/agent/memory',
         path: '/agent/memory',
         icon: DatabaseOutlined,
-        label: '记忆管理',
+        label: 'menu.memoryManagement',
       },
     ],
   },
   {
-    label: '测试中心',
+    label: 'menu.testCenter',
     items: [
       {
         key: '/test-cases',
         path: '/test-cases',
         icon: FileSearchOutlined,
-        label: '测试用例管理',
+        label: 'menu.testCaseManagement',
       },
       {
         key: '/test-executions',
         path: '/test-executions',
         icon: PlayCircleOutlined,
-        label: '测试执行管理',
+        label: 'menu.testExecutionManagement',
       },
       {
         key: '/test-results',
         path: '/test-results',
         icon: BarChartOutlined,
-        label: '测试结果管理',
+        label: 'menu.testResultManagement',
       },
     ],
   },
   {
-    label: '运维管理',
+    label: 'menu.opsManagement',
     items: [
       {
         key: 'ops-approval',
@@ -487,7 +487,7 @@ const menuGroups = [
     ],
   },
   {
-    label: '系统设置',
+    label: 'menu.systemSettings',
     items: [
       {
         key: '/tenant',
@@ -499,13 +499,13 @@ const menuGroups = [
         key: '/suggestions',
         path: '/suggestions',
         icon: BulbOutlined,
-        label: '优化建议管理',
+        label: 'menu.optimizationSuggestions',
       },
       {
         key: '/evolution',
         path: '/evolution',
         icon: BulbOutlined,
-        label: 'Agent自进化',
+        label: 'menu.agentEvolution',
       },
       {
         key: 'system',
@@ -534,19 +534,19 @@ const menuGroups = [
             key: '/system/alerts',
             path: '/system/alerts',
             icon: AlertOutlined,
-            label: '告警中心',
+            label: 'menu.alertCenter',
           },
           {
             key: '/system/quota',
             path: '/system/quota',
             icon: DashboardOutlined,
-            label: '配额管理',
+            label: 'menu.quotaManagement',
           },
           {
             key: '/system/files',
             path: '/system/files',
             icon: FolderOutlined,
-            label: '文件管理',
+            label: 'menu.fileManagement',
           },
         ],
       },
@@ -623,7 +623,7 @@ async function handleUserMenu(e: { key: string }) {
       content: t('header.logoutConfirm'),
       onOk: async () => {
         await userStore.logout()
-        message.success('Logged out successfully')
+        message.success(t('header.logoutSuccess'))
         router.push('/login')
       },
     })

@@ -17,6 +17,6 @@ export function getTenantQuotaDetails(tenantId: number) {
 /**
  * 更新租户配额
  */
-export function updateTenantQuota(tenantId: number, data: any) {
+export function updateTenantQuota(tenantId: number, data: Record<string, unknown>) {
   return request.put(`/v1/quotas/tenant/${tenantId}`, data)
 }

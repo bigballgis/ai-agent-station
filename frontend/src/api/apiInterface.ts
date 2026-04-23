@@ -12,11 +12,11 @@ export function getApiInterfacesByAgent(agentId: number) {
   return request.get(`/v1/api-interfaces/agent/${agentId}`)
 }
 
-export function createApiInterface(data: any) {
+export function createApiInterface(data: Record<string, unknown>) {
   return request.post('/v1/api-interfaces', data)
 }
 
-export function updateApiInterface(id: number, data: any) {
+export function updateApiInterface(id: number, data: Record<string, unknown>) {
   return request.put(`/v1/api-interfaces/${id}`, data)
 }
 

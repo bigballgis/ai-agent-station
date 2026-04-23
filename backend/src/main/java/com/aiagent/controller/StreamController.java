@@ -12,6 +12,7 @@ import com.aiagent.repository.AgentRepository;
 import com.aiagent.service.llm.LangChain4jService;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -49,19 +50,22 @@ public class StreamController {
     private final GraphExecutor graphExecutor;
     private final AgentRepository agentRepository;
     private final Executor sseExecutor;
+    private final ObjectMapper objectMapper;
 
     public StreamController(LangChain4jService langChain4jService,
                             PromptInjectionFilter promptInjectionFilter,
                             GraphParser graphParser,
                             GraphExecutor graphExecutor,
                             AgentRepository agentRepository,
-                            @Qualifier("sseExecutor") Executor sseExecutor) {
+                            @Qualifier("sseExecutor") Executor sseExecutor,
+                            ObjectMapper objectMapper) {
         this.langChain4jService = langChain4jService;
         this.promptInjectionFilter = promptInjectionFilter;
         this.graphParser = graphParser;
         this.graphExecutor = graphExecutor;
         this.agentRepository = agentRepository;
         this.sseExecutor = sseExecutor;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -100,12 +104,15 @@ public class StreamController {
                             @Override
                             public void onNext(String token) {
                                 try {
+                                    Map<String, String> eventData = new LinkedHashMap<>();
+                                    eventData.put("type", "token");
+                                    eventData.put("content", token);
                                     emitter.send(SseEmitter.event()
                                             .name("token")
-                                            .data("{\"type\":\"token\",\"content\":\"" + escapeJson(token) + "\"}"));
-                                } catch (IOException e) {
+                                            .data(objectMapper.writeValueAsString(eventData)));
+                                } catch (Exception e) {
                                     subscription.cancel();
-                                    emitter.completeWithError(e);
+                                    emitter.completeWithError(e instanceof IOException ? e : new IOException(e));
                                 }
                             }
 
@@ -113,31 +120,39 @@ public class StreamController {
                             public void onError(Throwable throwable) {
                                 log.error("[SSE] 流式对话错误: {}", throwable.getMessage());
                                 try {
+                                    Map<String, String> eventData = new LinkedHashMap<>();
+                                    eventData.put("type", "error");
+                                    eventData.put("content", throwable.getMessage());
                                     emitter.send(SseEmitter.event()
                                             .name("error")
-                                            .data("{\"type\":\"error\",\"content\":\"" +
-                                                    escapeJson(throwable.getMessage()) + "\"}"));
-                                } catch (IOException ignored) {}
+                                            .data(objectMapper.writeValueAsString(eventData)));
+                                } catch (Exception ignored) {}
                                 emitter.complete();
                             }
 
                             @Override
                             public void onComplete() {
                                 try {
+                                    Map<String, String> eventData = new LinkedHashMap<>();
+                                    eventData.put("type", "done");
+                                    eventData.put("content", "");
                                     emitter.send(SseEmitter.event()
                                             .name("done")
-                                            .data("{\"type\":\"done\",\"content\":\"\"}"));
-                                } catch (IOException ignored) {}
+                                            .data(objectMapper.writeValueAsString(eventData)));
+                                } catch (Exception ignored) {}
                                 emitter.complete();
                             }
                         });
             } catch (Exception e) {
                 log.error("[SSE] 流式对话启动失败: {}", e.getMessage());
                 try {
+                    Map<String, String> eventData = new LinkedHashMap<>();
+                    eventData.put("type", "error");
+                    eventData.put("content", e.getMessage());
                     emitter.send(SseEmitter.event()
                             .name("error")
-                            .data("{\"type\":\"error\",\"content\":\"" + escapeJson(e.getMessage()) + "\"}"));
-                } catch (IOException ignored) {}
+                            .data(objectMapper.writeValueAsString(eventData)));
+                } catch (Exception ignored) {}
                 emitter.complete();
             }
         });
@@ -166,11 +181,14 @@ public class StreamController {
         if (message == null || message.isBlank()) {
             SseEmitter emitter = new SseEmitter(1_000L);
             try {
+                Map<String, String> eventData = new LinkedHashMap<>();
+                eventData.put("type", "error");
+                eventData.put("content", "message is required");
                 emitter.send(SseEmitter.event()
                         .name("error")
-                        .data("{\"type\":\"error\",\"content\":\"message is required\"}"));
+                        .data(objectMapper.writeValueAsString(eventData)));
                 emitter.complete();
-            } catch (IOException ignored) {}
+            } catch (Exception ignored) {}
             return emitter;
         }
 
@@ -250,10 +268,12 @@ public class StreamController {
                     state.setCurrentNodeId(currentNodeId);
 
                     // 发送 node_start 事件
+                    Map<String, String> nodeStartData = new LinkedHashMap<>();
+                    nodeStartData.put("nodeId", node.getId());
+                    nodeStartData.put("nodeType", node.getType());
                     emitter.send(SseEmitter.event()
                             .name("node_start")
-                            .data("{\"nodeId\":\"" + escapeJson(node.getId()) +
-                                    "\",\"nodeType\":\"" + escapeJson(node.getType()) + "\"}"));
+                            .data(objectMapper.writeValueAsString(nodeStartData)));
 
                     try {
                         if ("llm".equals(node.getType())) {
@@ -293,10 +313,12 @@ public class StreamController {
                                         public void onNext(String token) {
                                             try {
                                                 nodeOutput.append(token);
+                                                Map<String, String> tokenData = new LinkedHashMap<>();
+                                                tokenData.put("content", token);
                                                 emitter.send(SseEmitter.event()
                                                         .name("token")
-                                                        .data("{\"content\":\"" + escapeJson(token) + "\"}"));
-                                            } catch (IOException e) {
+                                                        .data(objectMapper.writeValueAsString(tokenData)));
+                                            } catch (Exception e) {
                                                 subscription.cancel();
                                             }
                                         }
@@ -337,10 +359,12 @@ public class StreamController {
                         }
 
                         // 发送 node_end 事件
+                        Map<String, String> nodeEndData = new LinkedHashMap<>();
+                        nodeEndData.put("nodeId", node.getId());
+                        nodeEndData.put("status", "completed");
                         emitter.send(SseEmitter.event()
                                 .name("node_end")
-                                .data("{\"nodeId\":\"" + escapeJson(node.getId()) +
-                                        "\",\"status\":\"completed\"}"));
+                                .data(objectMapper.writeValueAsString(nodeEndData)));
 
                         // 决定下一个节点
                         if (!state.isShouldTerminate()) {
@@ -352,11 +376,14 @@ public class StreamController {
                     } catch (Exception e) {
                         log.error("[SSE] 节点 {} 执行失败: {}", node.getId(), e.getMessage());
                         try {
+                            Map<String, String> nodeFailData = new LinkedHashMap<>();
+                            nodeFailData.put("nodeId", node.getId());
+                            nodeFailData.put("status", "failed");
+                            nodeFailData.put("error", e.getMessage());
                             emitter.send(SseEmitter.event()
                                     .name("node_end")
-                                    .data("{\"nodeId\":\"" + escapeJson(node.getId()) +
-                                            "\",\"status\":\"failed\",\"error\":\"" + escapeJson(e.getMessage()) + "\"}"));
-                        } catch (IOException ignored) {}
+                                    .data(objectMapper.writeValueAsString(nodeFailData)));
+                        } catch (Exception ignored) {}
 
                         // 查找异常处理节点
                         currentNodeId = findExceptionHandler(graph, node);
@@ -370,19 +397,25 @@ public class StreamController {
 
                 // 5. 发送 done 事件
                 String finalOutput = fullOutput.toString();
+                Map<String, String> doneData = new LinkedHashMap<>();
+                doneData.put("type", "done");
+                doneData.put("content", finalOutput);
                 emitter.send(SseEmitter.event()
                         .name("done")
-                        .data("{\"type\":\"done\",\"content\":\"" + escapeJson(finalOutput) + "\"}"));
+                        .data(objectMapper.writeValueAsString(doneData)));
                 emitter.complete();
 
             } catch (Exception e) {
                 log.error("[SSE] Agent 执行失败: {}", e.getMessage());
                 try {
+                    Map<String, String> errorData = new LinkedHashMap<>();
+                    errorData.put("type", "error");
+                    errorData.put("content", e.getMessage());
                     emitter.send(SseEmitter.event()
                             .name("error")
-                            .data("{\"type\":\"error\",\"content\":\"" + escapeJson(e.getMessage()) + "\"}"));
+                            .data(objectMapper.writeValueAsString(errorData)));
                     emitter.complete();
-                } catch (IOException ignored) {}
+                } catch (Exception ignored) {}
             }
         });
 
@@ -452,17 +485,5 @@ public class StreamController {
             }
         }
         return null;
-    }
-
-    /**
-     * JSON 特殊字符转义
-     */
-    private String escapeJson(String text) {
-        if (text == null) return "";
-        return text.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 }

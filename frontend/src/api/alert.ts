@@ -10,14 +10,14 @@ export function getAlertRules() {
 /**
  * 创建告警规则
  */
-export function createAlertRule(data: any) {
+export function createAlertRule(data: Record<string, unknown>) {
   return request.post('/v1/alerts/rules', data)
 }
 
 /**
  * 更新告警规则
  */
-export function updateAlertRule(id: number, data: any) {
+export function updateAlertRule(id: number, data: Record<string, unknown>) {
   return request.put(`/v1/alerts/rules/${id}`, data)
 }
 
@@ -31,7 +31,7 @@ export function deleteAlertRule(id: number) {
 /**
  * 获取告警记录
  */
-export function getAlertRecords(params?: any) {
+export function getAlertRecords(params?: Record<string, unknown>) {
   return request.get('/v1/alerts/records', { params })
 }
 

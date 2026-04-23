@@ -42,6 +42,7 @@ const llmConfigSchema: ConfigFieldSchema[] = [
     defaultValue: 'openai',
     options: [
       { label: 'OpenAI', value: 'openai' },
+      // 注意：以下 provider 需要确认后端 LangChain4jService 是否已配置对应支持
       { label: 'Anthropic', value: 'anthropic' },
       { label: 'Google', value: 'google' },
       { label: 'Ollama', value: 'ollama' },
@@ -356,7 +357,6 @@ const codeConfigSchema: ConfigFieldSchema[] = [
     defaultValue: 'javascript',
     options: [
       { label: 'JavaScript', value: 'javascript' },
-      { label: 'Python', value: 'python' },
     ],
     tooltip: '代码执行的编程语言',
   },
@@ -531,7 +531,7 @@ const endConfigSchema: ConfigFieldSchema[] = [
 ]
 
 // ============================================================
-// 节点类型定义（14 种，与 GraphExecutor.java 一致）
+// 节点类型定义（18 种，与 GraphExecutor.java 一致）
 // ============================================================
 
 const nodeTypeDefinitions: NodeTypeDefinition[] = [

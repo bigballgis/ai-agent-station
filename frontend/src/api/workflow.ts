@@ -6,8 +6,8 @@ export interface WorkflowNode {
   id: string
   type: 'START' | 'END' | 'APPROVAL' | 'CONDITION' | 'NOTIFY' | 'AGENT' | 'HTTP' | 'DELAY' | 'PARALLEL'
   name: string
-  config?: Record<string, any>
-  [key: string]: any
+  config?: Record<string, unknown>
+  [key: string]: unknown
 }
 
 export interface WorkflowEdge {
@@ -15,7 +15,7 @@ export interface WorkflowEdge {
   source: string
   target: string
   label?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface WorkflowDefinition {
@@ -26,7 +26,7 @@ export interface WorkflowDefinition {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
   nodes: { nodes: WorkflowNode[] } | null
   edges: { edges: WorkflowEdge[] } | null
-  triggers: Record<string, any> | null
+  triggers: Record<string, unknown> | null
   tenantId: number
   createdAt: string
   updatedAt: string
@@ -39,9 +39,9 @@ export interface WorkflowInstance {
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'SUSPENDED'
   currentNodeId?: string
   currentStep?: number
-  variables: Record<string, any> | null
-  input: Record<string, any> | null
-  output: Record<string, any> | null
+  variables: Record<string, unknown> | null
+  input: Record<string, unknown> | null
+  output: Record<string, unknown> | null
   startedBy?: number
   startedAt?: string
   completedAt?: string
@@ -56,8 +56,8 @@ export interface WorkflowNodeLog {
   nodeName?: string
   nodeType: string
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED'
-  input: Record<string, any> | null
-  output: Record<string, any> | null
+  input: Record<string, unknown> | null
+  output: Record<string, unknown> | null
   error?: string
   startedAt?: string
   completedAt?: string
@@ -80,7 +80,7 @@ export interface ApiResponse<T> {
 export const workflowApi = {
   // Definition APIs
   getDefinitions: (page = 0, size = 10, status?: string) => {
-    const params: Record<string, any> = { page, size }
+    const params: Record<string, unknown> = { page, size }
     if (status) params.status = status
     return request.get<ApiResponse<PageResult<WorkflowDefinition>>>('/workflows/definitions', { params })
   },
@@ -92,9 +92,9 @@ export const workflowApi = {
   createDefinition: (data: {
     name: string
     description?: string
-    nodes?: Record<string, any>
-    edges?: Record<string, any>
-    triggers?: Record<string, any>
+    nodes?: Record<string, unknown>
+    edges?: Record<string, unknown>
+    triggers?: Record<string, unknown>
   }) => {
     return request.post<ApiResponse<WorkflowDefinition>>('/workflows/definitions', data)
   },
@@ -102,9 +102,9 @@ export const workflowApi = {
   updateDefinition: (id: number, data: {
     name?: string
     description?: string
-    nodes?: Record<string, any>
-    edges?: Record<string, any>
-    triggers?: Record<string, any>
+    nodes?: Record<string, unknown>
+    edges?: Record<string, unknown>
+    triggers?: Record<string, unknown>
   }) => {
     return request.put<ApiResponse<WorkflowDefinition>>(`/workflows/definitions/${id}`, data)
   },
@@ -119,7 +119,7 @@ export const workflowApi = {
 
   // Instance APIs
   getInstances: (page = 0, size = 10, filters?: { status?: string; definitionId?: number }) => {
-    const params: Record<string, any> = { page, size }
+    const params: Record<string, unknown> = { page, size }
     if (filters?.status) params.status = filters.status
     if (filters?.definitionId) params.definitionId = filters.definitionId
     return request.get<ApiResponse<PageResult<WorkflowInstance>>>('/workflows/instances', { params })
@@ -129,7 +129,7 @@ export const workflowApi = {
     return request.get<ApiResponse<WorkflowInstance>>(`/workflows/instances/${id}`)
   },
 
-  startWorkflow: (definitionId: number, variables?: Record<string, any>) => {
+  startWorkflow: (definitionId: number, variables?: Record<string, unknown>) => {
     return request.post<ApiResponse<WorkflowInstance>>('/workflows/instances/start', {
       definitionId,
       variables

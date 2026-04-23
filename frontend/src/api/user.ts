@@ -20,11 +20,11 @@ export function getUserById(id: number) {
   return request.get(`/users/${id}`)
 }
 
-export function createUser(data: any) {
+export function createUser(data: Record<string, unknown>) {
   return request.post('/users', data)
 }
 
-export function updateUser(id: number, data: any) {
+export function updateUser(id: number, data: Record<string, unknown>) {
   return request.put(`/users/${id}`, data)
 }
 

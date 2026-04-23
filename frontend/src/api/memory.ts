@@ -3,7 +3,7 @@ import request from '@/utils/request'
 /**
  * 获取 Agent 记忆列表
  */
-export function getAgentMemories(agentId: string, params?: any) {
+export function getAgentMemories(agentId: string, params?: Record<string, unknown>) {
   return request.get(`/v1/memories/agent/${agentId}`, { params })
 }
 

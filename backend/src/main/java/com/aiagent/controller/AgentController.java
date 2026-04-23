@@ -4,9 +4,11 @@ import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
 import com.aiagent.dto.AgentDTO;
+import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.service.AgentService;
+import com.aiagent.vo.AgentVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,22 +31,22 @@ public class AgentController {
     @GetMapping
     @RequiresPermission("agent:view")
     @Operation(summary = "获取所有Agent列表")
-    public Result<List<Agent>> getAllAgents() {
-        return Result.success(agentService.getAllAgents());
+    public Result<List<AgentVO>> getAllAgents() {
+        return Result.success(agentService.getAllAgents().stream().map(DTOConverter::toAgentVO).toList());
     }
 
     @GetMapping("/{id}")
     @RequiresPermission("agent:view")
     @Operation(summary = "根据ID获取Agent详情")
-    public Result<Agent> getAgentById(@Parameter(description = "Agent ID") @PathVariable Long id) {
-        return Result.success(agentService.getAgentById(id));
+    public Result<AgentVO> getAgentById(@Parameter(description = "Agent ID") @PathVariable Long id) {
+        return Result.success(DTOConverter.toAgentVO(agentService.getAgentById(id)));
     }
 
     @PostMapping
     @RequiresPermission("agent:create")
     @Operation(summary = "创建Agent")
     @OperationLog(value = "创建Agent", module = "Agent管理")
-    public Result<Agent> createAgent(@Valid @RequestBody AgentDTO dto) {
+    public Result<AgentVO> createAgent(@Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
         agent.setName(dto.getName());
         agent.setDescription(dto.getDescription());
@@ -54,14 +56,14 @@ public class AgentController {
         if (dto.getType() != null) {
             agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
         }
-        return Result.success(agentService.createAgent(agent));
+        return Result.success(DTOConverter.toAgentVO(agentService.createAgent(agent)));
     }
 
     @PutMapping("/{id}")
     @RequiresPermission("agent:update")
     @Operation(summary = "更新Agent")
     @OperationLog(value = "更新Agent", module = "Agent管理")
-    public Result<Agent> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentDTO dto) {
+    public Result<AgentVO> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
         agent.setName(dto.getName());
         agent.setDescription(dto.getDescription());
@@ -71,7 +73,7 @@ public class AgentController {
         if (dto.getType() != null) {
             agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
         }
-        return Result.success(agentService.updateAgent(id, agent));
+        return Result.success(DTOConverter.toAgentVO(agentService.updateAgent(id, agent)));
     }
 
     @DeleteMapping("/{id}")
@@ -86,8 +88,8 @@ public class AgentController {
     @PostMapping("/{id}/copy")
     @RequiresPermission("agent:create")
     @Operation(summary = "复制Agent")
-    public Result<Agent> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody CopyAgentRequest request) {
-        return Result.success(agentService.copyAgent(id, request.getNewName()));
+    public Result<AgentVO> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody CopyAgentRequest request) {
+        return Result.success(DTOConverter.toAgentVO(agentService.copyAgent(id, request.getNewName())));
     }
 
     @GetMapping("/{id}/versions")
@@ -107,8 +109,8 @@ public class AgentController {
     @PostMapping("/{id}/versions/{versionNumber}/rollback")
     @RequiresPermission("agent:update")
     @Operation(summary = "回滚到指定版本")
-    public Result<Agent> rollbackToVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
-        return Result.success(agentService.rollbackToVersion(id, versionNumber));
+    public Result<AgentVO> rollbackToVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
+        return Result.success(DTOConverter.toAgentVO(agentService.rollbackToVersion(id, versionNumber)));
     }
 
     public static class CopyAgentRequest {

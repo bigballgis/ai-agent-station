@@ -5,6 +5,7 @@ import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
 import com.aiagent.security.annotation.Auditable;
+import com.aiagent.security.validator.PasswordPolicyValidator;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicyValidator passwordPolicyValidator;
 
     public List<User> getAllUsers() {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -58,6 +60,12 @@ public class UserService {
             throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "用户名已存在");
         }
 
+        // 密码策略校验
+        List<String> passwordErrors = passwordPolicyValidator.validate(user.getPassword());
+        if (!passwordErrors.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("; ", passwordErrors));
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setIsActive(true);
         return userRepository.save(user);
@@ -84,6 +92,13 @@ public class UserService {
     @Auditable(tableName = "user", description = "重置密码")
     public void resetPassword(Long id, String newPassword) {
         User user = getUserById(id);
+
+        // 密码策略校验
+        List<String> passwordErrors = passwordPolicyValidator.validate(newPassword);
+        if (!passwordErrors.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("; ", passwordErrors));
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }

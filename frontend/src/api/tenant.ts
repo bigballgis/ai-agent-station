@@ -17,14 +17,14 @@ export function getTenantById(id: number) {
 /**
  * 创建租户
  */
-export function createTenant(data: any) {
+export function createTenant(data: Record<string, unknown>) {
   return request.post('/tenants', data)
 }
 
 /**
  * 更新租户
  */
-export function updateTenant(id: number, data: any) {
+export function updateTenant(id: number, data: Record<string, unknown>) {
   return request.put(`/tenants/${id}`, data)
 }
 

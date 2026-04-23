@@ -1,6 +1,6 @@
 export interface SSEOptions {
-  onMessage?: (data: any) => void
-  onError?: (err: any) => void
+  onMessage?: (data: unknown) => void
+  onError?: (err: Error) => void
 }
 
 export function streamChat(
@@ -26,8 +26,8 @@ export function streamAgentExecution(
 export function createSSEConnection(
   url: string,
   params: Record<string, string>,
-  onMessage?: (data: any) => void,
-  onError?: (err: any) => void
+  onMessage?: (data: unknown) => void,
+  onError?: (err: Error) => void
 ): { close: () => void } {
   const controller = new AbortController()
   const token = localStorage.getItem('token')

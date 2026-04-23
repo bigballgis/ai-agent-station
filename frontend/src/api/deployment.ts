@@ -20,12 +20,12 @@ export interface Deployment {
 }
 
 export interface VersionComparison {
-  version1: any;
-  version2: any;
+  version1: unknown;
+  version2: unknown;
   configDiff: {
-    added: Record<string, any>;
-    removed: Record<string, any>;
-    modified: Record<string, { old: any; new: any }>;
+    added: Record<string, unknown>;
+    removed: Record<string, unknown>;
+    modified: Record<string, { old: unknown; new: unknown }>;
   };
 }
 

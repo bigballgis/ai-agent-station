@@ -40,22 +40,19 @@ public class AuthService {
         }
 
         User user;
-
         if (tenantId != null) {
-            user = userRepository.findByUsernameAndTenantId(username, tenantId)
-                    .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
+            user = userRepository.findByUsernameAndTenantId(username, tenantId).orElse(null);
         } else {
-            user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new BusinessException(ResultCode.USER_NOT_FOUND));
+            user = userRepository.findByUsername(username).orElse(null);
         }
 
-        if (!user.getIsActive()) {
-            throw new BusinessException(ResultCode.USER_DISABLED);
-        }
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        // 统一错误消息，防止用户名枚举
+        if (user == null || !user.getIsActive() || !passwordEncoder.matches(password, user.getPassword())) {
+            if (user != null && passwordEncoder.matches(password, user.getPassword()) && !user.getIsActive()) {
+                throw new BusinessException(ResultCode.USER_DISABLED);
+            }
             loginRateLimitService.recordFailedAttempt(username, clientIp);
-            throw new BusinessException(ResultCode.INVALID_PASSWORD);
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "用户名或密码错误");
         }
 
         // 登录成功，重置失败计数
@@ -119,12 +116,43 @@ public class AuthService {
     }
 
     /**
-     * 登出：清除 Refresh Token
+     * 登出：清除 Refresh Token 并将 Access Token 加入黑名单
      */
-    public void logout(Long userId) {
+    public void logout(Long userId, String accessToken) {
+        // 清除 Refresh Token
         String key = "refresh_token:" + userId;
         redisTemplate.delete(key);
-        log.info("用户登出，已清除 Refresh Token: userId={}", userId);
+
+        // 将 Access Token 加入黑名单（TTL = token剩余有效期，最多24小时）
+        if (accessToken != null && jwtUtil.validateToken(accessToken)) {
+            try {
+                long remainingSeconds = getTokenRemainingSeconds(accessToken);
+                if (remainingSeconds > 0) {
+                    String blacklistKey = "token_blacklist:" + accessToken;
+                    redisTemplate.opsForValue().set(blacklistKey, "1", remainingSeconds, TimeUnit.SECONDS);
+                }
+            } catch (Exception e) {
+                log.warn("将token加入黑名单失败: {}", e.getMessage());
+            }
+        }
+        log.info("用户登出，已清除 Refresh Token 并加入黑名单: userId={}", userId);
+    }
+
+    private long getTokenRemainingSeconds(String token) {
+        try {
+            var claims = jwtUtil.getClaimsFromToken(token);
+            return (claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 检查token是否在黑名单中
+     */
+    public boolean isTokenBlacklisted(String token) {
+        String key = "token_blacklist:" + token;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
     private Map<String, Object> buildUserResponse(User user) {

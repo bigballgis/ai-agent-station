@@ -3,8 +3,10 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.Tenant;
 import com.aiagent.service.TenantService;
+import com.aiagent.vo.TenantVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,32 +27,32 @@ public class TenantController {
     @Operation(summary = "获取所有租户列表")
     @RequiresPermission("tenant:read")
     @RequiresRole("SUPER_ADMIN")
-    public Result<List<Tenant>> getAllTenants() {
-        return Result.success(tenantService.getAllTenants());
+    public Result<List<TenantVO>> getAllTenants() {
+        return Result.success(tenantService.getAllTenants().stream().map(DTOConverter::toTenantVO).toList());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取租户详情")
     @RequiresPermission("tenant:read")
     @RequiresRole("SUPER_ADMIN")
-    public Result<Tenant> getTenantById(@PathVariable Long id) {
-        return Result.success(tenantService.getTenantById(id));
+    public Result<TenantVO> getTenantById(@PathVariable Long id) {
+        return Result.success(DTOConverter.toTenantVO(tenantService.getTenantById(id)));
     }
 
     @PostMapping
     @Operation(summary = "创建租户")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<Tenant> createTenant(@RequestBody Tenant tenant) {
-        return Result.success(tenantService.createTenant(tenant));
+    public Result<TenantVO> createTenant(@RequestBody Tenant tenant) {
+        return Result.success(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新租户信息")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<Tenant> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
-        return Result.success(tenantService.updateTenant(id, tenant));
+    public Result<TenantVO> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
+        return Result.success(DTOConverter.toTenantVO(tenantService.updateTenant(id, tenant)));
     }
 
     @DeleteMapping("/{id}")
@@ -66,7 +68,7 @@ public class TenantController {
     @Operation(summary = "重新生成API密钥")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
-    public Result<Tenant> regenerateApiKey(@PathVariable Long id) {
-        return Result.success(tenantService.regenerateApiKey(id));
+    public Result<TenantVO> regenerateApiKey(@PathVariable Long id) {
+        return Result.success(DTOConverter.toTenantVO(tenantService.regenerateApiKey(id)));
     }
 }

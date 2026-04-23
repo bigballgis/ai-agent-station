@@ -1,6 +1,5 @@
 package com.aiagent.vo;
 
-import com.aiagent.entity.Tenant;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,20 +8,19 @@ import java.time.LocalDateTime;
 public class TenantVO {
     private Long id;
     private String name;
-    private String contactName;
-    private String contactEmail;
+    private String description;
+    private String schemaName;
     private String status;
-    private Integer agentCount;
-    private Integer userCount;
+    private Boolean isActive;
+    private Integer maxAgents;
+    private Long maxApiCallsPerDay;
+    private Long maxTokensPerDay;
+    private Long maxMcpCallsPerDay;
+    private Long maxStorageMb;
+    private Integer usedAgents;
+    private Long usedApiCallsToday;
+    private Long usedTokensToday;
     private LocalDateTime createdAt;
-
-    public static TenantVO fromEntity(Tenant entity) {
-        TenantVO vo = new TenantVO();
-        vo.setId(entity.getId());
-        vo.setName(entity.getName());
-        vo.setStatus(entity.getIsActive() != null && entity.getIsActive() ? "active" : "inactive");
-        vo.setAgentCount(entity.getUsedAgents());
-        vo.setCreatedAt(entity.getCreatedAt());
-        return vo;
-    }
+    private LocalDateTime updatedAt;
+    // 不包含 apiKey, apiSecret 等敏感字段
 }

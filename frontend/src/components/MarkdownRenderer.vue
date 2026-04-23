@@ -59,6 +59,23 @@ const props = withDefaults(defineProps<Props>(), {
 const contentRef = ref<HTMLElement | null>(null)
 
 /**
+ * URL 协议白名单校验，防止 XSS 攻击
+ */
+function sanitizeUrl(url: string): string {
+  if (!url) return ''
+  const trimmed = url.trim().toLowerCase()
+  // 仅允许 http, https, mailto 协议
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('mailto:')) {
+    return url.trim()
+  }
+  // 相对路径允许
+  if (trimmed.startsWith('/') || trimmed.startsWith('#') || trimmed.startsWith('./') || trimmed.startsWith('../')) {
+    return url.trim()
+  }
+  return '#'
+}
+
+/**
  * 简易 Markdown 渲染
  * 注意：生产环境建议使用 marked + highlight.js
  * 此处提供基础渲染能力
@@ -98,10 +115,10 @@ const renderedContent = computed(() => {
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
 
   // 链接（[text](url)）
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text, url) => `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`)
 
   // 图片（![alt](url)）
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, url) => `<img src="${sanitizeUrl(url)}" alt="${alt}" />`)
 
   // 无序列表
   html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')

@@ -10,11 +10,11 @@ export function getPermissionById(id: number) {
   return request.get(`/permissions/${id}`)
 }
 
-export function createPermission(data: any) {
+export function createPermission(data: Record<string, unknown>) {
   return request.post('/permissions', data)
 }
 
-export function updatePermission(id: number, data: any) {
+export function updatePermission(id: number, data: Record<string, unknown>) {
   return request.put(`/permissions/${id}`, data)
 }
 
@@ -44,11 +44,11 @@ export function getRoleById(id: number) {
   return request.get(`/roles/${id}`)
 }
 
-export function createRole(data: any) {
+export function createRole(data: Record<string, unknown>) {
   return request.post('/roles', data)
 }
 
-export function updateRole(id: number, data: any) {
+export function updateRole(id: number, data: Record<string, unknown>) {
   return request.put(`/roles/${id}`, data)
 }
 

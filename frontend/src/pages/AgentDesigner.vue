@@ -982,6 +982,10 @@ function handleImport(event: Event) {
 // Console Helpers
 // ============================================================
 function addLog(level: ConsoleLog['level'], msg: string, withTimestamp = true) {
+  const MAX_CONSOLE_LOGS = 500
+  if (consoleLogs.value.length >= MAX_CONSOLE_LOGS) {
+    consoleLogs.value.splice(0, consoleLogs.value.length - MAX_CONSOLE_LOGS + 50)
+  }
   consoleLogs.value.push({
     time: withTimestamp ? new Date().toLocaleTimeString('zh-CN', { hour12: false }) : '',
     level,
@@ -1321,6 +1325,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
   window.removeEventListener('click', onGlobalClick)
+  execution.stopExecution(t)
   if (resizeObserver) {
     resizeObserver.disconnect()
     resizeObserver = null

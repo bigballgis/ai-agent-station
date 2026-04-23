@@ -9,7 +9,7 @@ export const generateSuggestions = (agentId: number) => {
 }
 
 // 创建建议
-export const createSuggestion = (data: any) => {
+export const createSuggestion = (data: Record<string, unknown>) => {
   return request({
     url: '/suggestions',
     method: 'post',
@@ -18,7 +18,7 @@ export const createSuggestion = (data: any) => {
 }
 
 // 更新建议
-export const updateSuggestion = (id: number, data: any) => {
+export const updateSuggestion = (id: number, data: Record<string, unknown>) => {
   return request({
     url: `/suggestions/${id}`,
     method: 'put',
@@ -51,7 +51,7 @@ export const getAllSuggestions = () => {
 }
 
 // 搜索建议
-export const searchSuggestions = (params: any) => {
+export const searchSuggestions = (params: Record<string, unknown>) => {
   return request({
     url: '/suggestions/search',
     method: 'get',

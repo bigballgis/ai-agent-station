@@ -43,15 +43,20 @@ public class AuthController {
     }
 
     /**
-     * 登出（使 Refresh Token 失效）
+     * 登出（使 Refresh Token 失效并将 Access Token 加入黑名单）
      */
     @PostMapping("/logout")
     @Operation(summary = "用户登出")
     @RequiresPermission("auth:manage")
     @OperationLog(value = "用户登出", module = "认证")
-    public Result<?> logout(@AuthenticationPrincipal UserPrincipal principal) {
+    public Result<?> logout(@AuthenticationPrincipal UserPrincipal principal,
+                            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (principal != null && principal.getId() != null) {
-            authService.logout(principal.getId());
+            String accessToken = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                accessToken = authHeader.substring(7);
+            }
+            authService.logout(principal.getId(), accessToken);
         }
         return Result.success("登出成功");
     }
