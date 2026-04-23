@@ -29,17 +29,17 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 认证接口放行
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/v1/auth/**").permitAll()
                         // Actuator 端点需要 ADMIN 角色
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // 用户管理接口需要 ADMIN 或 TENANT_ADMIN 角色
-                        .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
+                        .requestMatchers("/v1/users/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
                         // 角色管理接口需要 ADMIN 或 TENANT_ADMIN 角色
-                        .requestMatchers("/api/v1/roles/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
+                        .requestMatchers("/v1/roles/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
                         // 权限管理接口需要 ADMIN 或 TENANT_ADMIN 角色
-                        .requestMatchers("/api/v1/permissions/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
+                        .requestMatchers("/v1/permissions/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
                         // 租户管理接口需要 ADMIN 或 TENANT_ADMIN 角色
-                        .requestMatchers("/api/v1/tenants/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
+                        .requestMatchers("/v1/tenants/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
                         // 其他接口只需要认证
                         .anyRequest().authenticated()
                 )

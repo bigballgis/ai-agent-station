@@ -3,17 +3,17 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.RoleDTO;
 import com.aiagent.entity.Role;
 import com.aiagent.entity.UserRole;
 import com.aiagent.service.RoleService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -28,32 +28,41 @@ public class RoleController {
     @Operation(summary = "获取所有角色列表")
     @RequiresPermission("role:read")
     @RequiresRole("ADMIN")
-    public Result<List<Role>> getAllRoles() {
-        return Result.success(roleService.getAllRoles());
+    public Result<List<RoleDTO>> getAllRoles() {
+        List<Role> roles = roleService.getAllRoles();
+        List<RoleDTO> dtoList = roles.stream()
+                .map(DTOConverter::toRoleDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取角色详情")
     @RequiresPermission("role:read")
     @RequiresRole("ADMIN")
-    public Result<Role> getRoleById(@PathVariable Long id) {
-        return Result.success(roleService.getRoleById(id));
+    public Result<RoleDTO> getRoleById(@PathVariable Long id) {
+        Role role = roleService.getRoleById(id);
+        return Result.success(DTOConverter.toRoleDTO(role));
     }
 
     @PostMapping
     @Operation(summary = "创建角色")
     @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
-    public Result<Role> createRole(@RequestBody Role role) {
-        return Result.success(roleService.createRole(role));
+    public Result<RoleDTO> createRole(@RequestBody RoleDTO roleDTO) {
+        Role role = DTOConverter.toRoleEntity(roleDTO);
+        Role created = roleService.createRole(role);
+        return Result.success(DTOConverter.toRoleDTO(created));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新角色信息")
     @RequiresPermission("role:write")
     @RequiresRole("ADMIN")
-    public Result<Role> updateRole(@PathVariable Long id, @RequestBody Role role) {
-        return Result.success(roleService.updateRole(id, role));
+    public Result<RoleDTO> updateRole(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
+        Role role = DTOConverter.toRoleEntity(roleDTO);
+        Role updated = roleService.updateRole(id, role);
+        return Result.success(DTOConverter.toRoleDTO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -65,20 +74,20 @@ public class RoleController {
         return Result.success();
     }
 
-    @PostMapping("/assign")
+    @PostMapping("/users/{userId}/roles/{roleId}")
     @Operation(summary = "分配角色给用户")
     @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
-    public Result<Void> assignRoleToUser(@Valid @RequestBody AssignRoleRequest request) {
-        roleService.assignRoleToUser(request.getUserId(), request.getRoleId());
+    public Result<Void> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
+        roleService.assignRoleToUser(userId, roleId);
         return Result.success();
     }
 
-    @DeleteMapping("/remove")
+    @DeleteMapping("/users/{userId}/roles/{roleId}")
     @Operation(summary = "从用户移除角色")
     @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
-    public Result<Void> removeRoleFromUser(@RequestParam Long userId, @RequestParam Long roleId) {
+    public Result<Void> removeRoleFromUser(@PathVariable Long userId, @PathVariable Long roleId) {
         roleService.removeRoleFromUser(userId, roleId);
         return Result.success();
     }
@@ -89,29 +98,5 @@ public class RoleController {
     @RequiresRole("ADMIN")
     public Result<List<UserRole>> getUserRoles(@PathVariable Long userId) {
         return Result.success(roleService.getUserRoles(userId));
-    }
-
-    public static class AssignRoleRequest {
-        @NotNull(message = "用户ID不能为空")
-        private Long userId;
-
-        @NotNull(message = "角色ID不能为空")
-        private Long roleId;
-
-        public Long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        public Long getRoleId() {
-            return roleId;
-        }
-
-        public void setRoleId(Long roleId) {
-            this.roleId = roleId;
-        }
     }
 }

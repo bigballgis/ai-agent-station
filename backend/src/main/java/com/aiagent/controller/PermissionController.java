@@ -3,17 +3,17 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.PermissionDTO;
 import com.aiagent.entity.Permission;
 import com.aiagent.entity.RolePermission;
 import com.aiagent.service.PermissionService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -28,32 +28,41 @@ public class PermissionController {
     @RequiresPermission("permission:read")
     @RequiresRole("ADMIN")
     @Operation(summary = "获取所有权限列表")
-    public Result<List<Permission>> getAllPermissions() {
-        return Result.success(permissionService.getAllPermissions());
+    public Result<List<PermissionDTO>> getAllPermissions() {
+        List<Permission> permissions = permissionService.getAllPermissions();
+        List<PermissionDTO> dtoList = permissions.stream()
+                .map(DTOConverter::toPermissionDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取权限详情")
     @RequiresPermission("permission:read")
     @RequiresRole("ADMIN")
-    public Result<Permission> getPermissionById(@PathVariable Long id) {
-        return Result.success(permissionService.getPermissionById(id));
+    public Result<PermissionDTO> getPermissionById(@PathVariable Long id) {
+        Permission permission = permissionService.getPermissionById(id);
+        return Result.success(DTOConverter.toPermissionDTO(permission));
     }
 
     @PostMapping
     @Operation(summary = "创建权限")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<Permission> createPermission(@RequestBody Permission permission) {
-        return Result.success(permissionService.createPermission(permission));
+    public Result<PermissionDTO> createPermission(@RequestBody PermissionDTO permissionDTO) {
+        Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
+        Permission created = permissionService.createPermission(permission);
+        return Result.success(DTOConverter.toPermissionDTO(created));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新权限")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<Permission> updatePermission(@PathVariable Long id, @RequestBody Permission permission) {
-        return Result.success(permissionService.updatePermission(id, permission));
+    public Result<PermissionDTO> updatePermission(@PathVariable Long id, @RequestBody PermissionDTO permissionDTO) {
+        Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
+        Permission updated = permissionService.updatePermission(id, permission);
+        return Result.success(DTOConverter.toPermissionDTO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -65,20 +74,20 @@ public class PermissionController {
         return Result.success();
     }
 
-    @PostMapping("/assign")
+    @PostMapping("/roles/{roleId}/permissions/{permissionId}")
     @Operation(summary = "分配权限给角色")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<Void> assignPermissionToRole(@Valid @RequestBody AssignPermissionRequest request) {
-        permissionService.assignPermissionToRole(request.getRoleId(), request.getPermissionId());
+    public Result<Void> assignPermissionToRole(@PathVariable Long roleId, @PathVariable Long permissionId) {
+        permissionService.assignPermissionToRole(roleId, permissionId);
         return Result.success();
     }
 
-    @DeleteMapping("/remove")
+    @DeleteMapping("/roles/{roleId}/permissions/{permissionId}")
     @Operation(summary = "从角色移除权限")
     @RequiresPermission("permission:manage")
     @RequiresRole("ADMIN")
-    public Result<Void> removePermissionFromRole(@RequestParam Long roleId, @RequestParam Long permissionId) {
+    public Result<Void> removePermissionFromRole(@PathVariable Long roleId, @PathVariable Long permissionId) {
         permissionService.removePermissionFromRole(roleId, permissionId);
         return Result.success();
     }
@@ -89,37 +98,5 @@ public class PermissionController {
     @RequiresRole("ADMIN")
     public Result<List<RolePermission>> getRolePermissions(@PathVariable Long roleId) {
         return Result.success(permissionService.getRolePermissions(roleId));
-    }
-
-    public static class AssignPermissionRequest {
-        @NotNull(message = "角色ID不能为空")
-        private Long roleId;
-
-        @NotNull(message = "权限ID不能为空")
-        private Long permissionId;
-
-        public AssignPermissionRequest() {
-        }
-
-        public AssignPermissionRequest(Long roleId, Long permissionId) {
-            this.roleId = roleId;
-            this.permissionId = permissionId;
-        }
-
-        public Long getRoleId() {
-            return roleId;
-        }
-
-        public void setRoleId(Long roleId) {
-            this.roleId = roleId;
-        }
-
-        public Long getPermissionId() {
-            return permissionId;
-        }
-
-        public void setPermissionId(Long permissionId) {
-            this.permissionId = permissionId;
-        }
     }
 }

@@ -6,8 +6,8 @@ export interface Agent {
   id?: number
   name: string
   description?: string
-  config?: any
-  graphDefinition?: any
+  config?: Record<string, unknown>
+  graphDefinition?: Record<string, unknown>
   isActive?: boolean
   status?: string
   type?: string
@@ -20,20 +20,20 @@ export interface Agent {
   latestVersionId?: number
   createdAt?: string
   updatedAt?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface AgentVersion {
   id: number
   agentId: number
   versionNumber: number
-  graphDefinition?: any
-  config?: any
+  graphDefinition?: Record<string, unknown>
+  config?: Record<string, unknown>
   status?: string
   remark?: string
   createdAt: string
   updatedAt?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 /**
@@ -53,14 +53,14 @@ export function getAgentById(id: string | number) {
 /**
  * 创建 Agent
  */
-export function createAgent(data: any) {
+export function createAgent(data: Record<string, unknown>) {
   return request.post('/agents', data)
 }
 
 /**
  * 更新 Agent
  */
-export function updateAgent(id: string | number, data: any) {
+export function updateAgent(id: string | number, data: Record<string, unknown>) {
   return request.put(`/agents/${id}`, data)
 }
 
@@ -74,8 +74,8 @@ export function deleteAgent(id: string | number) {
 /**
  * 复制 Agent
  */
-export function copyAgent(id: string | number, data?: any) {
-  return request.post(`/agents/${id}/copy`, data)
+export function copyAgent(id: string | number, data?: Record<string, unknown> | string) {
+  return request.post(`/agents/${id}/copy`, typeof data === 'string' ? { name: data } : data)
 }
 
 /**
@@ -122,8 +122,8 @@ export function rollbackToVersion(id: string | number, versionNumber: number) {
 export function executeAgentStream(
   agentId: string | null,
   message: string,
-  onMessage: (event: { type: string; data: any }) => void,
-  onError: (error: any) => void,
+  onMessage: (event: { type: string; data: unknown }) => void,
+  onError: (error: Error) => void,
   onComplete: () => void
 ): { cancel: () => void } {
   const controller = new AbortController()
@@ -187,7 +187,7 @@ export function executeAgentStream(
 /**
  * Process a single SSE block (may contain event: and data: lines)
  */
-function processSSEBlock(block: string, onMessage: (event: { type: string; data: any }) => void) {
+function processSSEBlock(block: string, onMessage: (event: { type: string; data: unknown }) => void) {
   let eventType = ''
   let dataStr = ''
 

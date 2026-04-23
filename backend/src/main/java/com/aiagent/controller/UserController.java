@@ -4,7 +4,9 @@ import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.UserDTO;
+import com.aiagent.dto.UserResponseDTO;
 import com.aiagent.entity.User;
 import com.aiagent.service.UserService;
 import jakarta.validation.Valid;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,16 +33,21 @@ public class UserController {
     @Operation(summary = "获取所有用户列表")
     @RequiresPermission("user:read")
     @RequiresRole("ADMIN")
-    public Result<List<User>> getAllUsers() {
-        return Result.success(userService.getAllUsers());
+    public Result<List<UserResponseDTO>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        List<UserResponseDTO> dtoList = users.stream()
+                .map(DTOConverter::toUserResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取用户详情")
     @RequiresPermission("user:read")
     @RequiresRole("ADMIN")
-    public Result<User> getUserById(@PathVariable Long id) {
-        return Result.success(userService.getUserById(id));
+    public Result<UserResponseDTO> getUserById(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        return Result.success(DTOConverter.toUserResponseDTO(user));
     }
 
     @PostMapping
@@ -47,14 +55,10 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "创建用户", module = "用户管理")
-    public Result<User> createUser(@Valid @RequestBody UserDTO dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-        user.setTenantId(dto.getTenantId());
-        return Result.success(userService.createUser(user));
+    public Result<UserResponseDTO> createUser(@Valid @RequestBody UserDTO dto) {
+        User user = DTOConverter.toUserEntity(dto);
+        User created = userService.createUser(user);
+        return Result.success(DTOConverter.toUserResponseDTO(created));
     }
 
     @PutMapping("/{id}")
@@ -62,14 +66,10 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "更新用户", module = "用户管理")
-    public Result<User> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-        user.setTenantId(dto.getTenantId());
-        return Result.success(userService.updateUser(id, user));
+    public Result<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
+        User user = DTOConverter.toUserEntity(dto);
+        User updated = userService.updateUser(id, user);
+        return Result.success(DTOConverter.toUserResponseDTO(updated));
     }
 
     @DeleteMapping("/{id}")

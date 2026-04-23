@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
+import { messages } from '@/locales'
 import MainLayout from '@/layouts/MainLayout.vue'
 
 // 路由配置
@@ -8,7 +9,7 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: () => import('@/pages/Login.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, title: 'login' }
   },
   {
     path: '/',
@@ -20,188 +21,188 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/pages/Dashboard.vue'),
-        meta: { title: 'Dashboard' }
+        meta: { title: 'dashboard' }
       },
       {
         path: 'agents',
         name: 'AgentList',
         component: () => import('@/pages/AgentList.vue'),
-        meta: { title: 'Agent管理' }
+        meta: { title: 'agentList' }
       },
       {
         path: 'agents/:id/edit',
         name: 'AgentEdit',
         component: () => import('@/pages/AgentEdit.vue'),
-        meta: { title: '编辑Agent' }
+        meta: { title: 'agentEdit' }
       },
       {
         path: 'agents/:id/versions',
         name: 'AgentVersions',
         component: () => import('@/pages/AgentVersions.vue'),
-        meta: { title: '版本管理' }
+        meta: { title: 'agentVersions' }
       },
       {
         path: 'agent/design/:id?',
         name: 'AgentDesign',
         component: () => import('@/pages/AgentDesigner.vue'),
-        meta: { title: 'Agent 设计器' }
+        meta: { title: 'agentDesign' }
       },
       {
         path: 'mcp/tools',
         name: 'McpToolMarket',
         component: () => import('@/pages/McpToolMarket.vue'),
-        meta: { title: 'MCP 工具市场' }
+        meta: { title: 'mcpToolMarket' }
       },
       {
         path: 'agent/approval',
         name: 'Approval',
         component: () => import('@/pages/ApprovalManagement.vue'),
-        meta: { title: '审批管理' }
+        meta: { title: 'approval' }
       },
       {
         path: 'agent/templates',
         name: 'AgentTemplateMarket',
         component: () => import('@/pages/AgentTemplateMarket.vue'),
-        meta: { title: 'Agent 模板市场' }
+        meta: { title: 'agentTemplateMarket' }
       },
       {
         path: 'agent/debugger',
         name: 'AgentDebugger',
         component: () => import('@/pages/AgentDebugger.vue'),
-        meta: { title: '在线调试' }
+        meta: { title: 'agentDebugger' }
       },
       {
         path: 'agent/memory',
         name: 'MemoryManagement',
         component: () => import('@/pages/MemoryManagement.vue'),
-        meta: { title: '记忆管理' }
+        meta: { title: 'memoryManagement' }
       },
       {
         path: 'agent/deployment',
         name: 'Deployment',
         component: () => import('@/pages/DeploymentManagement.vue'),
-        meta: { title: '发布管理' }
+        meta: { title: 'deployment' }
       },
       {
         path: 'api/manage',
         name: 'ApiManagement',
         component: () => import('@/pages/ApiManagement.vue'),
-        meta: { title: 'API管理' }
+        meta: { title: 'apiManagement' }
       },
       {
         path: 'api/docs',
         name: 'ApiDocumentation',
         component: () => import('@/pages/ApiDocumentation.vue'),
-        meta: { title: 'API文档' }
+        meta: { title: 'apiDocs' }
       },
       {
         path: 'tenant',
         name: 'TenantManagement',
         component: () => import('@/pages/TenantManagement.vue'),
-        meta: { title: 'Tenant Management' }
+        meta: { title: 'tenantManagement' }
       },
       {
         path: 'system/permission',
         name: 'Permission',
         component: () => import('@/pages/PermissionManagement.vue'),
-        meta: { title: 'Permission Management' }
+        meta: { title: 'permission' }
       },
       {
         path: 'system/i18n',
         name: 'I18n',
         component: () => import('@/pages/I18nSettings.vue'),
-        meta: { title: 'I18n Settings' }
+        meta: { title: 'i18nSettings' }
       },
       {
         path: 'system/log',
         name: 'Log',
         component: () => import('@/pages/LogCenter.vue'),
-        meta: { title: 'Log Monitoring' }
+        meta: { title: 'logCenter' }
       },
       {
         path: 'system/alerts',
         name: 'AlertNotification',
         component: () => import('@/pages/AlertNotification.vue'),
-        meta: { title: '告警中心' }
+        meta: { title: 'alertCenter' }
       },
       {
         path: 'system/quota',
         name: 'QuotaManagement',
         component: () => import('@/pages/QuotaManagement.vue'),
-        meta: { title: '配额管理' }
+        meta: { title: 'quotaManagement' }
       },
       {
         path: 'system/files',
         name: 'FileManagement',
         component: () => import('@/pages/FileManagement.vue'),
-        meta: { title: '文件管理' }
+        meta: { title: 'fileManagement' }
       },
       // 测试相关路由
       {
         path: 'test-cases',
         name: 'TestCaseList',
         component: () => import('@/pages/TestCaseList.vue'),
-        meta: { title: '测试用例管理' }
+        meta: { title: 'testCaseList' }
       },
       {
         path: 'test-cases/edit/:id?',
         name: 'TestCaseEdit',
         component: () => import('@/pages/TestCaseEdit.vue'),
-        meta: { title: '编辑测试用例' }
+        meta: { title: 'testCaseEdit' }
       },
       {
         path: 'test-cases/versions/:id',
         name: 'TestCaseVersions',
         component: () => import('@/pages/TestCaseVersions.vue'),
-        meta: { title: '测试用例版本管理' }
+        meta: { title: 'testCaseVersions' }
       },
       {
         path: 'test-executions',
         name: 'TestExecutionList',
         component: () => import('@/pages/TestExecutionList.vue'),
-        meta: { title: '测试执行管理' }
+        meta: { title: 'testExecutionList' }
       },
       {
         path: 'test-results',
         name: 'TestResultList',
         component: () => import('@/pages/TestResultList.vue'),
-        meta: { title: '测试结果管理' }
+        meta: { title: 'testResultList' }
       },
       {
         path: 'test-results/detail/:id',
         name: 'TestResultDetail',
         component: () => import('@/pages/TestResultDetail.vue'),
-        meta: { title: '测试结果详情' }
+        meta: { title: 'testResultDetail' }
       },
       {
         path: 'test-results/:executionId',
         name: 'TestResultsByExecution',
         component: () => import('@/pages/TestResultList.vue'),
-        meta: { title: '测试执行结果' }
+        meta: { title: 'testResultsByExecution' }
       },
       {
         path: 'workflow/designer',
         name: 'WorkflowDesigner',
         component: () => import('@/pages/WorkflowDesigner.vue'),
-        meta: { title: '工作流设计器' }
+        meta: { title: 'workflowDesigner' }
       },
       {
         path: 'workflow/instances',
         name: 'WorkflowInstance',
         component: () => import('@/pages/WorkflowInstance.vue'),
-        meta: { title: '工作流实例' }
+        meta: { title: 'workflowInstance' }
       },
       {
         path: 'suggestions',
         name: 'SuggestionList',
         component: () => import('@/pages/SuggestionList.vue'),
-        meta: { title: '优化建议管理' }
+        meta: { title: 'suggestionList' }
       },
       {
         path: 'evolution',
         name: 'Evolution',
         component: () => import('@/pages/Evolution.vue'),
-        meta: { title: 'Agent自进化' }
+        meta: { title: 'evolution' }
       }
     ]
   },
@@ -228,6 +229,15 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, _from, next) => {
+  // 设置页面标题（使用 i18n 翻译）
+  const titleKey = to.meta.title as string | undefined
+  if (titleKey) {
+    const currentLocale = localStorage.getItem('locale') || 'zh-CN'
+    const localeMessages = messages[currentLocale as keyof typeof messages]
+    const translatedTitle = (localeMessages as unknown as Record<string, Record<string, string>>)?.routes?.[titleKey] || titleKey
+    document.title = `${translatedTitle} - AI Agent Station`
+  }
+
   const userStore = useUserStore()
   
   // 检查路由是否需要认证

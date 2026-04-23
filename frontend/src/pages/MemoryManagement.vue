@@ -383,7 +383,7 @@ const filteredMemories = computed(() => {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(m =>
       m.content.toLowerCase().includes(q) ||
-      m.tags.some(t => t.toLowerCase().includes(q))
+      m.tags.some((t: string) => t.toLowerCase().includes(q))
     )
   }
 

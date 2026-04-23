@@ -264,10 +264,11 @@ export function useExecution(
         message_text,
         // onMessage
         (event) => {
+          const data = event.data as Record<string, unknown>
           switch (event.type) {
             case 'node_start': {
-              const nodeId = event.data.nodeId
-              const nodeType = event.data.nodeType
+              const nodeId = data.nodeId as string
+              const nodeType = data.nodeType as string
               runningNodeIds.value.add(nodeId)
               const node = nodes.value.find(n => n.id === nodeId)
               const label = node?.label || nodeId
@@ -275,14 +276,14 @@ export function useExecution(
               break
             }
             case 'node_end': {
-              const nodeId = event.data.nodeId
-              const status = event.data.status
+              const nodeId = data.nodeId as string
+              const status = data.status as string
               runningNodeIds.value.delete(nodeId)
               const node = nodes.value.find(n => n.id === nodeId)
               const label = node?.label || nodeId
               if (status === 'failed') {
                 failedNodeIds.value.add(nodeId)
-                addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${event.data.error || ''}`)
+                addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${(data.error as string) || ''}`)
               } else {
                 completedNodeIds.value.add(nodeId)
                 addLog('success', `${t('designer.messages.nodeComplete')}: ${label}`)
@@ -291,7 +292,7 @@ export function useExecution(
             }
             case 'token': {
               // LLM streaming token
-              addLog('info', event.data.content || '', false)
+              addLog('info', (data.content as string) || '', false)
               break
             }
             case 'done': {
@@ -302,7 +303,7 @@ export function useExecution(
               break
             }
             case 'error': {
-              addLog('error', `${t('designer.messages.runFailed')}: ${event.data.content || event.data.error || 'Unknown error'}`)
+              addLog('error', `${t('designer.messages.runFailed')}: ${(data.content as string) || (data.error as string) || 'Unknown error'}`)
               message.error(t('designer.messages.runFailed'))
               isRunning.value = false
               executionCancel = null

@@ -41,10 +41,24 @@ public class Result<T> implements Serializable {
         return new Result<>(resultCode.getCode(), resultCode.getMessage(), null);
     }
 
+    /**
+     * Creates a failure result with a 500 status code.
+     *
+     * @deprecated Use {@link #error(String)} for simple error messages,
+     *             or {@link #error(ResultCode)} for known error codes.
+     */
+    @Deprecated
     public static <T> Result<T> fail(String message) {
         return new Result<>(500, message, null);
     }
 
+    /**
+     * Creates a failure result with a 400 status code and data payload.
+     *
+     * @deprecated Use {@link #error(Integer, String)} for error codes with messages.
+     *             This method's semantics (400 code + data) are confusing and error-prone.
+     */
+    @Deprecated
     public static <T> Result<T> fail(String message, T data) {
         return new Result<>(400, message, data);
     }

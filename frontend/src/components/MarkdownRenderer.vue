@@ -121,7 +121,7 @@ const renderedContent = computed(() => {
   html = html.replace(/^\|(.+)\|$/gm, (_match, content) => {
     const cells = content.split('|').map((c: string) => c.trim())
     // 跳过分隔行
-    if (cells.every(c => /^[-:]+$/.test(c))) return ''
+    if (cells.every((c: string) => /^[-:]+$/.test(c))) return ''
     const tag = 'td'
     const row = cells.map((c: string) => `<${tag}>${c}</${tag}>`).join('')
     return `<tr>${row}</tr>`

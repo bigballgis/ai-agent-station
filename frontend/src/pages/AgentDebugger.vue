@@ -291,7 +291,7 @@ import { streamAgentExecution } from '@/api/stream'
 // Agent 列表
 const agentList = ref<{ id: string; name: string }[]>([])
 const selectedAgent = ref('')
-let eventSource: EventSource | null = null
+let sseConnection: { close: () => void } | null = null
 
 // Tab
 const tabs = [
@@ -410,22 +410,18 @@ async function sendMessage() {
     return
   }
 
-  // Close any existing EventSource
-  if (eventSource) {
-    eventSource.close()
-    eventSource = null
+  // Close any existing SSE connection
+  if (sseConnection) {
+    sseConnection.close()
+    sseConnection = null
   }
 
   const startTime = Date.now()
   let fullContent = ''
 
   try {
-    eventSource = streamAgentExecution(agentId, { message: userMsg })
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-
+    sseConnection = streamAgentExecution(agentId, { message: userMsg }, {
+      onMessage: (data: any) => {
         // Handle different event types from SSE
         if (data.type === 'chain' || data.type === 'step') {
           // Execution chain step
@@ -484,31 +480,27 @@ async function sendMessage() {
             messages.value.push({ role: 'agent', content: data.content || data.text })
           }
 
-          if (eventSource) {
-            eventSource.close()
-            eventSource = null
+          if (sseConnection) {
+            sseConnection.close()
+            sseConnection = null
           }
         }
-      } catch (e) {
-        // Non-JSON data, treat as plain text content
-        fullContent += event.data
-      }
-    }
+      },
+      onError: (_error: any) => {
+        totalDuration.value = Date.now() - startTime
+        executionStatus.value = 'failed'
+        isExecuting.value = false
 
-    eventSource.onerror = (_error) => {
-      totalDuration.value = Date.now() - startTime
-      executionStatus.value = 'failed'
-      isExecuting.value = false
+        if (fullContent) {
+          messages.value.push({ role: 'agent', content: fullContent })
+        }
 
-      if (fullContent) {
-        messages.value.push({ role: 'agent', content: fullContent })
-      }
-
-      if (eventSource) {
-        eventSource.close()
-        eventSource = null
-      }
-    }
+        if (sseConnection) {
+          sseConnection.close()
+          sseConnection = null
+        }
+      },
+    })
   } catch (error: any) {
     message.error('执行失败: ' + (error.message || '未知错误'))
     executionStatus.value = 'failed'
@@ -542,9 +534,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (eventSource) {
-    eventSource.close()
-    eventSource = null
+  if (sseConnection) {
+    sseConnection.close()
+    sseConnection = null
   }
 })
 </script>
