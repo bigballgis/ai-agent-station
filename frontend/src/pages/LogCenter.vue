@@ -1,7 +1,7 @@
 <template>
   <div class="log-center-page" aria-label="日志中心">
     <!-- 页面头部 -->
-    <PageHeader title="日志中心" subtitle="查看系统操作日志、API 调用日志和异常日志，追踪系统运行状态" />
+    <PageHeader :title="t('log.center')" :subtitle="t('log.centerDesc')" />
 
     <!-- Tab 切换 -->
     <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden animate-slide-up">
@@ -47,8 +47,8 @@
         </div>
 
         <!-- 操作日志表格 -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <a-spin size="large" />
+        <div v-if="loading">
+          <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="filteredOperationLogs.length === 0" class="flex flex-col items-center justify-center py-12">
           <EmptyState type="noData" description="暂无操作日志" />
@@ -161,8 +161,8 @@
         </div>
 
         <!-- 调用日志表格 -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <a-spin size="large" />
+        <div v-if="loading">
+          <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="filteredApiLogs.length === 0" class="flex flex-col items-center justify-center py-12">
           <EmptyState type="noData" description="暂无调用日志" />
@@ -275,8 +275,8 @@
         </div>
 
         <!-- 异常日志表格 -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <a-spin size="large" />
+        <div v-if="loading">
+          <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="errorLogs.length === 0" class="flex flex-col items-center justify-center py-12">
           <EmptyState type="noData" description="暂无异常日志" />
@@ -369,23 +369,26 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getLogs, getLogsByDateRange, getLogsByModule } from '@/api/log'
-import { PageHeader, TabNav, TimeRangePicker, EmptyState } from '@/components'
+import { PageHeader, TabNav, TimeRangePicker, EmptyState, LoadingSkeleton } from '@/components'
 import type { TabItem } from '@/components'
+
+const { t } = useI18n()
 
 // ============ Tab 配置 ============
 
-const tabs = [
-  { key: 'operation', label: '操作日志' },
-  { key: 'api', label: '调用日志' },
-  { key: 'error', label: '异常日志' },
-]
+const tabs = computed(() => [
+  { key: 'operation', label: t('log.operation') },
+  { key: 'api', label: t('log.api') },
+  { key: 'error', label: t('log.exception') },
+])
 const activeTab = ref('operation')
 const loading = ref(false)
 
 // TabNav items（响应式）
-const tabItems = computed<TabItem[]>(() => tabs.map(tab => ({ key: tab.key, label: tab.label })))
+const tabItems = computed<TabItem[]>(() => tabs.value.map(tab => ({ key: tab.key, label: tab.label })))
 
 // TimeRangePicker change handlers
 function handleOperationTimeRangeChange(range: [string, string] | null) {

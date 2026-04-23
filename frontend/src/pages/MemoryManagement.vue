@@ -5,10 +5,10 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            记忆管理
+            {{ t('routes.memoryManagement') }}
           </h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            查看、搜索和管理 Agent 的记忆数据，支持短期记忆、长期记忆和业务记忆
+            {{ t('memory.managementDesc') }}
           </p>
         </div>
         <button
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          清理过期记忆
+          {{ t('memory.cleanExpired') }}
         </button>
       </div>
     </div>
@@ -81,7 +81,13 @@
 
     <!-- 空状态 -->
     <div
-      v-if="filteredMemories.length === 0"
+      v-if="loading"
+      class="py-8"
+    >
+      <LoadingSkeleton type="card" :rows="3" />
+    </div>
+    <div
+      v-else-if="filteredMemories.length === 0"
       class="flex flex-col items-center justify-center py-20 animate-fade-in"
     >
       <div class="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-5">
@@ -294,9 +300,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { getAgentMemories, deleteMemory as deleteMemoryApi, cleanupAgentMemories } from '@/api/memory'
 import { getAllAgents } from '@/api/agent'
+import { LoadingSkeleton } from '@/components'
+
+const { t } = useI18n()
 
 // Agent 列表
 const agentList = ref<{ id: string; name: string }[]>([])
@@ -319,6 +329,7 @@ const pageSize = 10
 
 // 记忆数据
 const memories = ref<any[]>([])
+const loading = ref(false)
 
 async function fetchAgents() {
   try {
@@ -333,6 +344,7 @@ async function fetchAgents() {
 }
 
 async function fetchMemories() {
+  loading.value = true
   try {
     const params: any = { page: 1, size: 100 }
     if (selectedAgent.value) params.agentId = selectedAgent.value
@@ -340,8 +352,11 @@ async function fetchMemories() {
     if (searchQuery.value) params.keyword = searchQuery.value
     const res = await getAgentMemories(selectedAgent.value || 'all', params)
     memories.value = res.data?.content || res.data || res || []
-  } catch (e) {
+  } catch (e: any) {
     console.error('获取记忆列表失败:', e)
+    message.error('获取记忆列表失败: ' + (e.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
 
@@ -444,9 +459,9 @@ function deleteMemory(memory: typeof memories.value[0]) {
         await deleteMemoryApi(memory.id)
         message.success('删除成功')
         await fetchMemories()
-      } catch (e) {
+      } catch (e: any) {
         console.error('删除记忆失败:', e)
-        message.error('删除失败')
+        message.error('删除失败: ' + (e.message || '未知错误'))
       }
     },
   })
@@ -464,9 +479,9 @@ function cleanExpiredMemories() {
         await cleanupAgentMemories(selectedAgent.value || 'all')
         message.success('过期记忆清理成功')
         await fetchMemories()
-      } catch (e) {
+      } catch (e: any) {
         console.error('清理过期记忆失败:', e)
-        message.error('清理失败')
+        message.error('清理失败: ' + (e.message || '未知错误'))
       }
     },
   })

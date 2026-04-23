@@ -66,12 +66,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 /**
  * EmptyState 组件
  * 增强版空状态组件，替代基础的 Empty 组件
  * 提供多种类型的插画和描述
  */
+
+const { t } = useI18n()
 
 interface Props {
   /** 空状态类型 */
@@ -93,12 +96,12 @@ defineEmits<{
 // 默认标题
 const defaultTitle = computed(() => {
   switch (props.type) {
-    case 'noData': return '暂无数据'
-    case 'noSearch': return '未找到匹配结果'
-    case 'noPermission': return '暂无访问权限'
-    case 'error': return '出了点问题'
-    case 'network': return '网络连接异常'
-    default: return '暂无数据'
+    case 'noData': return t('common.empty.noData')
+    case 'noSearch': return t('common.empty.noSearch')
+    case 'noPermission': return t('common.empty.noPermission')
+    case 'error': return t('common.empty.error')
+    case 'network': return t('common.empty.network')
+    default: return t('common.empty.noData')
   }
 })
 </script>

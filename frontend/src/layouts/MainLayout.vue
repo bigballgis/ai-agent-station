@@ -377,8 +377,18 @@ const isMobile = computed(() => windowWidth.value < 768)
 const userInfo = computed(() => userStore.userInfo)
 const currentLocale = computed(() => appStore.locale)
 
-// 菜单分组定义
-const menuGroups = [
+// 菜单项类型定义
+type MenuItem = {
+  key: string
+  path?: string
+  icon: any
+  label: string
+  roles?: string[]
+  children?: MenuItem[]
+}
+
+// 菜单分组定义（原始数据，包含 roles 属性）
+const allMenuGroups: { label: string; items: MenuItem[] }[] = [
   {
     label: 'menu.workbench',
     items: [
@@ -400,8 +410,8 @@ const menuGroups = [
         label: 'menu.agentManagement',
       },
       {
-        key: '/agent/design',
-        path: '/agent/design',
+        key: '/agents/design',
+        path: '/agents/design',
         icon: RobotOutlined,
         label: 'menu.agentDesign',
       },
@@ -412,20 +422,20 @@ const menuGroups = [
         label: 'menu.mcpTools',
       },
       {
-        key: '/agent/templates',
-        path: '/agent/templates',
+        key: '/agents/templates',
+        path: '/agents/templates',
         icon: AppstoreOutlined,
         label: 'menu.templateMarket',
       },
       {
-        key: '/agent/debugger',
-        path: '/agent/debugger',
+        key: '/agents/debugger',
+        path: '/agents/debugger',
         icon: BugOutlined,
         label: 'menu.onlineDebug',
       },
       {
-        key: '/agent/memory',
-        path: '/agent/memory',
+        key: '/agents/memory',
+        path: '/agents/memory',
         icon: DatabaseOutlined,
         label: 'menu.memoryManagement',
       },
@@ -463,8 +473,8 @@ const menuGroups = [
         label: 'menu.approval',
         children: [
           {
-            key: '/agent/approval',
-            path: '/agent/approval',
+            key: '/agents/approval',
+            path: '/agents/approval',
             icon: CheckCircleOutlined,
             label: 'menu.approval',
           },
@@ -476,8 +486,8 @@ const menuGroups = [
         label: 'menu.testPublish',
         children: [
           {
-            key: '/agent/deployment',
-            path: '/agent/deployment',
+            key: '/agents/deployment',
+            path: '/agents/deployment',
             icon: ThunderboltOutlined,
             label: 'menu.testPublish',
           },
@@ -512,6 +522,7 @@ const menuGroups = [
         path: '/tenant',
         icon: TeamOutlined,
         label: 'menu.tenantManagement',
+        roles: ['ADMIN', 'TENANT_ADMIN'],
       },
       {
         key: '/suggestions',
@@ -535,6 +546,7 @@ const menuGroups = [
             path: '/system/permission',
             icon: SafetyOutlined,
             label: 'menu.permission',
+            roles: ['ADMIN', 'TENANT_ADMIN'],
           },
           {
             key: '/system/i18n',
@@ -547,6 +559,7 @@ const menuGroups = [
             path: '/system/log',
             icon: MonitorOutlined,
             label: 'menu.log',
+            roles: ['ADMIN', 'TENANT_ADMIN'],
           },
           {
             key: '/system/alerts',
@@ -571,6 +584,41 @@ const menuGroups = [
     ],
   },
 ]
+
+// 检查用户是否拥有指定角色
+function hasAnyRole(roles?: string[]): boolean {
+  if (!roles || roles.length === 0) return true
+  const userRoles = userStore.userInfo?.roles || []
+  return userRoles.some((role: string) => roles.includes(role))
+}
+
+// 过滤菜单项（递归处理子菜单）
+function filterMenuItems(items: MenuItem[]): MenuItem[] {
+  return items.filter(item => {
+    if (!hasAnyRole(item.roles)) return false
+    if (item.children) {
+      const filteredChildren = filterMenuItems(item.children)
+      if (filteredChildren.length === 0) return false
+      return { ...item, children: filteredChildren } as unknown as boolean
+    }
+    return true
+  }).map(item => {
+    if (item.children) {
+      return { ...item, children: filterMenuItems(item.children) }
+    }
+    return item
+  })
+}
+
+// 根据用户角色过滤后的菜单分组
+const menuGroups = computed(() => {
+  return allMenuGroups
+    .map(group => ({
+      ...group,
+      items: filterMenuItems(group.items) as MenuItem[],
+    }))
+    .filter(group => group.items.length > 0)
+})
 
 // 面包屑计算
 const breadcrumbs = computed(() => {
@@ -600,7 +648,7 @@ function isGroupActive(groupKey: string): boolean {
 
 // 查找分组项
 function findGroupItem(key: string) {
-  for (const group of menuGroups) {
+  for (const group of menuGroups.value) {
     const found = group.items.find(item => item.key === key)
     if (found) return found
   }
@@ -661,7 +709,7 @@ function handlePasswordChanged() {
 watch(
   () => route.path,
   (path) => {
-    for (const group of menuGroups) {
+    for (const group of menuGroups.value) {
       for (const item of group.items) {
         if (item.children) {
           const match = item.children.some(child => path === child.key || path.startsWith(child.key + '/'))

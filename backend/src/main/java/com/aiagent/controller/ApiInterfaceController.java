@@ -38,6 +38,7 @@ public class ApiInterfaceController {
         return Result.success(PageResult.from(apiPage));
     }
 
+    @RequiresPermission("api:read")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取API接口详情")
     public Result<ApiInterface> getById(
@@ -46,6 +47,7 @@ public class ApiInterfaceController {
         return Result.success(apiInterfaceService.getById(id, tenantId));
     }
 
+    @RequiresPermission("api:read")
     @Operation(summary = "根据Agent ID获取API接口列表")
     @GetMapping("/agent/{agentId}")
     public Result<List<ApiInterface>> listByAgent(
@@ -64,6 +66,7 @@ public class ApiInterfaceController {
         return Result.success(apiInterfaceService.create(apiInterface));
     }
 
+    @RequiresPermission("api:write")
     @PutMapping("/{id}")
     @Operation(summary = "更新API接口")
     public Result<ApiInterface> update(
@@ -73,6 +76,7 @@ public class ApiInterfaceController {
         return Result.success(apiInterfaceService.update(id, tenantId, apiInterface));
     }
 
+    @RequiresPermission("api:delete")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除API接口")
     public Result<Void> delete(
@@ -82,6 +86,7 @@ public class ApiInterfaceController {
         return Result.success();
     }
 
+    @RequiresPermission("api:write")
     @PatchMapping("/{id}/toggle")
     @Operation(summary = "切换API接口启用状态")
     public Result<ApiInterface> toggleActive(

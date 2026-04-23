@@ -35,7 +35,7 @@
     <div class="canvas-section">
       <div class="designer-redirect">
         <p>请使用可视化设计器编辑 Agent 工作流</p>
-        <router-link :to="`/agent/design/${route.params.id}`" class="btn btn-primary">
+        <router-link :to="`/agents/design/${route.params.id}`" class="btn btn-primary">
           打开设计器
         </router-link>
       </div>

@@ -231,7 +231,7 @@ const quickActions = ref([
     icon: AuditOutlined,
     iconBg: 'bg-amber-100 dark:bg-amber-900/40',
     iconColor: 'text-amber-600 dark:text-amber-400',
-    route: '/agent/approval'
+    route: '/agents/approval'
   },
   {
     label: t('dashboard.checkApiUsage'),
@@ -485,7 +485,7 @@ watch(locale, () => {
       icon: AuditOutlined,
       iconBg: 'bg-amber-100 dark:bg-amber-900/40',
       iconColor: 'text-amber-600 dark:text-amber-400',
-      route: '/agent/approval'
+      route: '/agents/approval'
     },
     {
       label: t('dashboard.checkApiUsage'),

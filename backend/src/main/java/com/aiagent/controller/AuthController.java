@@ -50,7 +50,6 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     @Operation(summary = "刷新Token")
-    @RequiresPermission("auth:manage")
     @OperationLog(value = "刷新Token", module = "认证")
     public Result<?> refresh(@Valid @RequestBody RefreshRequest request) {
         return Result.success(authService.refreshToken(request.getRefreshToken()));

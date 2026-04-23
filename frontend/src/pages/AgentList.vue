@@ -1,7 +1,7 @@
 <template>
   <div class="agent-list-page" aria-label="Agent列表">
     <!-- 页面头部 -->
-    <PageHeader title="Agent管理" subtitle="管理和监控所有 AI Agent，支持创建、编辑、版本管理和发布">
+    <PageHeader :title="t('agent.list')" :subtitle="t('agent.listDesc')">
       <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
@@ -11,7 +11,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          创建 Agent
+          {{ t('agent.createAgent') }}
         </button>
       </template>
     </PageHeader>
@@ -370,14 +370,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { PageHeader, SearchBar, StatusBadge, EmptyState } from '@/components'
 import type { SearchField } from '@/components'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
+const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const agents = ref<Agent[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
@@ -446,8 +449,8 @@ async function handleWizardCreate() {
     message.success('创建成功')
     resetWizard()
     loadAgents()
-  } catch (error) {
-    message.error('创建失败')
+  } catch (error: any) {
+    message.error('创建失败: ' + (error.message || '未知错误'))
   }
 }
 
@@ -552,8 +555,8 @@ async function loadAgents() {
   try {
     const res = await agentApi.getAllAgents()
     agents.value = res.data || []
-  } catch (error) {
-    message.error('加载 Agent 列表失败')
+  } catch (error: any) {
+    message.error('加载 Agent 列表失败: ' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -591,8 +594,8 @@ async function handleCopy() {
     message.success('复制成功')
     showCopyModal.value = false
     loadAgents()
-  } catch (error) {
-    message.error('复制失败')
+  } catch (error: any) {
+    message.error('复制失败: ' + (error.message || '未知错误'))
   }
 }
 
@@ -608,8 +611,8 @@ function deleteAgent(agent: Agent) {
         await agentApi.deleteAgent(agent.id!)
         message.success('删除成功')
         loadAgents()
-      } catch (error) {
-        message.error('删除失败')
+      } catch (error: any) {
+        message.error('删除失败: ' + (error.message || '未知错误'))
       }
     }
   })
@@ -669,7 +672,19 @@ function getAgentTags(agent: Agent): string[] {
 }
 
 onMounted(() => {
+  // 支持通过 URL 搜索参数（来自全局搜索框）
+  if (route.query.search) {
+    searchQuery.value = String(route.query.search)
+  }
   loadAgents()
+})
+
+// 监听 route.query.search 变化
+watch(() => route.query.search, (newSearch) => {
+  if (newSearch) {
+    searchQuery.value = String(newSearch)
+    currentPage.value = 1
+  }
 })
 </script>
 

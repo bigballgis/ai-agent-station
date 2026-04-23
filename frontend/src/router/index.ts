@@ -42,7 +42,7 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'agentVersions' }
       },
       {
-        path: 'agent/design/:id?',
+        path: 'agents/design/:id?',
         name: 'AgentDesign',
         component: () => import('@/pages/AgentDesigner.vue'),
         meta: { title: 'agentDesign' }
@@ -54,31 +54,31 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'mcpToolMarket' }
       },
       {
-        path: 'agent/approval',
+        path: 'agents/approval',
         name: 'Approval',
         component: () => import('@/pages/ApprovalManagement.vue'),
         meta: { title: 'approval' }
       },
       {
-        path: 'agent/templates',
+        path: 'agents/templates',
         name: 'AgentTemplateMarket',
         component: () => import('@/pages/AgentTemplateMarket.vue'),
         meta: { title: 'agentTemplateMarket' }
       },
       {
-        path: 'agent/debugger',
+        path: 'agents/debugger',
         name: 'AgentDebugger',
         component: () => import('@/pages/AgentDebugger.vue'),
         meta: { title: 'agentDebugger' }
       },
       {
-        path: 'agent/memory',
+        path: 'agents/memory',
         name: 'MemoryManagement',
         component: () => import('@/pages/MemoryManagement.vue'),
         meta: { title: 'memoryManagement' }
       },
       {
-        path: 'agent/deployment',
+        path: 'agents/deployment',
         name: 'Deployment',
         component: () => import('@/pages/DeploymentManagement.vue'),
         meta: { title: 'deployment' }

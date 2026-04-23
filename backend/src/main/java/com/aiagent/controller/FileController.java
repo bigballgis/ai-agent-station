@@ -92,6 +92,7 @@ public class FileController {
      * @param subDir optional sub-directory to list files from
      * @return list of FileInfo for all files in the directory
      */
+    @RequiresPermission("file:read")
     @Operation(summary = "获取文件列表")
     @GetMapping("/list")
     public Result<List<FileInfo>> listFiles(

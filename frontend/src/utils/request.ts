@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { message } from 'ant-design-vue'
 import type { ApiResponse } from '@/types/common'
+import i18n from '@/locales'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -62,6 +63,7 @@ async function refreshAccessToken(): Promise<string> {
  * 清除认证信息并跳转登录页
  */
 function clearAuthAndRedirect() {
+  message.warning(i18n.global.t('common.error.sessionExpired'))
   localStorage.removeItem('token')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('userInfo')
@@ -149,18 +151,21 @@ service.interceptors.response.use(
 
     // 429 限流: 提示用户稍后重试
     if (status === 429) {
-      message.warning('请求过于频繁，请稍后重试')
+      message.warning(i18n.global.t('common.error.rateLimit'))
       return Promise.reject(error)
     }
 
     // 500/502/503 服务端错误
     if (status >= 500) {
-      message.error('服务暂时不可用，请稍后重试')
+      message.error(i18n.global.t('common.error.serviceUnavailable'))
       return Promise.reject(error)
     }
 
-    // 其他错误
-    const errorMsg = error.response?.data?.message || error.message || 'Request failed'
+    // 其他错误（包括网络异常）
+    const errorMsg = error.response?.data?.message
+      || (!error.response && i18n.global.t('common.error.networkError'))
+      || error.message
+      || 'Request failed'
     message.error(errorMsg)
     return Promise.reject(error)
   }

@@ -34,6 +34,7 @@ public class AgentTestExecutionController {
         return Result.success(DTOConverter.toExecutionResponseDTO(createdExecution));
     }
 
+    @RequiresPermission("test:execute")
     @Operation(summary = "创建测试执行")
     @PostMapping("/{id}/execute")
     public Result<ExecutionResponseDTO> executeTest(@PathVariable Long id) {
@@ -41,6 +42,7 @@ public class AgentTestExecutionController {
         return Result.success(DTOConverter.toExecutionResponseDTO(execution));
     }
 
+    @RequiresPermission("test:read")
     @Operation(summary = "执行测试")
     @GetMapping("/{id}")
     public Result<ExecutionResponseDTO> getExecutionById(@PathVariable Long id) {

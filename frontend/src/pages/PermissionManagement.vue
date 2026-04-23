@@ -1,7 +1,7 @@
 <template>
   <div class="permission-page" aria-label="权限管理">
     <!-- 页面头部 -->
-    <PageHeader title="权限管理" subtitle="管理系统角色和权限，控制不同角色的访问范围">
+    <PageHeader :title="t('permission.management')" :subtitle="t('permission.managementDesc')">
       <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
@@ -38,6 +38,11 @@
             </div>
           </div>
           <div class="p-2 space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
+            <!-- 加载状态 -->
+            <div v-if="loading" class="p-4">
+              <LoadingSkeleton type="table" :rows="3" />
+            </div>
+            <template v-else>
             <button
               v-for="role in filteredRoles"
               :key="role.id"
@@ -92,6 +97,7 @@
                 </span>
               </div>
             </button>
+            </template>
           </div>
         </div>
       </div>
@@ -350,6 +356,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import {
   getPermissions,
@@ -361,7 +368,9 @@ import {
   getRolePermissions,
 } from '@/api/permission'
 import { getUsers } from '@/api/user'
-import { PageHeader, ConfirmModal } from '@/components'
+import { PageHeader, ConfirmModal, LoadingSkeleton } from '@/components'
+
+const { t } = useI18n()
 
 // ============ 数据 ============
 
@@ -395,9 +404,9 @@ async function fetchPermissions() {
     const res = await getPermissions()
     const data = res.data || res || []
     permissionTree.value = Array.isArray(data) ? data : []
-  } catch (e) {
+  } catch (e: any) {
     console.error('获取权限列表失败:', e)
-    message.error('获取权限列表失败')
+    message.error('获取权限列表失败: ' + (e.message || '未知错误'))
   }
 }
 
@@ -406,9 +415,9 @@ async function fetchRoles() {
   try {
     const res = await getRoles()
     roles.value = res.data || res || []
-  } catch (e) {
+  } catch (e: any) {
     console.error('获取角色列表失败:', e)
-    message.error('获取角色列表失败')
+    message.error('获取角色列表失败: ' + (e.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -425,9 +434,9 @@ async function fetchUsers() {
       department: u.department || '',
       joinedAt: u.createdAt || '',
     })) : []
-  } catch (e) {
+  } catch (e: any) {
     console.error('获取用户列表失败:', e)
-    message.error('获取用户列表失败')
+    message.error('获取用户列表失败: ' + (e.message || '未知错误'))
   }
 }
 
@@ -523,7 +532,7 @@ function handleCreateRoleSubmit() {
     })
     .catch((e: any) => {
       console.error('创建角色失败:', e)
-      message.error('创建角色失败')
+      message.error('创建角色失败: ' + (e.message || '未知错误'))
     })
 }
 
@@ -548,7 +557,7 @@ function saveRoleInfo() {
     })
     .catch((e: any) => {
       console.error('更新角色信息失败:', e)
-      message.error('更新角色信息失败')
+      message.error('更新角色信息失败: ' + (e.message || '未知错误'))
     })
 }
 
@@ -573,7 +582,7 @@ async function confirmDeleteRole() {
     message.success('角色已删除')
   } catch (e: any) {
     console.error('删除角色失败:', e)
-    message.error('删除角色失败')
+    message.error('删除角色失败: ' + (e.message || '未知错误'))
   } finally {
     deleteVisible.value = false
   }
@@ -593,9 +602,9 @@ function removeUser(userId: string) {
         await removeRole(Number(userId), Number(selectedRole.value!.id))
         roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
         message.success('已移除')
-      } catch (e) {
+      } catch (e: any) {
         console.error('移除用户失败:', e)
-        message.error('移除失败')
+        message.error('移除失败: ' + (e.message || '未知错误'))
       }
     }
   })

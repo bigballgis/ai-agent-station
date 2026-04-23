@@ -6,7 +6,7 @@
       <div class="w-96 flex-shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <!-- Agent 选择器 -->
         <div class="p-4 border-b border-neutral-100 dark:border-neutral-800">
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">选择 Agent</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('debugger.selectAgent') }}</label>
           <select
             v-model="selectedAgent"
             class="w-full px-3 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
@@ -63,7 +63,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            发送
+            {{ t('debugger.send') }}
             <span class="text-xs opacity-70 ml-1">Ctrl+Enter</span>
           </button>
         </div>
@@ -284,9 +284,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getAllAgents } from '@/api/agent'
 import { streamAgentExecution } from '@/api/stream'
+
+const { t } = useI18n()
 
 // Agent 列表
 const agentList = ref<{ id: string; name: string }[]>([])
@@ -294,12 +297,12 @@ const selectedAgent = ref('')
 let sseConnection: { close: () => void } | null = null
 
 // Tab
-const tabs = [
-  { key: 'chain', label: '执行链路' },
-  { key: 'mcp', label: 'MCP 工具调用' },
-  { key: 'memory', label: '记忆读写' },
-  { key: 'variables', label: '变量状态' },
-]
+const tabs = computed(() => [
+  { key: 'chain', label: t('debugger.tabs.chain') },
+  { key: 'mcp', label: t('debugger.tabs.mcp') },
+  { key: 'memory', label: t('debugger.tabs.memory') },
+  { key: 'variables', label: t('debugger.tabs.variables') },
+])
 const activeTab = ref('chain')
 
 // 对话

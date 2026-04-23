@@ -62,14 +62,14 @@
     <div class="bg-white rounded-lg shadow-sm p-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">快速入口</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <router-link to="/agent/design" class="bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg p-4 text-center">
+        <router-link to="/agents/design" class="bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg p-4 text-center">
           <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
             <span class="text-blue-600 text-xl">🎨</span>
           </div>
           <p class="text-sm font-medium text-gray-900">新建Agent</p>
         </router-link>
         
-        <router-link to="/agent/approval" class="bg-green-50 hover:bg-green-100 transition-colors rounded-lg p-4 text-center">
+        <router-link to="/agents/approval" class="bg-green-50 hover:bg-green-100 transition-colors rounded-lg p-4 text-center">
           <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
             <span class="text-green-600 text-xl">✅</span>
           </div>

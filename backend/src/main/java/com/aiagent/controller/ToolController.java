@@ -66,6 +66,7 @@ public class ToolController {
      * 获取工具统计信息
      * GET /api/v1/tools/stats
      */
+    @RequiresPermission("tool:read")
     @Operation(summary = "获取工具统计信息")
     @GetMapping("/stats")
     public Result<Map<String, Object>> getToolStats() {
@@ -89,6 +90,7 @@ public class ToolController {
      * 查询工具来源
      * GET /api/v1/tools/{toolName}/source
      */
+    @RequiresPermission("tool:read")
     @Operation(summary = "查询工具来源")
     @GetMapping("/{toolName}/source")
     public Result<Map<String, Object>> getToolSource(@PathVariable String toolName) {
