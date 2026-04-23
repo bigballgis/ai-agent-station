@@ -5,10 +5,10 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            租户管理
+            {{ t('tenant.management') }}
           </h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            管理多租户配置、资源配额和租户状态
+            {{ t('tenant.managementDesc') }}
           </p>
         </div>
         <button
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          新建租户
+          {{ t('tenant.create') }}
         </button>
       </div>
     </div>
@@ -36,7 +36,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索租户名称..."
+          :placeholder="t('tenant.searchPlaceholder')"
           class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
         />
       </div>
@@ -44,9 +44,9 @@
         v-model="statusFilter"
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
       >
-        <option value="">全部状态</option>
-        <option value="active">活跃</option>
-        <option value="inactive">停用</option>
+        <option value="">{{ t('tenant.allStatus') }}</option>
+        <option value="active">{{ t('tenant.active') }}</option>
+        <option value="inactive">{{ t('tenant.inactive') }}</option>
       </select>
     </div>
 
@@ -56,13 +56,13 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/30">
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">租户名称</th>
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Schema 名称</th>
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">状态</th>
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Agent 数量</th>
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">API 调用量</th>
-              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">创建时间</th>
-              <th class="text-right py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">操作</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.name') }}</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.schemaName') }}</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.status') }}</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.agentCount') }}</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.apiCalls') }}</th>
+              <th class="text-left py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.createdAt') }}</th>
+              <th class="text-right py-3.5 px-5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{{ t('tenant.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -100,7 +100,7 @@
                       tenant.status === 'active' ? 'bg-green-500' : 'bg-neutral-400',
                     ]"
                   />
-                  {{ tenant.status === 'active' ? '活跃' : '停用' }}
+                  {{ tenant.status === 'active' ? t('tenant.active') : t('tenant.inactive') }}
                 </span>
               </td>
               <td class="py-4 px-5">
@@ -124,7 +124,7 @@
                 <div class="flex items-center justify-end gap-1">
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer"
-                    title="编辑"
+                    :title="t('tenant.edit')"
                     @click="openEditModal(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@
                   </button>
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
-                    :title="tenant.status === 'active' ? '停用' : '启用'"
+                    :title="tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')"
                     @click="toggleTenantStatus(tenant)"
                   >
                     <svg v-if="tenant.status === 'active'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +145,7 @@
                   </button>
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors cursor-pointer"
-                    title="查看详情"
+                    :title="t('tenant.viewDetail')"
                     @click="showDetail(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@
                   </button>
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors cursor-pointer"
-                    title="资源配额"
+                    :title="t('tenant.resourceQuota')"
                     @click="openQuotaModal(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,14 +172,14 @@
 
       <!-- 分页 -->
       <div class="flex items-center justify-between px-5 py-4 border-t border-neutral-100 dark:border-neutral-800">
-        <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredTenants.length }} 个租户</span>
+        <span class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('tenant.totalCount', { count: filteredTenants.length }) }}</span>
         <div class="flex items-center gap-1">
           <button
             :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer', currentPage <= 1 ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' : 'text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700']"
             :disabled="currentPage <= 1"
             @click="currentPage--"
           >
-            上一页
+            {{ t('tenant.prevPage') }}
           </button>
           <span class="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400">{{ currentPage }} / {{ totalPages }}</span>
           <button
@@ -187,7 +187,7 @@
             :disabled="currentPage >= totalPages"
             @click="currentPage++"
           >
-            下一页
+            {{ t('tenant.nextPage') }}
           </button>
         </div>
       </div>
@@ -196,56 +196,56 @@
     <!-- 新建/编辑租户弹窗 -->
     <a-modal
       v-model:open="showModal"
-      :title="editingTenant ? '编辑租户' : '新建租户'"
+      :title="editingTenant ? t('tenant.editTenant') : t('tenant.createTenant')"
       :footer="null"
       :width="520"
       centered
     >
       <div class="space-y-4 pt-2">
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">租户名称 <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.nameLabel') }} <span class="text-red-500">*</span></label>
           <input
             v-model="form.name"
             type="text"
-            placeholder="请输入租户名称"
+            :placeholder="t('tenant.nameLabel')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">描述</label>
+          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.descriptionLabel') }}</label>
           <textarea
             v-model="form.description"
             rows="2"
-            placeholder="请输入租户描述"
+            :placeholder="t('tenant.descriptionLabel')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
           />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">联系人 <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.contactLabel') }} <span class="text-red-500">*</span></label>
             <input
               v-model="form.contact"
               type="text"
-              placeholder="联系人姓名"
+              :placeholder="t('tenant.contactLabel')"
               class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
             />
           </div>
           <div>
-            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">邮箱 <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.emailLabel') }} <span class="text-red-500">*</span></label>
             <input
               v-model="form.email"
               type="email"
-              placeholder="联系邮箱"
+              :placeholder="t('tenant.emailLabel')"
               class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
             />
           </div>
         </div>
         <!-- 配额设置 -->
         <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-          <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-3">配额设置</p>
+          <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-3">{{ t('tenant.quotaSettings') }}</p>
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Agent 数量上限</label>
+              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.agentLimitLabel') }}</label>
               <input
                 v-model.number="form.quota.agentLimit"
                 type="number"
@@ -254,7 +254,7 @@
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">API 调用上限/月</label>
+              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.apiLimitLabel') }}</label>
               <input
                 v-model.number="form.quota.apiLimit"
                 type="number"
@@ -263,7 +263,7 @@
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Token 额度</label>
+              <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.tokenLimitLabel') }}</label>
               <input
                 v-model.number="form.quota.tokenLimit"
                 type="number"
@@ -278,13 +278,13 @@
             class="px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
             @click="showModal = false"
           >
-            取消
+            {{ t('tenant.cancel') }}
           </button>
           <button
             class="px-4 py-2 rounded-xl text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200 cursor-pointer"
             @click="saveTenant"
           >
-            {{ editingTenant ? '保存' : '创建' }}
+            {{ editingTenant ? t('tenant.save') : t('tenant.create') }}
           </button>
         </div>
       </div>
@@ -293,7 +293,7 @@
     <!-- 资源配额弹窗 -->
     <a-modal
       v-model:open="showQuotaModal"
-      title="资源配额配置"
+      :title="t('tenant.quotaConfig')"
       :footer="null"
       :width="480"
       centered
@@ -315,7 +315,7 @@
           <!-- Agent 配额 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Agent 数量</span>
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ t('tenant.agentCount') }}</span>
               <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ quotaTenant.agentCount }} / {{ quotaForm.agentLimit }}</span>
             </div>
             <div class="w-full h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
@@ -335,7 +335,7 @@
           <!-- API 调用配额 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">API 调用量/月</span>
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ t('tenant.apiCallsPerMonth') }}</span>
               <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatNumber(quotaTenant.apiCalls) }} / {{ formatNumber(quotaForm.apiLimit) }}</span>
             </div>
             <div class="w-full h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
@@ -356,7 +356,7 @@
           <!-- Token 配额 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Token 额度</span>
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ t('tenant.tokenQuota') }}</span>
               <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatNumber(quotaTenant.tokenUsed) }} / {{ formatNumber(quotaForm.tokenLimit) }}</span>
             </div>
             <div class="w-full h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
@@ -380,13 +380,13 @@
             class="px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
             @click="showQuotaModal = false"
           >
-            取消
+            {{ t('tenant.cancel') }}
           </button>
           <button
             class="px-4 py-2 rounded-xl text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200 cursor-pointer"
             @click="saveQuota"
           >
-            保存配额
+            {{ t('tenant.saveQuota') }}
           </button>
         </div>
       </div>
@@ -395,7 +395,7 @@
     <!-- 租户详情弹窗 -->
     <a-modal
       v-model:open="showDetailModal"
-      title="租户详情"
+      :title="t('tenant.detail')"
       :footer="null"
       :width="560"
       centered
@@ -417,7 +417,7 @@
             <code class="text-sm text-neutral-700 dark:text-neutral-300 font-mono">{{ detailTenant.schema }}</code>
           </div>
           <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">状态</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">{{ t('tenant.status') }}</p>
             <span
               :class="[
                 'inline-flex items-center gap-1.5 text-sm font-medium',
@@ -425,23 +425,23 @@
               ]"
             >
               <span :class="['w-2 h-2 rounded-full', detailTenant.status === 'active' ? 'bg-green-500' : 'bg-neutral-400']" />
-              {{ detailTenant.status === 'active' ? '活跃' : '停用' }}
+              {{ detailTenant.status === 'active' ? t('tenant.active') : t('tenant.inactive') }}
             </span>
           </div>
           <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">联系人</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">{{ t('tenant.contactLabel') }}</p>
             <p class="text-sm text-neutral-700 dark:text-neutral-300">{{ detailTenant.contact }}</p>
           </div>
           <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">邮箱</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">{{ t('tenant.emailLabel') }}</p>
             <p class="text-sm text-neutral-700 dark:text-neutral-300">{{ detailTenant.email }}</p>
           </div>
           <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">创建时间</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">{{ t('tenant.createdAt') }}</p>
             <p class="text-sm text-neutral-700 dark:text-neutral-300">{{ detailTenant.createdAt }}</p>
           </div>
           <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">API 调用量</p>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-1">{{ t('tenant.apiCalls') }}</p>
             <p class="text-sm text-neutral-700 dark:text-neutral-300 font-medium">{{ formatNumber(detailTenant.apiCalls) }}</p>
           </div>
         </div>
@@ -452,12 +452,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import {
   getTenants,
   createTenant as createTenantApi,
   updateTenant as updateTenantApi,
 } from '@/api/tenant'
+
+const { t } = useI18n()
 
 // ============ 数据 ============
 
@@ -492,8 +495,8 @@ async function fetchTenants() {
     const res = await getTenants()
     tenants.value = res.data || res || []
   } catch (e) {
-    console.error('获取租户列表失败:', e)
-    message.error('获取租户列表失败')
+    console.error(t('tenant.fetchFailed'), e)
+    message.error(t('tenant.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -575,53 +578,53 @@ function openEditModal(tenant: Tenant) {
 
 function saveTenant() {
   if (!form.value.name || !form.value.contact || !form.value.email) {
-    message.warning('请填写必填字段')
+    message.warning(t('tenant.requiredFields'))
     return
   }
   if (editingTenant.value) {
     // 编辑
     updateTenantApi(Number(editingTenant.value.id), form.value)
       .then(() => {
-        message.success('租户信息已更新')
+        message.success(t('tenant.updateSuccess'))
         showModal.value = false
         fetchTenants()
       })
       .catch((e: any) => {
-        console.error('更新租户失败:', e)
-        message.error('更新租户失败')
+        console.error(t('tenant.updateFailed'), e)
+        message.error(t('tenant.updateFailed'))
       })
   } else {
     // 新建
     createTenantApi(form.value)
       .then(() => {
-        message.success('租户创建成功')
+        message.success(t('tenant.createSuccess'))
         showModal.value = false
         fetchTenants()
       })
       .catch((e: any) => {
-        console.error('创建租户失败:', e)
-        message.error('创建租户失败')
+        console.error(t('tenant.createFailed'), e)
+        message.error(t('tenant.createFailed'))
       })
   }
 }
 
 function toggleTenantStatus(tenant: Tenant) {
-  const action = tenant.status === 'active' ? '停用' : '启用'
+  const action = tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')
   Modal.confirm({
-    title: `确认${action}`,
-    content: `确定要${action}租户「${tenant.name}」吗？`,
+    title: t('tenant.confirmAction', { action }),
+    content: t('tenant.confirmActionContent', { action, name: tenant.name }),
     okText: action,
     okType: tenant.status === 'active' ? 'danger' : 'primary',
-    cancelText: '取消',
+    cancelText: t('tenant.cancel'),
     onOk() {
       updateTenantApi(Number(tenant.id), { status: tenant.status === 'active' ? 'inactive' : 'active' })
         .then(() => {
-          message.success(`租户已${action}`)
+          message.success(t('tenant.actionSuccess', { action }))
           fetchTenants()
         })
         .catch((e: any) => {
-          console.error(`${action}租户失败:`, e)
-          message.error(`${action}租户失败`)
+          console.error(t('tenant.actionFailed', { action }), e)
+          message.error(t('tenant.actionFailed', { action }))
         })
     },
   })
@@ -642,13 +645,13 @@ function saveQuota() {
   if (!quotaTenant.value) return
   updateTenantApi(Number(quotaTenant.value.id), { quota: quotaForm.value })
     .then(() => {
-      message.success('配额已更新')
+      message.success(t('tenant.quotaUpdated'))
       showQuotaModal.value = false
       fetchTenants()
     })
     .catch((e: any) => {
-      console.error('更新配额失败:', e)
-      message.error('更新配额失败')
+      console.error(t('tenant.updateQuotaFailed'), e)
+      message.error(t('tenant.updateQuotaFailed'))
     })
 }
 

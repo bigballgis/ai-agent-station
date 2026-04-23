@@ -1,8 +1,8 @@
 <template>
   <div class="workflow-instance-page">
-    <PageHeader title="工作流实例监控" :breadcrumbs="[
-      { title: '首页', path: '/dashboard' },
-      { title: '工作流实例' }
+    <PageHeader :title="t('workflow.instanceMonitor')" :breadcrumbs="[
+      { title: t('routes.dashboard'), path: '/dashboard' },
+      { title: t('workflow.instances') }
     ]" />
 
     <!-- Filters -->
@@ -10,25 +10,25 @@
       <a-space>
         <a-select
           v-model:value="filters.status"
-          placeholder="状态筛选"
+          :placeholder="t('workflow.statusFilter')"
           allow-clear
           style="width: 160px"
           @change="loadInstances"
         >
-          <a-select-option value="PENDING">待执行</a-select-option>
-          <a-select-option value="RUNNING">运行中</a-select-option>
-          <a-select-option value="COMPLETED">已完成</a-select-option>
-          <a-select-option value="FAILED">失败</a-select-option>
-          <a-select-option value="CANCELLED">已取消</a-select-option>
-          <a-select-option value="SUSPENDED">已挂起</a-select-option>
+          <a-select-option value="PENDING">{{ t('workflow.instanceStatuses.PENDING') }}</a-select-option>
+          <a-select-option value="RUNNING">{{ t('workflow.instanceStatuses.RUNNING') }}</a-select-option>
+          <a-select-option value="COMPLETED">{{ t('workflow.instanceStatuses.COMPLETED') }}</a-select-option>
+          <a-select-option value="FAILED">{{ t('workflow.instanceStatuses.FAILED') }}</a-select-option>
+          <a-select-option value="CANCELLED">{{ t('workflow.instanceStatuses.CANCELLED') }}</a-select-option>
+          <a-select-option value="SUSPENDED">{{ t('workflow.instanceStatuses.SUSPENDED') }}</a-select-option>
         </a-select>
         <a-input-search
           v-model:value="filters.search"
-          placeholder="搜索工作流名称"
+          :placeholder="t('workflow.searchPlaceholder')"
           style="width: 200px"
           @search="loadInstances"
         />
-        <a-button @click="resetFilters">重置</a-button>
+        <a-button @click="resetFilters">{{ t('workflow.resetFilters') }}</a-button>
       </a-space>
     </div>
 
@@ -59,21 +59,21 @@
         </template>
         <template v-else-if="column.key === 'actions'">
           <a-space>
-            <a-button type="link" size="small" @click="viewDetail(record)">详情</a-button>
+            <a-button type="link" size="small" @click="viewDetail(record)">{{ t('workflow.detail') }}</a-button>
             <a-button
               v-if="record.status === 'SUSPENDED'"
               type="link"
               size="small"
               @click="showApproveAction(record)"
             >
-              审批
+              {{ t('workflow.approvalAction') }}
             </a-button>
             <a-popconfirm
               v-if="record.status === 'RUNNING' || record.status === 'SUSPENDED' || record.status === 'PENDING'"
-              title="确定取消此工作流？"
+              :title="t('workflow.cancelWorkflowConfirm')"
               @confirm="handleCancel(record)"
             >
-              <a-button type="link" size="small" danger>取消</a-button>
+              <a-button type="link" size="small" danger>{{ t('workflow.cancel') }}</a-button>
             </a-popconfirm>
           </a-space>
         </template>
@@ -83,44 +83,44 @@
     <!-- Instance Detail Drawer -->
     <a-drawer
       v-model:open="showDetail"
-      :title="`实例详情 - ${currentInstance?.workflowName || ''}`"
+      :title="`${t('workflow.instanceDetail.title')} - ${currentInstance?.workflowName || ''}`"
       width="720"
     >
       <template v-if="currentInstance">
         <!-- Instance Info -->
         <a-descriptions :column="2" bordered size="small" style="margin-bottom: 20px">
-          <a-descriptions-item label="实例ID">{{ currentInstance.id }}</a-descriptions-item>
-          <a-descriptions-item label="工作流名称">{{ currentInstance.workflowName }}</a-descriptions-item>
-          <a-descriptions-item label="状态">
+          <a-descriptions-item :label="t('workflow.instanceDetail.instanceId')">{{ currentInstance.id }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.workflowName')">{{ currentInstance.workflowName }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.status')">
             <StatusBadge :status="currentInstance.status" :status-map="statusMap" />
           </a-descriptions-item>
-          <a-descriptions-item label="当前步骤">{{ currentInstance.currentStep ?? '-' }}</a-descriptions-item>
-          <a-descriptions-item label="当前节点">{{ currentInstance.currentNodeId || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="启动人">{{ currentInstance.startedBy ?? '-' }}</a-descriptions-item>
-          <a-descriptions-item label="启动时间">{{ currentInstance.startedAt ? formatDate(currentInstance.startedAt) : '-' }}</a-descriptions-item>
-          <a-descriptions-item label="完成时间">{{ currentInstance.completedAt ? formatDate(currentInstance.completedAt) : '-' }}</a-descriptions-item>
-          <a-descriptions-item v-if="currentInstance.error" label="错误信息" :span="2">
+          <a-descriptions-item :label="t('workflow.instanceDetail.currentStep')">{{ currentInstance.currentStep ?? '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.currentNode')">{{ currentInstance.currentNodeId || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.startedBy')">{{ currentInstance.startedBy ?? '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.startTime')">{{ currentInstance.startedAt ? formatDate(currentInstance.startedAt) : '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('workflow.instanceDetail.endTime')">{{ currentInstance.completedAt ? formatDate(currentInstance.completedAt) : '-' }}</a-descriptions-item>
+          <a-descriptions-item v-if="currentInstance.error" :label="t('workflow.instanceDetail.errorMessage')" :span="2">
             <span class="error-text">{{ currentInstance.error }}</span>
           </a-descriptions-item>
         </a-descriptions>
 
         <!-- Variables -->
-        <a-card title="上下文变量" size="small" style="margin-bottom: 16px">
+        <a-card :title="t('workflow.instanceDetail.contextVariables')" size="small" style="margin-bottom: 16px">
           <pre class="json-pre">{{ currentInstance.variables ? JSON.stringify(currentInstance.variables, null, 2) : '{}' }}</pre>
         </a-card>
 
         <!-- Input -->
-        <a-card title="输入" size="small" style="margin-bottom: 16px">
+        <a-card :title="t('workflow.instanceDetail.input')" size="small" style="margin-bottom: 16px">
           <pre class="json-pre">{{ currentInstance.input ? JSON.stringify(currentInstance.input, null, 2) : '{}' }}</pre>
         </a-card>
 
         <!-- Output -->
-        <a-card title="输出" size="small" style="margin-bottom: 16px">
+        <a-card :title="t('workflow.instanceDetail.output')" size="small" style="margin-bottom: 16px">
           <pre class="json-pre">{{ currentInstance.output ? JSON.stringify(currentInstance.output, null, 2) : '{}' }}</pre>
         </a-card>
 
         <!-- Node Execution Timeline -->
-        <a-card title="节点执行时间线" size="small">
+        <a-card :title="t('workflow.instanceDetail.nodeTimeline')" size="small">
           <a-timeline v-if="nodeLogs.length > 0">
             <a-timeline-item
               v-for="log in nodeLogs"
@@ -146,7 +146,7 @@
               </div>
             </a-timeline-item>
           </a-timeline>
-          <a-empty v-else description="暂无执行记录" />
+          <a-empty v-else :description="t('workflow.instanceDetail.noExecutionRecords')" />
         </a-card>
       </template>
     </a-drawer>
@@ -154,21 +154,21 @@
     <!-- Approve/Reject Modal -->
     <a-modal
       v-model:open="showApproveModal"
-      :title="approveAction === 'approve' ? '审批通过' : '审批拒绝'"
+      :title="approveAction === 'approve' ? t('workflow.approveModalTitle') : t('workflow.rejectModalTitle')"
       @ok="handleApproveAction"
       :confirm-loading="approving"
     >
       <a-form layout="vertical">
-        <a-form-item label="工作流">
+        <a-form-item :label="t('workflow.workflowLabel')">
           {{ currentInstance?.workflowName }}
         </a-form-item>
-        <a-form-item label="当前节点">
+        <a-form-item :label="t('workflow.currentNodeLabel')">
           {{ currentInstance?.currentNodeId }}
         </a-form-item>
-        <a-form-item label="审批意见">
+        <a-form-item :label="t('workflow.approvalCommentLabel')">
           <a-textarea
             v-model:value="approveComment"
-            placeholder="请输入审批意见"
+            :placeholder="t('workflow.approvalCommentPlaceholder')"
             :rows="4"
           />
         </a-form-item>
@@ -179,9 +179,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { PageHeader, StatusBadge } from '@/components'
 import { workflowApi, type WorkflowInstance, type WorkflowNodeLog } from '@/api/workflow'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const approving = ref(false)

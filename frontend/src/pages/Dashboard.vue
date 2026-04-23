@@ -10,6 +10,82 @@
 
     <template v-else>
 
+    <!-- 新手引导横幅 -->
+    <div
+      v-if="showOnboarding"
+      class="mb-8 rounded-2xl overflow-hidden animate-slide-up relative"
+    >
+      <div class="bg-gradient-to-r from-primary-600 via-primary-500 to-blue-500 dark:from-primary-800 dark:via-primary-700 dark:to-blue-700 p-6 pr-12 relative">
+        <!-- 关闭按钮 -->
+        <button
+          class="absolute top-3 right-3 p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer"
+          @click="dismissOnboarding"
+          :title="t('dashboard.onboarding.dismiss')"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <!-- 左侧文字 -->
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-white mb-1.5">{{ t('dashboard.onboarding.title') }}</h2>
+            <p class="text-sm text-white/80 mb-5">{{ t('dashboard.onboarding.description') }}</p>
+
+            <!-- 3个步骤 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <PlusOutlined class="text-white text-sm" />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-white">{{ t('dashboard.onboarding.step1') }}</p>
+                  <p class="text-xs text-white/70 mt-0.5">{{ t('dashboard.onboarding.step1Desc') }}</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <ExperimentOutlined class="text-white text-sm" />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-white">{{ t('dashboard.onboarding.step2') }}</p>
+                  <p class="text-xs text-white/70 mt-0.5">{{ t('dashboard.onboarding.step2Desc') }}</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <RocketOutlined class="text-white text-sm" />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-white">{{ t('dashboard.onboarding.step3') }}</p>
+                  <p class="text-xs text-white/70 mt-0.5">{{ t('dashboard.onboarding.step3Desc') }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-primary-600 hover:bg-white/90 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                @click="startOnboarding"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                {{ t('dashboard.onboarding.start') }}
+              </button>
+              <button
+                class="text-xs text-white/60 hover:text-white/90 transition-colors duration-200 cursor-pointer"
+                @click="dismissOnboarding"
+              >
+                {{ t('dashboard.onboarding.dismiss') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 统计卡片区域 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       <StatCard
@@ -165,6 +241,26 @@ const { t, locale } = useI18n()
 const { isDark } = useTheme()
 const router = useRouter()
 const route = useRoute()
+
+// ============ 新手引导(Onboarding) ============
+const ONBOARDING_KEY = 'onboarding_completed'
+const showOnboarding = ref(false)
+
+function checkOnboarding() {
+  showOnboarding.value = !localStorage.getItem(ONBOARDING_KEY)
+}
+
+function startOnboarding() {
+  showOnboarding.value = false
+  localStorage.setItem(ONBOARDING_KEY, 'true')
+  // 跳转到创建Agent页面
+  router.push('/agents')
+}
+
+function dismissOnboarding() {
+  showOnboarding.value = false
+  localStorage.setItem(ONBOARDING_KEY, 'true')
+}
 
 // ============ 统计卡片数据 ============
 const totalAgents = ref(0)
@@ -526,6 +622,7 @@ watch(locale, () => {
 })
 
 onMounted(() => {
+  checkOnboarding()
   fetchDashboardData()
   // 检查是否因权限不足被重定向
   if (route.query.noPermission) {

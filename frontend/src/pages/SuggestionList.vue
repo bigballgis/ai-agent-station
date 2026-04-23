@@ -1,30 +1,30 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6">优化建议管理</h1>
+    <h1 class="text-2xl font-bold mb-6">{{ t('suggestion.management') }}</h1>
     
     <div class="mb-6 flex justify-between items-center">
       <div class="flex space-x-4">
         <input 
           v-model="searchKeyword" 
           type="text" 
-          placeholder="搜索建议..." 
+          :placeholder="t('suggestion.searchPlaceholder')" 
           class="px-4 py-2 border rounded-md"
         />
         <select v-model="filterType" class="px-4 py-2 border rounded-md">
-          <option value="">所有类型</option>
-          <option value="process">流程优化</option>
-          <option value="performance">性能优化</option>
-          <option value="quality">质量优化</option>
+          <option value="">{{ t('suggestion.allTypes') }}</option>
+          <option value="process">{{ t('suggestion.typeProcess') }}</option>
+          <option value="performance">{{ t('suggestion.typePerformance') }}</option>
+          <option value="quality">{{ t('suggestion.typeQuality') }}</option>
         </select>
         <select v-model="filterStatus" class="px-4 py-2 border rounded-md">
-          <option value="">所有状态</option>
-          <option value="pending">待处理</option>
-          <option value="approved">已批准</option>
-          <option value="rejected">已拒绝</option>
+          <option value="">{{ t('suggestion.allStatus') }}</option>
+          <option value="pending">{{ t('suggestion.statusPending') }}</option>
+          <option value="approved">{{ t('suggestion.statusApproved') }}</option>
+          <option value="rejected">{{ t('suggestion.statusRejected') }}</option>
         </select>
       </div>
       <button @click="handleGenerateSuggestions" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-        生成建议
+        {{ t('suggestion.generateButton') }}
       </button>
     </div>
     
@@ -32,13 +32,13 @@
       <table class="min-w-full">
         <thead class="bg-gray-100">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">优先级</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">实现状态</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预期影响</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.titleCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.typeCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.priorityCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.statusCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.implementationCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.impactCol') }}</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('suggestion.actionsCol') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -69,9 +69,9 @@
             <td class="px-6 py-4 whitespace-nowrap">{{ suggestion.expectedImpact }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex space-x-2">
-                <button @click="viewSuggestion(suggestion)" class="text-blue-600 hover:text-blue-800">查看</button>
-                <button @click="editSuggestion(suggestion)" class="text-green-600 hover:text-green-800">编辑</button>
-                <button @click="deleteSuggestion(suggestion.id)" class="text-red-600 hover:text-red-800">删除</button>
+                <button @click="viewSuggestion(suggestion)" class="text-blue-600 hover:text-blue-800">{{ t('suggestion.viewButton') }}</button>
+                <button @click="editSuggestion(suggestion)" class="text-green-600 hover:text-green-800">{{ t('suggestion.editButton') }}</button>
+                <button @click="deleteSuggestion(suggestion.id)" class="text-red-600 hover:text-red-800">{{ t('suggestion.deleteButton') }}</button>
               </div>
             </td>
           </tr>
@@ -82,14 +82,14 @@
     <!-- 生成建议弹窗 -->
     <div v-if="showGenerateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl font-bold mb-4">生成优化建议</h2>
+        <h2 class="text-xl font-bold mb-4">{{ t('suggestion.generateModalTitle') }}</h2>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Agent ID</label>
           <input v-model="agentId" type="number" class="w-full px-4 py-2 border rounded-md" />
         </div>
         <div class="flex justify-end space-x-2">
-          <button @click="showGenerateModal = false" class="px-4 py-2 border rounded-md">取消</button>
-          <button @click="generateSuggestions" class="px-4 py-2 bg-blue-500 text-white rounded-md">生成</button>
+          <button @click="showGenerateModal = false" class="px-4 py-2 border rounded-md">{{ t('common.cancel') }}</button>
+          <button @click="generateSuggestions" class="px-4 py-2 bg-blue-500 text-white rounded-md">{{ t('suggestion.generateButtonAction') }}</button>
         </div>
       </div>
     </div>
@@ -98,8 +98,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import * as suggestionApi from '../api/suggestion'
 
+const { t } = useI18n()
 const suggestions = ref<any[]>([])
 const searchKeyword = ref('')
 const filterType = ref('')
@@ -120,24 +122,24 @@ const loadSuggestions = async () => {
     })
     suggestions.value = response.data.data.content
   } catch (error) {
-    console.warn('加载建议失败:', error)
+    console.warn(t('suggestion.loadFailed'), error)
   }
 }
 
 const getTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    'process': '流程优化',
-    'performance': '性能优化',
-    'quality': '质量优化'
+    'process': t('suggestion.typeProcess'),
+    'performance': t('suggestion.typePerformance'),
+    'quality': t('suggestion.typeQuality')
   }
   return labels[type] || type
 }
 
 const getPriorityLabel = (priority: number) => {
   const labels: Record<number, string> = {
-    1: '高',
-    2: '中',
-    3: '低'
+    1: t('suggestion.priorityHigh'),
+    2: t('suggestion.priorityMedium'),
+    3: t('suggestion.priorityLow')
   }
   return labels[priority] || priority
 }
@@ -151,12 +153,12 @@ const editSuggestion = (_suggestion: any) => {
 }
 
 const deleteSuggestion = async (id: number) => {
-  if (confirm('确定要删除这个建议吗？')) {
+  if (confirm(t('suggestion.deleteConfirm'))) {
     try {
       await suggestionApi.deleteSuggestion(id)
       loadSuggestions()
     } catch (error) {
-      console.warn('删除建议失败:', error)
+      console.warn(t('suggestion.deleteFailed'), error)
     }
   }
 }
@@ -171,7 +173,7 @@ const generateSuggestions = async () => {
     showGenerateModal.value = false
     loadSuggestions()
   } catch (error) {
-    console.warn('生成建议失败:', error)
+    console.warn(t('suggestion.generateFailed'), error)
   }
 }
 </script>

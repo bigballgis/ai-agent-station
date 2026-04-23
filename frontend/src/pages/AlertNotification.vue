@@ -3,6 +3,30 @@
     <!-- 页面头部 -->
     <PageHeader title="告警中心" subtitle="统一管理和监控所有告警规则与告警记录，及时发现和处理系统异常" />
 
+    <!-- 加载状态 -->
+    <div v-if="pageLoading" class="flex items-center justify-center py-20">
+      <a-spin size="large" />
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-else-if="loadError" class="flex flex-col items-center justify-center py-20">
+      <svg class="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-3">{{ loadError }}</p>
+      <button
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-950/50 transition-all duration-200 cursor-pointer"
+        @click="fetchAlertData"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        重新加载
+      </button>
+    </div>
+
+    <template v-else>
+
     <!-- 统计概览卡片 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       <StatCard
@@ -324,6 +348,7 @@
         </div>
       </div>
     </a-modal>
+    </template>
   </div>
 </template>
 
@@ -428,7 +453,13 @@ const alertRules = ref<any[]>([])
 // 告警记录
 const alertRecords = ref<any[]>([])
 
+// Loading & Error 状态
+const pageLoading = ref(true)
+const loadError = ref('')
+
 async function fetchAlertData() {
+  pageLoading.value = true
+  loadError.value = ''
   try {
     const [rulesRes, recordsRes, statsRes] = await Promise.all([
       getAlertRules(),
@@ -442,21 +473,24 @@ async function fetchAlertData() {
     // 更新统计卡片
     if (statsRes.data) {
       const s = statsRes.data
-      stats.value[0].value = s.activeCount ?? s.active ?? 0
+      stats.value[0].value = s.activeCount ?? s.active ?? s.activeIn24h ?? 0
       stats.value[0].trend = s.activeTrend ?? '-'
       stats.value[1].value = s.total24h ?? s.total24Hour ?? 0
       stats.value[1].trend = s.total24hTrend ?? '-'
       stats.value[2].value = s.resolvedCount ?? s.resolved ?? 0
       stats.value[2].trend = s.resolvedRate ?? '-'
-      stats.value[3].value = s.ruleCount ?? s.rules ?? 0
+      stats.value[3].value = s.ruleCount ?? s.totalRules ?? s.rules ?? 0
       stats.value[3].trend = s.enabledRuleCount != null ? `启用 ${s.enabledRuleCount} 条` : '-'
     }
 
     // 更新 Tab 计数
     tabs.value[0].count = alertRules.value.length
     tabs.value[1].count = alertRecords.value.length
-  } catch (e) {
+  } catch (e: any) {
     console.error('获取告警数据失败:', e)
+    loadError.value = e?.message || '获取告警数据失败，请稍后重试'
+  } finally {
+    pageLoading.value = false
   }
 }
 

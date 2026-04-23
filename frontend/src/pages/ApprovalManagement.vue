@@ -1,11 +1,11 @@
 <template>
   <div class="approval-management-page">
     <div class="page-header">
-      <h1>审批管理</h1>
+      <h1>{{ t('approval.management') }}</h1>
     </div>
 
     <a-tabs v-model:activeKey="activeTab">
-      <a-tab-pane key="pending" tab="待审批">
+      <a-tab-pane key="pending" :tab="t('approval.pending')">
         <a-table
           :columns="columns"
           :data-source="pendingApprovals"
@@ -20,20 +20,20 @@
             <template v-else-if="column.key === 'actions'">
               <a-space>
                 <a-button size="small" @click="viewTestResults(record.agentId!)">
-                  查看测试结果
+                  {{ t('approval.viewTestResults') }}
                 </a-button>
                 <a-button type="primary" size="small" @click="showApproveModal(record)">
-                  通过
+                  {{ t('approval.approve') }}
                 </a-button>
                 <a-button danger size="small" @click="showRejectModal(record)">
-                  驳回
+                  {{ t('approval.reject') }}
                 </a-button>
               </a-space>
             </template>
           </template>
         </a-table>
       </a-tab-pane>
-      <a-tab-pane key="all" tab="全部审批">
+      <a-tab-pane key="all" :tab="t('approval.allApprovals')">
         <a-table
           :columns="columnsAll"
           :data-source="allApprovals"
@@ -53,15 +53,15 @@
 
     <a-modal
       v-model:open="showApproveModalFlag"
-      title="通过审批"
+      :title="t('approval.approveModalTitle')"
       @ok="handleApprove"
       @cancel="showApproveModalFlag = false"
     >
       <a-form layout="vertical">
-        <a-form-item label="审批备注">
+        <a-form-item :label="t('approval.remarkLabel')">
           <a-textarea
             v-model:value="approvalRemark"
-            placeholder="请输入审批备注（可选）"
+            :placeholder="t('approval.remarkPlaceholder')"
             :rows="3"
           />
         </a-form-item>
@@ -70,15 +70,15 @@
 
     <a-modal
       v-model:open="showRejectModalFlag"
-      title="驳回审批"
+      :title="t('approval.rejectModalTitle')"
       @ok="handleReject"
       @cancel="showRejectModalFlag = false"
     >
       <a-form layout="vertical">
-        <a-form-item label="驳回原因">
+        <a-form-item :label="t('approval.rejectReasonLabel')">
           <a-textarea
             v-model:value="approvalRemark"
-            placeholder="请输入驳回原因"
+            :placeholder="t('approval.rejectReasonPlaceholder')"
             :rows="3"
           />
         </a-form-item>
@@ -87,7 +87,7 @@
 
     <a-modal
       v-model:open="showTestResults"
-      title="测试结果"
+      :title="t('approval.testResultsTitle')"
       @cancel="showTestResults = false"
       :width="800"
     >
@@ -100,7 +100,7 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-tag :color="record.status === 'passed' ? 'green' : 'red'">
-              {{ record.status === 'passed' ? '通过' : '失败' }}
+              {{ record.status === 'passed' ? t('approval.passed') : t('approval.failed') }}
             </a-tag>
           </template>
         </template>
@@ -111,10 +111,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { approvalApi, type Approval } from '@/api/approval'
 import { testApi } from '@/api/test'
 import type { TestResult } from '@/api/test'
+
+const { t } = useI18n()
 
 const activeTab = ref('pending')
 const pendingApprovals = ref<Approval[]>([])
@@ -135,28 +138,28 @@ const showTestResults = ref(false)
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
   { title: 'Agent ID', dataIndex: 'agentId', key: 'agentId', width: 100 },
-  { title: '版本 ID', dataIndex: 'agentVersionId', key: 'agentVersionId', width: 100 },
-  { title: '提交人', dataIndex: 'submitterId', key: 'submitterId', width: 100 },
-  { title: '备注', dataIndex: 'remark', key: 'remark' },
-  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 180, customRender: ({ text }: { text: string }) => formatDate(text) },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '操作', key: 'actions', width: 180 }
+  { title: t('approval.versionId'), dataIndex: 'agentVersionId', key: 'agentVersionId', width: 100 },
+  { title: t('approval.submitter'), dataIndex: 'submitterId', key: 'submitterId', width: 100 },
+  { title: t('approval.remark'), dataIndex: 'remark', key: 'remark' },
+  { title: t('approval.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 180, customRender: ({ text }: { text: string }) => formatDate(text) },
+  { title: t('common.status'), key: 'status', width: 100 },
+  { title: t('common.actions'), key: 'actions', width: 180 }
 ]
 
 const columnsAll = [
   ...columns.slice(0, -1),
-  { title: '审批人', dataIndex: 'approverId', key: 'approverId', width: 100 },
-  { title: '审批备注', dataIndex: 'approvalRemark', key: 'approvalRemark' },
-  { title: '审批时间', dataIndex: 'approvedAt', key: 'approvedAt', width: 180, customRender: ({ text }: { text: string }) => text ? formatDate(text) : '-' }
+  { title: t('approval.approver'), dataIndex: 'approverId', key: 'approverId', width: 100 },
+  { title: t('approval.approvalRemarkCol'), dataIndex: 'approvalRemark', key: 'approvalRemark' },
+  { title: t('approval.approvedAt'), dataIndex: 'approvedAt', key: 'approvedAt', width: 180, customRender: ({ text }: { text: string }) => text ? formatDate(text) : '-' }
 ]
 
 const testResultColumns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-  { title: '测试用例', dataIndex: 'testCaseName', key: 'testCaseName' },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '执行时间(ms)', dataIndex: 'executionTime', key: 'executionTime', width: 120 },
-  { title: '错误信息', dataIndex: 'errorMessage', key: 'errorMessage', ellipsis: true },
-  { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180, customRender: ({ text }: { text: string }) => text ? formatDate(text) : '-' }
+  { title: t('approval.testCaseName'), dataIndex: 'testCaseName', key: 'testCaseName' },
+  { title: t('common.status'), key: 'status', width: 100 },
+  { title: t('approval.executionTime'), dataIndex: 'executionTime', key: 'executionTime', width: 120 },
+  { title: t('approval.errorMessage'), dataIndex: 'errorMessage', key: 'errorMessage', ellipsis: true },
+  { title: t('common.createdAt'), dataIndex: 'createdAt', key: 'createdAt', width: 180, customRender: ({ text }: { text: string }) => text ? formatDate(text) : '-' }
 ]
 
 async function loadPendingApprovals() {
@@ -165,7 +168,7 @@ async function loadPendingApprovals() {
     const res = await approvalApi.getPendingApprovals()
     pendingApprovals.value = res.data?.data?.content || []
   } catch (error) {
-    message.error('加载待审批列表失败')
+    message.error(t('approval.loadPendingFailed'))
   } finally {
     loading.value = false
   }
@@ -178,7 +181,7 @@ async function loadAllApprovals(page = 1, pageSize = 10) {
     allApprovals.value = res.data?.data?.content || []
     pagination.value.total = res.data?.data?.totalElements || 0
   } catch (error) {
-    message.error('加载审批列表失败')
+    message.error(t('approval.loadAllFailed'))
   } finally {
     loading.value = false
   }
@@ -201,12 +204,12 @@ async function handleApprove() {
 
   try {
     await approvalApi.approve(currentApproval.value.id, approvalRemark.value)
-    message.success('审批通过')
+    message.success(t('approval.approveSuccess'))
     showApproveModalFlag.value = false
     loadPendingApprovals()
     loadAllApprovals(pagination.value.current, pagination.value.pageSize)
   } catch (error) {
-    message.error('审批失败')
+    message.error(t('approval.approveFailed'))
   }
 }
 
@@ -215,12 +218,12 @@ async function handleReject() {
 
   try {
     await approvalApi.reject(currentApproval.value.id, approvalRemark.value)
-    message.success('已驳回')
+    message.success(t('approval.rejectSuccess'))
     showRejectModalFlag.value = false
     loadPendingApprovals()
     loadAllApprovals(pagination.value.current, pagination.value.pageSize)
   } catch (error) {
-    message.error('操作失败')
+    message.error(t('approval.operationFailed'))
   }
 }
 
@@ -255,7 +258,7 @@ function viewTestResults(agentId: number) {
       testResults.value = response.data
     })
     .catch(_error => {
-      message.error('加载测试结果失败')
+      message.error(t('approval.loadTestResultsFailed'))
     })
 }
 

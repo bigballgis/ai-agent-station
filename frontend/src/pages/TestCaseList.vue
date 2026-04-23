@@ -5,10 +5,10 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            测试用例管理
+            {{ t('test.caseManagement') }}
           </h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            管理所有测试用例，支持创建、编辑、版本管理和执行测试
+            {{ t('test.caseManagementDesc') }}
           </p>
         </div>
         <button
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          创建用例
+          {{ t('test.createCase') }}
         </button>
       </div>
     </div>
@@ -37,7 +37,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索用例名称或描述..."
+          :placeholder="t('test.searchPlaceholder')"
           class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
           @input="handleSearch"
         />
@@ -49,9 +49,9 @@
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
         @change="handleSearch"
       >
-        <option value="">全部状态</option>
-        <option value="active">已启用</option>
-        <option value="inactive">已禁用</option>
+        <option value="">{{ t('test.allStatus') }}</option>
+        <option value="active">{{ t('test.enabled') }}</option>
+        <option value="inactive">{{ t('test.disabled') }}</option>
       </select>
 
       <!-- Agent 筛选 -->
@@ -60,7 +60,7 @@
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[160px]"
         @change="handleSearch"
       >
-        <option value="">全部 Agent</option>
+        <option value="">{{ t('test.allAgents') }}</option>
         <option
           v-for="agent in agentOptions"
           :key="agent.id"
@@ -76,11 +76,11 @@
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
         @change="handleSearch"
       >
-        <option value="">全部类型</option>
-        <option value="unit">单元测试</option>
-        <option value="integration">集成测试</option>
-        <option value="e2e">端到端测试</option>
-        <option value="performance">性能测试</option>
+        <option value="">{{ t('test.allTypes') }}</option>
+        <option value="unit">{{ t('test.typeUnit') }}</option>
+        <option value="integration">{{ t('test.typeIntegration') }}</option>
+        <option value="e2e">{{ t('test.typeE2e') }}</option>
+        <option value="performance">{{ t('test.typePerformance') }}</option>
       </select>
     </div>
 
@@ -109,8 +109,8 @@
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </div>
-        <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">暂无测试用例</h3>
-        <p class="text-sm text-neutral-400 dark:text-neutral-500 mb-5">点击下方按钮创建您的第一个测试用例</p>
+        <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">{{ t('test.noCases') }}</h3>
+        <p class="text-sm text-neutral-400 dark:text-neutral-500 mb-5">{{ t('test.createFirstCaseDesc') }}</p>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
           @click="handleCreateTestCase"
@@ -118,7 +118,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          创建第一个用例
+          {{ t('test.createFirstCase') }}
         </button>
       </div>
 
@@ -153,7 +153,7 @@
                   {{ record.name }}
                 </p>
                 <p class="text-xs text-neutral-400 dark:text-neutral-500 truncate">
-                  {{ record.description || '暂无描述' }}
+                  {{ record.description || t('test.noDescription') }}
                 </p>
               </div>
             </div>
@@ -188,7 +188,7 @@
                 class="w-1.5 h-1.5 rounded-full"
                 :class="record.isActive ? 'bg-green-500' : 'bg-red-500'"
               ></span>
-              {{ record.isActive ? '已启用' : '已禁用' }}
+              {{ record.isActive ? t('test.enabled') : t('test.disabled') }}
             </span>
           </template>
 
@@ -204,7 +204,7 @@
             <div class="flex items-center gap-1">
               <button
                 class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
-                title="编辑"
+                :title="t('test.editCase')"
                 @click="handleEditTestCase(record.id!)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@
               </button>
               <button
                 class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all duration-200 cursor-pointer"
-                title="版本"
+                :title="t('test.testCaseVersions')"
                 @click="handleViewVersions(record.id!)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +224,7 @@
               </button>
               <button
                 class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 cursor-pointer"
-                title="运行"
+                :title="t('test.runTest')"
                 @click="handleRunTestCase(record.id!)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@
               </button>
               <button
                 class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
-                title="删除"
+                :title="t('common.delete')"
                 @click="handleDeleteTestCase(record.id!)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,7 +256,7 @@
       class="mt-6 flex items-center justify-between animate-fade-in"
     >
       <span class="text-sm text-neutral-500 dark:text-neutral-400">
-        共 {{ filteredTestCases.length }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页
+        {{ t('test.paginationInfo', { total: filteredTestCases.length, current: currentPage, totalPage: totalPages }) }}
       </span>
       <div class="flex items-center gap-2">
         <button
@@ -267,7 +267,7 @@
           :disabled="currentPage <= 1"
           @click="currentPage--"
         >
-          上一页
+          {{ t('test.prevPage') }}
         </button>
         <template v-for="page in totalPages" :key="page">
           <button
@@ -289,7 +289,7 @@
           :disabled="currentPage >= totalPages"
           @click="currentPage++"
         >
-          下一页
+          {{ t('test.nextPage') }}
         </button>
       </div>
     </div>
@@ -299,11 +299,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { testApi, type TestCase } from '@/api/test'
 import { agentApi, type Agent } from '@/api/agent'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const testCases = ref<TestCase[]>([])
 const agents = ref<Agent[]>([])
@@ -363,44 +365,44 @@ function shouldShowPage(page: number): boolean {
 }
 
 // 表格列定义
-const columns = [
+const columns = computed(() => [
   {
-    title: '用例名称',
+    title: t('test.caseName'),
     key: 'name',
     dataIndex: 'name',
     width: 280
   },
   {
-    title: '关联 Agent',
+    title: t('test.relatedAgent'),
     key: 'agent',
     dataIndex: 'agentId',
     width: 140
   },
   {
-    title: '测试类型',
+    title: t('test.testType'),
     key: 'testType',
     dataIndex: 'testType',
     width: 120
   },
   {
-    title: '状态',
+    title: t('test.status'),
     key: 'status',
     dataIndex: 'isActive',
     width: 100
   },
   {
-    title: '创建时间',
+    title: t('test.createdAt'),
     key: 'createdAt',
     dataIndex: 'createdAt',
     width: 140
   },
   {
-    title: '操作',
+    title: t('test.actions'),
     key: 'action',
     width: 180,
     fixed: 'right' as const
   }
-]
+])
 
 // 加载数据
 async function fetchTestCases() {
@@ -409,7 +411,7 @@ async function fetchTestCases() {
     const response = await testApi.getAllTestCases()
     testCases.value = response.data || []
   } catch (error) {
-    message.error('加载测试用例列表失败')
+    message.error(t('test.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -443,19 +445,19 @@ function handleViewVersions(id: number) {
 
 function handleDeleteTestCase(id: number) {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除该测试用例吗？此操作不可恢复。',
-    okText: '确认删除',
+    title: t('test.confirmDelete'),
+    content: t('test.confirmDeleteContent'),
+    okText: t('test.confirmDelete'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: () => {
       testApi.deleteTestCase(id)
         .then(() => {
-          message.success('删除成功')
+          message.success(t('test.deleteSuccess'))
           fetchTestCases()
         })
         .catch(() => {
-          message.error('删除失败')
+          message.error(t('test.deleteFailed'))
         })
     }
   })
@@ -464,11 +466,11 @@ function handleDeleteTestCase(id: number) {
 function handleRunTestCase(id: number) {
   testApi.createTestExecution({ testCaseId: id })
     .then(() => {
-      message.success('测试执行已启动')
+      message.success(t('test.testStarted'))
       router.push('/test-executions')
     })
     .catch(() => {
-      message.error('启动测试执行失败')
+      message.error(t('test.startTestFailed'))
     })
 }
 
@@ -490,14 +492,14 @@ function getAgentName(agentId: number | undefined): string {
 
 function getTestTypeLabel(testType: string | undefined): string {
   const typeMap: Record<string, string> = {
-    unit: '单元测试',
-    integration: '集成测试',
-    e2e: '端到端测试',
-    performance: '性能测试',
-    api: 'API 测试',
-    smoke: '冒烟测试'
+    unit: t('test.typeUnit'),
+    integration: t('test.typeIntegration'),
+    e2e: t('test.typeE2e'),
+    performance: t('test.typePerformance'),
+    api: t('test.typeApi'),
+    smoke: t('test.typeSmoke')
   }
-  return typeMap[testType || ''] || testType || '未知'
+  return typeMap[testType || ''] || testType || t('test.typeUnknown')
 }
 
 function getTestTypeBadgeClass(testType: string | undefined): string {

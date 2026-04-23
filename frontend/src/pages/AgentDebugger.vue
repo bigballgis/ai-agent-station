@@ -49,6 +49,21 @@
 
         <!-- 输入面板 -->
         <div class="p-4 border-t border-neutral-100 dark:border-neutral-800">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-neutral-400 dark:text-neutral-500">
+              {{ messages.length > 0 ? `${messages.length} 条消息` : '' }}
+            </span>
+            <button
+              v-if="messages.length > 0"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
+              @click="clearHistory"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {{ t('debugger.clearHistory') }}
+            </button>
+          </div>
           <textarea
             v-model="inputMessage"
             placeholder="输入消息..."
@@ -284,13 +299,53 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { getAllAgents } from '@/api/agent'
 import { streamAgentExecution } from '@/api/stream'
 
 const { t } = useI18n()
+
+// ============ 对话历史持久化 ============
+const HISTORY_PREFIX = 'debug_history_'
+const MAX_HISTORY_MESSAGES = 50
+
+function getHistoryKey(agentId: string): string {
+  return `${HISTORY_PREFIX}${agentId}`
+}
+
+function saveHistory(agentId: string, msgs: typeof messages.value) {
+  if (!agentId) return
+  try {
+    const toSave = msgs.slice(-MAX_HISTORY_MESSAGES)
+    localStorage.setItem(getHistoryKey(agentId), JSON.stringify(toSave))
+  } catch {
+    // localStorage may be full or unavailable
+  }
+}
+
+function loadHistory(agentId: string): typeof messages.value {
+  if (!agentId) return []
+  try {
+    const raw = localStorage.getItem(getHistoryKey(agentId))
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        message.info(t('debugger.historyLoaded'))
+        return parsed
+      }
+    }
+  } catch {
+    // invalid data, ignore
+  }
+  return []
+}
+
+function clearHistoryStorage(agentId: string) {
+  if (!agentId) return
+  localStorage.removeItem(getHistoryKey(agentId))
+}
 
 // Agent 列表
 const agentList = ref<{ id: string; name: string }[]>([])
@@ -393,6 +448,7 @@ async function sendMessage() {
 
   const userMsg = inputMessage.value.trim()
   messages.value.push({ role: 'user', content: userMsg })
+  saveHistory(selectedAgent.value, messages.value)
   inputMessage.value = ''
   isExecuting.value = true
   executionStatus.value = 'running'
@@ -484,6 +540,8 @@ async function sendMessage() {
             messages.value.push({ role: 'agent', content: data.content || data.text })
           }
 
+          saveHistory(selectedAgent.value, messages.value)
+
           if (sseConnection) {
             sseConnection.close()
             sseConnection = null
@@ -499,6 +557,8 @@ async function sendMessage() {
           messages.value.push({ role: 'agent', content: fullContent })
         }
 
+        saveHistory(selectedAgent.value, messages.value)
+
         if (sseConnection) {
           sseConnection.close()
           sseConnection = null
@@ -511,6 +571,38 @@ async function sendMessage() {
     isExecuting.value = false
   }
 }
+
+function clearHistory() {
+  Modal.confirm({
+    title: t('debugger.clearHistory'),
+    content: t('debugger.clearHistoryConfirm'),
+    okText: t('common.confirm'),
+    okType: 'danger',
+    cancelText: t('common.cancel'),
+    onOk: () => {
+      clearHistoryStorage(selectedAgent.value)
+      messages.value = []
+      // 同时清空执行数据
+      executionChain.value = []
+      mcpCalls.value = []
+      memoryOps.value = []
+      variables.value = []
+      executionStatus.value = 'idle'
+      totalDuration.value = 0
+      tokenUsage.value = 0
+      message.success(t('debugger.clearHistorySuccess'))
+    },
+  })
+}
+
+// 监听 Agent 切换，加载对应历史记录
+watch(selectedAgent, (newAgentId) => {
+  if (newAgentId) {
+    messages.value = loadHistory(newAgentId)
+  } else {
+    messages.value = []
+  }
+})
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
