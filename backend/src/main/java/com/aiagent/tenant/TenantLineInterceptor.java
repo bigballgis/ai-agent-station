@@ -25,6 +25,16 @@ public class TenantLineInterceptor implements StatementInspector {
         if (tenantId == null || tenantId <= 0) {
             return sql; // 无效租户ID，不添加过滤
         }
+        // 防御性类型验证：确保 tenantId 是有效数字，防止潜在的注入风险
+        try {
+            long validated = Long.parseLong(String.valueOf(tenantId));
+            if (validated <= 0) {
+                return sql;
+            }
+        } catch (NumberFormatException e) {
+            log.warn("无效的租户ID，跳过租户过滤: {}", tenantId);
+            return sql;
+        }
         String lowerSql = sql.toLowerCase();
         
         if (lowerSql.startsWith("select")) {

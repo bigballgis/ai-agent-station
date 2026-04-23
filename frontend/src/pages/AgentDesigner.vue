@@ -1366,6 +1366,12 @@ onUnmounted(() => {
   user-select: none;
 }
 
+:global(.light) .agent-designer-page,
+.agent-designer-page:not(:global(.dark *)) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
 .designer-body {
   display: flex;
   flex: 1;
@@ -1382,6 +1388,10 @@ onUnmounted(() => {
   overflow: hidden;
   background: #1a1a2e;
   cursor: grab;
+}
+
+:global(.light) .canvas-container {
+  background: #f1f5f9;
 }
 
 .canvas-container:active {
@@ -1465,6 +1475,12 @@ onUnmounted(() => {
   animation: context-menu-in 0.12s ease-out;
 }
 
+:global(.light) .context-menu {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
 @keyframes context-menu-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -1486,6 +1502,14 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.08);
 }
 
+:global(.light) .context-menu-item {
+  color: #334155;
+}
+
+:global(.light) .context-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .context-menu-item.danger {
   color: #f87171;
 }
@@ -1498,6 +1522,10 @@ onUnmounted(() => {
   height: 1px;
   background: rgba(255, 255, 255, 0.06);
   margin: 4px 8px;
+}
+
+:global(.light) .context-menu-divider {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .breakpoint-badge {

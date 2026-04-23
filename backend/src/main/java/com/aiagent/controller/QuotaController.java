@@ -4,6 +4,7 @@ import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 
 import com.aiagent.common.Result;
+import com.aiagent.dto.TenantQuotaUpdateDTO;
 import com.aiagent.service.QuotaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -83,7 +82,7 @@ public class QuotaController {
     public Result<?> updateTenantQuota(
             @PathVariable String tenantId,
             @RequestHeader("X-Tenant-ID") String headerTenantId,
-            @Valid @RequestBody Map<String, Object> quotaUpdate) {
+            @Valid @RequestBody TenantQuotaUpdateDTO quotaUpdate) {
         log.info("Update tenant quota: tenantId={}, headerTenantId={}", tenantId, headerTenantId);
         if (!tenantId.equals(headerTenantId)) {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);

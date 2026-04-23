@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.common.ResultCode;
+import com.aiagent.dto.TenantQuotaUpdateDTO;
 import com.aiagent.entity.Tenant;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.TenantRepository;
@@ -145,27 +146,21 @@ public class QuotaService {
      * 更新租户配额限制
      */
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> updateTenantQuota(Object tenantIdParam, Object params) {
+    public Map<String, Object> updateTenantQuota(Object tenantIdParam, TenantQuotaUpdateDTO dto) {
         Long tenantId = parseTenantId(tenantIdParam);
         Tenant tenant = getTenantById(tenantId);
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> paramMap = (params instanceof Map) ? (Map<String, Object>) params : new HashMap<>();
-
-        if (paramMap.containsKey("maxAgents")) {
-            tenant.setMaxAgents(toInteger(paramMap.get("maxAgents")));
+        if (dto.getAgentLimit() != null) {
+            tenant.setMaxAgents(dto.getAgentLimit().intValue());
         }
-        if (paramMap.containsKey("maxApiCallsPerDay")) {
-            tenant.setMaxApiCallsPerDay(toLong(paramMap.get("maxApiCallsPerDay")));
+        if (dto.getApiCallLimit() != null) {
+            tenant.setMaxApiCallsPerDay(dto.getApiCallLimit());
         }
-        if (paramMap.containsKey("maxTokensPerDay")) {
-            tenant.setMaxTokensPerDay(toLong(paramMap.get("maxTokensPerDay")));
+        if (dto.getTokenLimit() != null) {
+            tenant.setMaxTokensPerDay(dto.getTokenLimit());
         }
-        if (paramMap.containsKey("maxMcpCallsPerDay")) {
-            tenant.setMaxMcpCallsPerDay(toLong(paramMap.get("maxMcpCallsPerDay")));
-        }
-        if (paramMap.containsKey("maxStorageMb")) {
-            tenant.setMaxStorageMb(toLong(paramMap.get("maxStorageMb")));
+        if (dto.getStorageLimit() != null) {
+            tenant.setMaxStorageMb(dto.getStorageLimit());
         }
 
         tenantRepository.save(tenant);
