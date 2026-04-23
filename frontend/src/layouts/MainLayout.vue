@@ -305,7 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type Component } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
@@ -377,11 +377,12 @@ const isMobile = computed(() => windowWidth.value < 768)
 const userInfo = computed(() => userStore.userInfo)
 const currentLocale = computed(() => appStore.locale)
 
+
 // 菜单项类型定义
 type MenuItem = {
   key: string
   path?: string
-  icon: any
+  icon: Component
   label: string
   roles?: string[]
   children?: MenuItem[]

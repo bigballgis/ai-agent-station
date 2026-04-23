@@ -1297,8 +1297,7 @@ onMounted(async () => {
   if (agentId) {
     try {
       const res = await agentApi.getAgentById(agentId)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const agentData: Record<string, unknown> = (res as any)?.data || res
+      const agentData: Record<string, unknown> = (res as { data?: Record<string, unknown> })?.data || res as Record<string, unknown>
       if (agentData) {
         if (agentData.name) agentName.value = String(agentData.name)
         const graphDef = agentData.graphDefinition as Record<string, unknown> | undefined

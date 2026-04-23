@@ -291,7 +291,7 @@ function handleRemove(file: UploadFile) {
 async function handleDownload(record: FileItem) {
   try {
     const res = await downloadFile(String(record.id))
-    const blob = new Blob([res as any])
+    const blob = new Blob([res as BlobPart])
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url

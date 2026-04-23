@@ -2,7 +2,7 @@ package com.aiagent.service;
 
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
-import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.WorkflowDefinitionRepository;
 import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.tenant.TenantContextHolder;
@@ -38,7 +38,7 @@ public class WorkflowService {
 
     public WorkflowDefinition getDefinitionByIdAndTenantId(Long id, Long tenantId) {
         return definitionRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException("工作流定义不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流定义不存在"));
     }
 
     @Transactional

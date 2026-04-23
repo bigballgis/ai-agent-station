@@ -218,8 +218,8 @@ function getStatusColor(status: string) {
 function fetchSuggestions() {
   // 模拟数据获取
   if (import.meta.env.DEV) {
-    console.log('Fetching suggestions for agent:', selectedAgent.value)
-    console.log('Status:', suggestionStatus.value)
+    console.debug('Fetching suggestions for agent:', selectedAgent.value)
+    console.debug('Status:', suggestionStatus.value)
   }
   // 这里可以添加实际的API调用
 }

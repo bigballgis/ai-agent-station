@@ -471,7 +471,7 @@ function resetOperationFilters() {
 async function fetchOperationLogs() {
   loading.value = true
   try {
-    let res: any
+    let res: { data?: unknown }
     const dr = operationFilters.value.dateRange
     if (dr && (dr.start || (Array.isArray(dr) && dr.length === 2))) {
       const startTime = typeof dr === 'object' && dr.start ? dr.start : (Array.isArray(dr) && dr[0]?.format ? dr[0].format('YYYY-MM-DD HH:mm:ss') : '')
@@ -491,16 +491,16 @@ async function fetchOperationLogs() {
       res = await getLogs({ page: operationPage.value, size: 100 })
     }
     const data = res?.data || res || []
-    operationLogs.value = Array.isArray(data) ? data.map((item: any, index: number) => ({
+    operationLogs.value = Array.isArray(data) ? data.map((item: Record<string, unknown>, index: number) => ({
       id: String(item.id || index + 1),
-      time: item.time || item.createdAt || item.timestamp || '',
-      operator: item.operator || item.createdBy || '',
-      module: item.module || item.type || '',
-      type: item.type || item.action || item.operationType || '',
-      ip: item.ip || item.ipAddress || '',
-      detail: item.detail || item.message || item.description || '',
+      time: (item.time || item.createdAt || item.timestamp || '') as string,
+      operator: (item.operator || item.createdBy || '') as string,
+      module: (item.module || item.type || '') as string,
+      type: (item.type || item.action || item.operationType || '') as string,
+      ip: (item.ip || item.ipAddress || '') as string,
+      detail: (item.detail || item.message || item.description || '') as string,
     })) : []
-  } catch (error: any) {
+  } catch {
     message.error(t('log.fetchOperationLogsFailed'))
   } finally {
     loading.value = false
@@ -557,7 +557,7 @@ function resetApiFilters() {
 async function fetchApiLogs() {
   loading.value = true
   try {
-    let res: any
+    let res: { data?: unknown }
     const dr = apiFilters.value.dateRange
     if (dr && (dr.start || (Array.isArray(dr) && dr.length === 2))) {
       const startTime = typeof dr === 'object' && dr.start ? dr.start : (Array.isArray(dr) && dr[0]?.format ? dr[0].format('YYYY-MM-DD HH:mm:ss') : '')
@@ -572,16 +572,16 @@ async function fetchApiLogs() {
       res = await getLogs({ page: apiPage.value, size: 100 })
     }
     const data = res?.data || res || []
-    apiLogs.value = Array.isArray(data) ? data.map((item: any, index: number) => ({
+    apiLogs.value = Array.isArray(data) ? data.map((item: Record<string, unknown>, index: number) => ({
       id: String(item.id || index + 1),
-      time: item.time || item.createdAt || item.timestamp || '',
-      agent: item.agent || item.agentName || '',
-      caller: item.caller || item.source || '',
-      params: typeof item.params === 'string' ? item.params : JSON.stringify(item.params || {}),
-      responseTime: item.responseTime || item.duration || item.executionTime || 0,
-      status: item.status || 'success',
+      time: (item.time || item.createdAt || item.timestamp || '') as string,
+      agent: (item.agent || item.agentName || '') as string,
+      caller: (item.caller || item.source || '') as string,
+      params: typeof item.params === 'string' ? item.params as string : JSON.stringify(item.params || {}),
+      responseTime: (item.responseTime || item.duration || item.executionTime || 0) as number,
+      status: (item.status || 'success') as string,
     })) : []
-  } catch (error: any) {
+  } catch {
     message.error(t('log.fetchApiLogsFailed'))
   } finally {
     loading.value = false
@@ -657,19 +657,19 @@ function toggleErrorExpand(id: string) {
 async function fetchErrorLogs() {
   loading.value = true
   try {
-    const res: any = await getLogs({ page: 1, size: 100 })
+    const res = await getLogs({ page: 1, size: 100 })
     const data = res?.data || res || []
     errorLogs.value = Array.isArray(data) ? data
-      .filter((item: any) => item.level === 'ERROR' || item.level === 'WARN' || item.type === 'error' || item.type === 'warn')
-      .map((item: any, index: number) => ({
+      .filter((item: Record<string, unknown>) => item.level === 'ERROR' || item.level === 'WARN' || item.type === 'error' || item.type === 'warn')
+      .map((item: Record<string, unknown>, index: number) => ({
         id: String(item.id || `e${index + 1}`),
-        time: item.time || item.createdAt || item.timestamp || '',
-        level: item.level || 'ERROR',
-        module: item.module || item.source || '',
-        message: item.message || item.errorMessage || '',
-        stack: item.stack || item.stackTrace || '',
+        time: (item.time || item.createdAt || item.timestamp || '') as string,
+        level: (item.level || 'ERROR') as 'ERROR' | 'WARN',
+        module: (item.module || item.source || '') as string,
+        message: (item.message || item.errorMessage || '') as string,
+        stack: (item.stack || item.stackTrace || '') as string,
       })) : []
-  } catch (error: any) {
+  } catch {
     message.error(t('log.fetchErrorLogsFailed'))
   } finally {
     loading.value = false

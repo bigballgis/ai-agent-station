@@ -449,8 +449,9 @@ async function handleWizardCreate() {
     message.success(t('agent.createSuccess'))
     resetWizard()
     loadAgents()
-  } catch (error: any) {
-    message.error(t('agent.createFailed') + ': ' + (error.message || ''))
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.createFailed') + ': ' + (err.message || ''))
   }
 }
 
@@ -555,8 +556,9 @@ async function loadAgents() {
   try {
     const res = await agentApi.getAllAgents()
     agents.value = res.data || []
-  } catch (error: any) {
-    message.error(t('agent.loadFailed') + ': ' + (error.message || ''))
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.loadFailed') + ': ' + (err.message || ''))
   } finally {
     loading.value = false
   }
@@ -594,8 +596,9 @@ async function handleCopy() {
     message.success(t('agent.copySuccess'))
     showCopyModal.value = false
     loadAgents()
-  } catch (error: any) {
-    message.error(t('agent.copyFailed') + ': ' + (error.message || ''))
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.copyFailed') + ': ' + (err.message || ''))
   }
 }
 
@@ -611,8 +614,9 @@ function deleteAgent(agent: Agent) {
         await agentApi.deleteAgent(agent.id!)
         message.success(t('agent.deleteSuccess'))
         loadAgents()
-      } catch (error: any) {
-        message.error(t('agent.deleteFailed') + ': ' + (error.message || ''))
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error))
+        message.error(t('agent.deleteFailed') + ': ' + (err.message || ''))
       }
     }
   })

@@ -37,6 +37,27 @@ public class GlobalExceptionHandler {
         return Result.error(e.getCode(), e.getMessage()).withTraceId(getTraceId());
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<Void> handleResourceNotFoundException(ResourceNotFoundException e) {
+        log.warn("资源不存在: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage()).withTraceId(getTraceId());
+    }
+
+    @ExceptionHandler(RateLimitException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleRateLimitException(RateLimitException e) {
+        log.warn("请求频率限制: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage()).withTraceId(getTraceId());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Result<Void> handleAuthenticationException(AuthenticationException e) {
+        log.warn("认证失败: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage()).withTraceId(getTraceId());
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Result<Void> handleAccessDeniedException(AccessDeniedException e) {

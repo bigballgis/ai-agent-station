@@ -286,7 +286,7 @@ async function loadInstances() {
   }
 }
 
-function handleTableChange(pag: any) {
+function handleTableChange(pag: { current: number; pageSize: number }) {
   pagination.value.current = pag.current
   pagination.value.pageSize = pag.pageSize
   loadInstances()

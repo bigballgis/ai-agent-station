@@ -2,7 +2,7 @@ package com.aiagent.service;
 
 import com.aiagent.common.ResultCode;
 import com.aiagent.entity.ApiInterface;
-import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.ApiInterfaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class ApiInterfaceService {
     @Transactional(rollbackFor = Exception.class)
     public ApiInterface update(Long id, Long tenantId, ApiInterface apiInterface) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
 
         if (apiInterface.getAgentId() != null) {
             existing.setAgentId(apiInterface.getAgentId());
@@ -57,7 +57,7 @@ public class ApiInterfaceService {
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id, Long tenantId) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
 
         apiInterfaceRepository.delete(existing);
         log.info("Deleted API interface id={}, tenantId={}", id, tenantId);
@@ -66,7 +66,7 @@ public class ApiInterfaceService {
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ApiInterface getById(Long id, Long tenantId) {
         return apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
@@ -82,7 +82,7 @@ public class ApiInterfaceService {
     @Transactional(rollbackFor = Exception.class)
     public ApiInterface toggleActive(Long id, Long tenantId, Boolean isActive) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
 
         existing.setIsActive(isActive);
         log.info("Toggled API interface id={}, tenantId={}, isActive={}", id, tenantId, isActive);

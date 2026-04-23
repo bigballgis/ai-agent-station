@@ -4,6 +4,7 @@ import com.aiagent.common.ResultCode;
 import com.aiagent.entity.AgentEvolutionExperience;
 import com.aiagent.entity.AgentEvolutionSuggestion;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentEvolutionExperienceRepository;
 import com.aiagent.repository.AgentEvolutionSuggestionRepository;
 import com.aiagent.security.UserPrincipal;
@@ -240,10 +241,10 @@ public class SuggestionServiceImpl implements SuggestionService {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return suggestionRepository.findByIdAndTenantId(id, tenantId)
-                    .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException());
         }
         return suggestionRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
     }
 
     @Override

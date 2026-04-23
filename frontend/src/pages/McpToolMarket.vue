@@ -447,7 +447,7 @@ function connectTool() {
   message.success(t('mcpTool.connectSubmitted'))
   refreshTools().then(() => {
     fetchTools()
-  }).catch((e: any) => {
+  }).catch((e: Error) => {
     console.error('刷新工具失败:', e)
     message.error(t('mcpTool.connectFailed'))
   })
@@ -469,7 +469,7 @@ function saveConfig() {
   message.success(t('mcpTool.configSaved'))
   refreshTools().then(() => {
     fetchTools()
-  }).catch((e: any) => {
+  }).catch((e: Error) => {
     console.error('刷新工具失败:', e)
     message.error(t('mcpTool.configSaveFailed'))
   })
@@ -479,7 +479,7 @@ function toggleTool(tool: McpTool) {
   message.success(tool.enabled ? `正在禁用「${tool.name}」...` : `正在启用「${tool.name}」...`)
   refreshTools().then(() => {
     fetchTools()
-  }).catch((e: any) => {
+  }).catch((e: Error) => {
     console.error('切换工具状态失败:', e)
     message.error('切换工具状态失败')
   })

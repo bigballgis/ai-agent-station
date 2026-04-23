@@ -235,7 +235,7 @@ async function handleCompare() {
   }
 }
 
-function handleTableChange(pag: any) {
+function handleTableChange(pag: { current: number; pageSize: number }) {
   pagination.value.current = pag.current
   pagination.value.pageSize = pag.pageSize
   loadDeployments(pag.current, pag.pageSize)

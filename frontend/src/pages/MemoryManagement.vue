@@ -329,16 +329,25 @@ const timeRange = ref('')
 const currentPage = ref(1)
 const pageSize = 10
 
+interface MemoryItem {
+  id: number | string
+  content: string
+  type: string
+  agentName?: string
+  tags: string[]
+  [key: string]: unknown
+}
+
 // 记忆数据
-const memories = ref<any[]>([])
+const memories = ref<MemoryItem[]>([])
 const loading = ref(false)
 
 async function fetchAgents() {
   try {
     const res = await getAllAgents()
-    agentList.value = (res.data || res || []).map((a: any) => ({
+    agentList.value = (res.data || res || []).map((a: Record<string, unknown>) => ({
       id: String(a.id),
-      name: a.name,
+      name: (a.name || '') as string,
     }))
   } catch (e) {
     console.error('获取 Agent 列表失败:', e)
@@ -348,13 +357,13 @@ async function fetchAgents() {
 async function fetchMemories() {
   loading.value = true
   try {
-    const params: any = { page: 1, size: 100 }
+    const params: Record<string, unknown> = { page: 1, size: 100 }
     if (selectedAgent.value) params.agentId = selectedAgent.value
     if (activeType.value) params.memoryType = activeType.value
     if (searchQuery.value) params.keyword = searchQuery.value
     const res = await getAgentMemories(selectedAgent.value || 'all', params)
     memories.value = res.data?.records || res.data || res || []
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('获取记忆列表失败:', e)
     message.error(t('memory.fetchMemoriesFailed'))
   } finally {
@@ -461,7 +470,7 @@ function deleteMemory(memory: typeof memories.value[0]) {
         await deleteMemoryApi(memory.id)
         message.success(t('memory.deleteSuccess'))
         await fetchMemories()
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('删除记忆失败:', e)
         message.error(t('memory.deleteFailed'))
       }
@@ -481,7 +490,7 @@ function cleanExpiredMemories() {
         await cleanupAgentMemories(selectedAgent.value || 'all')
         message.success(t('memory.cleanSuccess'))
         await fetchMemories()
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('清理过期记忆失败:', e)
         message.error(t('memory.cleanFailed'))
       }

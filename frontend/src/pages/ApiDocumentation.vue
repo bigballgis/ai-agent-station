@@ -159,26 +159,41 @@ const loading = ref(false)
 
 const agents = ref<{ id: number; name: string }[]>([])
 
-const apiList = ref<any[]>([])
+interface ApiDocItem {
+  id: number
+  name: string
+  description: string
+  path: string
+  method: string
+  agentId: number
+  agentName?: string
+  requestExample: string
+  responseExample: string
+  testRequest: string
+  testResponse: string
+  isLoading: boolean
+}
+
+const apiList = ref<ApiDocItem[]>([])
 
 async function fetchApiInterfaces() {
   loading.value = true
   try {
-    const res: any = await getApiInterfaces({ page: 1, size: 100 })
+    const res = await getApiInterfaces({ page: 1, size: 100 })
     const data = res?.data || res || []
     const list = Array.isArray(data) ? data : []
-    apiList.value = list.map((item: any) => ({
-      id: item.id,
-      name: item.name || item.agentName || '',
-      description: item.description || '',
-      path: item.path || `/api/v1/agent/${item.agentId}/invoke`,
-      method: item.method || 'POST',
-      agentId: item.agentId || item.id,
+    apiList.value = list.map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      name: (item.name || item.agentName || '') as string,
+      description: (item.description || '') as string,
+      path: (item.path || `/api/v1/agent/${item.agentId}/invoke`) as string,
+      method: (item.method || 'POST') as string,
+      agentId: (item.agentId || item.id) as number,
       requestExample: typeof item.requestExample === 'string'
-        ? item.requestExample
+        ? item.requestExample as string
         : JSON.stringify(item.requestExample || item.requestBody || {}, null, 2),
       responseExample: typeof item.responseExample === 'string'
-        ? item.responseExample
+        ? item.responseExample as string
         : JSON.stringify(item.responseExample || item.responseBody || {}, null, 2),
       testRequest: '',
       testResponse: '',
@@ -187,13 +202,13 @@ async function fetchApiInterfaces() {
 
     // Extract unique agents
     const agentMap = new Map<number, string>()
-    list.forEach((item: any) => {
+    list.forEach((item: Record<string, unknown>) => {
       if (item.agentId && item.agentName) {
-        agentMap.set(item.agentId, item.agentName)
+        agentMap.set(item.agentId as number, item.agentName as string)
       }
     })
     agents.value = Array.from(agentMap.entries()).map(([id, name]) => ({ id, name }))
-  } catch (error: any) {
+  } catch {
     message.error(t('apiDocs.fetchFailed'))
   } finally {
     loading.value = false
@@ -231,25 +246,26 @@ function toggleApiDetail(apiId: number) {
   }
 }
 
-async function executeApiTest(api: any) {
+async function executeApiTest(api: ApiDocItem) {
   api.isLoading = true
   api.testResponse = ''
 
   try {
     // Try to fetch API detail and use it as test response
-    const res: any = await getApiInterfaceById(api.id)
+    const res = await getApiInterfaceById(api.id)
     const data = res?.data || res || {}
     api.testResponse = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'SUCCESS',
-      outputs: data.responseExample || data.responseBody || { message: t('apiDocs.callSuccess') },
+      outputs: (data as Record<string, unknown>).responseExample || (data as Record<string, unknown>).responseBody || { message: t('apiDocs.callSuccess') },
       executionTime: Math.floor(Math.random() * 1000) + 200,
     }, null, 2)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
     api.testResponse = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'FAILED',
-      errorMessage: error.message || t('apiDocs.callFailed'),
+      errorMessage: err.message || t('apiDocs.callFailed'),
     }, null, 2)
   } finally {
     api.isLoading = false

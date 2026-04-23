@@ -5,6 +5,7 @@ import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.entity.DeploymentHistory;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.repository.DeploymentHistoryRepository;
@@ -51,7 +52,7 @@ public class DeploymentService {
     public DeploymentHistory getDeploymentById(Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         return deploymentHistoryRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new BusinessException("发布记录不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("发布记录不存在"));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -60,14 +61,14 @@ public class DeploymentService {
         Long tenantId = TenantContextHolder.getTenantId();
 
         Agent agent = agentRepository.findByIdAndTenantId(agentId, tenantId)
-                .orElseThrow(() -> new BusinessException("Agent不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("Agent不存在"));
 
         if (agent.getStatus() != Agent.AgentStatus.APPROVED && agent.getStatus() != Agent.AgentStatus.PUBLISHED) {
             throw new BusinessException("当前状态不允许发布");
         }
 
         AgentVersion version = agentVersionRepository.findById(versionId)
-                .orElseThrow(() -> new BusinessException("版本不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("版本不存在"));
 
         String semanticVersion = generateSemanticVersion(agentId, tenantId);
         version.setSemanticVersion(semanticVersion);
@@ -116,7 +117,7 @@ public class DeploymentService {
     @Transactional(rollbackFor = Exception.class)
     public void updateDeploymentSuccess(Long deploymentId, Agent agent, AgentVersion version) {
         DeploymentHistory deployment = deploymentHistoryRepository.findById(deploymentId)
-                .orElseThrow(() -> new BusinessException("部署记录不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("部署记录不存在"));
         deployment.setStatus(DeploymentHistory.DeploymentStatus.SUCCESS);
         deployment.setDeployedAt(LocalDateTime.now());
         deploymentHistoryRepository.save(deployment);
@@ -131,7 +132,7 @@ public class DeploymentService {
     @Transactional(rollbackFor = Exception.class)
     public void updateDeploymentFailed(Long deploymentId) {
         DeploymentHistory deployment = deploymentHistoryRepository.findById(deploymentId)
-                .orElseThrow(() -> new BusinessException("部署记录不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("部署记录不存在"));
         deployment.setStatus(DeploymentHistory.DeploymentStatus.FAILED);
         deploymentHistoryRepository.save(deployment);
     }
@@ -142,7 +143,7 @@ public class DeploymentService {
         Long tenantId = TenantContextHolder.getTenantId();
 
         DeploymentHistory deployment = deploymentHistoryRepository.findByIdAndTenantId(deploymentId, tenantId)
-                .orElseThrow(() -> new BusinessException("发布记录不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("发布记录不存在"));
 
         if (deployment.getStatus() != DeploymentHistory.DeploymentStatus.SUCCESS) {
             throw new BusinessException("只能回滚成功的发布");
@@ -171,9 +172,9 @@ public class DeploymentService {
 
         try {
             Agent agent = agentRepository.findByIdAndTenantId(deployment.getAgentId(), tenantId)
-                    .orElseThrow(() -> new BusinessException("Agent不存在"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Agent不存在"));
             AgentVersion previousVersion = agentVersionRepository.findById(previousDeployment.getAgentVersionId())
-                    .orElseThrow(() -> new BusinessException("之前的版本不存在"));
+                    .orElseThrow(() -> new ResourceNotFoundException("之前的版本不存在"));
             
             performDeployment(agent, previousVersion);
             
@@ -198,9 +199,9 @@ public class DeploymentService {
 
     public Map<String, Object> compareVersions(Long versionId1, Long versionId2) {
         AgentVersion version1 = agentVersionRepository.findById(versionId1)
-                .orElseThrow(() -> new BusinessException("版本1不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("版本1不存在"));
         AgentVersion version2 = agentVersionRepository.findById(versionId2)
-                .orElseThrow(() -> new BusinessException("版本2不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("版本2不存在"));
 
         Map<String, Object> result = new HashMap<>();
         result.put("version1", version1);

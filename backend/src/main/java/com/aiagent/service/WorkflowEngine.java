@@ -4,6 +4,7 @@ import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.entity.WorkflowNodeLog;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.WorkflowDefinitionRepository;
 import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.repository.WorkflowNodeLogRepository;
@@ -34,7 +35,7 @@ public class WorkflowEngine {
         Long tenantId = TenantContextHolder.getTenantId();
 
         WorkflowDefinition definition = definitionRepository.findByIdAndTenantId(definitionId, tenantId)
-                .orElseThrow(() -> new BusinessException("工作流定义不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流定义不存在"));
 
         if (definition.getStatus() != WorkflowDefinition.WorkflowStatus.PUBLISHED) {
             throw new BusinessException("工作流定义未发布，无法启动");
@@ -76,7 +77,7 @@ public class WorkflowEngine {
     @Transactional(rollbackFor = Exception.class)
     public WorkflowNodeLog executeNode(Long instanceId) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
-                .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流实例不存在"));
 
         if (instance.getStatus() != WorkflowInstance.InstanceStatus.RUNNING
                 && instance.getStatus() != WorkflowInstance.InstanceStatus.SUSPENDED) {
@@ -90,7 +91,7 @@ public class WorkflowEngine {
         }
 
         WorkflowDefinition definition = definitionRepository.findById(instance.getWorkflowDefinitionId())
-                .orElseThrow(() -> new BusinessException("工作流定义不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流定义不存在"));
 
         Map<String, Object> nodeConfig = getNodeConfig(definition, currentNodeId);
         String nodeType = (String) nodeConfig.getOrDefault("type", "UNKNOWN");
@@ -154,7 +155,7 @@ public class WorkflowEngine {
     @Transactional(rollbackFor = Exception.class)
     public WorkflowNodeLog approveNode(Long instanceId, boolean approved, String comment) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
-                .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流实例不存在"));
 
         if (instance.getStatus() != WorkflowInstance.InstanceStatus.SUSPENDED) {
             throw new BusinessException("工作流实例不在等待审批状态");
@@ -162,7 +163,7 @@ public class WorkflowEngine {
 
         String currentNodeId = instance.getCurrentNodeId();
         WorkflowDefinition definition = definitionRepository.findById(instance.getWorkflowDefinitionId())
-                .orElseThrow(() -> new BusinessException("工作流定义不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流定义不存在"));
 
         Map<String, Object> nodeConfig = getNodeConfig(definition, currentNodeId);
 
@@ -216,7 +217,7 @@ public class WorkflowEngine {
     @Transactional(rollbackFor = Exception.class)
     public WorkflowInstance cancelWorkflow(Long instanceId, String reason) {
         WorkflowInstance instance = instanceRepository.findById(instanceId)
-                .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流实例不存在"));
 
         if (instance.getStatus() == WorkflowInstance.InstanceStatus.COMPLETED
                 || instance.getStatus() == WorkflowInstance.InstanceStatus.CANCELLED
@@ -235,7 +236,7 @@ public class WorkflowEngine {
      */
     public WorkflowInstance getWorkflowStatus(Long instanceId) {
         return instanceRepository.findById(instanceId)
-                .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("工作流实例不存在"));
     }
 
     /**

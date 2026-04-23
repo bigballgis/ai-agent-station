@@ -3,6 +3,7 @@ package com.aiagent.service;
 import com.aiagent.common.ResultCode;
 import com.aiagent.entity.AgentEvolutionExperience;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentEvolutionExperienceRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.tenant.TenantContextHolder;
@@ -80,10 +81,10 @@ public class ExperienceServiceImpl implements ExperienceService {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return experienceRepository.findByIdAndTenantId(id, tenantId)
-                    .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException());
         }
         return experienceRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
     }
 
     @Override

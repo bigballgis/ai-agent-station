@@ -334,9 +334,21 @@ async function fetchTemplates() {
   try {
     const res = await agentApi.getAllAgents()
     const agents = res.data || res || []
+interface AgentTemplate {
+  id: number
+  name: string
+  isTemplate?: boolean
+  type?: string
+  category?: string
+  creator?: string
+  usageCount?: number
+  rating?: number
+  [key: string]: unknown
+}
+
     templates.value = agents
-      .filter((a: any) => a.isTemplate || a.type === 'template')
-      .map((a: any) => ({
+      .filter((a: AgentTemplate) => a.isTemplate || a.type === 'template')
+      .map((a: AgentTemplate) => ({
         ...a,
         category: a.category || '自动化',
         creator: a.creator || '系统',

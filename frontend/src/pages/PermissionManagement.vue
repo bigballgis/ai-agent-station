@@ -400,14 +400,21 @@ const roleUsers = ref<RoleUser[]>([])
 const loading = ref(false)
 
 // 权限树数据（从 API 获取）
-const permissionTree = ref<any[]>([])
+interface PermissionTreeNode {
+  key: string
+  title: string
+  children?: PermissionTreeNode[]
+  [key: string]: unknown
+}
+
+const permissionTree = ref<PermissionTreeNode[]>([])
 
 async function fetchPermissions() {
   try {
     const res = await getPermissions()
     const data = res.data || res || []
     permissionTree.value = Array.isArray(data) ? data : []
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('获取权限列表失败:', e)
     message.error(t('permission.fetchPermissionsFailed'))
   }
@@ -418,7 +425,7 @@ async function fetchRoles() {
   try {
     const res = await getRoles()
     roles.value = res.data || res || []
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('获取角色列表失败:', e)
     message.error(t('permission.fetchRolesFailed'))
   } finally {
@@ -430,14 +437,14 @@ async function fetchUsers() {
   try {
     const res = await getUsers()
     const users = res.data || res || []
-    roleUsers.value = Array.isArray(users) ? users.map((u: any) => ({
+    roleUsers.value = Array.isArray(users) ? users.map((u: Record<string, unknown>) => ({
       id: String(u.id),
-      name: u.name || u.username,
-      email: u.email || '',
-      department: u.department || '',
-      joinedAt: u.createdAt || '',
+      name: (u.name || u.username || '') as string,
+      email: (u.email || '') as string,
+      department: (u.department || '') as string,
+      joinedAt: (u.createdAt || '') as string,
     })) : []
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('获取用户列表失败:', e)
     message.error(t('permission.fetchUsersFailed'))
   }
@@ -448,12 +455,12 @@ async function loadRoleUsers() {
   try {
     const res = await getUsers()
     const users = res.data || res || []
-    roleUsers.value = Array.isArray(users) ? users.map((u: any) => ({
+    roleUsers.value = Array.isArray(users) ? users.map((u: Record<string, unknown>) => ({
       id: String(u.id),
-      name: u.name || u.username,
-      email: u.email || '',
-      department: u.department || '',
-      joinedAt: u.createdAt || '',
+      name: (u.name || u.username || '') as string,
+      email: (u.email || '') as string,
+      department: (u.department || '') as string,
+      joinedAt: (u.createdAt || '') as string,
     })) : []
   } catch (e) {
     console.error('获取角色用户失败:', e)
@@ -498,7 +505,7 @@ async function selectRole(role: Role) {
     const res = await getRolePermissions(Number(role.id))
     const data = res?.data || res || []
     checkedPermissions.value = Array.isArray(data)
-      ? data.map((p: any) => p.code || p.key || p.name)
+      ? data.map((p: Record<string, unknown>) => (p.code || p.key || p.name) as string)
       : []
   } catch (e) {
     console.error('获取角色权限失败:', e)
@@ -522,7 +529,7 @@ function handleCreateRoleSubmit() {
     return
   }
   createRole(createForm.value)
-    .then((res: any) => {
+    .then((res: { data?: { id?: number }; id?: number }) => {
       const newRole: Role = {
         id: String(res.data?.id || res?.id || Date.now()),
         name: createForm.value.name,
@@ -537,7 +544,7 @@ function handleCreateRoleSubmit() {
       message.success(t('permission.roleCreated'))
       selectRole(newRole)
     })
-    .catch((e: any) => {
+    .catch((e: unknown) => {
       console.error('创建角色失败:', e)
       message.error(t('permission.createRoleFailed'))
     })
@@ -562,7 +569,7 @@ function saveRoleInfo() {
       message.success(t('permission.roleUpdated'))
       fetchRoles()
     })
-    .catch((e: any) => {
+    .catch((e: unknown) => {
       console.error('更新角色信息失败:', e)
       message.error(t('permission.updateRoleFailed'))
     })
@@ -587,7 +594,7 @@ async function confirmDeleteRole() {
     roles.value = roles.value.filter(r => r.id !== selectedRole.value!.id)
     selectedRole.value = null
     message.success(t('permission.roleDeleted'))
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('删除角色失败:', e)
     message.error(t('permission.deleteRoleFailed'))
   } finally {
@@ -609,7 +616,7 @@ function removeUser(userId: string) {
         await removeRole(Number(userId), Number(selectedRole.value!.id))
         roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
         message.success(t('permission.userRemoved'))
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('移除用户失败:', e)
         message.error(t('permission.removeUserFailed'))
       }
@@ -618,7 +625,7 @@ function removeUser(userId: string) {
 }
 
 function expandAll() {
-  expandedKeys.value = permissionTree.value.map((m: any) => m.key)
+  expandedKeys.value = permissionTree.value.map((m) => m.key)
 }
 
 function collapseAll() {

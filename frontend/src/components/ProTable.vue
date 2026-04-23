@@ -81,9 +81,9 @@ export interface ProTableColumn {
   align?: 'left' | 'center' | 'right'
   ellipsis?: boolean
   fixed?: 'left' | 'right' | boolean
-  sorter?: boolean | ((a: any, b: any) => number)
-  customRender?: any
-  [key: string]: any
+  sorter?: boolean | ((a: Record<string, unknown>, b: Record<string, unknown>) => number)
+  customRender?: (value: unknown, record: Record<string, unknown>, index: number) => unknown
+  [key: string]: unknown
 }
 
 // 搜索字段类型
@@ -110,7 +110,7 @@ interface Props {
   /** 表格列定义 */
   columns: ProTableColumn[]
   /** 数据源 */
-  dataSource: any[]
+  dataSource: Record<string, unknown>[]
   /** 加载状态 */
   loading?: boolean
   /** 分页配置，false 表示不分页 */
@@ -120,7 +120,7 @@ interface Props {
   /** 搜索字段配置 */
   searchFields?: SearchField[]
   /** 行 key */
-  rowKey?: string | ((record: any) => string)
+  rowKey?: string | ((record: Record<string, unknown>) => string)
   /** 表格尺寸 */
   size?: 'small' | 'middle' | 'large'
   /** 滚动配置 */

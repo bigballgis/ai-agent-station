@@ -30,7 +30,7 @@ export function useExecution(
     debugExecutionOrder: { value: string[] }
     currentStepIndex: { value: number }
     initDebugInfo: (nodes: CanvasNode[]) => void
-    updateNodeDebugInfo: (nodeId: string, updates: any) => void
+    updateNodeDebugInfo: (nodeId: string, updates: Record<string, unknown>) => void
     hasBreakpoint: (nodeId: string) => boolean
     stopDebug: () => void
   },
@@ -50,8 +50,8 @@ export function useExecution(
   /**
    * Simulate node input data based on connected upstream nodes
    */
-  function simulateNodeInput(node: CanvasNode, conns: Connection[], allNodes: CanvasNode[]): any {
-    const input: any = {}
+  function simulateNodeInput(node: CanvasNode, conns: Connection[], allNodes: CanvasNode[]): Record<string, unknown> {
+    const input: Record<string, unknown> = {}
     for (const conn of conns) {
       if (conn.targetId === node.id) {
         const sourceNode = allNodes.find(n => n.id === conn.sourceId)
@@ -70,7 +70,7 @@ export function useExecution(
   /**
    * Simulate node output data
    */
-  function simulateNodeOutput(node: CanvasNode): any {
+  function simulateNodeOutput(node: CanvasNode): Record<string, unknown> {
     switch (node.type) {
       case 'llm':
         return { response: `模拟 LLM 响应来自 ${node.label}`, tokens: Math.floor(Math.random() * 500) + 100 }

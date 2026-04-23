@@ -227,7 +227,7 @@ async function handleReject() {
   }
 }
 
-function handleTableChange(pag: any) {
+function handleTableChange(pag: { current: number; pageSize: number }) {
   pagination.value.current = pag.current
   pagination.value.pageSize = pag.pageSize
   loadAllApprovals(pag.current, pag.pageSize)

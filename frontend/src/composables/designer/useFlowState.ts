@@ -31,12 +31,12 @@ export function useFlowState() {
   }
 
   // Set a state variable
-  function setState(key: string, value: any) {
+  function setState(key: string, value: unknown) {
     state[key] = value
   }
 
   // Get a state variable
-  function getState(key: string): any {
+  function getState(key: string): unknown {
     return state[key]
   }
 

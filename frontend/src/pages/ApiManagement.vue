@@ -251,23 +251,41 @@ const tabs = [
   { key: 'logs', label: t('apiMgmt.callLogs') },
 ]
 
-const mockApis = ref<any[]>([])
-const mockLogs = ref<any[]>([])
+interface MockApiItem {
+  id: number
+  agentName: string
+  path: string
+  method: string
+  isActive: boolean
+  callCount: number
+}
+
+interface MockLogItem {
+  id: number
+  requestId: string
+  agentName: string
+  timestamp: string
+  status: string
+  executionTime: number
+}
+
+const mockApis = ref<MockApiItem[]>([])
+const mockLogs = ref<MockLogItem[]>([])
 
 async function fetchApiInterfaces() {
   loading.value = true
   try {
-    const res: any = await getApiInterfaces({ page: 1, size: 100 })
+    const res = await getApiInterfaces({ page: 1, size: 100 })
     const data = res?.data || res || []
-    mockApis.value = Array.isArray(data) ? data.map((item: any) => ({
-      id: item.id,
-      agentName: item.agentName || item.name || '',
-      path: item.path || `/api/v1/agent/${item.id}/invoke`,
-      method: item.method || 'POST',
+    mockApis.value = Array.isArray(data) ? data.map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      agentName: (item.agentName || item.name || '') as string,
+      path: (item.path || `/api/v1/agent/${item.id}/invoke`) as string,
+      method: (item.method || 'POST') as string,
       isActive: item.isActive !== false,
-      callCount: item.callCount || item.callCount === 0 ? item.callCount : 0,
+      callCount: (item.callCount ?? 0) as number,
     })) : []
-  } catch (error: any) {
+  } catch {
     message.error(t('apiMgmt.fetchApiFailed'))
   } finally {
     loading.value = false
@@ -277,18 +295,18 @@ async function fetchApiInterfaces() {
 async function fetchApiLogs() {
   loading.value = true
   try {
-    const res: any = await getApiInterfaces({ page: 1, size: 100 })
+    const res = await getApiInterfaces({ page: 1, size: 100 })
     const data = res?.data || res || []
     // Derive logs from API interface data
-    mockLogs.value = Array.isArray(data) ? data.map((item: any) => ({
-      id: item.id,
-      requestId: `req-${item.id || Date.now()}`,
-      agentName: item.agentName || item.name || '',
-      timestamp: item.updatedAt || item.createdAt || new Date().toISOString().replace('T', ' ').slice(0, 19),
+    mockLogs.value = Array.isArray(data) ? data.map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      requestId: `req-${item.id || Date.now()}` as string,
+      agentName: (item.agentName || item.name || '') as string,
+      timestamp: (item.updatedAt || item.createdAt || new Date().toISOString().replace('T', ' ').slice(0, 19)) as string,
       status: item.isActive !== false ? 'SUCCESS' : 'FAILED',
-      executionTime: item.executionTime || Math.floor(Math.random() * 1000) + 100,
+      executionTime: ((item.executionTime as number) || Math.floor(Math.random() * 1000) + 100),
     })) : []
-  } catch (error: any) {
+  } catch {
     message.error(t('apiMgmt.fetchLogsFailed'))
   } finally {
     loading.value = false
@@ -315,35 +333,34 @@ function getStatusColor(status: string) {
   }
 }
 
-function testApi(api: any) {
+function testApi(api: MockApiItem) {
   selectedApi.value = api
   testRequest.value = JSON.stringify({ inputs: {}, context: {} }, null, 2)
   showTestModal.value = true
 }
 
-function viewLogDetail(log: any) {
-  if (import.meta.env.DEV) {
-    console.log('Viewing log detail:', log)
-  }
+function viewLogDetail(_log: MockLogItem) {
+  // Log detail view not yet implemented
 }
 
 async function executeTest() {
   if (!selectedApi.value) return
   try {
-    const res: any = await getApiInterfaces()
+    const res = await getApiInterfaces()
     const data = res?.data || res || []
-    const found = Array.isArray(data) ? data.find((item: any) => item.id === selectedApi.value.id) : null
+    const found = Array.isArray(data) ? data.find((item: Record<string, unknown>) => item.id === selectedApi.value.id) : null
     testResponse.value = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'SUCCESS',
-      outputs: found ? { name: found.name, path: found.path } : { message: t('apiMgmt.testSuccess') },
+      outputs: found ? { name: (found as Record<string, unknown>).name, path: (found as Record<string, unknown>).path } : { message: t('apiMgmt.testSuccess') },
       executionTime: 456,
     }, null, 2)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
     testResponse.value = JSON.stringify({
       requestId: 'test-' + Date.now(),
       status: 'FAILED',
-      errorMessage: error.message || t('apiMgmt.testFailed'),
+      errorMessage: err.message || t('apiMgmt.testFailed'),
     }, null, 2)
   }
 }

@@ -145,11 +145,16 @@ const getPriorityLabel = (priority: number) => {
   return labels[priority] || priority
 }
 
-const viewSuggestion = (_suggestion: any) => {
+interface SuggestionItem {
+  id: number
+  [key: string]: unknown
+}
+
+const viewSuggestion = (_suggestion: SuggestionItem) => {
   // 查看建议详情 - TODO: 实现详情页面跳转
 }
 
-const editSuggestion = (_suggestion: any) => {
+const editSuggestion = (_suggestion: SuggestionItem) => {
   // 编辑建议 - TODO: 实现编辑页面跳转
 }
 

@@ -606,7 +606,7 @@ function saveTenant() {
         showModal.value = false
         fetchTenants()
       })
-      .catch((e: any) => {
+      .catch((e: Error) => {
         console.error(t('tenant.updateFailed'), e)
         message.error(t('tenant.updateFailed'))
       })
@@ -618,7 +618,7 @@ function saveTenant() {
         showModal.value = false
         fetchTenants()
       })
-      .catch((e: any) => {
+      .catch((e: Error) => {
         console.error(t('tenant.createFailed'), e)
         message.error(t('tenant.createFailed'))
       })
@@ -639,7 +639,7 @@ function toggleTenantStatus(tenant: Tenant) {
           message.success(t('tenant.actionSuccess', { action }))
           fetchTenants()
         })
-        .catch((e: any) => {
+        .catch((e: Error) => {
           console.error(t('tenant.actionFailed', { action }), e)
           message.error(t('tenant.actionFailed', { action }))
         })
@@ -666,7 +666,7 @@ function saveQuota() {
       showQuotaModal.value = false
       fetchTenants()
     })
-    .catch((e: any) => {
+    .catch((e: Error) => {
       console.error(t('tenant.updateQuotaFailed'), e)
       message.error(t('tenant.updateQuotaFailed'))
     })

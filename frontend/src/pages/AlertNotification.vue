@@ -669,9 +669,9 @@ async function fetchAlertData() {
       fetchRecords(),
       fetchStats(),
     ])
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('获取告警数据失败:', e)
-    loadError.value = e?.message || t('alert.fetchFailed')
+    loadError.value = e instanceof Error ? e?.message : t('alert.fetchFailed')
   } finally {
     pageLoading.value = false
   }

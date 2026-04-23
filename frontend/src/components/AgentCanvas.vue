@@ -215,7 +215,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Record<string, any>): void
-  (e: 'save', payload: { graph: { entryNodeId: string; nodes: any[]; connections: any[] } }): void
+  (e: 'save', payload: { graph: { entryNodeId: string; nodes: Record<string, unknown>[]; connections: Record<string, unknown>[] } }): void
 }>()
 
 // ========== 节点类型定义 (12种) ==========
@@ -397,7 +397,7 @@ function handleUpdateLabel(value: string) {
   emitChange()
 }
 
-function handleUpdateData(key: string, value: any) {
+function handleUpdateData(key: string, value: unknown) {
   if (!selectedNode.value) return
   pushUndo()
   selectedNode.value.data[key] = value

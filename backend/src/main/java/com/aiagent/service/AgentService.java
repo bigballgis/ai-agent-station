@@ -4,6 +4,7 @@ import com.aiagent.common.ResultCode;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.security.UserPrincipal;
@@ -53,10 +54,10 @@ public class AgentService {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return agentRepository.findByIdAndTenantId(id, tenantId)
-                    .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException());
         }
         return agentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
     }
 
     public Optional<Agent> findAgentById(Long id) {
@@ -156,7 +157,7 @@ public class AgentService {
 
     public AgentVersion getAgentVersion(Long agentId, Integer versionNumber) {
         return agentVersionRepository.findByAgentIdAndVersionNumber(agentId, versionNumber)
-                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException());
     }
 
     @Transactional(rollbackFor = Exception.class)

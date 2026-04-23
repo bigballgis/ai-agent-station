@@ -166,7 +166,7 @@ export interface FormField {
   /** 校验规则 */
   rules?: Rule[]
   /** 下拉选项 */
-  options?: Array<{ label: string; value: any }>
+  options?: Array<{ label: string; value: string | number | boolean }>
   /** 是否禁用 */
   disabled?: boolean
   /** 列宽（24 栅格） */

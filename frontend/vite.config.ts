@@ -27,14 +27,16 @@ export default defineConfig({
             'ant-design-vue/es/config-provider',
             'ant-design-vue/es/icon',
           ],
-          'antd-data': [
+          'antd-data-entry': [
             'ant-design-vue/es/table',
-            'ant-design-vue/es/select',
-            'ant-design-vue/es/tree',
             'ant-design-vue/es/pagination',
             'ant-design-vue/es/list',
             'ant-design-vue/es/cascader',
             'ant-design-vue/es/transfer',
+          ],
+          'antd-data-selection': [
+            'ant-design-vue/es/select',
+            'ant-design-vue/es/tree',
             'ant-design-vue/es/checkbox',
             'ant-design-vue/es/radio',
             'ant-design-vue/es/switch',

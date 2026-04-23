@@ -291,13 +291,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'updateLabel', value: string): void
-  (e: 'updateData', key: string, value: any): void
+  (e: 'updateData', key: string, value: unknown): void
   (e: 'addKV'): void
   (e: 'removeKV', idx: number): void
   (e: 'deleteNode'): void
 }>()
 
-function updateData(key: string, value: any) {
+function updateData(key: string, value: unknown) {
   emit('updateData', key, value)
 }
 
