@@ -5,12 +5,12 @@
       { title: t('workflow.designer') }
     ]" />
 
-    <div class="designer-layout">
+    <div class="designer-layout" role="application" :aria-label="t('workflow.designer')">
       <!-- Left Panel: Definition List -->
       <div class="left-panel">
         <div class="panel-header">
           <h3>{{ t('workflow.definitionList') }}</h3>
-          <a-button type="primary" size="small" @click="showCreateModal = true">
+          <a-button type="primary" size="small" @click="showCreateModal = true" :aria-label="t('workflow.newCreate')">
             {{ t('workflow.newCreate') }}
           </a-button>
         </div>
@@ -50,19 +50,21 @@
               <StatusBadge :status="selectedDefinition.status" :status-map="statusMap" />
             </div>
             <div class="detail-actions">
-              <a-button v-if="selectedDefinition.status === 'DRAFT'" type="primary" @click="showEditModal = true">
+              <a-button v-if="selectedDefinition.status === 'DRAFT'" type="primary" @click="showEditModal = true" :aria-label="t('workflow.edit')">
                 {{ t('workflow.edit') }}
               </a-button>
               <a-button
                 v-if="selectedDefinition.status === 'DRAFT'"
                 type="primary"
                 @click="handlePublish"
+                :aria-label="t('workflow.publish')"
               >
                 {{ t('workflow.publish') }}
               </a-button>
               <a-button
                 v-if="selectedDefinition.status === 'PUBLISHED'"
                 @click="handleStartWorkflow"
+                :aria-label="t('workflow.startInstance')"
               >
                 {{ t('workflow.startInstance') }}
               </a-button>
@@ -807,5 +809,16 @@ onMounted(() => {
 
 :global(.dark) .edge-arrow {
   color: #737373;
+}
+
+@media (max-width: 768px) {
+  .designer-layout {
+    flex-direction: column;
+  }
+  .left-panel {
+    width: 100%;
+    min-width: unset;
+    max-height: 40vh;
+  }
 }
 </style>

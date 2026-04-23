@@ -296,4 +296,14 @@ pre {
   max-height: 300px;
   overflow-y: auto;
 }
+
+/* Dark mode overrides */
+:global(.dark) .page-header h1 {
+  color: #e5e5e5;
+}
+
+:global(.dark) pre {
+  background: #262626;
+  color: #e5e5e5;
+}
 </style>

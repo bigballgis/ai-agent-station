@@ -1,27 +1,27 @@
 <template>
   <div class="agent-edit-page">
     <div class="edit-header">
-      <button @click="goBack" class="btn btn-secondary">{{ t('common.back') }}</button>
+      <button @click="goBack" class="btn btn-secondary" :aria-label="t('common.back')">{{ t('common.back') }}</button>
       <h1>{{ t('agent.editAgent') }}</h1>
       <div class="header-actions">
-        <button @click="submitForApproval" class="btn btn-secondary">{{ t('agent.submitApproval') }}</button>
-        <button @click="deployAgent" class="btn btn-success">{{ t('agent.publish') }}</button>
-        <button @click="saveAgent" class="btn btn-primary">{{ t('common.save') }}</button>
+        <button @click="submitForApproval" class="btn btn-secondary" :aria-label="t('agent.submitApproval')">{{ t('agent.submitApproval') }}</button>
+        <button @click="deployAgent" class="btn btn-success" :aria-label="t('agent.publish')">{{ t('agent.publish') }}</button>
+        <button @click="saveAgent" class="btn btn-primary" :aria-label="t('common.save')">{{ t('common.save') }}</button>
       </div>
     </div>
 
     <div class="info-section">
       <div class="info-item">
-        <label>{{ t('agent.agentName') }}:</label>
-        <input v-model="agent.name" :placeholder="t('agent.inputNamePlaceholder')" />
+        <label :for="'agent-name'">{{ t('agent.agentName') }}:</label>
+        <input id="agent-name" v-model="agent.name" :placeholder="t('agent.inputNamePlaceholder')" />
       </div>
       <div class="info-item">
-        <label>{{ t('agent.agentDescription') }}:</label>
-        <textarea v-model="agent.description" :placeholder="t('agent.inputDescPlaceholder')" rows="2"></textarea>
+        <label :for="'agent-desc'">{{ t('agent.agentDescription') }}:</label>
+        <textarea id="agent-desc" v-model="agent.description" :placeholder="t('agent.inputDescPlaceholder')" rows="2"></textarea>
       </div>
       <div class="info-item">
-        <label>{{ t('common.status') }}:</label>
-        <select v-model="agent.isActive">
+        <label :for="'agent-status'">{{ t('common.status') }}:</label>
+        <select id="agent-status" v-model="agent.isActive">
           <option :value="true">{{ t('agent.statusEnabled') }}</option>
           <option :value="false">{{ t('agent.statusDisabled') }}</option>
         </select>
@@ -365,5 +365,12 @@ onMounted(() => {
 :global(.dark) .status-published {
   background: #083344;
   color: #22d3ee;
+}
+
+@media (max-width: 768px) {
+  .info-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

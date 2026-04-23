@@ -125,6 +125,7 @@
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer"
                     :title="t('tenant.edit')"
+                    :aria-label="t('tenant.edit')"
                     @click="openEditModal(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,6 +135,7 @@
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
                     :title="tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')"
+                    :aria-label="tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')"
                     @click="toggleTenantStatus(tenant)"
                   >
                     <svg v-if="tenant.status === 'active'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,6 +148,7 @@
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors cursor-pointer"
                     :title="t('tenant.viewDetail')"
+                    :aria-label="t('tenant.viewDetail')"
                     @click="showDetail(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,6 +159,7 @@
                   <button
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors cursor-pointer"
                     :title="t('tenant.resourceQuota')"
+                    :aria-label="t('tenant.resourceQuota')"
                     @click="openQuotaModal(tenant)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

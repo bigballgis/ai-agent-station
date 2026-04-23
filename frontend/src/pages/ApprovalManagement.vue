@@ -286,4 +286,9 @@ onMounted(() => {
   font-size: 24px;
   color: #333;
 }
+
+/* Dark mode overrides */
+:global(.dark) .page-header h1 {
+  color: #e5e5e5;
+}
 </style>

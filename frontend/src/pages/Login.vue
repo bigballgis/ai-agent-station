@@ -146,8 +146,9 @@
           >
             <!-- 用户名 -->
             <a-form-item name="username" class="form-item-custom">
-              <label class="form-label">{{ t('login.username') }}</label>
+              <label for="register-username" class="form-label">{{ t('login.username') }}</label>
               <a-input
+                id="register-username"
                 v-model:value="registerForm.username"
                 size="large"
                 :placeholder="t('login.usernamePlaceholder')"
@@ -161,8 +162,9 @@
 
             <!-- 邮箱（可选） -->
             <a-form-item name="email" class="form-item-custom">
-              <label class="form-label">{{ t('login.email') }} <span class="text-gray-400 text-xs">({{ t('login.optional') }})</span></label>
+              <label for="register-email" class="form-label">{{ t('login.email') }} <span class="text-gray-400 text-xs">({{ t('login.optional') }})</span></label>
               <a-input
+                id="register-email"
                 v-model:value="registerForm.email"
                 size="large"
                 :placeholder="t('login.emailPlaceholder')"
@@ -176,8 +178,9 @@
 
             <!-- 密码 -->
             <a-form-item name="password" class="form-item-custom">
-              <label class="form-label">{{ t('login.password') }}</label>
+              <label for="register-password" class="form-label">{{ t('login.password') }}</label>
               <a-input-password
+                id="register-password"
                 v-model:value="registerForm.password"
                 size="large"
                 :placeholder="t('login.passwordPlaceholder')"
@@ -191,8 +194,9 @@
 
             <!-- 确认密码 -->
             <a-form-item name="confirmPassword" class="form-item-custom">
-              <label class="form-label">{{ t('login.confirmPassword') }}</label>
+              <label for="register-confirm-password" class="form-label">{{ t('login.confirmPassword') }}</label>
               <a-input-password
+                id="register-confirm-password"
                 v-model:value="registerForm.confirmPassword"
                 size="large"
                 :placeholder="t('login.confirmPasswordPlaceholder')"

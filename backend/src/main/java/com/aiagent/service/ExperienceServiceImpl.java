@@ -157,53 +157,40 @@ public class ExperienceServiceImpl implements ExperienceService {
     @Override
     public Map<String, Object> analyzeExperienceEffectiveness() {
         Long tenantId = TenantContextHolder.getTenantId();
-        List<AgentEvolutionExperience> experiences;
-
-        if (tenantId != null) {
-            experiences = experienceRepository.findByTenantId(tenantId);
-        } else {
-            experiences = experienceRepository.findAll();
-        }
 
         Map<String, Object> analysis = new HashMap<>();
 
-        // 计算平均有效性得分
-        Optional<BigDecimal> avgScore = experiences.stream()
-                .filter(exp -> exp.getEffectivenessScore() != null)
-                .map(AgentEvolutionExperience::getEffectivenessScore)
-                .reduce(BigDecimal::add);
+        // 使用数据库聚合查询计算平均有效性得分
+        Optional<BigDecimal> avgScore = tenantId != null
+                ? experienceRepository.averageEffectivenessScoreByTenantId(tenantId)
+                : experienceRepository.averageEffectivenessScoreGlobal();
 
-        if (avgScore.isPresent()) {
-            int count = (int) experiences.stream().filter(exp -> exp.getEffectivenessScore() != null).count();
-            analysis.put("averageEffectivenessScore", avgScore.get().divide(BigDecimal.valueOf(count), 2, BigDecimal.ROUND_HALF_UP));
-        }
+        avgScore.ifPresent(score -> analysis.put("averageEffectivenessScore",
+                score.setScale(2, BigDecimal.ROUND_HALF_UP)));
 
-        // 按经验类型分组分析
-        Map<String, List<AgentEvolutionExperience>> experiencesByType = experiences.stream()
-                .collect(Collectors.groupingBy(AgentEvolutionExperience::getExperienceType));
+        // 使用数据库聚合查询按经验类型分组分析
+        List<Object[]> typeStats = tenantId != null
+                ? experienceRepository.countAndAvgScoreByTypeForTenant(tenantId)
+                : experienceRepository.countAndAvgScoreByTypeGlobal();
 
         Map<String, Object> typeAnalysis = new HashMap<>();
-        for (Map.Entry<String, List<AgentEvolutionExperience>> entry : experiencesByType.entrySet()) {
-            List<AgentEvolutionExperience> typeExperiences = entry.getValue();
-            Map<String, Object> typeStats = new HashMap<>();
-            typeStats.put("count", typeExperiences.size());
-            
-            Optional<BigDecimal> typeAvgScore = typeExperiences.stream()
-                    .filter(exp -> exp.getEffectivenessScore() != null)
-                    .map(AgentEvolutionExperience::getEffectivenessScore)
-                    .reduce(BigDecimal::add);
-            
-            if (typeAvgScore.isPresent()) {
-                int typeCount = (int) typeExperiences.stream().filter(exp -> exp.getEffectivenessScore() != null).count();
-                typeStats.put("averageEffectivenessScore", typeAvgScore.get().divide(BigDecimal.valueOf(typeCount), 2, BigDecimal.ROUND_HALF_UP));
+        for (Object[] row : typeStats) {
+            String type = (String) row[0];
+            long count = (Long) row[1];
+            Map<String, Object> typeStat = new HashMap<>();
+            typeStat.put("count", count);
+            if (row[2] != null) {
+                BigDecimal typeAvg = (BigDecimal) row[2];
+                typeStat.put("averageEffectivenessScore", typeAvg.setScale(2, BigDecimal.ROUND_HALF_UP));
             }
-            
-            typeAnalysis.put(entry.getKey(), typeStats);
+            typeAnalysis.put(type, typeStat);
         }
         analysis.put("byType", typeAnalysis);
 
-        // 计算总使用次数
-        int totalUsage = experiences.stream().mapToInt(AgentEvolutionExperience::getUsageCount).sum();
+        // 使用数据库聚合查询计算总使用次数
+        long totalUsage = tenantId != null
+                ? experienceRepository.totalUsageCountByTenantId(tenantId)
+                : experienceRepository.totalUsageCountGlobal();
         analysis.put("totalUsageCount", totalUsage);
 
         return analysis;

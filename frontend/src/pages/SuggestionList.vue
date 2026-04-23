@@ -2,12 +2,13 @@
   <div class="p-6">
     <h1 class="text-2xl font-bold mb-6">{{ t('suggestion.management') }}</h1>
     
-    <div class="mb-6 flex justify-between items-center">
-      <div class="flex space-x-4">
+    <div class="mb-6 flex flex-wrap justify-between items-center">
+      <div class="flex flex-wrap space-x-4">
         <input 
           v-model="searchKeyword" 
           type="text" 
           :placeholder="t('suggestion.searchPlaceholder')" 
+          :aria-label="t('suggestion.searchPlaceholder')"
           class="px-4 py-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200"
         />
         <select v-model="filterType" class="px-4 py-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200">

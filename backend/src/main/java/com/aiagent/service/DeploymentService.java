@@ -16,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -83,23 +85,55 @@ public class DeploymentService {
         deployment.setRemark(remark);
         deployment = deploymentHistoryRepository.save(deployment);
 
+        // 注册事务提交后回调，在事务外执行部署操作，避免长事务
+        final DeploymentHistory savedDeployment = deployment;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                executeDeploymentOutsideTransaction(savedDeployment.getId(), agent, version);
+            }
+        });
+
+        return deployment;
+    }
+
+    /**
+     * 在事务外执行部署操作，避免长事务。
+     * 事务提交后通过新事务更新部署状态。
+     */
+    private void executeDeploymentOutsideTransaction(Long deploymentId, Agent agent, AgentVersion version) {
         try {
             performDeployment(agent, version);
-            
-            deployment.setStatus(DeploymentHistory.DeploymentStatus.SUCCESS);
-            deployment.setDeployedAt(LocalDateTime.now());
-            
-            agent.setStatus(Agent.AgentStatus.PUBLISHED);
-            agent.setPublishedVersionId(versionId);
-            agent.setPublishedAt(LocalDateTime.now());
-            agentRepository.save(agent);
-            
+            // 部署成功，通过新事务更新状态
+            updateDeploymentSuccess(deploymentId, agent, version);
         } catch (Exception e) {
             log.error("部署失败", e);
-            deployment.setStatus(DeploymentHistory.DeploymentStatus.FAILED);
+            // 部署失败，通过新事务更新状态
+            updateDeploymentFailed(deploymentId);
         }
+    }
 
-        return deploymentHistoryRepository.save(deployment);
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDeploymentSuccess(Long deploymentId, Agent agent, AgentVersion version) {
+        DeploymentHistory deployment = deploymentHistoryRepository.findById(deploymentId)
+                .orElseThrow(() -> new BusinessException("部署记录不存在"));
+        deployment.setStatus(DeploymentHistory.DeploymentStatus.SUCCESS);
+        deployment.setDeployedAt(LocalDateTime.now());
+        deploymentHistoryRepository.save(deployment);
+
+        Agent currentAgent = agentRepository.findById(agent.getId()).orElse(agent);
+        currentAgent.setStatus(Agent.AgentStatus.PUBLISHED);
+        currentAgent.setPublishedVersionId(version.getId());
+        currentAgent.setPublishedAt(LocalDateTime.now());
+        agentRepository.save(currentAgent);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDeploymentFailed(Long deploymentId) {
+        DeploymentHistory deployment = deploymentHistoryRepository.findById(deploymentId)
+                .orElseThrow(() -> new BusinessException("部署记录不存在"));
+        deployment.setStatus(DeploymentHistory.DeploymentStatus.FAILED);
+        deploymentHistoryRepository.save(deployment);
     }
 
     @Transactional(rollbackFor = Exception.class)
