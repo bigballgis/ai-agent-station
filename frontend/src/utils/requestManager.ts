@@ -109,12 +109,13 @@ export function getPendingRequestCount(): number {
 /**
  * 对对象键排序（确保相同参数生成相同的 key）
  */
-function sortKeys(obj: any): any {
+function sortKeys(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') return obj
   if (Array.isArray(obj)) return obj.map(sortKeys)
-  const sorted: Record<string, any> = {}
-  Object.keys(obj).sort().forEach(key => {
-    sorted[key] = sortKeys(obj[key])
+  const record = obj as Record<string, unknown>
+  const sorted: Record<string, unknown> = {}
+  Object.keys(record).sort().forEach(key => {
+    sorted[key] = sortKeys(record[key])
   })
   return sorted
 }

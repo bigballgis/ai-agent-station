@@ -22,6 +22,19 @@ import { ref, computed } from 'vue'
 import type { CanvasNode, Connection, HistoryEntry } from './types'
 import { MAX_HISTORY } from './constants'
 
+/**
+ * 根据节点数量动态计算历史记录上限。
+ * 节点越多，快照越大，需要限制历史深度以控制内存占用。
+ * - 节点数 <= 50: 使用默认 MAX_HISTORY (50)
+ * - 节点数 > 50: MAX_HISTORY = 20
+ * - 节点数 > 100: MAX_HISTORY = 10
+ */
+function getDynamicMaxHistory(nodeCount: number): number {
+  if (nodeCount > 100) return 10
+  if (nodeCount > 50) return 20
+  return MAX_HISTORY
+}
+
 export function useHistory() {
   // ============================================================
   // 响应式状态
@@ -90,8 +103,9 @@ export function useHistory() {
     // 推入新快照
     history.value.push(snapshot)
 
-    // 超出最大历史数量时，移除最早的记录
-    if (history.value.length > MAX_HISTORY) {
+    // 超出动态最大历史数量时，移除最早的记录
+    const dynamicMax = getDynamicMaxHistory(nodes.length)
+    if (history.value.length > dynamicMax) {
       history.value.shift()
     }
 

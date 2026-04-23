@@ -28,7 +28,7 @@ export interface CanvasNode {
   /** 节点 Y 坐标（画布像素坐标） */
   y: number
   /** 节点配置（与后端 GraphExecutor 期望的字段一致） */
-  config: Record<string, any>
+  config: Record<string, unknown>
   /** 输入端口列表 */
   inputs: PortDefinition[]
   /** 输出端口列表 */
@@ -82,7 +82,7 @@ export interface NodeTypeDefinition {
   /** 节点分类 */
   category: 'flow' | 'ai' | 'integration' | 'advanced'
   /** 默认配置（与后端 GraphExecutor 期望的字段一致） */
-  defaultConfig: Record<string, any>
+  defaultConfig: Record<string, unknown>
   /** 默认输入端口 */
   defaultInputs: PortDefinition[]
   /** 默认输出端口 */
@@ -102,7 +102,7 @@ export interface ConfigFieldSchema {
   /** 是否必填 */
   required: boolean
   /** 默认值 */
-  defaultValue: any
+  defaultValue: unknown
   /** 选项列表（select 类型使用） */
   options?: Array<{ label: string; value: string }>
   /** 占位提示文本 */
@@ -124,7 +124,7 @@ export interface GraphData {
     id: string
     type: string
     label: string
-    config: Record<string, any>
+    config: Record<string, unknown>
     position: { x: number; y: number }
   }>
   /** 连接列表 */

@@ -21,6 +21,8 @@ export const useNotificationStore = defineStore('notification', () => {
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+  let reconnectAttempts = 0
+  const MAX_RECONNECT_DELAY = 60000
 
   // Getters
   const unreadNotifications = computed(() =>
@@ -67,6 +69,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
     ws.onopen = () => {
       wsConnected.value = true
+      reconnectAttempts = 0
       startHeartbeat()
     }
 
@@ -127,12 +130,19 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
+  function getReconnectDelay(): number {
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY)
+    reconnectAttempts++
+    return delay
+  }
+
   function scheduleReconnect(token: string) {
     if (reconnectTimer) return
+    const delay = getReconnectDelay()
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null
       connectWebSocket(token)
-    }, 5000)
+    }, delay)
   }
 
   return {

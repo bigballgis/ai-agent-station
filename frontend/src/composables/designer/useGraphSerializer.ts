@@ -13,6 +13,37 @@ import { computed } from 'vue'
 import type { CanvasNode, Connection, GraphData } from './types'
 import { getNodeTypeDefinition } from './nodeRegistry'
 
+/** 导入数据中的节点格式（兼容新旧格式） */
+interface ImportedNode {
+  id?: string
+  type: string
+  label?: string
+  x?: number
+  y?: number
+  position?: { x: number; y: number }
+  config?: Record<string, unknown>
+}
+
+/** 导入数据中的连接格式（兼容新旧格式） */
+interface ImportedConnection {
+  id?: string
+  sourceId?: string
+  sourcePort?: string
+  targetId?: string
+  targetPort?: string
+  fromNodeId?: string
+  fromPort?: string
+  toNodeId?: string
+  toPort?: string
+}
+
+/** 导入的图数据格式 */
+interface ImportedGraphData {
+  nodes?: ImportedNode[]
+  connections?: ImportedConnection[]
+  [key: string]: unknown
+}
+
 export function useGraphSerializer(
   nodes: { value: CanvasNode[] },
   connections: { value: Connection[] },
@@ -50,7 +81,7 @@ export function useGraphSerializer(
    *
    * 兼容旧格式（fromNodeId -> sourceId, toNodeId -> targetId）
    */
-  function fromGraphData(data: any): void {
+  function fromGraphData(data: ImportedGraphData): void {
     // 数据验证
     if (!data || !Array.isArray(data.nodes)) {
       throw new Error('无效的图数据格式：nodes必须为数组')
@@ -68,13 +99,13 @@ export function useGraphSerializer(
         throw new Error(`未知的节点类型：${node.type}`)
       }
       // 对Code节点的code字段进行长度检查（不超过10000字符）
-      if (node.type === 'code' && node.config?.code && node.config.code.length > 10000) {
+      if (node.type === 'code' && node.config?.code && typeof node.config.code === 'string' && node.config.code.length > 10000) {
         throw new Error(`Code节点"${node.label || node.id}"的代码长度超出限制：最多允许10000字符`)
       }
     }
 
     // Handle both old (fromNodeId) and new (sourceId) formats
-    nodes.value = (data.nodes || []).map((n: any) => {
+    nodes.value = (data.nodes || []).map((n: ImportedNode) => {
       const typeDef = getNodeTypeDefinition(n.type)
       const x = n.position?.x ?? n.x ?? 100
       const y = n.position?.y ?? n.y ?? 100
@@ -89,11 +120,11 @@ export function useGraphSerializer(
         outputs: typeDef?.defaultOutputs.map(p => ({ ...p })) || [],
       }
     })
-    connections.value = (data.connections || []).map((c: any) => ({
+    connections.value = (data.connections || []).map((c: ImportedConnection) => ({
       id: c.id || `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      sourceId: c.sourceId || c.fromNodeId,
+      sourceId: c.sourceId || c.fromNodeId || '',
       sourcePort: c.sourcePort || c.fromPort || 'output',
-      targetId: c.targetId || c.toNodeId,
+      targetId: c.targetId || c.toNodeId || '',
       targetPort: c.targetPort || c.toPort || 'input',
     }))
   }

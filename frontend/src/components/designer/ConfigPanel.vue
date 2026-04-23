@@ -56,7 +56,7 @@
           <textarea
             class="form-textarea"
             rows="3"
-            :value="node.config[field.key]"
+            :value="(node.config[field.key] as string) ?? ''"
             @input="updateConfig(field.key, ($event.target as HTMLTextAreaElement).value)"
             :placeholder="field.placeholder"
           />
@@ -122,7 +122,7 @@
             rows="3"
             :value="typeof node.config[field.key] === 'object'
               ? JSON.stringify(node.config[field.key], null, 2)
-              : (node.config[field.key] ?? '')"
+              : ((node.config[field.key] as string) ?? '')"
             @input="updateConfig(field.key, ($event.target as HTMLTextAreaElement).value)"
             :placeholder="field.placeholder"
           />
@@ -134,7 +134,7 @@
             {{ field.label }}
             <span v-if="field.tooltip" class="form-hint" :title="field.tooltip">ⓘ</span>
           </label>
-          <div v-for="(kv, idx) in (node.config[field.key] || [])" :key="idx" class="kv-row">
+          <div v-for="(kv, idx) in (node.config[field.key] as Array<{key: string, value: string}> || [])" :key="idx" class="kv-row">
             <input
               class="kv-input"
               type="text"
@@ -167,7 +167,7 @@
           <textarea
             class="form-textarea code-textarea"
             rows="8"
-            :value="node.config[field.key]"
+            :value="(node.config[field.key] as string) ?? ''"
             @input="updateConfig(field.key, ($event.target as HTMLTextAreaElement).value)"
             :placeholder="field.placeholder"
           />
@@ -179,7 +179,7 @@
             {{ field.label }}
             <span v-if="field.tooltip" class="form-hint" :title="field.tooltip">ⓘ</span>
           </label>
-          <div v-for="(c, i) in (node.config.cases || [])" :key="i" class="kv-row">
+          <div v-for="(c, i) in (node.config.cases as Array<{expression: string, label: string, outputPort: string}> || [])" :key="i" class="kv-row">
             <input
               class="kv-input"
               type="text"
@@ -308,7 +308,7 @@ function updateConfig(key: string, value: any) {
 // Generic KV editor methods (work for any field.key)
 function updateKV(fieldKey: string, idx: number, field: 'key' | 'value', value: string) {
   if (!props.node) return
-  const arr = [...(props.node.config[fieldKey] || [])]
+  const arr = [...(props.node.config[fieldKey] as Array<{key: string, value: string}> || [])]
   if (!arr[idx]) return
   arr[idx] = { ...arr[idx], [field]: value }
   emit('update-config', props.node.id, fieldKey, arr)
@@ -316,13 +316,13 @@ function updateKV(fieldKey: string, idx: number, field: 'key' | 'value', value: 
 
 function addKV(fieldKey: string) {
   if (!props.node) return
-  const arr = [...(props.node.config[fieldKey] || []), { key: '', value: '' }]
+  const arr = [...(props.node.config[fieldKey] as Array<{key: string, value: string}> || []), { key: '', value: '' }]
   emit('update-config', props.node.id, fieldKey, arr)
 }
 
 function removeKV(fieldKey: string, idx: number) {
   if (!props.node) return
-  const arr = [...(props.node.config[fieldKey] || [])]
+  const arr = [...(props.node.config[fieldKey] as Array<{key: string, value: string}> || [])]
   arr.splice(idx, 1)
   emit('update-config', props.node.id, fieldKey, arr)
 }
@@ -330,14 +330,14 @@ function removeKV(fieldKey: string, idx: number) {
 // Switch node case management (custom override for switch-cases type)
 function updateCase(index: number, field: string, value: string) {
   if (!props.node) return
-  const cases = [...(props.node.config.cases || [])]
+  const cases = [...(props.node.config.cases as Array<{expression: string, label: string, outputPort: string}> || [])]
   cases[index] = { ...cases[index], [field]: value }
   emit('update-config', props.node.id, 'cases', cases)
 }
 
 function addCase() {
   if (!props.node) return
-  const cases = [...(props.node.config.cases || [])]
+  const cases = [...(props.node.config.cases as Array<{expression: string, label: string, outputPort: string}> || [])]
   const portIndex = cases.length + 1
   cases.push({ expression: '', label: `分支 ${portIndex}`, outputPort: `case_${portIndex}` })
   emit('update-config', props.node.id, 'cases', cases)
@@ -345,7 +345,7 @@ function addCase() {
 
 function removeCase(index: number) {
   if (!props.node) return
-  const cases = [...(props.node.config.cases || [])]
+  const cases = [...(props.node.config.cases as Array<{expression: string, label: string, outputPort: string}> || [])]
   cases.splice(index, 1)
   emit('update-config', props.node.id, 'cases', cases)
 }

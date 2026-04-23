@@ -6,7 +6,7 @@ export interface WorkflowDefinition {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
   nodes?: WorkflowNode[]
   edges?: WorkflowEdge[]
-  triggers?: any
+  triggers?: Record<string, unknown>
   tenantId?: number
   createdAt?: string
   updatedAt?: string
@@ -16,7 +16,7 @@ export interface WorkflowNode {
   id: string
   name: string
   type: 'START' | 'END' | 'AGENT' | 'APPROVAL' | 'CONDITION' | 'NOTIFY' | 'HTTP' | 'DELAY' | 'PARALLEL'
-  config?: Record<string, any>
+  config?: Record<string, unknown>
   nextNodes?: string[]
   position?: { x: number; y: number }
 }
@@ -26,7 +26,7 @@ export interface WorkflowEdge {
   source: string
   target: string
   label?: string
-  condition?: Record<string, any>
+  condition?: Record<string, unknown>
 }
 
 export interface WorkflowInstance {
@@ -35,7 +35,7 @@ export interface WorkflowInstance {
   workflowName: string
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'SUSPENDED'
   currentNodeId?: string
-  variables?: Record<string, any>
+  variables?: Record<string, unknown>
   startedBy?: string
   startedAt?: string
   completedAt?: string
@@ -48,8 +48,8 @@ export interface WorkflowNodeLog {
   nodeName: string
   nodeType: string
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED'
-  input?: any
-  output?: any
+  input?: unknown
+  output?: unknown
   error?: string
   startedAt?: string
   completedAt?: string

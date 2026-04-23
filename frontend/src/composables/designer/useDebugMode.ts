@@ -10,8 +10,8 @@ export interface NodeDebugInfo {
   nodeId: string
   label: string
   status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'skipped'
-  input: any
-  output: any
+  input: unknown
+  output: unknown
   duration: number
   error?: string
 }

@@ -23,6 +23,18 @@
 
 import type { CanvasNode, Connection, ValidationResult } from './types'
 
+/** 安全获取节点配置中的字符串值 */
+function configStr(config: Record<string, unknown>, key: string): string | undefined {
+  const val = config[key]
+  return typeof val === 'string' ? val : undefined
+}
+
+/** 安全获取节点配置中的数字值 */
+function configNum(config: Record<string, unknown>, key: string): number | undefined {
+  const val = config[key]
+  return typeof val === 'number' ? val : undefined
+}
+
 export function useGraphValidation() {
   // ============================================================
   // 邻接表构建
@@ -303,13 +315,13 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'llm') continue
 
-      if (!node.config.model || node.config.model.trim() === '') {
+      if (!configStr(node.config, 'model')?.trim()) {
         errors.push(
           `LLM 节点「${node.label}」未配置模型名称（model）`,
         )
       }
 
-      if (!node.config.prompt || node.config.prompt.trim() === '') {
+      if (!configStr(node.config, 'prompt')?.trim()) {
         warnings.push(
           `LLM 节点「${node.label}」未配置用户提示词（prompt）`,
         )
@@ -322,7 +334,7 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'http') continue
 
-      if (!node.config.url || node.config.url.trim() === '') {
+      if (!configStr(node.config, 'url')?.trim()) {
         errors.push(
           `HTTP 节点「${node.label}」未配置请求 URL（url）`,
         )
@@ -335,7 +347,7 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'tool') continue
 
-      if (!node.config.toolId || node.config.toolId.trim() === '') {
+      if (!configStr(node.config, 'toolId')?.trim()) {
         errors.push(
           `工具节点「${node.label}」未配置工具 ID（toolId）`,
         )
@@ -348,7 +360,7 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'code') continue
 
-      if (!node.config.code || node.config.code.trim() === '') {
+      if (!configStr(node.config, 'code')?.trim()) {
         errors.push(
           `代码节点「${node.label}」未配置代码内容（code）`,
         )
@@ -361,11 +373,8 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'delay') continue
 
-      if (
-        node.config.seconds === undefined ||
-        node.config.seconds === null ||
-        node.config.seconds <= 0
-      ) {
+      const seconds = configNum(node.config, 'seconds')
+      if (seconds === undefined || seconds === null || seconds <= 0) {
         errors.push(
           `延迟节点「${node.label}」的延迟秒数（seconds）必须大于 0`,
         )
@@ -378,7 +387,7 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'retriever') continue
 
-      if (!node.config.query || node.config.query.trim() === '') {
+      if (!configStr(node.config, 'query')?.trim()) {
         warnings.push(
           `检索器节点「${node.label}」未配置检索查询（query）`,
         )
@@ -392,7 +401,7 @@ export function useGraphValidation() {
       if (node.type !== 'memory') continue
 
       if (node.config.action === 'save') {
-        if (!node.config.summary || node.config.summary.trim() === '') {
+        if (!configStr(node.config, 'summary')?.trim()) {
           warnings.push(
             `记忆节点「${node.label}」的操作为保存，但未配置摘要内容（summary）`,
           )
@@ -400,7 +409,7 @@ export function useGraphValidation() {
       }
 
       if (node.config.action === 'load') {
-        if (!node.config.query || node.config.query.trim() === '') {
+        if (!configStr(node.config, 'query')?.trim()) {
           warnings.push(
             `记忆节点「${node.label}」的操作为加载，但未配置查询内容（query）`,
           )
@@ -416,7 +425,7 @@ export function useGraphValidation() {
 
       if (
         node.config.action === 'fallback' &&
-        (!node.config.fallbackValue || node.config.fallbackValue.trim() === '')
+        !configStr(node.config, 'fallbackValue')?.trim()
       ) {
         warnings.push(
           `异常处理节点「${node.label}」的降级处理未配置降级值（fallbackValue）`,
@@ -452,7 +461,7 @@ export function useGraphValidation() {
 
       const cases = node.config?.cases
       if (Array.isArray(cases)) {
-        cases.forEach((c: any, i: number) => {
+        cases.forEach((c: Record<string, unknown>, i: number) => {
           if (!c.expression) {
             warnings.push(`多路分支节点「${node.label}」的分支 ${i + 1} 缺少条件表达式`)
           }
@@ -471,7 +480,7 @@ export function useGraphValidation() {
     for (const node of nodes) {
       if (node.type !== 'subgraph') continue
 
-      if (!node.config.agentId || node.config.agentId.trim() === '') {
+      if (!configStr(node.config, 'agentId')?.trim()) {
         errors.push(
           `子图节点「${node.label}」未配置 Agent ID（agentId）`,
         )

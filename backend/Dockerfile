@@ -9,9 +9,9 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Copy source code and build
+# Copy source code and build (use BuildKit cache for Maven dependencies)
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests -B
 
 # ===========================================
 # Stage 2: Runtime

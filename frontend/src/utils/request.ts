@@ -2,6 +2,14 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { message } from 'ant-design-vue'
 
+/** 后端 API 统一响应格式 */
+interface ApiResponse<T = unknown> {
+  code: number
+  message?: string
+  data?: T
+  [key: string]: unknown
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
 const service: AxiosInstance = axios.create({
@@ -15,17 +23,19 @@ const service: AxiosInstance = axios.create({
 // ==================== Token 自动刷新机制 ====================
 
 let isRefreshing = false
-let failedQueue: Array<{ resolve: Function; reject: Function }> = []
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: unknown) => void }> = []
 
 /**
  * 将等待中的请求重新发送
  */
-function processQueue(error: any, token: string | null = null) {
+function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
       reject(error)
-    } else {
+    } else if (token) {
       resolve(token)
+    } else {
+      reject(new Error('No token available'))
     }
   })
   failedQueue = []
@@ -93,12 +103,12 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    const res = response.data as any
+    const res = response.data as ApiResponse
     if (res.code !== 200 && res.code !== 0) {
       message.error(res.message || 'Error')
       return Promise.reject(new Error(res.message || 'Error'))
     }
-    return res
+    return response
   },
   async (error) => {
     const originalRequest = error.config

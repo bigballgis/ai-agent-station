@@ -422,6 +422,10 @@ let isSpaceHeld = false
 let isDraggingMultiple = false
 let dragNodeStartPositions = new Map<string, { x: number; y: number }>()
 
+// Arrow key debounce state: track whether arrow keys are being held down
+// to avoid pushing a history snapshot on every keydown event.
+let isArrowKeyMoving = false
+
 // ============================================================
 // Computed
 // ============================================================
@@ -1059,15 +1063,20 @@ function onKeyDown(event: KeyboardEvent) {
     return
   }
 
-  // Arrow keys: nudge selected nodes
+  // Arrow keys: nudge selected nodes (debounced - only push history on keyup)
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) && !isEditing) {
     event.preventDefault()
     const delta = event.shiftKey ? 10 : 1 // Shift+Arrow = 10px nudge
     const dx = event.key === 'ArrowLeft' ? -delta : event.key === 'ArrowRight' ? delta : 0
     const dy = event.key === 'ArrowUp' ? -delta : event.key === 'ArrowDown' ? delta : 0
 
-    if (selectedNodeIds.value.size > 0) {
+    // On first keydown, save history snapshot before moving
+    if (!isArrowKeyMoving) {
+      isArrowKeyMoving = true
       pushHistory(nodes.value, connections.value)
+    }
+
+    if (selectedNodeIds.value.size > 0) {
       selectedNodeIds.value.forEach(id => {
         const node = nodes.value.find(n => n.id === id)
         if (node) {
@@ -1077,7 +1086,6 @@ function onKeyDown(event: KeyboardEvent) {
     } else if (selectedNodeId.value) {
       const node = nodes.value.find(n => n.id === selectedNodeId.value)
       if (node) {
-        pushHistory(nodes.value, connections.value)
         updateNodePosition(selectedNodeId.value, node.x + dx, node.y + dy)
       }
     }
@@ -1225,6 +1233,11 @@ function onKeyUp(event: KeyboardEvent) {
   if (event.key === ' ') {
     isSpaceHeld = false
     canvasContainerRef.value?.classList.remove('panning-mode')
+  }
+
+  // Arrow key released: end the move batch (history was already saved on keydown)
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    isArrowKeyMoving = false
   }
 }
 

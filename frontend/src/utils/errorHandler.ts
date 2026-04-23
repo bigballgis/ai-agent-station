@@ -62,7 +62,7 @@ export function setupErrorHandler(app: App) {
   window.addEventListener('error', (event) => {
     const target = event.target as HTMLElement
     if (target?.tagName) {
-      console.warn('[Resource Error]', target.tagName, (target as any).src || (target as any).href)
+      console.warn('[Resource Error]', target.tagName, (target as HTMLImageElement).src || (target as HTMLAnchorElement).href)
     }
   }, true) // 使用捕获阶段
 }
