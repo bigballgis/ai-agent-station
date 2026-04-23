@@ -5,8 +5,8 @@
     :width="width"
     :centered="centered"
     :confirm-loading="confirmLoading"
-    :ok-text="okText"
-    :cancel-text="cancelText"
+    :ok-text="okText || t('common.confirm')"
+    :cancel-text="cancelText || t('common.cancel')"
     :ok-type="okType"
     :closable="closable"
     :mask-closable="maskClosable"
@@ -30,6 +30,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ExclamationCircleOutlined,
   CloseCircleOutlined,
@@ -68,17 +69,16 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: '确认操作',
   content: '',
   type: 'info',
   confirmLoading: false,
   width: 420,
   centered: true,
-  okText: '确认',
-  cancelText: '取消',
   closable: true,
   maskClosable: false,
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
@@ -90,9 +90,9 @@ const emit = defineEmits<{
 const modalTitle = computed(() => {
   if (props.title) return props.title
   switch (props.type) {
-    case 'delete': return '确认删除'
-    case 'warning': return '警告'
-    default: return '提示'
+    case 'delete': return t('common.confirmDelete')
+    case 'warning': return t('common.warning')
+    default: return t('common.info')
   }
 })
 

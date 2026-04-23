@@ -23,7 +23,7 @@
             <a-input
               v-if="field.type === 'input'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请输入${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseInput', { label: field.label })"
               :disabled="field.disabled"
               :maxlength="field.maxlength"
               :allow-clear="!field.disabled"
@@ -33,7 +33,7 @@
             <a-textarea
               v-else-if="field.type === 'textarea'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请输入${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseInput', { label: field.label })"
               :disabled="field.disabled"
               :rows="field.rows || 3"
               :maxlength="field.maxlength"
@@ -45,7 +45,7 @@
             <a-input-number
               v-else-if="field.type === 'number'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请输入${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseInput', { label: field.label })"
               :disabled="field.disabled"
               :min="field.min"
               :max="field.max"
@@ -58,7 +58,7 @@
             <a-select
               v-else-if="field.type === 'select'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请选择${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseSelect', { label: field.label })"
               :disabled="field.disabled"
               :options="field.options"
               :mode="field.mode"
@@ -93,7 +93,7 @@
             <a-date-picker
               v-else-if="field.type === 'date'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请选择${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseSelect', { label: field.label })"
               :disabled="field.disabled"
               :format="field.format || 'YYYY-MM-DD'"
               value-format="YYYY-MM-DD"
@@ -104,7 +104,7 @@
             <a-range-picker
               v-else-if="field.type === 'dateRange'"
               v-model:value="internalModel[field.key]"
-              :placeholder="['开始日期', '结束日期']"
+              :placeholder="[t('common.startDate'), t('common.endDate')]"
               :disabled="field.disabled"
               style="width: 100%;"
               value-format="YYYY-MM-DD"
@@ -121,7 +121,7 @@
             <a-input-password
               v-else-if="field.type === 'password'"
               v-model:value="internalModel[field.key]"
-              :placeholder="field.placeholder || `请输入${field.label}`"
+              :placeholder="field.placeholder || t('common.pleaseInput', { label: field.label })"
               :disabled="field.disabled"
               :maxlength="field.maxlength"
             />
@@ -142,6 +142,7 @@
 
 <script setup lang="ts">
 import { ref, watch, reactive, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FormInstance, Rule } from 'ant-design-vue/es/form'
 
 /**
@@ -206,6 +207,8 @@ const props = withDefaults(defineProps<Props>(), {
   labelCol: () => ({ span: 6 }),
   wrapperCol: () => ({ span: 18 }),
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Record<string, any>): void

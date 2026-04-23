@@ -120,7 +120,7 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { deploymentApi, type Deployment, type VersionComparison } from '@/api/deployment'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const activeTab = ref('history')
 const deployments = ref<Deployment[]>([])
@@ -264,7 +264,7 @@ function getStatusText(status: string) {
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleString('zh-CN')
+  return new Date(date).toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US')
 }
 
 onMounted(() => {

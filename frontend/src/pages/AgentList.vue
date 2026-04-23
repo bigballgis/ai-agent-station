@@ -1,11 +1,11 @@
 <template>
-  <div class="agent-list-page" aria-label="Agent列表">
+  <div class="agent-list-page" :aria-label="t('routes.agentList')">
     <!-- 页面头部 -->
     <PageHeader :title="t('agent.list')" :subtitle="t('agent.listDesc')">
       <template #actions>
         <button
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-          aria-label="创建Agent"
+          :aria-label="t('agent.createAgent')"
           @click="showCreateModal = true"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,8 +53,8 @@
     <EmptyState
       v-else-if="filteredAgents.length === 0"
       type="noData"
-      description="点击下方按钮创建您的第一个 Agent"
-      action-text="创建第一个 Agent"
+      :description="t('agent.createFirstDesc')"
+      :action-text="t('agent.createFirstBtn')"
       class="py-20 animate-fade-in"
       @action="showCreateModal = true"
     />
@@ -95,7 +95,7 @@
 
         <!-- 描述: 两行截断 -->
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4 line-clamp-2 leading-relaxed">
-          {{ agent.description || '暂无描述' }}
+          {{ agent.description || t('common.noDescription') }}
         </p>
 
         <!-- 标签列表 -->
@@ -117,7 +117,7 @@
           <div class="flex items-center gap-1.5">
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
-              title="编辑"
+              :title="t('common.edit')"
               @click.stop="editAgent(agent)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +127,7 @@
             </button>
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all duration-200 cursor-pointer"
-              title="版本"
+              :title="t('common.version')"
               @click.stop="viewVersions(agent)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@
             </button>
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
-              title="删除"
+              :title="t('common.delete')"
               @click.stop="deleteAgent(agent)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@
         :disabled="currentPage <= 1"
         @click="currentPage--"
       >
-        上一页
+        {{ t('common.prevPage') }}
       </button>
       <template v-for="page in totalPages" :key="page">
         <button
@@ -185,7 +185,7 @@
         :disabled="currentPage >= totalPages"
         @click="currentPage++"
       >
-        下一页
+        {{ t('common.nextPage') }}
       </button>
     </div>
 
@@ -208,26 +208,26 @@
       <!-- Step 1: 基本信息 -->
       <div v-show="currentStep === 0" class="space-y-4">
         <a-form layout="vertical">
-          <a-form-item label="名称" required>
-            <a-input v-model:value="agentConfig.name" placeholder="请输入 Agent 名称" />
+          <a-form-item :label="t('common.name')" required>
+            <a-input v-model:value="agentConfig.name" :placeholder="t('agent.inputNamePlaceholder')" />
           </a-form-item>
-          <a-form-item label="描述">
-            <a-textarea v-model:value="agentConfig.description" placeholder="请输入 Agent 描述" :rows="3" />
+          <a-form-item :label="t('common.description')">
+            <a-textarea v-model:value="agentConfig.description" :placeholder="t('agent.inputDescPlaceholder')" :rows="3" />
           </a-form-item>
-          <a-form-item label="类型">
+          <a-form-item :label="t('common.type')">
             <a-select v-model:value="agentConfig.type">
-              <a-select-option value="CHAT">对话型</a-select-option>
-              <a-select-option value="TASK">任务型</a-select-option>
-              <a-select-option value="FLOW">工作流型</a-select-option>
+              <a-select-option value="CHAT">{{ t('agent.typeConversational') }}</a-select-option>
+              <a-select-option value="TASK">{{ t('agent.typeTask') }}</a-select-option>
+              <a-select-option value="FLOW">{{ t('agent.typeWorkflow') }}</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="分类">
+          <a-form-item :label="t('common.category')">
             <a-select v-model:value="agentConfig.category">
-              <a-select-option value="general">通用</a-select-option>
-              <a-select-option value="customer-service">客服</a-select-option>
-              <a-select-option value="data-analysis">数据分析</a-select-option>
-              <a-select-option value="code-generation">代码生成</a-select-option>
-              <a-select-option value="document">文档处理</a-select-option>
+              <a-select-option value="general">{{ t('agent.typeGeneral') }}</a-select-option>
+              <a-select-option value="customer-service">{{ t('agent.typeCustomerService') }}</a-select-option>
+              <a-select-option value="data-analysis">{{ t('agent.typeDataAnalysis') }}</a-select-option>
+              <a-select-option value="code-generation">{{ t('agent.typeCodeGeneration') }}</a-select-option>
+              <a-select-option value="document">{{ t('agent.typeDocument') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-form>
@@ -262,32 +262,32 @@
       <!-- Step 3: 工具绑定 -->
       <div v-show="currentStep === 2" class="space-y-4">
         <a-form layout="vertical">
-          <a-form-item label="选择可用工具">
+          <a-form-item :label="t('agent.selectTools')">
             <a-checkbox-group v-model:value="agentConfig.tools" class="w-full">
               <div class="grid grid-cols-2 gap-3">
                 <a-checkbox value="web-search" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">网络搜索</div>
-                  <div class="text-xs text-neutral-400">搜索互联网获取最新信息</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolWebSearch') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolWebSearchDesc') }}</div>
                 </a-checkbox>
                 <a-checkbox value="code-executor" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">代码执行</div>
-                  <div class="text-xs text-neutral-400">运行代码片段并返回结果</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolCodeExecutor') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolCodeExecutorDesc') }}</div>
                 </a-checkbox>
                 <a-checkbox value="file-reader" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">文件读取</div>
-                  <div class="text-xs text-neutral-400">读取和解析各类文件</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolFileReader') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolFileReaderDesc') }}</div>
                 </a-checkbox>
                 <a-checkbox value="database-query" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">数据库查询</div>
-                  <div class="text-xs text-neutral-400">执行SQL查询获取数据</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolDatabaseQuery') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolDatabaseQueryDesc') }}</div>
                 </a-checkbox>
                 <a-checkbox value="api-caller" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">API 调用</div>
-                  <div class="text-xs text-neutral-400">调用外部API接口</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolApiCaller') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolApiCallerDesc') }}</div>
                 </a-checkbox>
                 <a-checkbox value="image-generator" class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
-                  <div class="font-medium text-sm">图片生成</div>
-                  <div class="text-xs text-neutral-400">AI生成图片内容</div>
+                  <div class="font-medium text-sm">{{ t('agent.toolImageGenerator') }}</div>
+                  <div class="text-xs text-neutral-400">{{ t('agent.toolImageGeneratorDesc') }}</div>
                 </a-checkbox>
               </div>
             </a-checkbox-group>
@@ -298,39 +298,39 @@
       <!-- Step 4: 预览确认 -->
       <div v-show="currentStep === 3" class="space-y-4">
         <div class="bg-neutral-50 dark:bg-neutral-800/60 rounded-xl p-5 space-y-4">
-          <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">配置预览</h4>
+          <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">{{ t('agent.configPreview') }}</h4>
           <div class="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">名称：</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('common.name') }}：</span>
               <span class="text-neutral-800 dark:text-neutral-200 font-medium">{{ agentConfig.name || '-' }}</span>
             </div>
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">类型：</span>
-              <span class="text-neutral-800 dark:text-neutral-200">{{ { CHAT: '对话型', TASK: '任务型', FLOW: '工作流型' }[agentConfig.type] }}</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('common.type') }}：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ { CHAT: t('agent.typeConversational'), TASK: t('agent.typeTask'), FLOW: t('agent.typeWorkflow') }[agentConfig.type] }}</span>
             </div>
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">分类：</span>
-              <span class="text-neutral-800 dark:text-neutral-200">{{ { general: '通用', 'customer-service': '客服', 'data-analysis': '数据分析', 'code-generation': '代码生成', document: '文档处理' }[agentConfig.category] }}</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('common.category') }}：</span>
+              <span class="text-neutral-800 dark:text-neutral-200">{{ { general: t('agent.typeGeneral'), 'customer-service': t('agent.typeCustomerService'), 'data-analysis': t('agent.typeDataAnalysis'), 'code-generation': t('agent.typeCodeGeneration'), document: t('agent.typeDocument') }[agentConfig.category] }}</span>
             </div>
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">模型：</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('agent.wizard.model') }}：</span>
               <span class="text-neutral-800 dark:text-neutral-200 font-mono">{{ agentConfig.model }}</span>
             </div>
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">温度：</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('agent.wizard.temperature') }}：</span>
               <span class="text-neutral-800 dark:text-neutral-200">{{ agentConfig.temperature }}</span>
             </div>
             <div>
-              <span class="text-neutral-400 dark:text-neutral-500">最大 Token：</span>
+              <span class="text-neutral-400 dark:text-neutral-500">{{ t('agent.wizard.maxTokens') }}：</span>
               <span class="text-neutral-800 dark:text-neutral-200">{{ agentConfig.maxTokens }}</span>
             </div>
           </div>
           <div v-if="agentConfig.description" class="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-            <span class="text-neutral-400 dark:text-neutral-500 text-sm">描述：</span>
+            <span class="text-neutral-400 dark:text-neutral-500 text-sm">{{ t('common.description') }}：</span>
             <p class="text-sm text-neutral-700 dark:text-neutral-300 mt-1">{{ agentConfig.description }}</p>
           </div>
           <div v-if="agentConfig.tools.length" class="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-            <span class="text-neutral-400 dark:text-neutral-500 text-sm">已绑定工具：</span>
+            <span class="text-neutral-400 dark:text-neutral-500 text-sm">{{ t('agent.boundTools') }}</span>
             <div class="flex flex-wrap gap-1.5 mt-2">
               <a-tag v-for="tool in agentConfig.tools" :key="tool" color="blue">{{ tool }}</a-tag>
             </div>
@@ -340,12 +340,12 @@
 
       <!-- 底部按钮 -->
       <div class="flex items-center justify-between mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-        <a-button v-if="currentStep > 0" @click="prevStep">上一步</a-button>
+        <a-button v-if="currentStep > 0" @click="prevStep">{{ t('agent.wizard.prev') }}</a-button>
         <div v-else></div>
         <div class="flex items-center gap-2">
-          <a-button @click="resetWizard">取消</a-button>
-          <a-button v-if="currentStep < 3" type="primary" @click="nextStep">下一步</a-button>
-          <a-button v-else type="primary" @click="handleWizardCreate">确认创建</a-button>
+          <a-button @click="resetWizard">{{ t('common.cancel') }}</a-button>
+          <a-button v-if="currentStep < 3" type="primary" @click="nextStep">{{ t('agent.wizard.next') }}</a-button>
+          <a-button v-else type="primary" @click="handleWizardCreate">{{ t('agent.wizard.confirmCreate') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -353,15 +353,15 @@
     <!-- 复制 Agent 弹窗 -->
     <a-modal
       v-model:open="showCopyModal"
-      title="复制 Agent"
+      :title="t('agent.copyAgentTitle')"
       :ok-button-props="{ class: '!rounded-xl' }"
       :cancel-button-props="{ class: '!rounded-xl' }"
       @ok="handleCopy"
       @cancel="showCopyModal = false"
     >
       <a-form layout="vertical" class="mt-4">
-        <a-form-item label="新名称">
-          <a-input v-model:value="copyAgentName" placeholder="请输入新 Agent 名称" />
+        <a-form-item :label="t('agent.newName')">
+          <a-input v-model:value="copyAgentName" :placeholder="t('agent.inputNewNamePlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -378,7 +378,7 @@ import { PageHeader, SearchBar, StatusBadge, EmptyState } from '@/components'
 import type { SearchField } from '@/components'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const agents = ref<Agent[]>([])
@@ -401,15 +401,15 @@ const agentConfig = reactive({
 })
 
 const steps = [
-  { title: '基本信息', description: '填写Agent基本信息' },
-  { title: '模型配置', description: '选择AI模型和参数' },
-  { title: '工具绑定', description: '选择Agent可用的工具' },
-  { title: '预览确认', description: '确认配置并创建' }
+  { title: t('agent.wizard.basicInfo'), description: t('agent.wizard.basicInfoDesc') },
+  { title: t('agent.wizard.modelConfig'), description: t('agent.wizard.modelConfigDesc') },
+  { title: t('agent.wizard.toolBinding'), description: t('agent.wizard.toolBindingDesc') },
+  { title: t('agent.wizard.preview'), description: t('agent.wizard.previewDesc') }
 ]
 
 const nextStep = async () => {
   if (currentStep.value === 0) {
-    if (!agentConfig.name) { message.warning('请输入Agent名称'); return }
+    if (!agentConfig.name) { message.warning(t('agent.inputAgentNameWarning')); return }
   }
   currentStep.value++
 }
@@ -446,11 +446,11 @@ async function handleWizardCreate() {
         tools: agentConfig.tools,
       }
     })
-    message.success('创建成功')
+    message.success(t('agent.createSuccess'))
     resetWizard()
     loadAgents()
   } catch (error: any) {
-    message.error('创建失败: ' + (error.message || '未知错误'))
+    message.error(t('agent.createFailed') + ': ' + (error.message || ''))
   }
 }
 
@@ -477,32 +477,32 @@ const activeFilter = ref('')
 // SearchBar 字段配置
 const searchFields: SearchField[] = [
   {
-    label: 'Agent 名称',
+    label: t('agent.agentName'),
     key: 'searchQuery',
     type: 'input',
-    placeholder: '搜索 Agent 名称或描述...',
+    placeholder: t('agent.searchPlaceholder'),
   },
   {
-    label: '状态',
+    label: t('common.status'),
     key: 'statusFilter',
     type: 'select',
-    placeholder: '全部状态',
+    placeholder: t('agent.allStatus'),
     options: [
-      { label: '草稿', value: 'DRAFT' },
-      { label: '待审批', value: 'PENDING_APPROVAL' },
-      { label: '已审批', value: 'APPROVED' },
-      { label: '已发布', value: 'PUBLISHED' },
-      { label: '已归档', value: 'ARCHIVED' },
+      { label: t('agent.statusDraft'), value: 'DRAFT' },
+      { label: t('agent.statusPendingApproval'), value: 'PENDING_APPROVAL' },
+      { label: t('agent.statusApproved'), value: 'APPROVED' },
+      { label: t('agent.statusPublished'), value: 'PUBLISHED' },
+      { label: t('agent.statusArchived'), value: 'ARCHIVED' },
     ],
   },
   {
-    label: '类型',
+    label: t('common.type'),
     key: 'activeFilter',
     type: 'select',
-    placeholder: '全部类型',
+    placeholder: t('agent.allTypes'),
     options: [
-      { label: '已启用', value: 'true' },
-      { label: '已禁用', value: 'false' },
+      { label: t('agent.statusEnabled'), value: 'true' },
+      { label: t('agent.statusDisabled'), value: 'false' },
     ],
   },
 ]
@@ -556,7 +556,7 @@ async function loadAgents() {
     const res = await agentApi.getAllAgents()
     agents.value = res.data || []
   } catch (error: any) {
-    message.error('加载 Agent 列表失败: ' + (error.message || '未知错误'))
+    message.error(t('agent.loadFailed') + ': ' + (error.message || ''))
   } finally {
     loading.value = false
   }
@@ -591,28 +591,28 @@ async function handleCopy() {
 
   try {
     await agentApi.copyAgent(currentAgent.value.id!, copyAgentName.value)
-    message.success('复制成功')
+    message.success(t('agent.copySuccess'))
     showCopyModal.value = false
     loadAgents()
   } catch (error: any) {
-    message.error('复制失败: ' + (error.message || '未知错误'))
+    message.error(t('agent.copyFailed') + ': ' + (error.message || ''))
   }
 }
 
 function deleteAgent(agent: Agent) {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除 Agent "${agent.name}" 吗？此操作不可恢复。`,
-    okText: '确认删除',
+    title: t('agent.confirmDelete'),
+    content: `${t('agent.confirmDeleteContent').replace('此 Agent 吗？', '')} "${agent.name}"？`,
+    okText: t('agent.confirmDelete'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         await agentApi.deleteAgent(agent.id!)
-        message.success('删除成功')
+        message.success(t('agent.deleteSuccess'))
         loadAgents()
       } catch (error: any) {
-        message.error('删除失败: ' + (error.message || '未知错误'))
+        message.error(t('agent.deleteFailed') + ': ' + (error.message || ''))
       }
     }
   })
@@ -620,7 +620,7 @@ function deleteAgent(agent: Agent) {
 
 function formatDate(date: string | undefined) {
   if (!date) return '-'
-  return new Date(date).toLocaleDateString('zh-CN', {
+  return new Date(date).toLocaleDateString(locale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
@@ -653,16 +653,16 @@ function getAgentTags(agent: Agent): string[] {
   const tags: string[] = []
   if (agent.status) {
     const statusLabels: Record<string, string> = {
-      DRAFT: '草稿',
-      PENDING_APPROVAL: '待审批',
-      APPROVED: '已审批',
-      PUBLISHED: '已发布',
-      ARCHIVED: '已归档'
+      DRAFT: t('agent.statusDraft'),
+      PENDING_APPROVAL: t('agent.statusPendingApproval'),
+      APPROVED: t('agent.statusApproved'),
+      PUBLISHED: t('agent.statusPublished'),
+      ARCHIVED: t('agent.statusArchived')
     }
     tags.push(statusLabels[agent.status] || agent.status)
   }
   if (agent.isActive) {
-    tags.push('已启用')
+    tags.push(t('agent.statusEnabled'))
   }
   // 从 config 中提取类型标签
   if (agent.config?.type) {

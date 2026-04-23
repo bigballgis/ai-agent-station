@@ -1,5 +1,5 @@
 <template>
-  <div class="log-center-page" aria-label="日志中心">
+  <div class="log-center-page" :aria-label="t('log.center')">
     <!-- 页面头部 -->
     <PageHeader :title="t('log.center')" :subtitle="t('log.centerDesc')" />
 
@@ -19,13 +19,13 @@
             v-model="operationFilters.module"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
-            <option value="">全部模块</option>
-            <option value="agent">Agent 管理</option>
-            <option value="approval">审批管理</option>
-            <option value="deployment">发布管理</option>
-            <option value="api">API 管理</option>
-            <option value="system">系统设置</option>
-            <option value="tenant">租户管理</option>
+            <option value="">{{ t('log.allModules') }}</option>
+            <option value="agent">{{ t('log.moduleAgent') }}</option>
+            <option value="approval">{{ t('log.moduleApproval') }}</option>
+            <option value="deployment">{{ t('log.moduleDeployment') }}</option>
+            <option value="api">{{ t('log.moduleApi') }}</option>
+            <option value="system">{{ t('log.moduleSystem') }}</option>
+            <option value="tenant">{{ t('log.moduleTenant') }}</option>
           </select>
           <div class="relative flex-1 min-w-[200px] max-w-xs">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
             <input
               v-model="operationFilters.operator"
               type="text"
-              placeholder="搜索操作人..."
+              :placeholder="t('log.searchOperatorPlaceholder')"
               class="w-full pl-10 pr-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
             />
           </div>
@@ -42,7 +42,7 @@
             class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
             @click="resetOperationFilters"
           >
-            重置
+            {{ t('common.reset') }}
           </button>
         </div>
 
@@ -54,18 +54,18 @@
           <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="filteredOperationLogs.length === 0" class="flex flex-col items-center justify-center py-12">
-          <EmptyState type="noData" description="暂无操作日志" />
+          <EmptyState type="noData" :description="t('log.noOperationLogs')" />
         </div>
-        <div v-else class="overflow-x-auto" aria-label="操作日志表格">
+        <div v-else class="overflow-x-auto" :aria-label="t('log.operation')">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">时间</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">操作人</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">模块</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">操作类型</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">IP 地址</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">详情</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.time') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.operator') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.module') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.operationType') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.ipAddress') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.detail') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -110,14 +110,14 @@
 
         <!-- 分页 -->
         <div v-if="!loading && filteredOperationLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredOperationLogs.length }} 条记录</span>
+          <span class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('log.totalRecords', { count: filteredOperationLogs.length }) }}</span>
           <div class="flex items-center gap-1">
             <button
               :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer', operationPage <= 1 ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' : 'text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700']"
               :disabled="operationPage <= 1"
               @click="operationPage--"
             >
-              上一页
+              {{ t('common.prevPage') }}
             </button>
             <span class="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400">{{ operationPage }} / {{ operationTotalPages }}</span>
             <button
@@ -125,7 +125,7 @@
               :disabled="operationPage >= operationTotalPages"
               @click="operationPage++"
             >
-              下一页
+              {{ t('common.nextPage') }}
             </button>
           </div>
         </div>
@@ -140,7 +140,7 @@
             v-model="apiFilters.agent"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
-            <option value="">全部 Agent</option>
+            <option value="">{{ t('log.allAgents') }}</option>
             <option value="智能客服">智能客服</option>
             <option value="文档助手">文档助手</option>
             <option value="数据分析">数据分析</option>
@@ -150,16 +150,16 @@
             v-model="apiFilters.status"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
-            <option value="">全部状态</option>
-            <option value="success">成功</option>
-            <option value="failed">失败</option>
-            <option value="timeout">超时</option>
+            <option value="">{{ t('log.allStatus') }}</option>
+            <option value="success">{{ t('log.statusSuccess') }}</option>
+            <option value="failed">{{ t('log.statusFailed') }}</option>
+            <option value="timeout">{{ t('log.statusTimeout') }}</option>
           </select>
           <button
             class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
             @click="resetApiFilters"
           >
-            重置
+            {{ t('common.reset') }}
           </button>
         </div>
 
@@ -171,18 +171,18 @@
           <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="filteredApiLogs.length === 0" class="flex flex-col items-center justify-center py-12">
-          <EmptyState type="noData" description="暂无调用日志" />
+          <EmptyState type="noData" :description="t('log.noApiLogs')" />
         </div>
-        <div v-else class="overflow-x-auto" aria-label="调用日志表格">
+        <div v-else class="overflow-x-auto" :aria-label="t('log.api')">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">时间</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.time') }}</th>
                 <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">Agent</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">调用方</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">请求参数</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">响应时间</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">状态</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.caller') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.requestParams') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.responseTime') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.status') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -216,7 +216,7 @@
                       'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400',
                     ]"
                   >
-                    {{ log.status === 'success' ? '成功' : log.status === 'failed' ? '失败' : '超时' }}
+                    {{ log.status === 'success' ? t('log.statusSuccess') : log.status === 'failed' ? t('log.statusFailed') : t('log.statusTimeout') }}
                   </span>
                 </td>
               </tr>
@@ -226,14 +226,14 @@
 
         <!-- 分页 -->
         <div v-if="!loading && filteredApiLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredApiLogs.length }} 条记录</span>
+          <span class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('log.totalRecords', { count: filteredApiLogs.length }) }}</span>
           <div class="flex items-center gap-1">
             <button
               :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer', apiPage <= 1 ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' : 'text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700']"
               :disabled="apiPage <= 1"
               @click="apiPage--"
             >
-              上一页
+              {{ t('common.prevPage') }}
             </button>
             <span class="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400">{{ apiPage }} / {{ apiTotalPages }}</span>
             <button
@@ -241,7 +241,7 @@
               :disabled="apiPage >= apiTotalPages"
               @click="apiPage++"
             >
-              下一页
+              {{ t('common.nextPage') }}
             </button>
           </div>
         </div>
@@ -256,7 +256,7 @@
             v-model="errorFilters.module"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
-            <option value="">全部模块</option>
+            <option value="">{{ t('log.allModules') }}</option>
             <option value="Agent">Agent</option>
             <option value="认证">认证</option>
             <option value="工作流">工作流</option>
@@ -267,7 +267,7 @@
             v-model="errorFilters.level"
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
-            <option value="">全部级别</option>
+            <option value="">{{ t('log.allLevels') }}</option>
             <option value="ERROR">ERROR</option>
             <option value="WARN">WARN</option>
             <option value="FATAL">FATAL</option>
@@ -276,7 +276,7 @@
             class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200 cursor-pointer"
             @click="resetErrorFilters"
           >
-            重置
+            {{ t('common.reset') }}
           </button>
         </div>
 
@@ -288,17 +288,17 @@
           <LoadingSkeleton type="table" />
         </div>
         <div v-else-if="errorLogs.length === 0" class="flex flex-col items-center justify-center py-12">
-          <EmptyState type="noData" description="暂无异常日志" />
+          <EmptyState type="noData" :description="t('log.noErrorLogs')" />
         </div>
-        <div v-else class="overflow-x-auto" aria-label="异常日志表格">
+        <div v-else class="overflow-x-auto" :aria-label="t('log.exception')">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-neutral-100 dark:border-neutral-800">
                 <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400 w-8"></th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">时间</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">级别</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">模块</th>
-                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">异常信息</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.time') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.level') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.module') }}</th>
+                <th class="text-left py-3 px-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('log.errorMessage') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -339,7 +339,7 @@
                 <tr v-if="expandedErrors.has(log.id)">
                   <td colspan="5" class="px-4 py-3 bg-neutral-50 dark:bg-neutral-800/30">
                     <a-collapse ghost>
-                      <a-collapse-panel header="查看技术详情">
+                      <a-collapse-panel :header="t('log.viewStackTrace')">
                         <pre class="text-xs text-neutral-500 dark:text-neutral-400 font-mono whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto p-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">{{ log.stack }}</pre>
                       </a-collapse-panel>
                     </a-collapse>
@@ -352,14 +352,14 @@
 
         <!-- 分页 -->
         <div v-if="!loading && filteredErrorLogs.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <span class="text-xs text-neutral-400 dark:text-neutral-500">共 {{ filteredErrorLogs.length }} 条记录</span>
+          <span class="text-xs text-neutral-400 dark:text-neutral-500">{{ t('log.totalRecords', { count: filteredErrorLogs.length }) }}</span>
           <div class="flex items-center gap-1">
             <button
               :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer', errorPage <= 1 ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' : 'text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700']"
               :disabled="errorPage <= 1"
               @click="errorPage--"
             >
-              上一页
+              {{ t('common.prevPage') }}
             </button>
             <span class="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400">{{ errorPage }} / {{ errorTotalPages }}</span>
             <button
@@ -367,7 +367,7 @@
               :disabled="errorPage >= errorTotalPages"
               @click="errorPage++"
             >
-              下一页
+              {{ t('common.nextPage') }}
             </button>
           </div>
         </div>
@@ -501,7 +501,7 @@ async function fetchOperationLogs() {
       detail: item.detail || item.message || item.description || '',
     })) : []
   } catch (error: any) {
-    message.error('获取操作日志失败: ' + (error.message || '未知错误'))
+    message.error(t('log.fetchOperationLogsFailed'))
   } finally {
     loading.value = false
   }
@@ -582,7 +582,7 @@ async function fetchApiLogs() {
       status: item.status || 'success',
     })) : []
   } catch (error: any) {
-    message.error('获取调用日志失败: ' + (error.message || '未知错误'))
+    message.error(t('log.fetchApiLogsFailed'))
   } finally {
     loading.value = false
   }
@@ -670,7 +670,7 @@ async function fetchErrorLogs() {
         stack: item.stack || item.stackTrace || '',
       })) : []
   } catch (error: any) {
-    message.error('获取异常日志失败: ' + (error.message || '未知错误'))
+    message.error(t('log.fetchErrorLogsFailed'))
   } finally {
     loading.value = false
   }

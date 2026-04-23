@@ -31,7 +31,7 @@
         aria-label="Agent"
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[160px]"
       >
-        <option value="">全部 Agent</option>
+        <option value="">{{ t('memory.allAgents') }}</option>
         <option v-for="agent in agentList" :key="agent.id" :value="agent.id">{{ agent.name }}</option>
       </select>
 
@@ -62,7 +62,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索记忆内容..."
+          :placeholder="t('memory.searchPlaceholder')"
           class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
         />
       </div>
@@ -73,11 +73,11 @@
         aria-label="Time range"
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
       >
-        <option value="">全部时间</option>
-        <option value="1h">最近 1 小时</option>
-        <option value="24h">最近 24 小时</option>
-        <option value="7d">最近 7 天</option>
-        <option value="30d">最近 30 天</option>
+        <option value="">{{ t('memory.allTime') }}</option>
+        <option value="1h">{{ t('memory.last1Hour') }}</option>
+        <option value="24h">{{ t('memory.last24Hours') }}</option>
+        <option value="7d">{{ t('memory.last7Days') }}</option>
+        <option value="30d">{{ t('memory.last30Days') }}</option>
       </select>
     </div>
 
@@ -98,8 +98,8 @@
             d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       </div>
-      <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">暂无记忆数据</h3>
-      <p class="text-sm text-neutral-400 dark:text-neutral-500">尝试调整筛选条件或选择其他 Agent</p>
+      <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">{{ t('memory.noMemory') }}</h3>
+      <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('memory.noMemoryHint') }}</p>
     </div>
 
     <!-- 记忆列表 -->
@@ -147,7 +147,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                {{ memory.accessCount }}
+                {{ t('memory.times', { count: memory.accessCount }) }}
               </span>
 
               <!-- 创建时间 -->
@@ -166,7 +166,7 @@
           <div class="flex items-center gap-1 flex-shrink-0">
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
-              title="查看详情"
+              :title="t('common.view')"
               @click="viewMemoryDetail(memory)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@
             </button>
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
-              title="删除"
+              :title="t('common.delete')"
               @click="deleteMemory(memory)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,7 +201,7 @@
         :disabled="currentPage <= 1"
         @click="currentPage--"
       >
-        上一页
+        {{ t('common.prevPage') }}
       </button>
       <template v-for="page in totalPages" :key="page">
         <button
@@ -223,27 +223,27 @@
         :disabled="currentPage >= totalPages"
         @click="currentPage++"
       >
-        下一页
+        {{ t('common.nextPage') }}
       </button>
     </div>
 
     <!-- 记忆详情弹窗 -->
     <a-modal
       v-model:open="showDetailModal"
-      :title="'记忆详情'"
+      :title="t('memory.detail')"
       :footer="null"
       width="640px"
     >
       <div v-if="detailMemory" class="mt-4 space-y-4">
         <div>
-          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">记忆内容</h4>
+          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">{{ t('memory.content') }}</h4>
           <div class="bg-neutral-50 dark:bg-neutral-800/60 rounded-xl p-4">
             <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{{ detailMemory.content }}</p>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">记忆类型</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.type') }}</h4>
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
               :class="getTypeBadgeClass(detailMemory.type)"
@@ -252,11 +252,11 @@
             </span>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">所属 Agent</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.agent') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ detailMemory.agentName }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">重要性评分</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.importance') }}</h4>
             <div class="flex items-center gap-0.5">
               <svg
                 v-for="star in 5"
@@ -271,20 +271,20 @@
             </div>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">访问次数</h4>
-            <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ detailMemory.accessCount }} 次</p>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.accessCount') }}</h4>
+            <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ t('memory.times', { count: detailMemory.accessCount }) }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">创建时间</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.createdAt') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ detailMemory.createdAt }}</p>
           </div>
           <div>
-            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">最后访问</h4>
+            <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.lastAccessedAt') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ detailMemory.lastAccessedAt }}</p>
           </div>
         </div>
         <div>
-          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">关联标签</h4>
+          <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('memory.tags') }}</h4>
           <div class="flex flex-wrap gap-1.5">
             <span
               v-for="tag in detailMemory.tags"
@@ -316,10 +316,10 @@ const selectedAgent = ref('')
 
 // 记忆类型
 const memoryTypes = [
-  { label: '全部', value: '' },
-  { label: '短期记忆', value: 'short_term' },
-  { label: '长期记忆', value: 'long_term' },
-  { label: '业务记忆', value: 'business' },
+  { label: t('memory.allTypes'), value: '' },
+  { label: t('memory.shortTerm'), value: 'short_term' },
+  { label: t('memory.longTerm'), value: 'long_term' },
+  { label: t('memory.businessMemory'), value: 'business' },
 ]
 const activeType = ref('')
 const searchQuery = ref('')
@@ -356,7 +356,7 @@ async function fetchMemories() {
     memories.value = res.data?.records || res.data || res || []
   } catch (e: any) {
     console.error('获取记忆列表失败:', e)
-    message.error('获取记忆列表失败: ' + (e.message || '未知错误'))
+    message.error(t('memory.fetchMemoriesFailed'))
   } finally {
     loading.value = false
   }
@@ -433,9 +433,9 @@ function getTypeBadgeClass(type: string): string {
 
 function getTypeLabel(type: string): string {
   const map: Record<string, string> = {
-    short_term: '短期记忆',
-    long_term: '长期记忆',
-    business: '业务记忆',
+    short_term: t('memory.shortTerm'),
+    long_term: t('memory.longTerm'),
+    business: t('memory.businessMemory'),
   }
   return map[type] || type
 }
@@ -451,19 +451,19 @@ function viewMemoryDetail(memory: typeof memories.value[0]) {
 
 function deleteMemory(memory: typeof memories.value[0]) {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除这条记忆吗？此操作不可恢复。',
-    okText: '确认删除',
+    title: t('memory.deleteConfirmTitle'),
+    content: t('memory.deleteConfirmContent'),
+    okText: t('memory.deleteConfirmOk'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         await deleteMemoryApi(memory.id)
-        message.success('删除成功')
+        message.success(t('memory.deleteSuccess'))
         await fetchMemories()
       } catch (e: any) {
         console.error('删除记忆失败:', e)
-        message.error('删除失败: ' + (e.message || '未知错误'))
+        message.error(t('memory.deleteFailed'))
       }
     },
   })
@@ -471,19 +471,19 @@ function deleteMemory(memory: typeof memories.value[0]) {
 
 function cleanExpiredMemories() {
   Modal.confirm({
-    title: '清理过期记忆',
-    content: '确定要清理所有超过 30 天未访问的记忆吗？此操作不可恢复。',
-    okText: '确认清理',
+    title: t('memory.cleanConfirmTitle'),
+    content: t('memory.cleanConfirmContent'),
+    okText: t('memory.cleanConfirmOk'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         await cleanupAgentMemories(selectedAgent.value || 'all')
-        message.success('过期记忆清理成功')
+        message.success(t('memory.cleanSuccess'))
         await fetchMemories()
       } catch (e: any) {
         console.error('清理过期记忆失败:', e)
-        message.error('清理失败: ' + (e.message || '未知错误'))
+        message.error(t('memory.cleanFailed'))
       }
     },
   })

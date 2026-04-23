@@ -17,7 +17,7 @@
           <template #icon>
             <ReloadOutlined :spin="loading" />
           </template>
-          刷新
+          {{ t('common.refresh') }}
         </a-button>
       </div>
     </div>
@@ -49,7 +49,7 @@
         :total="total"
         :show-size-changer="showSizeChanger"
         :show-quick-jumper="showQuickJumper"
-        :show-total="showTotal ? (total: number) => `共 ${total} 条` : undefined"
+        :show-total="showTotal ? (total: number) => t('common.totalRecords', { total }) : undefined"
         :page-sizes="pageSizes"
         size="small"
         @change="handlePageChange"
@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import SearchBar from './SearchBar.vue'
 import type { TableProps } from 'ant-design-vue'
@@ -143,6 +144,8 @@ const props = withDefaults(defineProps<Props>(), {
   showSizeChanger: true,
   pageSizes: () => [10, 20, 50, 100],
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   /** 搜索事件 */

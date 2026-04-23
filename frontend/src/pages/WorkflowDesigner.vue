@@ -156,10 +156,10 @@
       width="640px"
     >
       <a-form layout="vertical">
-        <a-form-item :label="t('workflow.namePlaceholder').replace('请输入', '')" required>
+        <a-form-item :label="t('workflow.nameLabel')" required>
           <a-input v-model:value="createForm.name" :placeholder="t('workflow.namePlaceholder')" />
         </a-form-item>
-        <a-form-item :label="t('workflow.descriptionPlaceholder').replace('请输入', '')">
+        <a-form-item :label="t('workflow.descriptionLabel')">
           <a-textarea v-model:value="createForm.description" :placeholder="t('workflow.descriptionPlaceholder')" :rows="3" />
         </a-form-item>
         <a-form-item :label="t('workflow.nodesConfig')">
@@ -195,10 +195,10 @@
       width="640px"
     >
       <a-form layout="vertical">
-        <a-form-item :label="t('workflow.namePlaceholder').replace('请输入', '')" required>
+        <a-form-item :label="t('workflow.nameLabel')" required>
           <a-input v-model:value="editForm.name" :placeholder="t('workflow.namePlaceholder')" />
         </a-form-item>
-        <a-form-item :label="t('workflow.descriptionPlaceholder').replace('请输入', '')">
+        <a-form-item :label="t('workflow.descriptionLabel')">
           <a-textarea v-model:value="editForm.description" :placeholder="t('workflow.descriptionPlaceholder')" :rows="3" />
         </a-form-item>
         <a-form-item :label="t('workflow.nodesConfig')">
@@ -255,7 +255,7 @@ import { message } from 'ant-design-vue'
 import { PageHeader, StatusBadge } from '@/components'
 import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNode, type WorkflowEdge } from '@/api/workflow'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 
 const loading = ref(false)
@@ -277,7 +277,7 @@ const showStartModal = ref(false)
 const createForm = ref({
   name: '',
   description: '',
-  nodesJson: '{"nodes": [{"id": "start", "type": "START", "name": "开始"}, {"id": "end", "type": "END", "name": "结束"}]}',
+  nodesJson: '{"nodes": [{"id": "start", "type": "START", "name": "Start"}, {"id": "end", "type": "END", "name": "End"}]}',
   edgesJson: '{"edges": [{"id": "e1", "source": "start", "target": "end"}]}',
   triggersJson: '{"type": "manual"}'
 })
@@ -344,7 +344,7 @@ function getNodeTypeName(type: string) {
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleString('zh-CN')
+  return new Date(date).toLocaleString(locale.value)
 }
 
 async function loadDefinitions() {
@@ -403,7 +403,7 @@ async function handleCreate() {
     createForm.value = {
       name: '',
       description: '',
-      nodesJson: '{"nodes": [{"id": "start", "type": "START", "name": "开始"}, {"id": "end", "type": "END", "name": "结束"}]}',
+      nodesJson: '{"nodes": [{"id": "start", "type": "START", "name": "Start"}, {"id": "end", "type": "END", "name": "End"}]}',
       edgesJson: '{"edges": [{"id": "e1", "source": "start", "target": "end"}]}',
       triggersJson: '{"type": "manual"}'
     }

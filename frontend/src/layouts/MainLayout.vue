@@ -291,7 +291,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75" />
           <span class="relative inline-flex rounded-full h-2 w-2 bg-success-500" />
         </span>
-        <span class="text-[11px] text-neutral-400 dark:text-neutral-500">系统正常运行</span>
+        <span class="text-[11px] text-neutral-400 dark:text-neutral-500">{{ t('common.systemRunning') }}</span>
       </div>
       <span class="text-[11px] text-neutral-400 dark:text-neutral-500">v1.0.0</span>
     </footer>

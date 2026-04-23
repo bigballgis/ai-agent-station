@@ -10,7 +10,7 @@
         class="preset-btn"
         @click="selectPreset(preset)"
       >
-        {{ preset.label }}
+        {{ typeof preset.label === 'function' ? preset.label() : preset.label }}
       </a-button>
       <a-button
         :type="activePreset === 'custom' ? 'primary' : 'default'"
@@ -18,7 +18,7 @@
         class="preset-btn"
         @click="showCustomRange = true"
       >
-        自定义
+        {{ t('common.custom') }}
       </a-button>
     </div>
 
@@ -26,7 +26,7 @@
     <div v-if="showCustomRange" class="custom-range">
       <a-range-picker
         v-model:value="customRange"
-        :placeholder="['开始日期', '结束日期']"
+        :placeholder="[t('common.startDate'), t('common.endDate')]"
         value-format="YYYY-MM-DD"
         style="width: 100%;"
         @change="handleCustomChange"
@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CalendarOutlined } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 
@@ -56,19 +57,21 @@ import dayjs, { type Dayjs } from 'dayjs'
 // 预设定义
 interface Preset {
   key: string
-  label: string
+  label: string | (() => string)
   getValue: () => [string, string]
 }
+
+const { t } = useI18n()
 
 const presets: Preset[] = [
   {
     key: 'today',
-    label: '今天',
+    label: () => t('timeRange.today'),
     getValue: () => [dayjs().format('YYYY-MM-DD'), dayjs().format('YYYY-MM-DD')],
   },
   {
     key: 'yesterday',
-    label: '昨天',
+    label: () => t('timeRange.yesterday'),
     getValue: () => [
       dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
       dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -76,7 +79,7 @@ const presets: Preset[] = [
   },
   {
     key: '7days',
-    label: '最近 7 天',
+    label: () => t('timeRange.last7Days'),
     getValue: () => [
       dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
       dayjs().format('YYYY-MM-DD'),
@@ -84,7 +87,7 @@ const presets: Preset[] = [
   },
   {
     key: '30days',
-    label: '最近 30 天',
+    label: () => t('timeRange.last30Days'),
     getValue: () => [
       dayjs().subtract(29, 'day').format('YYYY-MM-DD'),
       dayjs().format('YYYY-MM-DD'),
@@ -92,7 +95,7 @@ const presets: Preset[] = [
   },
   {
     key: '90days',
-    label: '最近 90 天',
+    label: () => t('timeRange.last90Days'),
     getValue: () => [
       dayjs().subtract(89, 'day').format('YYYY-MM-DD'),
       dayjs().format('YYYY-MM-DD'),

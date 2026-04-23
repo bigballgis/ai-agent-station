@@ -7,7 +7,7 @@
         <a-input
           v-if="field.type === 'input'"
           v-model:value="searchValues[field.key]"
-          :placeholder="field.placeholder || `请输入${field.label}`"
+          :placeholder="field.placeholder || t('common.pleaseInput', { label: field.label })"
           allow-clear
           style="min-width: 200px; max-width: 280px;"
           @pressEnter="handleSearch"
@@ -21,7 +21,7 @@
         <a-select
           v-else-if="field.type === 'select'"
           v-model:value="searchValues[field.key]"
-          :placeholder="field.placeholder || `请选择${field.label}`"
+          :placeholder="field.placeholder || t('common.pleaseSelect', { label: field.label })"
           allow-clear
           style="min-width: 140px; max-width: 200px;"
           :options="field.options"
@@ -31,7 +31,7 @@
         <a-range-picker
           v-else-if="field.type === 'dateRange'"
           v-model:value="searchValues[field.key]"
-          :placeholder="['开始日期', '结束日期']"
+          :placeholder="[t('common.startDate'), t('common.endDate')]"
           style="min-width: 240px;"
           value-format="YYYY-MM-DD"
         />
@@ -44,7 +44,7 @@
         size="small"
         @click="expanded = !expanded"
       >
-        {{ expanded ? '收起' : '展开' }}
+        {{ expanded ? t('common.collapse') : t('common.expand') }}
         <UpOutlined v-if="expanded" />
         <DownOutlined v-else />
       </a-button>
@@ -55,13 +55,13 @@
           <template #icon>
             <SearchOutlined />
           </template>
-          搜索
+          {{ t('common.search') }}
         </a-button>
         <a-button @click="handleReset">
           <template #icon>
             <ReloadOutlined />
           </template>
-          重置
+          {{ t('common.reset') }}
         </a-button>
       </div>
     </div>
@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
 
 /**
@@ -102,6 +103,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   defaultShowCount: 3,
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   /** 搜索事件，返回搜索参数 */
