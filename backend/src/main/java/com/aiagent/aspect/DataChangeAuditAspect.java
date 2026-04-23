@@ -311,12 +311,28 @@ public class DataChangeAuditAspect {
     }
 
     /**
-     * 判断是否跳过该字段（跳过序列化相关、静态字段、集合等）
+     * 判断是否跳过该字段（跳过序列化相关、静态字段、集合、敏感字段等）
      */
+    private static final java.util.Set<String> SENSITIVE_FIELD_NAMES = java.util.Set.of(
+            "password", "oldpassword", "newpassword", "confirmpassword",
+            "secret", "token", "accesstoken", "refreshtoken",
+            "apikey", "authorization", "credential"
+    );
+
     private boolean shouldSkipField(Field field) {
-        return "serialVersionUID".equals(field.getName())
+        if ("serialVersionUID".equals(field.getName())
                 || java.lang.reflect.Modifier.isStatic(field.getModifiers())
-                || java.lang.reflect.Modifier.isTransient(field.getModifiers());
+                || java.lang.reflect.Modifier.isTransient(field.getModifiers())) {
+            return true;
+        }
+        // 跳过敏感字段，不记录到审计日志
+        String lowerName = field.getName().toLowerCase();
+        for (String sensitive : SENSITIVE_FIELD_NAMES) {
+            if (lowerName.contains(sensitive)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

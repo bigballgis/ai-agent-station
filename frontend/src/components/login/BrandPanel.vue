@@ -38,12 +38,12 @@
 
       <!-- 产品名称 -->
       <h1 class="brand-title text-5xl font-bold text-white mb-4 tracking-tight">
-        {{ t('login.brandTitle') || 'AI Agent Station' }}
+        {{ t('login.brandTitle') }}
       </h1>
 
       <!-- 产品描述 -->
       <p class="brand-description text-lg text-indigo-100 leading-relaxed max-w-md mx-auto">
-        {{ t('login.brandDescription') || '智能体管理与编排平台，赋能团队高效构建、部署和管理 AI 智能体应用' }}
+        {{ t('login.brandDescription') }}
       </p>
 
       <!-- 特性标签 -->
@@ -65,7 +65,7 @@
 
     <!-- 底部版权 -->
     <div class="absolute bottom-8 left-0 right-0 text-center text-indigo-200 text-sm opacity-60">
-      &copy; 2025 {{ t('login.brandTitle') || 'AI Agent Station' }}. All rights reserved.
+      &copy; 2025 {{ t('login.brandTitle') }}. All rights reserved.
     </div>
   </div>
 </template>

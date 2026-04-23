@@ -39,10 +39,10 @@
           <!-- 标题 -->
           <div class="mb-8">
             <h2 v-if="activeTab === 'login'" class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {{ t('login.welcomeBack') || '欢迎回来' }}
+              {{ t('login.welcomeBack') }}
             </h2>
             <h2 v-else class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {{ t('login.createAccount') || '创建账号' }}
+              {{ t('login.createAccount') }}
             </h2>
             <p class="text-gray-500 dark:text-gray-400 text-base">
               {{ activeTab === 'login'

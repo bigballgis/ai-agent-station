@@ -38,11 +38,14 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 # Project Architecture
 
 ## Tech Stack
-- **Frontend**: Vue 3 + TypeScript + Vite + Ant Design Vue + Tailwind CSS
-- **Backend**: Spring Boot 3 + Java 17 + Spring Security + JWT
-- **Database**: MySQL + Redis (cluster)
+- **Frontend**: Vue 3 + TypeScript + Vite + Ant Design Vue + Tailwind CSS + vue-i18n
+- **Backend**: Spring Boot 3 + Java 17 + Spring Security + JWT + LangChain4j
+- **Database**: PostgreSQL 16 (pgvector) + Redis 7 (cluster optional)
+- **Migration**: Flyway
+- **Monitoring**: Spring Boot Actuator + Prometheus + Grafana
 - **Build**: Docker Compose (multi-container)
-- **CI/CD**: GitHub Actions (planned)
+- **CI/CD**: GitHub Actions
+- **Testing**: Vitest (unit) + Playwright (E2E, configured)
 
 ## Core Modules
 - Agent Management (CRUD, versioning, templates, debugging)
@@ -109,3 +112,15 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - Backend CORS: confirmed environment-variable-driven via CORS_ALLOWED_ORIGINS in application.yml
 - Frontend i18n fallback: silentFallbackWarn/silentTranslationWarn enabled, missing key handler with dev-only warnings
 - i18n keys added: common.renderError, common.retry in zh-CN/en-US
+
+### Round 7 (Final Polish - Comprehensive)
+- **i18n hardcode cleanup**: OptimizationSuggestion.vue fully i18n (template + script + mock data), LogCenter.vue log type comparison, McpToolMarket.vue placeholder, FileManagement.vue type labels, AgentTemplateMarket.vue defaults, WorkflowInstance.vue cancel reason, Login.vue/BrandPanel.vue fallback strings removed, MainLayout.vue language labels
+- **i18n keys added**: optimizationSuggestion namespace (30+ keys), logCenter namespace (3 keys), mcpTool.inputApiKey/inputBearerToken/toggleToolFailed, tplMarket.defaultCategory/defaultCreator, workflow.userCancelReason
+- **Backend log sanitization**: OperationLogAspect masks sensitive parameters (password, secret, token, apiKey, etc.) in audit logs; DataChangeAuditAspect skips sensitive fields in data change audit
+- **Vite env types**: vite-env.d.ts enhanced with ImportMetaEnv interface for VITE_API_BASE_URL and VITE_APP_TITLE
+- **application.yml optimization**: server.port via SERVER_PORT env var, spring.jpa.open-in-view=false, spring.jackson date-format/time-zone/write-dates-as-timestamps configured
+- **package.json scripts**: lint extended to .js/.tsx, added type-check script (vue-tsc --noEmit)
+- **PWA manifest**: Created public/manifest.json with basic PWA configuration
+- **Backend README**: Created /backend/README.md with tech stack, local run guide, env vars, API docs link, project structure
+- **Playwright E2E**: Created playwright.config.ts with chromium/firefox/webkit projects and dev server config
+- **Docker healthcheck**: All services (postgres, redis, prometheus, grafana, backend, frontend) confirmed with healthcheck configuration

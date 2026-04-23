@@ -1,24 +1,24 @@
 <template>
   <div class="optimization-suggestion">
-    <a-card title="优化建议管理" class="mb-6">
+    <a-card :title="t('optimizationSuggestion.management')" class="mb-6">
       <div class="flex flex-wrap gap-4 mb-6">
-        <a-select v-model:value="selectedAgent" placeholder="选择Agent" class="w-64">
+        <a-select v-model:value="selectedAgent" :placeholder="t('optimizationSuggestion.selectAgent')" class="w-64">
           <a-option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </a-option>
         </a-select>
-        <a-select v-model:value="suggestionStatus" placeholder="建议状态" class="w-64">
-          <a-option value="all">全部</a-option>
-          <a-option value="pending">待处理</a-option>
-          <a-option value="applied">已应用</a-option>
-          <a-option value="rejected">已拒绝</a-option>
+        <a-select v-model:value="suggestionStatus" :placeholder="t('optimizationSuggestion.suggestionStatus')" class="w-64">
+          <a-option value="all">{{ t('optimizationSuggestion.all') }}</a-option>
+          <a-option value="pending">{{ t('optimizationSuggestion.pending') }}</a-option>
+          <a-option value="applied">{{ t('optimizationSuggestion.applied') }}</a-option>
+          <a-option value="rejected">{{ t('optimizationSuggestion.rejected') }}</a-option>
         </a-select>
         <a-button type="primary" @click="fetchSuggestions">
-          <SearchOutlined /> 查询
+          <SearchOutlined /> {{ t('optimizationSuggestion.query') }}
         </a-button>
       </div>
 
-      <a-card title="优化建议列表">
+      <a-card :title="t('optimizationSuggestion.list')">
         <a-table :columns="suggestionColumns" :data-source="suggestions" :pagination="{ pageSize: 10 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'priority'">
@@ -28,26 +28,26 @@
               <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
             </template>
             <template v-else-if="column.key === 'actions'">
-              <a-button 
-                v-if="record.status === '待处理'" 
-                type="primary" 
-                size="small" 
+              <a-button
+                v-if="record.status === t('optimizationSuggestion.pending')"
+                type="primary"
+                size="small"
                 @click="applySuggestion(record)"
               >
-                应用
+                {{ t('optimizationSuggestion.apply') }}
               </a-button>
-              <a-button 
-                v-if="record.status === '待处理'" 
-                size="small" 
+              <a-button
+                v-if="record.status === t('optimizationSuggestion.pending')"
+                size="small"
                 @click="rejectSuggestion(record)"
               >
-                拒绝
+                {{ t('optimizationSuggestion.reject') }}
               </a-button>
-              <a-button 
-                size="small" 
+              <a-button
+                size="small"
                 @click="viewDetails(record)"
               >
-                详情
+                {{ t('optimizationSuggestion.detail') }}
               </a-button>
             </template>
           </template>
@@ -58,27 +58,30 @@
     <!-- 建议详情模态框 -->
     <a-modal
       v-model:open="showDetailModal"
-      title="建议详情"
+      :title="t('optimizationSuggestion.detailTitle')"
       :width="600"
     >
       <div v-if="selectedSuggestion">
-        <p><strong>建议ID:</strong> {{ selectedSuggestion.id }}</p>
-        <p><strong>Agent名称:</strong> {{ selectedSuggestion.agentName }}</p>
-        <p><strong>建议类型:</strong> {{ selectedSuggestion.type }}</p>
-        <p><strong>优先级:</strong> <a-tag :color="getPriorityColor(selectedSuggestion.priority)">{{ selectedSuggestion.priority }}</a-tag></p>
-        <p><strong>建议内容:</strong> {{ selectedSuggestion.content }}</p>
-        <p><strong>预期效果:</strong> {{ selectedSuggestion.expectedEffect }}</p>
-        <p><strong>创建时间:</strong> {{ selectedSuggestion.createdAt }}</p>
-        <p><strong>状态:</strong> <a-tag :color="getStatusColor(selectedSuggestion.status)">{{ selectedSuggestion.status }}</a-tag></p>
+        <p><strong>{{ t('optimizationSuggestion.suggestionId') }}:</strong> {{ selectedSuggestion.id }}</p>
+        <p><strong>{{ t('optimizationSuggestion.agentName') }}:</strong> {{ selectedSuggestion.agentName }}</p>
+        <p><strong>{{ t('optimizationSuggestion.suggestionType') }}:</strong> {{ selectedSuggestion.type }}</p>
+        <p><strong>{{ t('optimizationSuggestion.priority') }}:</strong> <a-tag :color="getPriorityColor(selectedSuggestion.priority)">{{ selectedSuggestion.priority }}</a-tag></p>
+        <p><strong>{{ t('optimizationSuggestion.suggestionContent') }}:</strong> {{ selectedSuggestion.content }}</p>
+        <p><strong>{{ t('optimizationSuggestion.expectedEffect') }}:</strong> {{ selectedSuggestion.expectedEffect }}</p>
+        <p><strong>{{ t('optimizationSuggestion.createdAt') }}:</strong> {{ selectedSuggestion.createdAt }}</p>
+        <p><strong>{{ t('common.status') }}:</strong> <a-tag :color="getStatusColor(selectedSuggestion.status)">{{ selectedSuggestion.status }}</a-tag></p>
       </div>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+
+const { t } = useI18n()
 
 const selectedAgent = ref<string>('1')
 const suggestionStatus = ref<string>('all')
@@ -86,152 +89,144 @@ const showDetailModal = ref(false)
 const selectedSuggestion = ref<any>(null)
 
 const agents = [
-  { id: '1', name: '客服Agent' },
-  { id: '2', name: '销售Agent' },
-  { id: '3', name: '技术支持Agent' }
+  { id: '1', name: 'Customer Service Agent' },
+  { id: '2', name: 'Sales Agent' },
+  { id: '3', name: 'Tech Support Agent' }
 ]
 
 const suggestions = [
   {
     id: 1,
     agentId: '1',
-    agentName: '客服Agent',
-    type: '性能优化',
-    priority: '高',
-    content: '优化响应速度，减少用户等待时间',
-    expectedEffect: '响应时间减少30%，用户满意度提升',
-    status: '待处理',
+    agentName: 'Customer Service Agent',
+    type: t('optimizationSuggestion.performanceOptimization'),
+    priority: t('optimizationSuggestion.high'),
+    content: t('optimizationSuggestion.systemStability'),
+    expectedEffect: 'Response time reduced by 30%',
+    status: t('optimizationSuggestion.pending'),
     createdAt: '2024-04-20 14:30:00'
   },
   {
     id: 2,
     agentId: '1',
-    agentName: '客服Agent',
-    type: '知识更新',
-    priority: '中',
-    content: '更新产品知识库，提高回答准确性',
-    expectedEffect: '回答准确率提升20%',
-    status: '已应用',
+    agentName: 'Customer Service Agent',
+    type: t('optimizationSuggestion.knowledgeUpdate'),
+    priority: t('optimizationSuggestion.medium'),
+    content: 'Update product knowledge base for better accuracy',
+    expectedEffect: 'Answer accuracy improved by 20%',
+    status: t('optimizationSuggestion.applied'),
     createdAt: '2024-04-19 10:15:00'
   },
   {
     id: 3,
     agentId: '1',
-    agentName: '客服Agent',
-    type: '流程优化',
-    priority: '中',
-    content: '优化处理流程，提高工作效率',
-    expectedEffect: '处理效率提升25%',
-    status: '待处理',
+    agentName: 'Customer Service Agent',
+    type: t('optimizationSuggestion.processOptimization'),
+    priority: t('optimizationSuggestion.medium'),
+    content: 'Optimize processing flow for better efficiency',
+    expectedEffect: 'Processing efficiency improved by 25%',
+    status: t('optimizationSuggestion.pending'),
     createdAt: '2024-04-18 16:45:00'
   },
   {
     id: 4,
     agentId: '1',
-    agentName: '客服Agent',
-    type: '话术优化',
-    priority: '低',
-    content: '优化沟通话术，提升用户体验',
-    expectedEffect: '用户满意度提升15%',
-    status: '已拒绝',
+    agentName: 'Customer Service Agent',
+    type: t('optimizationSuggestion.scriptOptimization'),
+    priority: t('optimizationSuggestion.low'),
+    content: 'Optimize communication scripts for better UX',
+    expectedEffect: 'User satisfaction improved by 15%',
+    status: t('optimizationSuggestion.rejected'),
     createdAt: '2024-04-17 09:30:00'
   },
   {
     id: 5,
     agentId: '1',
-    agentName: '客服Agent',
-    type: '性能优化',
-    priority: '高',
-    content: '优化系统稳定性，减少崩溃率',
-    expectedEffect: '系统崩溃率降低50%',
-    status: '待处理',
+    agentName: 'Customer Service Agent',
+    type: t('optimizationSuggestion.performanceOptimization'),
+    priority: t('optimizationSuggestion.high'),
+    content: t('optimizationSuggestion.systemStability'),
+    expectedEffect: 'System crash rate reduced by 50%',
+    status: t('optimizationSuggestion.pending'),
     createdAt: '2024-04-16 11:20:00'
   }
 ]
 
-const suggestionColumns = [
+const suggestionColumns = computed(() => [
   {
-    title: '建议ID',
+    title: t('optimizationSuggestion.suggestionId'),
     dataIndex: 'id',
     key: 'id'
   },
   {
-    title: 'Agent名称',
+    title: t('optimizationSuggestion.agentName'),
     dataIndex: 'agentName',
     key: 'agentName'
   },
   {
-    title: '建议类型',
+    title: t('optimizationSuggestion.suggestionType'),
     dataIndex: 'type',
     key: 'type'
   },
   {
-    title: '优先级',
+    title: t('optimizationSuggestion.priority'),
     dataIndex: 'priority',
     key: 'priority'
   },
   {
-    title: '建议内容',
+    title: t('optimizationSuggestion.suggestionContent'),
     dataIndex: 'content',
     key: 'content'
   },
   {
-    title: '预期效果',
+    title: t('optimizationSuggestion.expectedEffect'),
     dataIndex: 'expectedEffect',
     key: 'expectedEffect'
   },
   {
-    title: '状态',
+    title: t('common.status'),
     dataIndex: 'status',
     key: 'status'
   },
   {
-    title: '创建时间',
+    title: t('common.createdAt'),
     dataIndex: 'createdAt',
     key: 'createdAt'
   },
   {
-    title: '操作',
+    title: t('common.actions'),
     key: 'actions',
     width: 150
   }
-]
+])
 
 function getPriorityColor(priority: string) {
-  switch (priority) {
-    case '高': return 'red'
-    case '中': return 'orange'
-    case '低': return 'blue'
-    default: return 'default'
-  }
+  if (priority === t('optimizationSuggestion.high')) return 'red'
+  if (priority === t('optimizationSuggestion.medium')) return 'orange'
+  if (priority === t('optimizationSuggestion.low')) return 'blue'
+  return 'default'
 }
 
 function getStatusColor(status: string) {
-  switch (status) {
-    case '待处理': return 'blue'
-    case '已应用': return 'green'
-    case '已拒绝': return 'red'
-    default: return 'default'
-  }
+  if (status === t('optimizationSuggestion.pending')) return 'blue'
+  if (status === t('optimizationSuggestion.applied')) return 'green'
+  if (status === t('optimizationSuggestion.rejected')) return 'red'
+  return 'default'
 }
 
 function fetchSuggestions() {
-  // 模拟数据获取
   if (import.meta.env.DEV) {
     console.debug('Fetching suggestions for agent:', selectedAgent.value)
     console.debug('Status:', suggestionStatus.value)
   }
-  // 这里可以添加实际的API调用
 }
 
 function applySuggestion(_suggestion: any) {
-  message.success('建议已应用')
-  // 这里可以添加实际的API调用
+  message.success(t('optimizationSuggestion.applySuccess'))
 }
 
 function rejectSuggestion(_suggestion: any) {
-  message.warning('建议已拒绝')
-  // 这里可以添加实际的API调用
+  message.warning(t('optimizationSuggestion.rejectSuccess'))
 }
 
 function viewDetails(suggestion: any) {

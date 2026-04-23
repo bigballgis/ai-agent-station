@@ -8,8 +8,9 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "check": "vue-tsc -b",
-    "lint": "eslint . --ext .ts,.vue",
-    "lint:fix": "eslint . --ext .ts,.vue --fix",
+    "lint": "eslint . --ext .vue,.js,.ts,.tsx",
+    "lint:fix": "eslint . --ext .vue,.js,.ts,.tsx --fix",
+    "type-check": "vue-tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

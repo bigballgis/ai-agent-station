@@ -236,9 +236,9 @@ function getTypeLabel(type: string): string {
     pdf: 'PDF',
     word: 'Word',
     excel: 'Excel',
-    image: '图片',
-    code: '代码',
-    other: '其他',
+    image: t('fileMgmt.image'),
+    code: t('fileMgmt.code'),
+    other: t('fileMgmt.other'),
   }
   return map[type] || type
 }

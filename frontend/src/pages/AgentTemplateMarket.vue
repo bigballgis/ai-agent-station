@@ -350,8 +350,8 @@ interface AgentTemplate {
       .filter((a: AgentTemplate) => a.isTemplate || a.type === 'template')
       .map((a: AgentTemplate) => ({
         ...a,
-        category: a.category || '自动化',
-        creator: a.creator || '系统',
+        category: a.category || t('tplMarket.defaultCategory'),
+        creator: a.creator || t('tplMarket.defaultCreator'),
         usageCount: a.usageCount || 0,
         rating: a.rating || 4.0,
         favorited: a.favorited || false,

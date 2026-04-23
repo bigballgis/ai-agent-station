@@ -5,6 +5,7 @@ import com.aiagent.entity.SystemLog;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.SystemLogService;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.util.DataMaskingUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,9 @@ public class OperationLogAspect {
         StringBuilder paramsBuilder = new StringBuilder();
         for (int i = 0; i < args.length; i++) {
             if (i > 0) paramsBuilder.append(", ");
-            paramsBuilder.append(paramNames[i]).append("=").append(systemLogService.toJson(args[i]));
+            String paramName = paramNames[i];
+            String paramValue = maskSensitiveField(paramName, args[i]);
+            paramsBuilder.append(paramName).append("=").append(paramValue);
         }
         systemLog.setParams(paramsBuilder.toString());
 
@@ -107,5 +110,30 @@ public class OperationLogAspect {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    /**
+     * 敏感字段名称集合（小写匹配）
+     */
+    private static final java.util.Set<String> SENSITIVE_FIELD_NAMES = java.util.Set.of(
+            "password", "oldpassword", "newpassword", "confirmpassword",
+            "secret", "token", "accesstoken", "refreshtoken",
+            "apikey", "authorization", "credential"
+    );
+
+    /**
+     * 对敏感字段进行脱敏处理
+     */
+    private String maskSensitiveField(String paramName, Object arg) {
+        if (paramName == null || arg == null) {
+            return systemLogService.toJson(arg);
+        }
+        String lowerName = paramName.toLowerCase();
+        for (String sensitive : SENSITIVE_FIELD_NAMES) {
+            if (lowerName.contains(sensitive)) {
+                return "******";
+            }
+        }
+        return systemLogService.toJson(arg);
     }
 }

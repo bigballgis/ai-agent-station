@@ -357,7 +357,7 @@ async function handleApproveAction() {
 
 async function handleCancel(instance: WorkflowInstance) {
   try {
-    await workflowApi.cancelWorkflow(instance.id, '用户手动取消')
+    await workflowApi.cancelWorkflow(instance.id, t('workflow.userCancelReason'))
     message.success(t('workflow.workflowCancelled'))
     loadInstances()
   } catch (error) {

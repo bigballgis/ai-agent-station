@@ -59,11 +59,11 @@
             class="h-9 px-2.5 rounded-xl flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
           >
             <GlobalOutlined class="text-sm" />
-            <span class="hidden sm:inline">{{ currentLocale === 'zh-CN' ? '中文' : 'EN' }}</span>
+            <span class="hidden sm:inline">{{ currentLocale === 'zh-CN' ? t('i18n.chinese') : 'EN' }}</span>
           </button>
           <template #overlay>
             <a-menu @click="changeLocale">
-              <a-menu-item key="zh-CN">中文</a-menu-item>
+              <a-menu-item key="zh-CN">{{ t('i18n.chinese') }}</a-menu-item>
               <a-menu-item key="en-US">English</a-menu-item>
             </a-menu>
           </template>

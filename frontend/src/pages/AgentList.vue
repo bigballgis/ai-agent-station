@@ -605,7 +605,7 @@ async function handleCopy() {
 function deleteAgent(agent: Agent) {
   Modal.confirm({
     title: t('agent.confirmDelete'),
-    content: `${t('agent.confirmDeleteContent').replace('此 Agent 吗？', '')} "${agent.name}"？`,
+    content: `${t('agent.confirmDeleteContent')} "${agent.name}"?`,
     okText: t('agent.confirmDelete'),
     okType: 'danger',
     cancelText: t('common.cancel'),

@@ -92,9 +92,9 @@
                   <span
                     :class="[
                       'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium',
-                      log.type === '创建' ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400' :
-                      log.type === '删除' ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400' :
-                      log.type === '审批' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400' :
+                      log.type === t('logCenter.typeCreate') ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400' :
+                      log.type === t('logCenter.typeDelete') ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400' :
+                      log.type === t('logCenter.typeApproval') ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400' :
                       'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400',
                     ]"
                   >

@@ -234,7 +234,7 @@
           <input
             v-model="connectForm.authValue"
             :type="connectForm.authType === 'api_key' ? 'text' : 'password'"
-            :placeholder="connectForm.authType === 'api_key' ? '请输入 API Key' : '请输入 Bearer Token'"
+            :placeholder="connectForm.authType === 'api_key' ? t('mcpTool.inputApiKey') : t('mcpTool.inputBearerToken')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 font-mono"
           />
         </div>
@@ -481,7 +481,7 @@ function toggleTool(tool: McpTool) {
     fetchTools()
   }).catch((e: Error) => {
     console.error('切换工具状态失败:', e)
-    message.error('切换工具状态失败')
+    message.error(t('mcpTool.toggleToolFailed'))
   })
 }
 
