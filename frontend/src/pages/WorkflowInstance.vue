@@ -277,8 +277,8 @@ async function loadInstances() {
       pagination.value.pageSize,
       { status: filters.value.status }
     )
-    instances.value = res.data?.data?.content || []
-    pagination.value.total = res.data?.data?.totalElements || 0
+    instances.value = res.data?.data?.records || []
+    pagination.value.total = res.data?.data?.total || 0
   } catch (error) {
     message.error('加载实例列表失败')
   } finally {

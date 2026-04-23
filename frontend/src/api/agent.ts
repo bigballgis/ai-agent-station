@@ -73,7 +73,7 @@ export function deleteAgent(id: string | number) {
  * 复制 Agent
  */
 export function copyAgent(id: string | number, data?: Record<string, unknown> | string) {
-  return request.post(`/v1/agents/${id}/copy`, typeof data === 'string' ? { name: data } : data)
+  return request.post(`/v1/agents/${id}/copy`, typeof data === 'string' ? { newName: data } : data)
 }
 
 /**

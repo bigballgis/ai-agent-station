@@ -166,7 +166,7 @@ async function loadPendingApprovals() {
   loading.value = true
   try {
     const res = await approvalApi.getPendingApprovals()
-    pendingApprovals.value = res.data?.data?.content || []
+    pendingApprovals.value = res.data?.data?.records || []
   } catch (error) {
     message.error(t('approval.loadPendingFailed'))
   } finally {
@@ -178,8 +178,8 @@ async function loadAllApprovals(page = 1, pageSize = 10) {
   loading.value = true
   try {
     const res = await approvalApi.getApprovals(page - 1, pageSize)
-    allApprovals.value = res.data?.data?.content || []
-    pagination.value.total = res.data?.data?.totalElements || 0
+    allApprovals.value = res.data?.data?.records || []
+    pagination.value.total = res.data?.data?.total || 0
   } catch (error) {
     message.error(t('approval.loadAllFailed'))
   } finally {

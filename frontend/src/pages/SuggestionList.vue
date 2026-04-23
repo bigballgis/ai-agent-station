@@ -120,7 +120,7 @@ const loadSuggestions = async () => {
       suggestionType: filterType.value,
       status: filterStatus.value
     })
-    suggestions.value = response.data.data.content
+    suggestions.value = response.data.data.records
   } catch (error) {
     console.warn(t('suggestion.loadFailed'), error)
   }

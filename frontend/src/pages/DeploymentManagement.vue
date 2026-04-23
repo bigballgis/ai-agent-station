@@ -165,8 +165,8 @@ async function loadDeployments(page = 1, pageSize = 10) {
   loading.value = true
   try {
     const res = await deploymentApi.getDeployments(page - 1, pageSize)
-    deployments.value = res.data?.data?.content || []
-    pagination.value.total = res.data?.data?.totalElements || 0
+    deployments.value = res.data?.data?.records || []
+    pagination.value.total = res.data?.data?.total || 0
   } catch (error) {
     message.error(t('deployment.loadDeployFailed'))
   } finally {

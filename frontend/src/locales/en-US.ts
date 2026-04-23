@@ -95,6 +95,7 @@ export default {
     captchaRefresh: 'Refresh',
     captchaExpired: 'Captcha expired, please get a new one',
     captchaError: 'Incorrect captcha',
+    captchaLoadFailed: 'Failed to load captcha, please click to refresh',
   },
   password: {
     changePassword: 'Change Password',

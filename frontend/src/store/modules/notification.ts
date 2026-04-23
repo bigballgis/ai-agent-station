@@ -44,7 +44,7 @@ export const useNotificationStore = defineStore('notification', () => {
     if (Array.isArray(data)) {
       notifications.value = data
     } else {
-      notifications.value = data?.content || []
+      notifications.value = data?.records || []
     }
     unreadCount.value = notifications.value.filter((n) => !n.read).length
     return res.data

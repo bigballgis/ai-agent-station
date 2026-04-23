@@ -623,8 +623,9 @@ const breadcrumbs = computed(() => {
   const matched = route.matched.filter(r => r.meta?.title)
   matched.forEach((r, i) => {
     const isLast = i === matched.length - 1
+    const titleKey = (r.meta.title as string) || ''
     crumbs.push({
-      title: (r.meta.title as string) || '',
+      title: t(`routes.${titleKey}`) || titleKey,
       path: isLast ? undefined : r.path,
     })
   })

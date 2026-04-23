@@ -15,7 +15,7 @@ export interface User {
 export interface LoginRequest {
   username: string
   password: string
-  tenantId?: string
+  tenantId?: number
   captchaId?: string
   captchaAnswer?: string
 }

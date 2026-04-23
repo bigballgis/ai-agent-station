@@ -25,7 +25,7 @@ export const useDictStore = defineStore('dict', () => {
 
   // Actions
   async function fetchDictTypes() {
-    const res = await request.get<DictType[]>('/v1/dict/types')
+    const res = await request.get<DictType[]>('/v1/dict-types')
     dictTypes.value = res.data || []
     return res.data
   }
@@ -36,7 +36,7 @@ export const useDictStore = defineStore('dict', () => {
     }
 
     const res = await request.get<DictItem[]>(
-      `/v1/dict/items/${dictType}`
+      `/v1/dict-types/${dictType}/items`
     )
     const items = res.data || []
     dictItems.value.set(dictType, items)

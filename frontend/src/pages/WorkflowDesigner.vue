@@ -351,7 +351,7 @@ async function loadDefinitions() {
   loading.value = true
   try {
     const res = await workflowApi.getDefinitions(0, 100, statusFilter.value)
-    definitions.value = res.data?.data?.content || []
+    definitions.value = res.data?.data?.records || []
   } catch (error) {
     message.error(t('workflow.loadDefinitionsFailed'))
   } finally {
@@ -368,7 +368,7 @@ async function loadDefinitionInstances(definitionId: number) {
   loadingInstances.value = true
   try {
     const res = await workflowApi.getInstances(0, 10, { definitionId })
-    definitionInstances.value = res.data?.data?.content || []
+    definitionInstances.value = res.data?.data?.records || []
   } catch (error) {
     message.error(t('workflow.loadInstancesFailed'))
   } finally {

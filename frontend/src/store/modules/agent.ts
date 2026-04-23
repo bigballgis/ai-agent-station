@@ -62,7 +62,7 @@ export const useAgentStore = defineStore('agent', () => {
         '/v1/agents',
         { params: { ...filters.value, ...params } }
       )
-      agents.value = res.data.content
+      agents.value = res.data.records
       return res.data
     } finally {
       loading.value = false

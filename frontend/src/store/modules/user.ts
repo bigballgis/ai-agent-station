@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as userApi from '@/api/user'
 import type { UserInfo } from '@/types/user'
+import { setRefreshToken as storeRefreshToken, clearAuth as clearAllAuth } from '@/utils/authStorage'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || sessionStorage.getItem('token') || '')
@@ -33,6 +34,9 @@ export const useUserStore = defineStore('user', () => {
         const remember = loginData.remember ?? false
         setToken(res.data.token, remember)
         setUserInfo(res.data.userInfo, remember)
+        if (res.data.refreshToken) {
+          storeRefreshToken(res.data.refreshToken, remember)
+        }
         return true
       }
       return false
@@ -48,12 +52,9 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      clearAllAuth()
       token.value = ''
-      userInfo.value = {}
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('userInfo')
+      userInfo.value = {} as UserInfo
     }
   }
 

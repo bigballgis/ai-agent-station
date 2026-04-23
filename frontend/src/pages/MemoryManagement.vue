@@ -353,7 +353,7 @@ async function fetchMemories() {
     if (activeType.value) params.memoryType = activeType.value
     if (searchQuery.value) params.keyword = searchQuery.value
     const res = await getAgentMemories(selectedAgent.value || 'all', params)
-    memories.value = res.data?.content || res.data || res || []
+    memories.value = res.data?.records || res.data || res || []
   } catch (e: any) {
     console.error('获取记忆列表失败:', e)
     message.error('获取记忆列表失败: ' + (e.message || '未知错误'))

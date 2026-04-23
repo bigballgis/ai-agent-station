@@ -22,7 +22,7 @@ describe('Dict API', () => {
   it('获取字典列表 - 调用 GET /v1/dict-types', async () => {
     mockGet.mockResolvedValue({
       code: 200,
-      data: { content: [{ id: 1, dictName: '用户状态', dictType: 'user_status' }], totalElements: 1 }
+      data: { records: [{ id: 1, dictName: '用户状态', dictType: 'user_status' }], total: 1 }
     })
 
     const request = (await import('@/utils/request')).default
@@ -30,7 +30,7 @@ describe('Dict API', () => {
 
     expect(mockGet).toHaveBeenCalledWith('/v1/dict-types', { params: { page: 0, size: 10 } })
     expect(result.code).toBe(200)
-    expect(result.data.content).toHaveLength(1)
+    expect(result.data.records).toHaveLength(1)
   })
 
   it('获取字典详情 - 调用 GET /v1/dict-types/:id', async () => {

@@ -11,8 +11,8 @@ export interface ApiResponse<T = unknown> {
  * 分页结果（对齐后端 Spring Data 分页结构）
  */
 export interface PageResult<T = unknown> {
-  content: T[]
-  totalElements: number
+  records: T[]
+  total: number
   totalPages: number
   page: number
   size: number

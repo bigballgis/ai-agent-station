@@ -383,7 +383,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons-vue'
@@ -393,6 +393,7 @@ import { register, getCaptcha } from '@/api/user'
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()
+const route = useRoute()
 const { t, locale } = useI18n()
 const userStore = useUserStore()
 const appStore = useAppStore()
@@ -417,7 +418,7 @@ async function fetchCaptcha() {
       captchaQuestion.value = res.data.question
     }
   } catch {
-    // silently fail
+    message.warning(t('login.captchaLoadFailed'))
   } finally {
     captchaLoading.value = false
   }
@@ -501,7 +502,8 @@ async function handleLogin() {
 
     if (success) {
       message.success(t('login.loginSuccess'))
-      router.push('/dashboard')
+      const redirect = route.query.redirect as string
+      router.push(redirect || '/dashboard')
     } else {
       message.error(t('login.loginFailed'))
       fetchCaptcha()
@@ -534,7 +536,8 @@ async function handleRegister() {
       // 注册成功后自动登录（后端已返回token），存储登录信息
       if (res.data?.token) {
         userStore.setToken(res.data.token)
-        router.push('/dashboard')
+        const redirect = route.query.redirect as string
+        router.push(redirect || '/dashboard')
       } else {
         // 如果后端没有返回token，切换到登录tab
         activeTab.value = 'login'

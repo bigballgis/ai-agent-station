@@ -36,7 +36,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         '/v1/workflows/definitions',
         { params }
       )
-      definitions.value = res.data.content
+      definitions.value = res.data.records
       return res.data
     } finally {
       loading.value = false
@@ -50,7 +50,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         '/v1/workflows/instances',
         { params }
       )
-      instances.value = res.data.content
+      instances.value = res.data.records
       return res.data
     } finally {
       loading.value = false

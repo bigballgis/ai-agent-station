@@ -94,6 +94,7 @@ export default {
     captchaRefresh: '换一道',
     captchaExpired: '验证码已过期，请重新获取',
     captchaError: '验证码错误',
+    captchaLoadFailed: '验证码加载失败，请点击刷新',
   },
   password: {
     changePassword: '修改密码',
