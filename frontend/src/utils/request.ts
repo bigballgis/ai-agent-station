@@ -14,6 +14,32 @@ const service: AxiosInstance = axios.create({
   }
 })
 
+// ==================== GET 请求自动重试机制 ====================
+
+const MAX_RETRY_COUNT = 2
+const RETRY_DELAY_MS = 1000
+
+/**
+ * 延迟指定毫秒
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * 判断错误是否可重试（仅网络异常和 5xx 服务端错误可重试）
+ */
+function isRetryableError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('response' in error)) {
+    // 无响应对象，可能是网络错误（如断网、DNS 解析失败），可重试
+    return true
+  }
+  const response = (error as { response?: { status?: number } }).response
+  if (!response) return true
+  // 仅 5xx 服务端错误可重试，4xx 客户端错误不重试
+  return (response.status ?? 0) >= 500
+}
+
 // ==================== Token 自动刷新机制 ====================
 
 let isRefreshing = false
@@ -89,7 +115,7 @@ service.interceptors.request.use(
   }
 )
 
-// ==================== 响应拦截器（含 Token 自动刷新） ====================
+// ==================== 响应拦截器（含 Token 自动刷新 + GET 重试） ====================
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -105,6 +131,18 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     const status = error.response?.status
+
+    // GET 请求自动重试（最多 2 次，间隔 1 秒）
+    if (
+      originalRequest.method?.toLowerCase() === 'get' &&
+      isRetryableError(error) &&
+      (originalRequest._retryCount ?? 0) < MAX_RETRY_COUNT
+    ) {
+      originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1
+      console.warn(`[Retry] GET ${originalRequest.url} retry #${originalRequest._retryCount}`)
+      await delay(RETRY_DELAY_MS)
+      return service(originalRequest)
+    }
 
     // Token 过期: 尝试自动刷新
     if (status === 401 && !originalRequest._retry) {

@@ -80,8 +80,9 @@ public class NodeExecutors {
         } else if (secondsObj instanceof String) {
             try { seconds = Integer.parseInt((String) secondsObj); } catch (NumberFormatException e) { /* use default */ }
         }
-        seconds = Math.max(1, Math.min(seconds, 300)); // 限制 1-300 秒
+        seconds = Math.max(1, Math.min(seconds, 300)); // 限制 1-300 秒（超时上限）
 
+        // 业务需求: Delay 节点需要等待指定时间，保留 Thread.sleep
         log.info("Delay 节点 {} 等待 {} 秒", nodeId, seconds);
         try {
             Thread.sleep(seconds * 1000L);

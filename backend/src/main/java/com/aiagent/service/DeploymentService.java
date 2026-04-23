@@ -261,12 +261,13 @@ public class DeploymentService {
 
             // 步骤3: 执行部署（模拟）
             log.info("[步骤3/4] 执行部署...");
-            // 模拟部署耗时操作
+            // TODO: 模拟部署耗时操作，生产环境应替换为实际的部署逻辑（如调用K8s API、CI/CD流水线等）
             Thread.sleep(50);
             log.info("  部署包已分发至目标节点");
 
             // 步骤4: 健康检查
             log.info("[步骤4/4] 执行健康检查...");
+            // TODO: 模拟健康检查耗时，生产环境应替换为实际的健康检查逻辑（如HTTP探针、TCP探测等）
             Thread.sleep(50);
             log.info("  健康检查通过");
 

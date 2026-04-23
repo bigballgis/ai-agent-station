@@ -424,6 +424,8 @@ public class WorkflowEngine {
                 ? ((Number) nodeConfig.get("delaySeconds")).intValue()
                 : 5;
 
+        // 业务需求: Delay 节点需要等待指定时间，保留 Thread.sleep
+        // 注意: delaySeconds 由 GraphExecutor/NodeExecutors 限制在 1-300 秒范围内
         try {
             Thread.sleep(delaySeconds * 1000L);
         } catch (InterruptedException e) {

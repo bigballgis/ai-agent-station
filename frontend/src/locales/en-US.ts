@@ -141,6 +141,8 @@ export default {
     resetPasswordSuccess: 'Password reset successfully, please log in with the new password',
     resetPasswordFailed: 'Failed to reset password',
     passwordChangedRedirect: 'Password changed, please log in again',
+    renderError: 'Component Render Error',
+    retry: 'Retry',
   },
   routes: {
     dashboard: 'Dashboard',

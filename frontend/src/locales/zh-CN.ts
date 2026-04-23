@@ -141,6 +141,8 @@ export default {
     resetPasswordSuccess: '密码重置成功，请使用新密码登录',
     resetPasswordFailed: '密码重置失败',
     passwordChangedRedirect: '密码已修改，请重新登录',
+    renderError: '组件渲染出错',
+    retry: '重试',
   },
   routes: {
     dashboard: '仪表盘',

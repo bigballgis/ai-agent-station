@@ -20,7 +20,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('@/pages/Dashboard.vue'),
+        component: () => import(/* webpackPrefetch: true */ '@/pages/Dashboard.vue'),
         meta: { title: 'dashboard' }
       },
       {

@@ -97,3 +97,15 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - ProTable a11y: aria-label on table
 - Health Check: show-components enabled for DB/Redis visibility
 - Vite gzip: checked, plugin not installed, skipped per requirements
+
+### Round 6 (Stability Enhancement)
+- Backend Thread.sleep audit: DeploymentService marked TODO for production replacement, Delay nodes (WorkflowEngine/NodeExecutors) confirmed business requirement with 1-300s timeout cap
+- Frontend ErrorBoundary component: Vue error boundary wrapping router-view in App.vue, catches child component render errors with retry
+- Frontend API retry: GET requests auto-retry up to 2 times with 1s delay on 5xx/network errors (POST/PUT/DELETE excluded)
+- Backend RateLimit annotation + AOP aspect: method-level rate limiting with sliding window counter, IP-based per-endpoint throttling
+- Frontend localStorage capacity management: storage.ts utility with 5MB limit, near-full detection, and cleanup mechanism
+- Backend API response time monitoring: TraceFilter enhanced with X-Response-Time header, MDC responseTimeMs, slow request warning (>3s)
+- Frontend route prefetch: Dashboard route annotated with webpackPrefetch for faster initial load
+- Backend CORS: confirmed environment-variable-driven via CORS_ALLOWED_ORIGINS in application.yml
+- Frontend i18n fallback: silentFallbackWarn/silentTranslationWarn enabled, missing key handler with dev-only warnings
+- i18n keys added: common.renderError, common.retry in zh-CN/en-US

@@ -1,7 +1,9 @@
 <template>
-  <a-config-provider :locale="currentLocale" :theme="antdTheme">
-    <router-view />
-  </a-config-provider>
+  <ErrorBoundary>
+    <a-config-provider :locale="currentLocale" :theme="antdTheme">
+      <router-view />
+    </a-config-provider>
+  </ErrorBoundary>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +11,7 @@ import { computed } from 'vue'
 import { theme as antdThemeConfig } from 'ant-design-vue'
 import { useAppStore } from '@/store/modules/app'
 import { useTheme } from '@/composables/useTheme'
+import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 
