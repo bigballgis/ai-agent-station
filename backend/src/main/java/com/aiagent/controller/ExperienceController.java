@@ -29,7 +29,7 @@ public class ExperienceController {
     private final ExperienceService experienceService;
 
     // 创建经验
-    @RequiresPermission("agent:view")
+    @RequiresPermission("experience:manage")
     @PostMapping
     @Operation(summary = "创建经验")
     public Result<AgentEvolutionExperience> createExperience(@RequestBody AgentEvolutionExperience experience) {
@@ -38,6 +38,7 @@ public class ExperienceController {
     }
 
     // 更新经验
+    @RequiresPermission("experience:manage")
     @Operation(summary = "更新经验")
     @PutMapping("/{id}")
     public Result<AgentEvolutionExperience> updateExperience(@PathVariable Long id, @RequestBody AgentEvolutionExperience experienceDetails) {
@@ -46,6 +47,7 @@ public class ExperienceController {
     }
 
     // 删除经验
+    @RequiresPermission("experience:manage")
     @Operation(summary = "删除经验")
     @DeleteMapping("/{id}")
     public Result<Void> deleteExperience(@PathVariable Long id) {
@@ -54,6 +56,7 @@ public class ExperienceController {
     }
 
     // 获取单个经验
+    @RequiresPermission("experience:view")
     @Operation(summary = "根据ID获取经验详情")
     @GetMapping("/{id}")
     public Result<AgentEvolutionExperience> getExperienceById(@PathVariable Long id) {
@@ -62,6 +65,7 @@ public class ExperienceController {
     }
 
     // 获取所有经验
+    @RequiresPermission("experience:view")
     @Operation(summary = "获取所有经验列表")
     @GetMapping
     public Result<List<AgentEvolutionExperience>> getAllExperiences() {
@@ -70,6 +74,7 @@ public class ExperienceController {
     }
 
     // 搜索经验
+    @RequiresPermission("experience:view")
     @Operation(summary = "搜索经验")
     @GetMapping("/search")
     public Result<Page<AgentEvolutionExperience>> searchExperiences(
@@ -89,6 +94,7 @@ public class ExperienceController {
     }
 
     // 按Agent ID获取经验
+    @RequiresPermission("experience:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取经验列表")
     public Result<List<AgentEvolutionExperience>> getExperiencesByAgentId(@PathVariable Long agentId) {
@@ -97,6 +103,7 @@ public class ExperienceController {
     }
 
     // 按类型获取经验
+    @RequiresPermission("experience:view")
     @Operation(summary = "根据类型获取经验列表")
     @GetMapping("/type/{experienceType}")
     public Result<List<AgentEvolutionExperience>> getExperiencesByType(@PathVariable String experienceType) {
@@ -105,6 +112,7 @@ public class ExperienceController {
     }
 
     // 分析经验有效性
+    @RequiresPermission("experience:view")
     @Operation(summary = "分析经验有效性")
     @GetMapping("/analysis/effectiveness")
     public Result<Map<String, Object>> analyzeExperienceEffectiveness() {
@@ -113,6 +121,7 @@ public class ExperienceController {
     }
 
     // 去重经验
+    @RequiresPermission("experience:manage")
     @Operation(summary = "去重经验")
     @PostMapping("/deduplicate")
     public Result<Void> deduplicateExperiences() {
@@ -121,6 +130,7 @@ public class ExperienceController {
     }
 
     // 清理过期经验
+    @RequiresPermission("experience:manage")
     @Operation(summary = "清理过期经验")
     @PostMapping("/cleanup")
     public Result<Void> cleanupExpiredExperiences() {
@@ -129,6 +139,7 @@ public class ExperienceController {
     }
 
     // 增加使用次数
+    @RequiresPermission("experience:manage")
     @Operation(summary = "增加经验使用次数")
     @PostMapping("/{id}/increment-usage")
     public Result<Void> incrementUsageCount(@PathVariable Long id) {

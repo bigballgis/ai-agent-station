@@ -587,6 +587,9 @@ public class GraphExecutor {
         }
 
         try {
+            // SSRF防护：验证URL安全性
+            validateHttpUrl(url);
+
             RestTemplate restTemplate = new RestTemplate();
             SimpleClientHttpRequestFactory reqFactory = (SimpleClientHttpRequestFactory) restTemplate.getRequestFactory();
             reqFactory.setConnectTimeout(10_000);
@@ -598,7 +601,16 @@ public class GraphExecutor {
             if (nodeConfig.containsKey("headers")) {
                 @SuppressWarnings("unchecked")
                 Map<String, String> headerMap = (Map<String, String>) nodeConfig.get("headers");
-                headerMap.forEach(headers::set);
+                for (Map.Entry<String, String> header : headerMap.entrySet()) {
+                    // 过滤敏感头，防止SSRF攻击
+                    if ("host".equalsIgnoreCase(header.getKey()) ||
+                        "authorization".equalsIgnoreCase(header.getKey()) ||
+                        "cookie".equalsIgnoreCase(header.getKey()) ||
+                        "set-cookie".equalsIgnoreCase(header.getKey())) {
+                        continue;
+                    }
+                    headers.set(header.getKey(), header.getValue());
+                }
             }
 
             // 构建请求体
@@ -1078,5 +1090,34 @@ public class GraphExecutor {
             };
         }
         return false;
+    }
+
+    /**
+     * SSRF防护：验证HTTP节点URL安全性
+     */
+    private void validateHttpUrl(String url) {
+        try {
+            java.net.URI uri = java.net.URI.create(url);
+            String scheme = uri.getScheme();
+            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+                throw new RuntimeException("HTTP节点仅允许http/https协议: " + scheme);
+            }
+            String host = uri.getHost();
+            if (host == null) {
+                throw new RuntimeException("HTTP节点URL缺少主机名: " + url);
+            }
+            // 检查内网地址
+            java.net.InetAddress address = java.net.InetAddress.getByName(host);
+            if (address.isLoopbackAddress() || address.isSiteLocalAddress() ||
+                address.isLinkLocalAddress() || address.isAnyLocalAddress()) {
+                throw new RuntimeException("HTTP节点不允许访问内网地址: " + host);
+            }
+            // 检查169.254.x.x (云元数据)
+            if (host.startsWith("169.254.")) {
+                throw new RuntimeException("HTTP节点不允许访问元数据服务: " + host);
+            }
+        } catch (java.net.UnknownHostException e) {
+            throw new RuntimeException("HTTP节点无法解析主机名: " + url);
+        }
     }
 }

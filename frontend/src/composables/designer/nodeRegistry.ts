@@ -966,7 +966,7 @@ export function getNodeTypesByCategory(
  * @returns 配置字段 Schema 数组，如果不存在则返回空数组
  */
 export function getConfigSchema(type: string): ConfigFieldSchema[] {
-  const def = nodeTypeRegistry[type] as any
+  const def = nodeTypeRegistry[type] as NodeTypeDefinition | undefined
   return def?.configSchema ?? []
 }
 

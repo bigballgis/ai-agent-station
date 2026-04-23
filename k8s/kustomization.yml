@@ -10,3 +10,6 @@ resources:
   - redis.yml
   - backend.yml
   - frontend.yml
+  - ingress.yaml
+  - network-policy.yml
+  - rbac.yml

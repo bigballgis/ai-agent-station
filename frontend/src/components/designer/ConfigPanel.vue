@@ -246,7 +246,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'update-config', nodeId: string, key: string, value: any): void
+  (e: 'update-config', nodeId: string, key: string, value: unknown): void
   (e: 'delete-node', nodeId: string): void
   (e: 'update-label', nodeId: string, label: string): void
 }>()
@@ -300,7 +300,7 @@ function handleLabelUpdate(value: string) {
   emit('update-label', props.node.id, value)
 }
 
-function updateConfig(key: string, value: any) {
+function updateConfig(key: string, value: unknown) {
   if (!props.node) return
   emit('update-config', props.node.id, key, value)
 }

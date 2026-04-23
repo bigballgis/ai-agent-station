@@ -31,6 +31,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据ID获取测试结果详情")
+    @RequiresPermission("test:view")
     @GetMapping("/execution/{executionId}")
     public Result<List<AgentTestResult>> getResultsByExecutionId(@PathVariable Long executionId) {
         List<AgentTestResult> results = resultService.getResultsByExecutionId(executionId);
@@ -38,6 +39,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据执行ID获取测试结果列表")
+    @RequiresPermission("test:view")
     @GetMapping("/tenant/{tenantId}")
     public Result<List<AgentTestResult>> getResultsByTenantId(@PathVariable Long tenantId) {
         List<AgentTestResult> results = resultService.getResultsByTenantId(tenantId);
@@ -45,6 +47,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据租户ID获取测试结果列表")
+    @RequiresPermission("test:view")
     @GetMapping("/agent/{agentId}")
     public Result<List<AgentTestResult>> getResultsByAgentId(@PathVariable Long agentId) {
         List<AgentTestResult> results = resultService.getResultsByAgentId(agentId);
@@ -52,6 +55,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据Agent ID获取测试结果列表")
+    @RequiresPermission("test:view")
     @GetMapping("/test-case/{testCaseId}")
     public Result<List<AgentTestResult>> getResultsByTestCaseId(@PathVariable Long testCaseId) {
         List<AgentTestResult> results = resultService.getResultsByTestCaseId(testCaseId);
@@ -59,6 +63,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据测试用例ID获取结果列表")
+    @RequiresPermission("test:view")
     @GetMapping("/status/{tenantId}/{status}")
     public Result<List<AgentTestResult>> getResultsByStatus(@PathVariable Long tenantId, @PathVariable String status) {
         List<AgentTestResult> results = resultService.getResultsByStatus(tenantId, status);
@@ -66,6 +71,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "根据状态获取测试结果列表")
+    @RequiresPermission("test:manage")
     @PutMapping("/{id}")
     public Result<AgentTestResult> updateResult(@PathVariable Long id, @RequestBody AgentTestResult result) {
         AgentTestResult updatedResult = resultService.updateResult(id, result);
@@ -73,6 +79,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "更新测试结果")
+    @RequiresPermission("test:view")
     @GetMapping("/count/tenant/{tenantId}")
     public Result<Long> countResultsByTenant(@PathVariable Long tenantId) {
         long count = resultService.countResultsByTenant(tenantId);
@@ -80,6 +87,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "统计租户下测试结果数量")
+    @RequiresPermission("test:view")
     @GetMapping("/count/agent/{agentId}")
     public Result<Long> countResultsByAgent(@PathVariable Long agentId) {
         long count = resultService.countResultsByAgent(agentId);
@@ -87,6 +95,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "统计Agent下测试结果数量")
+    @RequiresPermission("test:view")
     @GetMapping("/count/test-case/{testCaseId}")
     public Result<Long> countResultsByTestCase(@PathVariable Long testCaseId) {
         long count = resultService.countResultsByTestCase(testCaseId);
@@ -94,6 +103,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "统计测试用例下结果数量")
+    @RequiresPermission("test:view")
     @GetMapping("/count/execution/{executionId}")
     public Result<Long> countResultsByExecution(@PathVariable Long executionId) {
         long count = resultService.countResultsByExecution(executionId);
@@ -101,6 +111,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "统计执行下结果数量")
+    @RequiresPermission("test:view")
     @GetMapping("/pass-rate/agent/{agentId}")
     public Result<Double> getPassRateByAgent(@PathVariable Long agentId) {
         double passRate = resultService.getPassRateByAgent(agentId);
@@ -108,6 +119,7 @@ public class AgentTestResultController {
     }
 
     @Operation(summary = "获取Agent通过率")
+    @RequiresPermission("test:view")
     @GetMapping("/pass-rate/test-case/{testCaseId}")
     public Result<Double> getPassRateByTestCase(@PathVariable Long testCaseId) {
         double passRate = resultService.getPassRateByTestCase(testCaseId);

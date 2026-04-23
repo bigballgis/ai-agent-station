@@ -58,7 +58,8 @@ jobs:
       - name: Security Audit (npm)
         run: |
           cd frontend
-          npm audit --audit-level=high --production || true
+          npm audit --audit-level=high --production
+        continue-on-error: true
       - name: Check for secrets
         uses: gitleaks/gitleaks-action@v2
         env:

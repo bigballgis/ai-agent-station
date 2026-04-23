@@ -29,7 +29,7 @@ public class SuggestionController {
     private final SuggestionService suggestionService;
 
     // 生成建议
-    @RequiresPermission("agent:view")
+    @RequiresPermission("suggestion:manage")
     @PostMapping("/generate/{agentId}")
     @Operation(summary = "生成Agent优化建议")
     public Result<List<AgentEvolutionSuggestion>> generateSuggestions(@PathVariable Long agentId) {
@@ -38,6 +38,7 @@ public class SuggestionController {
     }
 
     // 创建建议
+    @RequiresPermission("suggestion:manage")
     @Operation(summary = "创建建议")
     @PostMapping
     public Result<AgentEvolutionSuggestion> createSuggestion(@RequestBody AgentEvolutionSuggestion suggestion) {
@@ -46,6 +47,7 @@ public class SuggestionController {
     }
 
     // 更新建议
+    @RequiresPermission("suggestion:manage")
     @Operation(summary = "更新建议")
     @PutMapping("/{id}")
     public Result<AgentEvolutionSuggestion> updateSuggestion(@PathVariable Long id, @RequestBody AgentEvolutionSuggestion suggestionDetails) {
@@ -54,6 +56,7 @@ public class SuggestionController {
     }
 
     // 删除建议
+    @RequiresPermission("suggestion:manage")
     @Operation(summary = "删除建议")
     @DeleteMapping("/{id}")
     public Result<Void> deleteSuggestion(@PathVariable Long id) {
@@ -62,6 +65,7 @@ public class SuggestionController {
     }
 
     // 获取单个建议
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "根据ID获取建议详情")
     @GetMapping("/{id}")
     public Result<AgentEvolutionSuggestion> getSuggestionById(@PathVariable Long id) {
@@ -70,6 +74,7 @@ public class SuggestionController {
     }
 
     // 获取所有建议
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "获取所有建议列表")
     @GetMapping
     public Result<List<AgentEvolutionSuggestion>> getAllSuggestions() {
@@ -78,6 +83,7 @@ public class SuggestionController {
     }
 
     // 搜索建议
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "搜索建议")
     @GetMapping("/search")
     public Result<Page<AgentEvolutionSuggestion>> searchSuggestions(
@@ -97,6 +103,7 @@ public class SuggestionController {
     }
 
     // 按Agent ID获取建议
+    @RequiresPermission("suggestion:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取建议列表")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByAgentId(@PathVariable Long agentId) {
@@ -105,6 +112,7 @@ public class SuggestionController {
     }
 
     // 按类型获取建议
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "根据类型获取建议列表")
     @GetMapping("/type/{suggestionType}")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByType(@PathVariable String suggestionType) {
@@ -113,6 +121,7 @@ public class SuggestionController {
     }
 
     // 按优先级获取建议
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "根据优先级获取建议列表")
     @GetMapping("/priority/{agentId}")
     public Result<List<AgentEvolutionSuggestion>> getSuggestionsByPriority(@PathVariable Long agentId) {
@@ -121,6 +130,7 @@ public class SuggestionController {
     }
 
     // 更新建议状态
+    @RequiresPermission("suggestion:manage")
     @PutMapping("/{id}/status")
     @Operation(summary = "更新建议状态")
     public Result<AgentEvolutionSuggestion> updateSuggestionStatus(@PathVariable Long id, @RequestParam String status) {
@@ -129,6 +139,7 @@ public class SuggestionController {
     }
 
     // 更新实现状态
+    @RequiresPermission("suggestion:manage")
     @PutMapping("/{id}/implementation-status")
     @Operation(summary = "更新实现状态")
     public Result<AgentEvolutionSuggestion> updateImplementationStatus(@PathVariable Long id, @RequestParam String implementationStatus) {
@@ -137,6 +148,7 @@ public class SuggestionController {
     }
 
     // 分析建议效果
+    @RequiresPermission("suggestion:view")
     @Operation(summary = "分析建议效果")
     @GetMapping("/analysis/effectiveness")
     public Result<Map<String, Object>> analyzeSuggestionEffectiveness() {

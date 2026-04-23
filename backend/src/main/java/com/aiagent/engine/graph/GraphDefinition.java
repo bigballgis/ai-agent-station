@@ -3,8 +3,10 @@ package com.aiagent.engine.graph;
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 图定义 — 从 Agent.config 中解析的完整图结构
@@ -66,6 +68,15 @@ public class GraphDefinition {
                 }
             }
         }
+        // 检测循环依赖（DFS）
+        Set<String> visited = new HashSet<>();
+        Set<String> recursionStack = new HashSet<>();
+        for (GraphNode node : nodes.values()) {
+            if (hasCycle(node.getId(), visited, recursionStack)) {
+                errors.add("图中存在循环依赖，包含节点: " + node.getId());
+                break;
+            }
+        }
         return errors;
     }
 
@@ -99,5 +110,19 @@ public class GraphDefinition {
         json.put("connections", edgeJsons);
 
         return json;
+    }
+
+    private boolean hasCycle(String nodeId, Set<String> visited, Set<String> recursionStack) {
+        if (recursionStack.contains(nodeId)) return true;
+        if (visited.contains(nodeId)) return false;
+        visited.add(nodeId);
+        recursionStack.add(nodeId);
+        for (GraphEdge edge : edges) {
+            if (edge.getSourceNodeId().equals(nodeId)) {
+                if (hasCycle(edge.getTargetNodeId(), visited, recursionStack)) return true;
+            }
+        }
+        recursionStack.remove(nodeId);
+        return false;
     }
 }

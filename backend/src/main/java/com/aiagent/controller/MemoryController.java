@@ -21,13 +21,14 @@ public class MemoryController {
 
     private final MemoryService memoryService;
 
-    @RequiresPermission("agent:view")
+    @RequiresPermission("memory:manage")
     @PostMapping
     @Operation(summary = "创建Agent记忆")
     public Result<AgentMemory> createMemory(@RequestBody AgentMemory memory) {
         return Result.success(memoryService.createMemory(memory));
     }
 
+    @RequiresPermission("memory:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "获取Agent记忆列表")
     public Result<PageResult<AgentMemory>> getMemories(
@@ -40,12 +41,14 @@ public class MemoryController {
         return Result.success(PageResult.from(result));
     }
 
+    @RequiresPermission("memory:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取记忆详情")
     public Result<AgentMemory> getMemory(@PathVariable Long id) {
         return Result.success(memoryService.getMemory(id));
     }
 
+    @RequiresPermission("memory:manage")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除记忆")
     public Result<Void> deleteMemory(@PathVariable Long id) {
@@ -53,6 +56,7 @@ public class MemoryController {
         return Result.success();
     }
 
+    @RequiresPermission("memory:manage")
     @DeleteMapping("/agent/{agentId}/cleanup")
     @Operation(summary = "清理过期记忆")
     public Result<Void> cleanupExpired(@PathVariable Long agentId) {

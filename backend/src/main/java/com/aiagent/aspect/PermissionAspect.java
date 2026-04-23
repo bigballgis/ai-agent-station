@@ -94,6 +94,11 @@ public class PermissionAspect {
         if (cachedPermissions != null) {
             // 缓存命中：检查缓存中是否包含所需权限
             Set<String> permissionNames = Set.of(cachedPermissions.split(","));
+            // 如果缓存值包含通配符（SUPER_ADMIN），直接通过
+            if (permissionNames.contains("*")) {
+                log.debug("用户 {} 拥有 SUPER_ADMIN 角色（缓存命中），权限检查通过: {}", userId, requiredPermissionName);
+                return;
+            }
             if (permissionNames.contains(requiredPermissionName)) {
                 log.debug("用户 {} 权限检查通过（缓存命中）: {}", userId, requiredPermissionName);
                 return;

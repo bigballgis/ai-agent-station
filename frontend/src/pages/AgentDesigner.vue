@@ -256,7 +256,7 @@ import {
   useExecution,
   useGraphSerializer,
 } from '@/composables/designer'
-import type { CanvasNode, Connection, ConsoleLog } from '@/composables/designer'
+import type { CanvasNode, Connection, ConsoleLog, NodeTypeDefinition } from '@/composables/designer'
 
 // ============================================================
 // Sub-components
@@ -628,7 +628,7 @@ function onCanvasDrop(event: DragEvent) {
 // ============================================================
 // Event Handlers - Node & Port
 // ============================================================
-function onPortMouseDown(_event: MouseEvent, node: CanvasNode, port: any, portType: string) {
+function onPortMouseDown(_event: MouseEvent, node: CanvasNode, port: { name: string }, portType: string) {
   startConnecting(node.id, port.name, portType as 'input' | 'output')
 
   const rect = canvasContainerRef.value?.getBoundingClientRect()
@@ -893,7 +893,7 @@ function handleAutoLayout() {
   nextTick(() => fitView(nodes.value, canvasContainerRef))
 }
 
-function handleUpdateConfig(nodeId: string, key: string, value: any) {
+function handleUpdateConfig(nodeId: string, key: string, value: unknown) {
   pushHistory(nodes.value, connections.value)
   updateNodeConfig(nodeId, { [key]: value })
 }
@@ -911,7 +911,7 @@ function handleDeleteNode(nodeId: string) {
   addLog('info', `${t('designer.messages.deleteNode')}: ${label}`)
 }
 
-function handlePaletteDragStart(_nodeType: any) {
+function handlePaletteDragStart(_nodeType: NodeTypeDefinition) {
   // The NodePalette component handles setting drag data internally
 }
 
@@ -1294,12 +1294,13 @@ onMounted(async () => {
 
   if (agentId) {
     try {
-      const res: any = await agentApi.getAgentById(agentId)
-      const agentData = res?.data || res
+      const res = await agentApi.getAgentById(agentId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const agentData: Record<string, unknown> = (res as any)?.data || res
       if (agentData) {
-        if (agentData.name) agentName.value = agentData.name
-        const graphDef = agentData.graphDefinition
-        if (graphDef && graphDef.nodes && graphDef.nodes.length > 0) {
+        if (agentData.name) agentName.value = String(agentData.name)
+        const graphDef = agentData.graphDefinition as Record<string, unknown> | undefined
+        if (graphDef && graphDef.nodes && Array.isArray(graphDef.nodes) && graphDef.nodes.length > 0) {
           serializer.fromGraphData(graphDef)
           resetHistory(nodes.value, connections.value)
           loaded = true

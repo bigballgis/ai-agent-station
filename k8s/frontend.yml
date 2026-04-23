@@ -13,7 +13,7 @@ spec:
       labels:
         app: frontend
     spec:
-      serviceAccountName: backend-sa
+      serviceAccountName: frontend-sa
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

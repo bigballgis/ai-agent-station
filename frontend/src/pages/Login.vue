@@ -239,9 +239,11 @@ async function handleLogin() {
     } else {
       message.error(t('login.loginFailed'))
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login error:', error)
-    message.error(error?.response?.data?.message || t('login.loginFailed'))
+    const errMessage = error instanceof Error ? error.message : undefined
+    const axiosError = error as { response?: { data?: { message?: string } } }
+    message.error(axiosError?.response?.data?.message || errMessage || t('login.loginFailed'))
   } finally {
     loading.value = false
   }
