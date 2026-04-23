@@ -21,19 +21,10 @@
 
 import { ref, computed } from 'vue'
 import type { CanvasNode, Connection, ConnectingFrom, PortPosition } from './types'
+import { NODE_WIDTH, PORT_START_Y, PORT_GAP, BEZIER_OFFSET } from './constants'
 
 /** 连接 ID 计数器 */
 let connectionIdCounter = 0
-
-/** 节点尺寸常量（与 useCanvas 保持一致） */
-const NODE_WIDTH = 220
-
-/** 端口尺寸常量 */
-const PORT_START_Y = 36 // 第一个端口的 Y 偏移
-const PORT_GAP = 24 // 端口间距
-
-/** 贝塞尔曲线控制点偏移量 */
-const BEZIER_OFFSET = 80
 
 export function useConnections() {
   // ============================================================
@@ -291,17 +282,26 @@ export function useConnections() {
    * @returns SVG path d 属性字符串
    */
   function buildBezierPath(x1: number, y1: number, x2: number, y2: number): string {
-    const dx = Math.abs(x2 - x1)
+    const dx = x2 - x1
 
-    // 根据水平距离动态调整控制点偏移
-    const offset = Math.max(BEZIER_OFFSET, dx * 0.4)
+    if (dx > 0) {
+      // Forward connection: standard horizontal bezier
+      const offset = Math.max(BEZIER_OFFSET, dx * 0.4)
+      return `M ${x1} ${y1} C ${x1 + offset} ${y1}, ${x2 - offset} ${y2}, ${x2} ${y2}`
+    } else {
+      // Backward connection: route around with vertical displacement
+      const absDx = Math.abs(dx)
+      const dy = Math.abs(y2 - y1)
+      const offset = Math.max(BEZIER_OFFSET, absDx * 0.5, dy * 0.3)
 
-    const cx1 = x1 + offset
-    const cy1 = y1
-    const cx2 = x2 - offset
-    const cy2 = y2
+      // Route above or below based on which requires less displacement
+      const goAbove = y1 > y2
 
-    return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`
+      const midY1 = goAbove ? y1 - offset : y1 + offset
+      const midY2 = goAbove ? y2 - offset : y2 + offset
+
+      return `M ${x1} ${y1} C ${x1 + offset} ${midY1}, ${x2 - offset} ${midY2}, ${x2} ${y2}`
+    }
   }
 
   // ============================================================

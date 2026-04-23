@@ -98,7 +98,7 @@ export interface ConfigFieldSchema {
   /** 显示标签 */
   label: string
   /** 字段类型 */
-  type: 'text' | 'textarea' | 'number' | 'select' | 'slider' | 'json' | 'key-value' | 'code'
+  type: 'text' | 'textarea' | 'number' | 'select' | 'slider' | 'json' | 'key-value' | 'code' | 'switch-cases'
   /** 是否必填 */
   required: boolean
   /** 默认值 */
@@ -111,8 +111,10 @@ export interface ConfigFieldSchema {
   tooltip?: string
   /** 最小值（number 类型） */
   min?: number
-  /** 最大值（number 类型） */
+  /** 最大值（number/slider 类型） */
   max?: number
+  /** 步进值（number/slider 类型） */
+  step?: number
 }
 
 /** 导出的图数据格式（与后端 API 对接） */

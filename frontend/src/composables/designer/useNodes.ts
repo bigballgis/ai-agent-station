@@ -20,6 +20,7 @@
 import { ref, computed, type Ref } from 'vue'
 import type { CanvasNode, Connection } from './types'
 import { nodeTypeRegistry, getNodeColor as getRegistryNodeColor } from './nodeRegistry'
+import { NODE_WIDTH, NODE_HEIGHT } from './constants'
 
 /** 节点 ID 计数器 */
 let nodeIdCounter = 0
@@ -249,10 +250,6 @@ export function useNodes(connections: Ref<Connection[]>) {
    * @returns 命中的节点或 null
    */
   function findNodeAtPosition(x: number, y: number): CanvasNode | null {
-    // 节点尺寸常量（与 useCanvas 中的保持一致）
-    const NODE_WIDTH = 220
-    const NODE_HEIGHT = 80
-
     // 从后往前遍历（后添加的节点在上层）
     for (let i = nodes.value.length - 1; i >= 0; i--) {
       const node = nodes.value[i]

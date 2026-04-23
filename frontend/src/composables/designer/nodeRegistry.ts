@@ -43,8 +43,9 @@ const llmConfigSchema: ConfigFieldSchema[] = [
     options: [
       { label: 'OpenAI', value: 'openai' },
       { label: 'Anthropic', value: 'anthropic' },
-      { label: 'Azure OpenAI', value: 'azure' },
+      { label: 'Google', value: 'google' },
       { label: 'Ollama', value: 'ollama' },
+      { label: 'Azure OpenAI', value: 'azure' },
     ],
     tooltip: '选择 LLM 服务提供商',
   },
@@ -60,21 +61,23 @@ const llmConfigSchema: ConfigFieldSchema[] = [
   {
     key: 'temperature',
     label: '温度',
-    type: 'number',
+    type: 'slider',
     required: false,
     defaultValue: 0.7,
     min: 0,
     max: 2,
+    step: 0.1,
     tooltip: '控制输出随机性，0 表示确定性输出，2 表示最大随机性',
   },
   {
     key: 'topP',
     label: 'Top P',
-    type: 'number',
+    type: 'slider',
     required: false,
     defaultValue: 1,
     min: 0,
     max: 1,
+    step: 0.05,
     tooltip: '核采样参数，控制候选词范围',
   },
   {
@@ -134,11 +137,21 @@ const toolConfigSchema: ConfigFieldSchema[] = [
   {
     key: 'toolId',
     label: '工具 ID',
-    type: 'text',
+    type: 'select',
     required: true,
     defaultValue: '',
-    placeholder: 'tool_001',
-    tooltip: '关联的工具唯一标识',
+    options: [
+      { label: '请选择...', value: '' },
+      { label: 'Web 搜索', value: 'web_search' },
+      { label: '计算器', value: 'calculator' },
+      { label: '天气查询', value: 'weather' },
+      { label: '数据库查询', value: 'database' },
+      { label: '邮件发送', value: 'email' },
+      { label: '文件读取', value: 'file_read' },
+      { label: '文件写入', value: 'file_write' },
+      { label: '自定义工具', value: 'custom' },
+    ],
+    tooltip: '选择要调用的工具',
   },
   {
     key: 'toolName',
@@ -146,16 +159,15 @@ const toolConfigSchema: ConfigFieldSchema[] = [
     type: 'text',
     required: true,
     defaultValue: '',
-    placeholder: 'Web Search',
+    placeholder: 'my_tool',
     tooltip: '工具显示名称',
   },
   {
     key: 'inputMapping',
-    label: '输入映射',
-    type: 'json',
+    label: '输入映射 (Key-Value)',
+    type: 'key-value',
     required: false,
-    defaultValue: '[]',
-    placeholder: '[{"key": "query", "value": "{{input}}"}]',
+    defaultValue: [],
     tooltip: '将工作流变量映射到工具输入参数',
   },
 ]
@@ -230,15 +242,11 @@ const variableConfigSchema: ConfigFieldSchema[] = [
   {
     key: 'source',
     label: '变量来源',
-    type: 'select',
+    type: 'text',
     required: false,
-    defaultValue: 'static',
-    options: [
-      { label: '静态值', value: 'static' },
-      { label: '上游输出', value: 'upstream' },
-      { label: '环境变量', value: 'env' },
-    ],
-    tooltip: '变量的来源方式',
+    defaultValue: '',
+    placeholder: '来源节点/表达式',
+    tooltip: '变量的来源节点或表达式',
   },
 ]
 
@@ -330,11 +338,11 @@ const httpConfigSchema: ConfigFieldSchema[] = [
   {
     key: 'body',
     label: '请求体',
-    type: 'json',
+    type: 'textarea',
     required: false,
     defaultValue: '',
-    placeholder: '{"key": "value"}',
-    tooltip: 'HTTP 请求体内容，JSON 格式',
+    placeholder: '请求体...',
+    tooltip: 'HTTP 请求体内容',
   },
 ]
 
@@ -408,7 +416,7 @@ const switchConfigSchema: ConfigFieldSchema[] = [
   {
     key: 'cases',
     label: '分支规则',
-    type: 'key-value',
+    type: 'switch-cases',
     required: true,
     defaultValue: [],
     tooltip: '配置条件表达式和分支标签，支持动态添加多个分支',
@@ -726,7 +734,7 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
   {
     type: 'code',
     name: '代码执行',
-    description: '执行自定义 JavaScript 或 Python 代码',
+    description: '执行自定义 JavaScript 代码（支持变量引用）',
     color: '#a855f7',
     icon: '\uD83D\uDCBB',
     category: 'advanced',
@@ -745,7 +753,7 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
   {
     type: 'delay',
     name: '延迟',
-    description: '暂停工作流执行指定秒数',
+    description: '暂停执行指定秒数（1-300秒）',
     color: '#78716c',
     icon: '\u23F3',
     category: 'advanced',
@@ -823,11 +831,11 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
       { name: 'output', label: '输出', index: 0 },
     ],
     configSchema: [
-      { key: 'maxParallelism', label: '最大并行数', type: 'number', required: false, min: 1, max: 20, defaultValue: 5 },
+      { key: 'maxParallelism', label: '最大并行数', type: 'number', required: false, min: 1, max: 20, defaultValue: 5, tooltip: '最大并行执行的任务数' },
       { key: 'failStrategy', label: '失败策略', type: 'select', required: false, options: [
         { label: '等待全部完成', value: 'wait' },
         { label: '快速失败', value: 'fail_fast' },
-      ], defaultValue: 'wait' },
+      ], defaultValue: 'wait', tooltip: '某个分支失败时的处理策略' },
     ],
   },
   {
@@ -854,7 +862,7 @@ const nodeTypeDefinitions: NodeTypeDefinition[] = [
         { label: '追加 (Append)', value: 'append' },
         { label: '覆盖 (Overwrite)', value: 'overwrite' },
         { label: '取第一个 (First)', value: 'first' },
-      ], defaultValue: 'append' },
+      ], defaultValue: 'append', tooltip: '多个分支输出的合并方式' },
     ],
   },
   {

@@ -15,15 +15,7 @@
 
 import type { CanvasNode, Connection } from './types'
 import { useGraphValidation } from './useGraphValidation'
-
-/** 水平间距（节点中心之间的水平距离） */
-const HORIZONTAL_GAP = 280
-
-/** 垂直间距（节点之间的垂直距离） */
-const VERTICAL_GAP = 120
-
-/** 节点高度（与 useCanvas 保持一致） */
-const NODE_HEIGHT = 80
+import { LAYOUT_HORIZONTAL_GAP, LAYOUT_VERTICAL_GAP, NODE_WIDTH, NODE_HEIGHT } from './constants'
 
 /** 布局起始 X 坐标 */
 const START_X = 80
@@ -128,10 +120,10 @@ export function useAutoLayout() {
 
     for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       const layer = layers[layerIndex]
-      const x = START_X + layerIndex * HORIZONTAL_GAP
+      const x = START_X + layerIndex * LAYOUT_HORIZONTAL_GAP
 
       // 计算该层总高度
-      const layerHeight = (layer.length - 1) * VERTICAL_GAP
+      const layerHeight = (layer.length - 1) * LAYOUT_VERTICAL_GAP
 
       // 计算起始 Y（使该层垂直居中）
       const startY = START_Y + (layerHeight > 0 ? 0 : 0)
@@ -141,7 +133,7 @@ export function useAutoLayout() {
         const node = nodeMap.get(nodeId)
         if (node) {
           node.x = x
-          node.y = startY + nodeIndex * VERTICAL_GAP
+          node.y = startY + nodeIndex * LAYOUT_VERTICAL_GAP
         }
       }
     }
@@ -158,7 +150,7 @@ export function useAutoLayout() {
     for (const node of nodes) {
       minX = Math.min(minX, node.x)
       minY = Math.min(minY, node.y)
-      maxX = Math.max(maxX, node.x + 220) // NODE_WIDTH
+      maxX = Math.max(maxX, node.x + NODE_WIDTH) // NODE_WIDTH
       maxY = Math.max(maxY, node.y + NODE_HEIGHT)
     }
 

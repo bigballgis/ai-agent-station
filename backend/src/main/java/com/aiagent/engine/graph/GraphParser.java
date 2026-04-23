@@ -112,13 +112,13 @@ public class GraphParser {
                         node.getOutputPorts().add("output");
                     }
 
-                    // 代码节点端口（前端可视化类型，后端不执行，仅定义端口）
+                    // 代码节点端口
                     if ("code".equals(node.getType())) {
                         node.getOutputPorts().clear();
                         node.getOutputPorts().add("output");
                     }
 
-                    // 延时节点端口（前端可视化类型，后端不执行，仅定义端口）
+                    // 延时节点端口
                     if ("delay".equals(node.getType())) {
                         node.getOutputPorts().clear();
                         node.getOutputPorts().add("output");

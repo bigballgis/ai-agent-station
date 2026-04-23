@@ -111,6 +111,7 @@ function getOutputPortClass(port: PortDefinition): Record<string, boolean> {
 
 <style scoped>
 .designer-node {
+  /* Width must match NODE_WIDTH in constants.ts */
   position: absolute;
   width: 180px;
   background: #1a1a2e;

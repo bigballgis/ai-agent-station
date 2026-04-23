@@ -16,16 +16,12 @@
 
 import { ref, computed, type Ref } from 'vue'
 import type { CanvasNode } from './types'
+import { NODE_WIDTH, NODE_HEIGHT, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from './constants'
 
-/** 缩放范围 */
-const ZOOM_MIN = 0.2
-const ZOOM_MAX = 3
-const ZOOM_STEP = 0.1
+/** 缩放默认值 */
 const ZOOM_DEFAULT = 1
 
-/** 节点尺寸常量（用于 fitView 计算） */
-const NODE_WIDTH = 220
-const NODE_HEIGHT = 80
+/** fitView 内边距 */
 const FIT_PADDING = 60
 
 export function useCanvas() {

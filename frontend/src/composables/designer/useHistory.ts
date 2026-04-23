@@ -20,9 +20,7 @@
 
 import { ref, computed } from 'vue'
 import type { CanvasNode, Connection, HistoryEntry } from './types'
-
-/** 最大历史记录数量 */
-const MAX_HISTORY = 50
+import { MAX_HISTORY } from './constants'
 
 export function useHistory() {
   // ============================================================
@@ -80,8 +78,8 @@ export function useHistory() {
   function pushHistory(nodes: CanvasNode[], connections: Connection[]): void {
     // 深拷贝当前状态
     const snapshot: HistoryEntry = {
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      connections: JSON.parse(JSON.stringify(connections)),
+      nodes: structuredClone(nodes),
+      connections: structuredClone(connections),
     }
 
     // 如果不在历史栈末尾，丢弃后续记录
@@ -120,8 +118,8 @@ export function useHistory() {
 
     // 返回深拷贝，避免外部修改影响历史记录
     return {
-      nodes: JSON.parse(JSON.stringify(entry.nodes)),
-      connections: JSON.parse(JSON.stringify(entry.connections)),
+      nodes: structuredClone(entry.nodes),
+      connections: structuredClone(entry.connections),
     }
   }
 
@@ -140,8 +138,8 @@ export function useHistory() {
 
     // 返回深拷贝
     return {
-      nodes: JSON.parse(JSON.stringify(entry.nodes)),
-      connections: JSON.parse(JSON.stringify(entry.connections)),
+      nodes: structuredClone(entry.nodes),
+      connections: structuredClone(entry.connections),
     }
   }
 

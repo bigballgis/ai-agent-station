@@ -8,7 +8,7 @@
       :zoom="zoom"
       :validation-message="validationMessage"
       :validation-type="validationType"
-      :running="isRunning"
+      :running="execution.isRunning.value"
       :debug-mode="debug.isDebugMode.value"
       :can-step-next="debug.canStepNext.value"
       :can-continue="debug.canContinue.value"
@@ -23,8 +23,8 @@
       @export="exportJson"
       @validate="handleValidate"
       @auto-layout="handleAutoLayout"
-      @run="runAgent"
-      @stop="stopExecution"
+      @run="execution.runAgent(route.params.id as string, t)"
+      @stop="execution.stopExecution(t)"
       @save="saveAgent"
       @debug-toggle="debug.isDebugMode.value ? debug.exitDebugMode() : debug.enterDebugMode()"
       @debug-step="debug.stepNext()"
@@ -113,9 +113,9 @@
             :node="node"
             :selected="selectedNodeId === node.id"
             :multi-selected="selectedNodeIds.has(node.id) && selectedNodeId !== node.id"
-            :running="runningNodeIds.has(node.id)"
-            :completed="completedNodeIds.has(node.id)"
-            :failed="failedNodeIds.has(node.id)"
+            :running="execution.runningNodeIds.value.has(node.id)"
+            :completed="execution.completedNodeIds.value.has(node.id)"
+            :failed="execution.failedNodeIds.value.has(node.id)"
             :has-breakpoint="debug.hasBreakpoint(node.id)"
             :is-debug-target="debug.currentDebugNodeId.value === node.id"
             :debug-status="debug.getNodeDebugInfo(node.id)?.status"
@@ -253,9 +253,10 @@ import {
   useAutoLayout,
   useFlowState,
   useDebugMode,
-  getNodeTypeDefinition,
+  useExecution,
+  useGraphSerializer,
 } from '@/composables/designer'
-import type { CanvasNode, Connection, ConsoleLog, GraphData } from '@/composables/designer'
+import type { CanvasNode, Connection, ConsoleLog } from '@/composables/designer'
 
 // ============================================================
 // Sub-components
@@ -270,7 +271,7 @@ import MiniMap from '@/components/designer/MiniMap.vue'
 // ============================================================
 // API
 // ============================================================
-import { agentApi, executeAgentStream } from '@/api/agent'
+import { agentApi } from '@/api/agent'
 
 // ============================================================
 // Router
@@ -339,7 +340,7 @@ const {
 const { canUndo, canRedo, pushHistory, undo, redo, resetHistory } = useHistory()
 
 // Validation (no dependencies)
-const { validate, getExecutionOrder } = useGraphValidation()
+const { validate } = useGraphValidation()
 
 // Auto Layout (no dependencies)
 const { autoLayout } = useAutoLayout()
@@ -365,11 +366,6 @@ const agentName = ref(t('designer.messages.unnamedAgent'))
 const leftPanelCollapsed = ref(false)
 const bottomPanelCollapsed = ref(true)
 const consoleLogs = ref<ConsoleLog[]>([])
-const runningNodeIds = ref<Set<string>>(new Set())
-const completedNodeIds = ref<Set<string>>(new Set())
-const failedNodeIds = ref<Set<string>>(new Set())
-let isRunning = false
-let executionCancel: { cancel: () => void } | null = null
 const editingNodeId = ref<string | null>(null)
 const validationMessage = ref('')
 const validationType = ref<'success' | 'error' | 'warning'>('success')
@@ -386,6 +382,18 @@ const containerHeight = ref(0)
 const canvasContainerRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+
+// Graph Serializer (depends on nodes, connections, agentName)
+const serializer = useGraphSerializer(nodes, connections, agentName)
+
+// Execution (depends on nodes, connections, debug, addLog)
+const execution = useExecution(
+  nodes,
+  connections,
+  debug,
+  addLog,
+  () => { bottomPanelCollapsed.value = false },
+)
 
 // Non-reactive drag state
 let isDraggingNode = false
@@ -439,11 +447,6 @@ const tempConnectionPath = computed(() => {
   const mouseY = (connectingMouseY - panY.value) / zoom.value
 
   return getTempConnectionPath(pos.x, pos.y, mouseX, mouseY, portType)
-})
-
-const entryNodeId = computed(() => {
-  const startNode = nodes.value.find(n => n.type === 'start')
-  return startNode?.id || ''
 })
 
 // ============================================================
@@ -914,58 +917,10 @@ function handleMinimapNavigate(newPanX: number, newPanY: number) {
 }
 
 // ============================================================
-// GraphData Export/Import (Backend Compatible)
-// ============================================================
-function toGraphData(): GraphData {
-  return {
-    entryNodeId: entryNodeId.value,
-    nodes: nodes.value.map(n => ({
-      id: n.id,
-      type: n.type,
-      label: n.label,
-      config: { ...n.config },
-      position: { x: Math.round(n.x), y: Math.round(n.y) },
-    })),
-    connections: connections.value.map(c => ({
-      sourceId: c.sourceId,
-      sourcePort: c.sourcePort,
-      targetId: c.targetId,
-      targetPort: c.targetPort,
-    })),
-  }
-}
-
-function fromGraphData(data: any): void {
-  // Handle both old (fromNodeId) and new (sourceId) formats
-  nodes.value = (data.nodes || []).map((n: any) => {
-    const typeDef = getNodeTypeDefinition(n.type)
-    const x = n.position?.x ?? n.x ?? 100
-    const y = n.position?.y ?? n.y ?? 100
-    return {
-      id: n.id || `node_${n.type}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      type: n.type,
-      label: n.label || typeDef?.name || n.type,
-      x,
-      y,
-      config: n.config || typeDef?.defaultConfig || {},
-      inputs: typeDef?.defaultInputs.map(p => ({ ...p })) || [],
-      outputs: typeDef?.defaultOutputs.map(p => ({ ...p })) || [],
-    }
-  })
-  connections.value = (data.connections || []).map((c: any) => ({
-    id: c.id || `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    sourceId: c.sourceId || c.fromNodeId,
-    sourcePort: c.sourcePort || c.fromPort || 'output',
-    targetId: c.targetId || c.toNodeId,
-    targetPort: c.targetPort || c.toPort || 'input',
-  }))
-}
-
-// ============================================================
 // Save / Export / Import
 // ============================================================
 function saveAgent() {
-  const graphData = toGraphData()
+  const graphData = serializer.toGraphData()
 
   // Try API save first if we have an agent ID
   const agentId = route.params.id as string
@@ -991,14 +946,7 @@ function saveAgent() {
 }
 
 function exportJson() {
-  const graphData = { name: agentName.value, ...toGraphData() }
-  const blob = new Blob([JSON.stringify(graphData, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${agentName.value || 'agent-design'}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  serializer.exportJson()
   addLog('info', t('designer.messages.exportSuccess'))
 }
 
@@ -1016,7 +964,7 @@ function handleImport(event: Event) {
     try {
       const data = JSON.parse(e.target?.result as string)
       if (data.name) agentName.value = data.name
-      fromGraphData(data)
+      serializer.fromGraphData(data)
       resetHistory(nodes.value, connections.value)
       addLog('success', t('designer.messages.importSuccess'))
       message.success(t('designer.messages.importSuccess'))
@@ -1028,314 +976,6 @@ function handleImport(event: Event) {
   }
   reader.readAsText(file)
   input.value = ''
-}
-
-// ============================================================
-// Run Agent (SSE Streaming with Simulation Fallback)
-// ============================================================
-
-/**
- * Simulated execution fallback - used when backend SSE is unavailable
- */
-async function runAgentSimulated() {
-  const startNode = nodes.value.find(n => n.type === 'start')
-  if (!startNode) {
-    addLog('warn', `${t('designer.messages.runFailed')}: missing start node`)
-    return
-  }
-
-  addLog('info', `节点数量: ${nodes.value.length}, 连线数量: ${connections.value.length}`)
-
-  const order = getExecutionOrder(startNode.id, nodes.value, connections.value)
-
-  // Debug mode: initialize debug info and set execution order
-  if (debug.isDebugMode.value) {
-    debug.initDebugInfo(nodes.value)
-    debug.debugExecutionOrder.value = order
-    debug.currentStepIndex.value = -1
-    debug.isStepping.value = false
-    addLog('info', t('designer.debug.running'))
-  }
-
-  for (let i = 0; i < order.length; i++) {
-    if (!isRunning) break // Check if stopped
-    const nodeId = order[i]
-    const node = nodes.value.find(n => n.id === nodeId)
-    if (!node) continue
-
-    // Debug mode: check for breakpoint or stepping
-    if (debug.isDebugMode.value) {
-      debug.currentStepIndex.value = i
-      debug.currentDebugNodeId.value = nodeId
-      debug.updateNodeDebugInfo(nodeId, {
-        status: 'running',
-        input: simulateNodeInput(node, connections.value, nodes.value),
-      })
-
-      // Simulate input data for the node
-      const simulatedInput = simulateNodeInput(node, connections.value, nodes.value)
-      debug.updateNodeDebugInfo(nodeId, { input: simulatedInput })
-
-      const hasBp = debug.hasBreakpoint(nodeId)
-
-      if (hasBp || debug.isStepping.value) {
-        debug.isPaused.value = true
-        debug.updateNodeDebugInfo(nodeId, { status: 'paused' })
-        addLog('info', `${t('designer.debug.paused')}: ${node.label}`)
-
-        // Wait for user to step or continue
-        await waitForDebugResume()
-
-        if (!isRunning || !debug.isDebugMode.value) break
-
-        debug.isPaused.value = false
-        debug.updateNodeDebugInfo(nodeId, { status: 'running' })
-      }
-    }
-
-    runningNodeIds.value.add(nodeId)
-    addLog('info', `${t('designer.messages.nodeRunning')}: ${node.label} (${node.type})`)
-
-    const startTime = Date.now()
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700))
-    const duration = Date.now() - startTime
-
-    if (!isRunning) break // Check again after delay
-
-    runningNodeIds.value.delete(nodeId)
-
-    if (Math.random() < 0.05) {
-      failedNodeIds.value.add(nodeId)
-      addLog('error', `${t('designer.messages.nodeFailed')}: ${node.label}`)
-      if (debug.isDebugMode.value) {
-        debug.updateNodeDebugInfo(nodeId, {
-          status: 'failed',
-          duration,
-          output: { error: 'Simulated failure' },
-          error: 'Simulated failure',
-        })
-      }
-    } else {
-      completedNodeIds.value.add(nodeId)
-      addLog('success', `${t('designer.messages.nodeComplete')}: ${node.label}`)
-      if (debug.isDebugMode.value) {
-        const simulatedOutput = simulateNodeOutput(node)
-        debug.updateNodeDebugInfo(nodeId, {
-          status: 'completed',
-          duration,
-          output: simulatedOutput,
-        })
-      }
-    }
-  }
-
-  if (!isRunning) {
-    if (debug.isDebugMode.value) {
-      debug.stopDebug()
-    }
-    return
-  }
-
-  const endNode = nodes.value.find(n => n.type === 'end')
-  if (endNode && completedNodeIds.value.has(endNode.id)) {
-    addLog('success', t('designer.messages.runComplete'))
-    message.success(t('designer.messages.runComplete'))
-  } else if (failedNodeIds.value.size > 0) {
-    addLog('error', t('designer.messages.runFailed'))
-    message.error(t('designer.messages.runFailed'))
-  } else {
-    addLog('warn', t('designer.messages.runIncomplete'))
-    message.warning(t('designer.messages.runIncomplete'))
-  }
-
-  if (debug.isDebugMode.value) {
-    debug.currentDebugNodeId.value = null
-    debug.isPaused.value = false
-    debug.isStepping.value = false
-  }
-
-  isRunning = false
-  executionCancel = null
-}
-
-/**
- * Simulate node input data based on connected upstream nodes
- */
-function simulateNodeInput(node: CanvasNode, conns: Connection[], allNodes: CanvasNode[]): any {
-  const input: any = {}
-  for (const conn of conns) {
-    if (conn.targetId === node.id) {
-      const sourceNode = allNodes.find(n => n.id === conn.sourceId)
-      if (sourceNode) {
-        input[conn.targetPort] = {
-          from: sourceNode.label,
-          type: sourceNode.type,
-          data: `模拟数据来自 ${sourceNode.label}`,
-        }
-      }
-    }
-  }
-  return Object.keys(input).length > 0 ? input : { message: 'Hello World' }
-}
-
-/**
- * Simulate node output data
- */
-function simulateNodeOutput(node: CanvasNode): any {
-  switch (node.type) {
-    case 'llm':
-      return { response: `模拟 LLM 响应来自 ${node.label}`, tokens: Math.floor(Math.random() * 500) + 100 }
-    case 'condition':
-      return { result: Math.random() > 0.5, branch: Math.random() > 0.5 ? 'true' : 'false' }
-    case 'tool':
-      return { result: `模拟工具执行结果`, success: true }
-    case 'code':
-      return { output: `模拟代码输出`, exitCode: 0 }
-    case 'delay':
-      return { waited: node.config.delay || '1s' }
-    case 'notify':
-      return { sent: true, channel: node.config.channel || 'default' }
-    default:
-      return { status: 'completed', label: node.label }
-  }
-}
-
-/**
- * Wait for debug resume (step or continue) using a polling approach
- */
-function waitForDebugResume(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    const check = () => {
-      if (!debug.isPaused.value || !isRunning || !debug.isDebugMode.value) {
-        resolve()
-        return
-      }
-      requestAnimationFrame(check)
-    }
-    check()
-  })
-}
-
-/**
- * Run agent via real backend SSE, falling back to simulation on failure
- */
-function runAgent() {
-  if (isRunning) return
-
-  if (nodes.value.length === 0) {
-    message.warning(t('designer.messages.noNodes'))
-    return
-  }
-
-  const startNode = nodes.value.find(n => n.type === 'start')
-  if (!startNode) {
-    message.warning(t('designer.messages.noStartNode'))
-    addLog('warn', `${t('designer.messages.runFailed')}: missing start node`)
-    return
-  }
-
-  // Clear previous state
-  bottomPanelCollapsed.value = false
-  runningNodeIds.value.clear()
-  completedNodeIds.value.clear()
-  failedNodeIds.value.clear()
-  isRunning = true
-
-  addLog('info', t('designer.messages.runStart'))
-
-  const agentId = route.params.id as string
-  const message_text = 'Hello' // Default message for agent execution
-
-  // Try real SSE execution first
-  if (agentId) {
-    addLog('info', `连接后端 SSE 端点 (agentId: ${agentId})...`)
-
-    executionCancel = executeAgentStream(
-      agentId,
-      message_text,
-      // onMessage
-      (event) => {
-        switch (event.type) {
-          case 'node_start': {
-            const nodeId = event.data.nodeId
-            const nodeType = event.data.nodeType
-            runningNodeIds.value.add(nodeId)
-            const node = nodes.value.find(n => n.id === nodeId)
-            const label = node?.label || nodeId
-            addLog('info', `${t('designer.messages.nodeRunning')}: ${label} (${nodeType})`)
-            break
-          }
-          case 'node_end': {
-            const nodeId = event.data.nodeId
-            const status = event.data.status
-            runningNodeIds.value.delete(nodeId)
-            const node = nodes.value.find(n => n.id === nodeId)
-            const label = node?.label || nodeId
-            if (status === 'failed') {
-              failedNodeIds.value.add(nodeId)
-              addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${event.data.error || ''}`)
-            } else {
-              completedNodeIds.value.add(nodeId)
-              addLog('success', `${t('designer.messages.nodeComplete')}: ${label}`)
-            }
-            break
-          }
-          case 'token': {
-            // LLM streaming token
-            addLog('info', event.data.content || '', false)
-            break
-          }
-          case 'done': {
-            addLog('success', t('designer.messages.runComplete'))
-            message.success(t('designer.messages.runComplete'))
-            isRunning = false
-            executionCancel = null
-            break
-          }
-          case 'error': {
-            addLog('error', `${t('designer.messages.runFailed')}: ${event.data.content || event.data.error || 'Unknown error'}`)
-            message.error(t('designer.messages.runFailed'))
-            isRunning = false
-            executionCancel = null
-            break
-          }
-        }
-      },
-      // onError
-      (error) => {
-        addLog('warn', `后端 SSE 连接失败: ${error.message}，切换到模拟执行...`)
-        // Fall back to simulation
-        isRunning = false
-        executionCancel = null
-        runAgentSimulated()
-      },
-      // onComplete
-      () => {
-        if (isRunning) {
-          addLog('success', t('designer.messages.runComplete'))
-          isRunning = false
-          executionCancel = null
-        }
-      }
-    )
-  } else {
-    // No agent ID - use simulation directly
-    addLog('info', '未关联 Agent ID，使用模拟执行...')
-    runAgentSimulated()
-  }
-}
-
-/**
- * Stop the current execution
- */
-function stopExecution() {
-  if (executionCancel) {
-    executionCancel.cancel()
-    executionCancel = null
-  }
-  isRunning = false
-  runningNodeIds.value.clear()
-  addLog('warn', t('designer.messages.executionStopped'))
 }
 
 // ============================================================
@@ -1548,8 +1188,8 @@ function onKeyDown(event: KeyboardEvent) {
   if (event.key === 'F5' && event.shiftKey && debug.isDebugMode.value) {
     event.preventDefault()
     debug.stopDebug()
-    if (isRunning) {
-      stopExecution()
+    if (execution.isRunning.value) {
+      execution.stopExecution(t)
     }
     return
   }
@@ -1643,7 +1283,7 @@ onMounted(async () => {
         if (agentData.name) agentName.value = agentData.name
         const graphDef = agentData.graphDefinition
         if (graphDef && graphDef.nodes && graphDef.nodes.length > 0) {
-          fromGraphData(graphDef)
+          serializer.fromGraphData(graphDef)
           resetHistory(nodes.value, connections.value)
           loaded = true
           nextTick(() => fitView(nodes.value, canvasContainerRef))
@@ -1661,7 +1301,7 @@ onMounted(async () => {
         const data = JSON.parse(saved)
         if (data.name) agentName.value = data.name
         if (data.nodes && data.nodes.length > 0) {
-          fromGraphData(data)
+          serializer.fromGraphData(data)
           resetHistory(nodes.value, connections.value)
           loaded = true
           nextTick(() => fitView(nodes.value, canvasContainerRef))

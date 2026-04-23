@@ -16,6 +16,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -106,10 +109,64 @@ public class GraphExecutor {
                         case "switch" -> executeSwitchNode(node, state);
                         case "subgraph" -> executeSubgraphNode(node, state);
                         case "human_approval" -> executeHumanApprovalNode(node, state);
-                        // code 和 delay 是前端可视化类型，不需要后端执行，直接跳过
-                        case "code", "delay" -> {
-                            log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
-                            node.setStatus("skipped");
+                        case "code" -> {
+                            Map<String, Object> config = node.getConfig();
+                            String language = (String) config.getOrDefault("language", "javascript");
+                            String code = (String) config.get("code");
+
+                            if (code == null || code.isBlank()) {
+                                throw new RuntimeException("Code 节点代码为空: " + node.getId());
+                            }
+
+                            String result;
+
+                            if ("javascript".equalsIgnoreCase(language) || "js".equalsIgnoreCase(language)) {
+                                try {
+                                    ScriptEngineManager manager = new ScriptEngineManager();
+                                    ScriptEngine engine = manager.getEngineByName("js");
+                                    if (engine != null) {
+                                        // 注入上游节点输出作为变量
+                                        for (Map.Entry<String, Object> entry : nodeOutputs.entrySet()) {
+                                            engine.put(entry.getKey(), entry.getValue());
+                                        }
+                                        Object evalResult = engine.eval(code);
+                                        result = evalResult != null ? evalResult.toString() : "";
+                                    } else {
+                                        log.warn("JavaScript 引擎不可用，Code 节点 {} 跳过执行", node.getId());
+                                        result = "[JavaScript engine not available]";
+                                    }
+                                } catch (ScriptException e) {
+                                    throw new RuntimeException("Code 节点执行失败: " + e.getMessage(), e);
+                                }
+                            } else {
+                                throw new RuntimeException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
+                            }
+
+                            node.setOutput(result);
+                            nodeOutputs.put(node.getId(), result);
+                        }
+                        case "delay" -> {
+                            Map<String, Object> config = node.getConfig();
+                            Object secondsObj = config.get("seconds");
+                            int seconds = 1;
+                            if (secondsObj instanceof Number) {
+                                seconds = ((Number) secondsObj).intValue();
+                            } else if (secondsObj instanceof String) {
+                                try { seconds = Integer.parseInt((String) secondsObj); } catch (NumberFormatException e) { /* use default */ }
+                            }
+                            seconds = Math.max(1, Math.min(seconds, 300)); // 限制 1-300 秒
+
+                            log.info("Delay 节点 {} 等待 {} 秒", node.getId(), seconds);
+                            try {
+                                Thread.sleep(seconds * 1000L);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException("Delay 节点被中断: " + node.getId(), e);
+                            }
+
+                            String result = "delayed_" + seconds + "s";
+                            node.setOutput(result);
+                            nodeOutputs.put(node.getId(), result);
                         }
                         default -> {
                             log.warn("未知节点类型: {}, 跳过", node.getType());
@@ -913,10 +970,63 @@ public class GraphExecutor {
             case "http" -> executeHttpNode(node, state, nodeOutputs, graph);
             case "parallel" -> executeParallelNode(node, state, nodeOutputs, graph);
             case "merge" -> executeMergeNode(node, state, nodeOutputs, graph);
-            case "code", "delay" -> {
-                log.debug("节点类型 {} 为前端可视化类型，跳过执行", node.getType());
-                node.setStatus("skipped");
-                return;
+            case "code" -> {
+                Map<String, Object> config = node.getConfig();
+                String language = (String) config.getOrDefault("language", "javascript");
+                String code = (String) config.get("code");
+
+                if (code == null || code.isBlank()) {
+                    throw new RuntimeException("Code 节点代码为空: " + node.getId());
+                }
+
+                String result;
+
+                if ("javascript".equalsIgnoreCase(language) || "js".equalsIgnoreCase(language)) {
+                    try {
+                        ScriptEngineManager manager = new ScriptEngineManager();
+                        ScriptEngine engine = manager.getEngineByName("js");
+                        if (engine != null) {
+                            for (Map.Entry<String, Object> entry : nodeOutputs.entrySet()) {
+                                engine.put(entry.getKey(), entry.getValue());
+                            }
+                            Object evalResult = engine.eval(code);
+                            result = evalResult != null ? evalResult.toString() : "";
+                        } else {
+                            log.warn("JavaScript 引擎不可用，Code 节点 {} 跳过执行", node.getId());
+                            result = "[JavaScript engine not available]";
+                        }
+                    } catch (ScriptException e) {
+                        throw new RuntimeException("Code 节点执行失败: " + e.getMessage(), e);
+                    }
+                } else {
+                    throw new RuntimeException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
+                }
+
+                node.setOutput(result);
+                nodeOutputs.put(node.getId(), result);
+            }
+            case "delay" -> {
+                Map<String, Object> config = node.getConfig();
+                Object secondsObj = config.get("seconds");
+                int seconds = 1;
+                if (secondsObj instanceof Number) {
+                    seconds = ((Number) secondsObj).intValue();
+                } else if (secondsObj instanceof String) {
+                    try { seconds = Integer.parseInt((String) secondsObj); } catch (NumberFormatException e) { /* use default */ }
+                }
+                seconds = Math.max(1, Math.min(seconds, 300));
+
+                log.info("Delay 节点 {} 等待 {} 秒", node.getId(), seconds);
+                try {
+                    Thread.sleep(seconds * 1000L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Delay 节点被中断: " + node.getId(), e);
+                }
+
+                String result = "delayed_" + seconds + "s";
+                node.setOutput(result);
+                nodeOutputs.put(node.getId(), result);
             }
             default -> {
                 log.warn("未知节点类型: {}, 跳过", node.getType());
