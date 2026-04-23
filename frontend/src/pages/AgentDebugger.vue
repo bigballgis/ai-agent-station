@@ -41,7 +41,7 @@
                   <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 animate-bounce" style="animation-delay: 150ms" />
                   <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 animate-bounce" style="animation-delay: 300ms" />
                 </span>
-                正在思考...
+                {{ t('debugger.thinking') }}
               </span>
             </div>
           </div>
@@ -51,7 +51,7 @@
         <div class="p-4 border-t border-neutral-100 dark:border-neutral-800">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-neutral-400 dark:text-neutral-500">
-              {{ messages.length > 0 ? `${messages.length} 条消息` : '' }}
+              {{ messages.length > 0 ? t('debugger.messageCount', { count: messages.length }) : '' }}
             </span>
             <button
               v-if="messages.length > 0"
@@ -66,7 +66,7 @@
           </div>
           <textarea
             v-model="inputMessage"
-            placeholder="输入消息..."
+            :placeholder="t('debugger.inputPlaceholder')"
             rows="3"
             class="w-full px-3 py-2.5 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
             @keydown.ctrl.enter="sendMessage"
@@ -116,7 +116,7 @@
               <svg class="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <p class="text-sm">发送消息后查看执行链路</p>
+              <p class="text-sm">{{ t('debugger.noChain') }}</p>
             </div>
             <div v-else class="relative">
               <!-- 时间线竖线 -->
@@ -157,8 +157,8 @@
                     </div>
                     <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-2">{{ node.output }}</p>
                     <div class="flex items-center gap-3 text-xs text-neutral-400 dark:text-neutral-500">
-                      <span>耗时: {{ node.duration }}ms</span>
-                      <span>类型: {{ node.type }}</span>
+                      <span>{{ t('debugger.duration') }} {{ node.duration }}ms</span>
+                      <span>{{ t('debugger.nodeType') }} {{ node.type }}</span>
                     </div>
                   </div>
                 </div>
@@ -173,7 +173,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <p class="text-sm">暂无 MCP 工具调用记录</p>
+              <p class="text-sm">{{ t('debugger.noMcp') }}</p>
             </div>
             <div v-else class="space-y-3">
               <div
@@ -194,11 +194,11 @@
                 </div>
                 <div class="space-y-2">
                   <div>
-                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">请求参数</span>
+                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('debugger.requestParams') }}</span>
                     <pre class="mt-1 text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-2 overflow-x-auto">{{ call.request }}</pre>
                   </div>
                   <div>
-                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">响应结果</span>
+                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ t('debugger.responseResult') }}</span>
                     <pre class="mt-1 text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-2 overflow-x-auto">{{ call.response }}</pre>
                   </div>
                 </div>
@@ -212,7 +212,7 @@
               <svg class="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p class="text-sm">暂无记忆读写记录</p>
+              <p class="text-sm">{{ t('debugger.noMemory') }}</p>
             </div>
             <div v-else class="space-y-3">
               <div
@@ -228,7 +228,7 @@
                         ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400'
                         : 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'"
                     >
-                      {{ op.type === 'load' ? '读取' : '保存' }}
+                      {{ op.type === 'load' ? t('debugger.load') : t('debugger.save') }}
                     </span>
                     <span class="text-xs text-neutral-400 dark:text-neutral-500">{{ op.time }}</span>
                   </div>
@@ -244,16 +244,16 @@
               <svg class="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
-              <p class="text-sm">暂无变量数据</p>
+              <p class="text-sm">{{ t('debugger.noVariables') }}</p>
             </div>
             <div v-else class="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-800 overflow-hidden">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">变量名</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">类型</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">当前值</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">更新时间</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('debugger.variableName') }}</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('debugger.variableType') }}</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('debugger.variableValue') }}</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('debugger.variableUpdatedAt') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -287,10 +287,10 @@
               />
               {{ executionStatusLabel }}
             </span>
-            <span>总耗时: {{ totalDuration }}ms</span>
+            <span>{{ t('debugger.totalDuration') }}: {{ totalDuration }}ms</span>
           </div>
           <div class="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
-            <span>Token 使用: {{ tokenUsage }}</span>
+            <span>{{ t('debugger.tokenUsage') }}: {{ tokenUsage }}</span>
           </div>
         </div>
       </div>
@@ -306,7 +306,43 @@ import { getAllAgents } from '@/api/agent'
 import { streamAgentExecution } from '@/api/stream'
 import { getExecutionHistory, deleteExecutionHistory } from '@/api/executionHistory'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// ==================== 类型定义 ====================
+
+interface ExecutionHistoryItem {
+  id: number
+  agentId: number
+  role: string
+  message: string
+  createdAt: string
+}
+
+interface SSEEventData {
+  type: string
+  name?: string
+  step?: string
+  status?: string
+  duration?: number
+  output?: string
+  nodeType?: string
+  toolName?: string
+  request?: unknown
+  response?: unknown
+  action?: string
+  content?: string
+  text?: string
+  delta?: string
+  varType?: string
+  value?: unknown
+  usage?: number
+  count?: number
+}
+
+interface AgentItem {
+  id: number | string
+  name: string
+}
 
 // ============ 对话历史持久化 ============
 const HISTORY_PREFIX = 'debug_history_'
@@ -352,7 +388,7 @@ async function loadHistoryFromBackend(agentId: string) {
       const historyMsgs = res.data
         .slice()
         .reverse()
-        .map((item: any) => ({
+        .map((item: ExecutionHistoryItem) => ({
           role: item.role === 'user' ? 'user' as const : 'agent' as const,
           content: item.message,
         }))
@@ -398,10 +434,10 @@ const tokenUsage = ref(0)
 
 const executionStatusLabel = computed(() => {
   const map: Record<string, string> = {
-    idle: '等待输入',
-    running: '执行中',
-    completed: '执行完成',
-    failed: '执行失败',
+    idle: t('debugger.status.idle'),
+    running: t('debugger.status.running'),
+    completed: t('debugger.status.completed'),
+    failed: t('debugger.status.failed'),
   }
   return map[executionStatus.value]
 })
@@ -460,10 +496,10 @@ function getNodeBadgeClass(status: string): string {
 
 function getNodeStatusLabel(status: string): string {
   const map: Record<string, string> = {
-    pending: '等待中',
-    running: '执行中',
-    completed: '已完成',
-    failed: '失败',
+    pending: t('debugger.nodeStatus.pending'),
+    running: t('debugger.nodeStatus.running'),
+    completed: t('debugger.nodeStatus.completed'),
+    failed: t('debugger.nodeStatus.failed'),
   }
   return map[status] || status
 }
@@ -489,7 +525,7 @@ async function sendMessage() {
 
   const agentId = Number(selectedAgent.value)
   if (!agentId) {
-    message.error('请选择一个有效的 Agent')
+    message.error(t('debugger.selectValidAgent'))
     isExecuting.value = false
     executionStatus.value = 'failed'
     return
@@ -506,18 +542,18 @@ async function sendMessage() {
 
   try {
     sseConnection = streamAgentExecution(agentId, { message: userMsg }, {
-      onMessage: (data: any) => {
+      onMessage: (data: SSEEventData) => {
         // Handle different event types from SSE
         if (data.type === 'chain' || data.type === 'step') {
           // Execution chain step
-          const node = executionChain.value.find((n: any) => n.name === data.name)
+          const node = executionChain.value.find(n => n.name === data.name)
           if (node) {
             node.status = data.status === 'running' ? 'running' : 'completed'
             node.duration = data.duration || 0
             node.output = data.output || ''
           } else {
             executionChain.value.push({
-              name: data.name || data.step || '未知步骤',
+              name: data.name || data.step || t('debugger.unknownStep'),
               status: data.status === 'running' ? 'running' : 'completed',
               duration: data.duration || 0,
               output: data.output || '',
@@ -573,7 +609,7 @@ async function sendMessage() {
           }
         }
       },
-      onError: (_error: any) => {
+      onError: (_error: Error) => {
         totalDuration.value = Date.now() - startTime
         executionStatus.value = 'failed'
         isExecuting.value = false
@@ -590,8 +626,9 @@ async function sendMessage() {
         }
       },
     })
-  } catch (error: any) {
-    message.error('执行失败: ' + (error.message || '未知错误'))
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    message.error(t('debugger.executionFailed', { message: errMsg }))
     executionStatus.value = 'failed'
     isExecuting.value = false
   }
@@ -641,23 +678,24 @@ watch(selectedAgent, (newAgentId) => {
 })
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return date.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 async function fetchAgentList() {
   try {
-    const res: any = await getAllAgents()
+    const res = await getAllAgents()
     const data = res?.data || res || []
-    const list = Array.isArray(data) ? data : []
-    agentList.value = list.map((item: any) => ({
+    const list: AgentItem[] = Array.isArray(data) ? data : []
+    agentList.value = list.map((item: AgentItem) => ({
       id: String(item.id),
       name: item.name || `Agent ${item.id}`,
     }))
     if (agentList.value.length > 0 && !selectedAgent.value) {
       selectedAgent.value = agentList.value[0].id
     }
-  } catch (error: any) {
-    message.error('获取Agent列表失败: ' + (error.message || '未知错误'))
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    message.error(t('debugger.fetchAgentListFailed', { message: errMsg }))
   }
 }
 
