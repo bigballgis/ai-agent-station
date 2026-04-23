@@ -24,8 +24,8 @@ spring:
   # PostgreSQL数据库配置
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://postgres:5432/ai_agent_platform?stringtype=unspecified
-    username: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/ai_agent_platform?stringtype=unspecified}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: 20
@@ -60,8 +60,8 @@ spring:
   data:
     redis:
       # 单机模式配置 (默认)
-      host: redis
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       database: 0
       timeout: 3000ms
