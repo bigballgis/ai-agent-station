@@ -244,6 +244,9 @@
                 添加用户
               </button>
             </div>
+            <div class="md:hidden text-center text-sm text-neutral-500 dark:text-neutral-400 py-3">
+              {{ t('common.mobileTableTip') }}
+            </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>

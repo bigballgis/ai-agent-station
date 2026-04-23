@@ -47,6 +47,9 @@
         </div>
 
         <!-- 操作日志表格 -->
+        <div class="md:hidden text-center text-sm text-neutral-500 dark:text-neutral-400 py-3">
+          {{ t('common.mobileTableTip') }}
+        </div>
         <div v-if="loading">
           <LoadingSkeleton type="table" />
         </div>
@@ -161,6 +164,9 @@
         </div>
 
         <!-- 调用日志表格 -->
+        <div class="md:hidden text-center text-sm text-neutral-500 dark:text-neutral-400 py-3">
+          {{ t('common.mobileTableTip') }}
+        </div>
         <div v-if="loading">
           <LoadingSkeleton type="table" />
         </div>
@@ -275,6 +281,9 @@
         </div>
 
         <!-- 异常日志表格 -->
+        <div class="md:hidden text-center text-sm text-neutral-500 dark:text-neutral-400 py-3">
+          {{ t('common.mobileTableTip') }}
+        </div>
         <div v-if="loading">
           <LoadingSkeleton type="table" />
         </div>

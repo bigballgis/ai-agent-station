@@ -2,6 +2,7 @@ package com.aiagent.controller;
 
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.dto.AgentDTO;
 import com.aiagent.dto.DTOConverter;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/agents")
@@ -30,9 +32,34 @@ public class AgentController {
 
     @GetMapping
     @RequiresPermission("agent:view")
-    @Operation(summary = "获取所有Agent列表")
-    public Result<List<AgentVO>> getAllAgents() {
-        return Result.success(agentService.getAllAgents().stream().map(DTOConverter::toAgentVO).toList());
+    @Operation(summary = "获取所有Agent列表（分页）")
+    public Result<PageResult<AgentVO>> getAllAgents(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @Parameter(description = "状态筛选") String status) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
+        List<AgentVO> allAgents = agentService.getAllAgents().stream()
+                .map(DTOConverter::toAgentVO)
+                .collect(Collectors.toList());
+
+        // 关键词过滤
+        if (keyword != null && !keyword.isBlank()) {
+            String lowerKeyword = keyword.toLowerCase();
+            allAgents = allAgents.stream()
+                    .filter(a -> (a.getName() != null && a.getName().toLowerCase().contains(lowerKeyword))
+                            || (a.getDescription() != null && a.getDescription().toLowerCase().contains(lowerKeyword)))
+                    .collect(Collectors.toList());
+        }
+
+        // 状态过滤
+        if (status != null && !status.isBlank()) {
+            allAgents = allAgents.stream()
+                    .filter(a -> status.equalsIgnoreCase(a.getStatus()))
+                    .collect(Collectors.toList());
+        }
+
+        return Result.success(PageResult.paginate(allAgents, page, size));
     }
 
     @GetMapping("/{id}")

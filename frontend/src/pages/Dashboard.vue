@@ -180,7 +180,7 @@ const statCards = computed(() => [
     value: totalAgents.value,
     icon: RocketOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
+    trendValue: `${t('dashboard.comparedLastMonth')} ${t('dashboard.noData')}`,
     color: 'blue' as const,
     decimals: 0,
     suffix: '',
@@ -190,7 +190,7 @@ const statCards = computed(() => [
     value: passRate.value,
     icon: CheckCircleOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
+    trendValue: `${t('dashboard.comparedLastMonth')} ${t('dashboard.noData')}`,
     color: 'green' as const,
     decimals: 1,
     suffix: '%',
@@ -200,7 +200,7 @@ const statCards = computed(() => [
     value: apiCalls.value,
     icon: ApiOutlined,
     trend: 'down' as const,
-    trendValue: `${t('dashboard.comparedYesterday')} N/A`,
+    trendValue: `${t('dashboard.comparedYesterday')} ${t('dashboard.noData')}`,
     color: 'purple' as const,
     decimals: 0,
     suffix: '',
@@ -210,7 +210,7 @@ const statCards = computed(() => [
     value: activeAlerts.value,
     icon: ClockCircleOutlined,
     trend: 'up' as const,
-    trendValue: `${t('dashboard.comparedLastMonth')} N/A`,
+    trendValue: `${t('dashboard.comparedLastMonth')} ${t('dashboard.noData')}`,
     color: 'orange' as const,
     decimals: 0,
     suffix: '',
@@ -260,39 +260,57 @@ const activities = ref<Array<{
 // ============ Chart.js 图表数据（供 ChartContainer 使用） ============
 const agentDistribution = ref({ running: 0, stopped: 0, pending: 0, abnormal: 0 })
 
-const lineChartData = computed(() => ({
-  labels: (t('dashboard.weekDays') as unknown) as string[],
-  datasets: [
-    {
-      label: t('dashboard.callVolume'),
-      data: [3200, 4100, 3800, 5200, 4800, 3900, apiCalls.value || 4321],
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59, 130, 246, 0.15)',
-      borderWidth: 2.5,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointHoverBackgroundColor: '#3b82f6',
-      pointHoverBorderColor: '#ffffff',
-      pointHoverBorderWidth: 2,
-    },
-    {
-      label: t('dashboard.success'),
-      data: [3000, 3900, 3600, 5000, 4600, 3750, Math.floor((apiCalls.value || 4321) * (passRate.value || 94.8) / 100)],
-      borderColor: '#22c55e',
-      backgroundColor: 'rgba(34, 197, 94, 0.12)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: '#22c55e',
-      pointHoverBorderColor: '#ffffff',
-      pointHoverBorderWidth: 2,
-    },
-  ],
-}))
+const lineChartData = computed(() => {
+  // 模拟数据：基于当天数据生成前6天的随机波动（±30%）
+  // TODO: 待后端提供历史统计API后替换为真实历史数据
+  const todayCalls = apiCalls.value || 4321
+  const todayRate = passRate.value || 94.8
+  const generateHistoricalData = (baseValue: number, days: number) => {
+    const data: number[] = []
+    for (let i = days - 1; i >= 1; i--) {
+      // 越早的数据波动越大，模拟自然趋势
+      const fluctuation = 0.7 + Math.random() * 0.6 // 0.7 ~ 1.3，即 ±30%
+      data.push(Math.floor(baseValue * fluctuation))
+    }
+    return data
+  }
+  const historicalCalls = generateHistoricalData(todayCalls, 6)
+  const historicalSuccess = historicalCalls.map(v => Math.floor(v * todayRate / 100))
+
+  return {
+    labels: (t('dashboard.weekDays') as unknown) as string[],
+    datasets: [
+      {
+        label: t('dashboard.callVolume'),
+        data: [...historicalCalls, todayCalls],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#3b82f6',
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 2,
+      },
+      {
+        label: t('dashboard.success'),
+        data: [...historicalSuccess, Math.floor(todayCalls * todayRate / 100)],
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34, 197, 94, 0.12)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#22c55e',
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 2,
+      },
+    ],
+  }
+})
 
 const lineChartOptions = computed(() => ({
   responsive: true,

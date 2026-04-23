@@ -2,6 +2,7 @@ package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
 
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.TestResultResponseDTO;
@@ -38,56 +39,77 @@ public class AgentTestResultController {
     @Operation(summary = "根据ID获取测试结果详情")
     @RequiresPermission("test:view")
     @GetMapping("/execution/{executionId}")
-    public Result<List<TestResultResponseDTO>> getResultsByExecutionId(@PathVariable Long executionId) {
+    public Result<PageResult<TestResultResponseDTO>> getResultsByExecutionId(
+            @PathVariable Long executionId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
         List<AgentTestResult> results = resultService.getResultsByExecutionId(executionId);
         List<TestResultResponseDTO> dtoList = results.stream()
                 .map(DTOConverter::toTestResultResponseDTO)
                 .collect(Collectors.toList());
-        return Result.success(dtoList);
+        return Result.success(PageResult.paginate(dtoList, page, size));
     }
 
     @Operation(summary = "根据执行ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/tenant/{tenantId}")
-    public Result<List<TestResultResponseDTO>> getResultsByTenantId(@PathVariable Long tenantId) {
+    public Result<PageResult<TestResultResponseDTO>> getResultsByTenantId(
+            @PathVariable Long tenantId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
         List<AgentTestResult> results = resultService.getResultsByTenantId(tenantId);
         List<TestResultResponseDTO> dtoList = results.stream()
                 .map(DTOConverter::toTestResultResponseDTO)
                 .collect(Collectors.toList());
-        return Result.success(dtoList);
+        return Result.success(PageResult.paginate(dtoList, page, size));
     }
 
     @Operation(summary = "根据租户ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/agent/{agentId}")
-    public Result<List<TestResultResponseDTO>> getResultsByAgentId(@PathVariable Long agentId) {
+    public Result<PageResult<TestResultResponseDTO>> getResultsByAgentId(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
         List<AgentTestResult> results = resultService.getResultsByAgentId(agentId);
         List<TestResultResponseDTO> dtoList = results.stream()
                 .map(DTOConverter::toTestResultResponseDTO)
                 .collect(Collectors.toList());
-        return Result.success(dtoList);
+        return Result.success(PageResult.paginate(dtoList, page, size));
     }
 
     @Operation(summary = "根据Agent ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/test-case/{testCaseId}")
-    public Result<List<TestResultResponseDTO>> getResultsByTestCaseId(@PathVariable Long testCaseId) {
+    public Result<PageResult<TestResultResponseDTO>> getResultsByTestCaseId(
+            @PathVariable Long testCaseId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
         List<AgentTestResult> results = resultService.getResultsByTestCaseId(testCaseId);
         List<TestResultResponseDTO> dtoList = results.stream()
                 .map(DTOConverter::toTestResultResponseDTO)
                 .collect(Collectors.toList());
-        return Result.success(dtoList);
+        return Result.success(PageResult.paginate(dtoList, page, size));
     }
 
-    @Operation(summary = "根据测试用例ID获取结果列表")
+    @Operation(summary = "根据状态获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/status/{tenantId}/{status}")
-    public Result<List<TestResultResponseDTO>> getResultsByStatus(@PathVariable Long tenantId, @PathVariable String status) {
+    public Result<PageResult<TestResultResponseDTO>> getResultsByStatus(
+            @PathVariable Long tenantId,
+            @PathVariable String status,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
         List<AgentTestResult> results = resultService.getResultsByStatus(tenantId, status);
         List<TestResultResponseDTO> dtoList = results.stream()
                 .map(DTOConverter::toTestResultResponseDTO)
                 .collect(Collectors.toList());
-        return Result.success(dtoList);
+        return Result.success(PageResult.paginate(dtoList, page, size));
     }
 
     @Operation(summary = "根据状态获取测试结果列表")

@@ -42,6 +42,7 @@ export default {
       error: '出了点问题',
       network: '网络连接异常',
     },
+    mobileTableTip: '建议在电脑端查看表格数据',
     error: {
       rateLimit: '请求过于频繁，请稍后重试',
       serviceUnavailable: '服务暂时不可用，请稍后重试',
@@ -217,7 +218,10 @@ export default {
       '测试套件 "回归测试 v2.1" 执行完成，通过率 96%',
       'Agent "Order Processor" 配置已更新'
     ],
-    activityTimes: ['3 分钟前', '1 小时前', '2 小时前', '3 小时前', '5 小时前']
+    activityTimes: ['3 分钟前', '1 小时前', '2 小时前', '3 小时前', '5 小时前'],
+    noData: '--',
+    loadFailed: '数据加载失败',
+    noActivity: '暂无活动记录',
   },
   agent: {
     management: 'Agent 管理',

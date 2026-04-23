@@ -130,8 +130,9 @@
           >
             <!-- 用户名 -->
             <a-form-item name="username" class="form-item-custom">
-              <label class="form-label">{{ t('login.username') }}</label>
+              <label for="login-username" class="form-label">{{ t('login.username') }}</label>
               <a-input
+                id="login-username"
                 v-model:value="loginForm.username"
                 size="large"
                 :placeholder="t('login.usernamePlaceholder')"
@@ -145,8 +146,9 @@
 
             <!-- 密码 -->
             <a-form-item name="password" class="form-item-custom">
-              <label class="form-label">{{ t('login.password') }}</label>
+              <label for="login-password" class="form-label">{{ t('login.password') }}</label>
               <a-input-password
+                id="login-password"
                 v-model:value="loginForm.password"
                 size="large"
                 :placeholder="t('login.passwordPlaceholder')"

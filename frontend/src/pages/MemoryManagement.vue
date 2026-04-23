@@ -28,6 +28,7 @@
       <!-- Agent 选择器 -->
       <select
         v-model="selectedAgent"
+        aria-label="Agent"
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[160px]"
       >
         <option value="">全部 Agent</option>
@@ -69,6 +70,7 @@
       <!-- 时间范围 -->
       <select
         v-model="timeRange"
+        aria-label="Time range"
         class="px-4 py-2.5 rounded-xl text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
       >
         <option value="">全部时间</option>

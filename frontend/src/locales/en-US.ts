@@ -42,6 +42,7 @@ export default {
       error: 'Something went wrong',
       network: 'Network connection error',
     },
+    mobileTableTip: 'Table data is best viewed on desktop',
     error: {
       rateLimit: 'Too many requests, please try again later',
       serviceUnavailable: 'Service temporarily unavailable, please try again later',
@@ -218,7 +219,10 @@ export default {
       'Test suite "Regression v2.1" completed with 96% pass rate',
       'Agent "Order Processor" configuration updated'
     ],
-    activityTimes: ['3 min ago', '1 hour ago', '2 hours ago', '3 hours ago', '5 hours ago']
+    activityTimes: ['3 min ago', '1 hour ago', '2 hours ago', '3 hours ago', '5 hours ago'],
+    noData: 'N/A',
+    loadFailed: 'Failed to load data',
+    noActivity: 'No recent activity',
   },
   agent: {
     management: 'Agent Management',

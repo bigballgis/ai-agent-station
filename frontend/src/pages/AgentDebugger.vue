@@ -6,8 +6,9 @@
       <div class="w-96 flex-shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <!-- Agent 选择器 -->
         <div class="p-4 border-b border-neutral-100 dark:border-neutral-800">
-          <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('debugger.selectAgent') }}</label>
+          <label for="agent-debugger-select" class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('debugger.selectAgent') }}</label>
           <select
+            id="agent-debugger-select"
             v-model="selectedAgent"
             class="w-full px-3 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >

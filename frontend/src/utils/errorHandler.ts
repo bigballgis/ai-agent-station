@@ -9,6 +9,95 @@ import { App } from 'vue'
  * - window.onunhandledrejection 捕获未处理的 Promise 异常
  * - 错误上报到监控系统（生产环境）
  */
+
+const ERROR_STORAGE_KEY = '__frontend_error_reports__'
+const MAX_STORED_ERRORS = 50
+
+interface ErrorReport {
+  type: 'vue' | 'global' | 'promise'
+  message: string
+  stack?: string
+  source?: string
+  lineno?: number
+  colno?: number
+  component?: string
+  info?: string
+}
+
+interface StoredErrorReport extends ErrorReport {
+  timestamp: string
+  url: string
+  userAgent: string
+  userId?: string
+}
+
+/**
+ * 获取当前用户ID（从 localStorage 中读取）
+ */
+function getCurrentUserId(): string | undefined {
+  try {
+    const userStr = localStorage.getItem('user') || localStorage.getItem('currentUser')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      return user.id || user.userId || user.username || undefined
+    }
+  } catch {
+    // 解析失败时忽略
+  }
+  return undefined
+}
+
+/**
+ * 将错误信息存储到 localStorage 中（最多保留50条）
+ */
+function storeError(report: ErrorReport): void {
+  try {
+    const storedReport: StoredErrorReport = {
+      ...report,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      userId: getCurrentUserId(),
+    }
+
+    const raw = localStorage.getItem(ERROR_STORAGE_KEY)
+    const errors: StoredErrorReport[] = raw ? JSON.parse(raw) : []
+
+    errors.push(storedReport)
+
+    // 只保留最新的 MAX_STORED_ERRORS 条记录
+    if (errors.length > MAX_STORED_ERRORS) {
+      errors.splice(0, errors.length - MAX_STORED_ERRORS)
+    }
+
+    localStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(errors))
+  } catch {
+    // localStorage 写入失败时静默处理，避免影响主流程
+  }
+}
+
+/**
+ * 获取已存储的错误记录（供开发者调试使用）
+ */
+export function getStoredErrors(): StoredErrorReport[] {
+  try {
+    const raw = localStorage.getItem(ERROR_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 清除已存储的错误记录
+ */
+export function clearStoredErrors(): void {
+  try {
+    localStorage.removeItem(ERROR_STORAGE_KEY)
+  } catch {
+    // 忽略
+  }
+}
 export function setupErrorHandler(app: App) {
   // Vue 组件错误捕获
   app.config.errorHandler = (err, instance, info) => {
@@ -67,19 +156,9 @@ export function setupErrorHandler(app: App) {
   }, true) // 使用捕获阶段
 }
 
-interface ErrorReport {
-  type: 'vue' | 'global' | 'promise'
-  message: string
-  stack?: string
-  source?: string
-  lineno?: number
-  colno?: number
-  component?: string
-  info?: string
-}
-
 function reportError(report: ErrorReport) {
-  // 错误上报已集成到全局异常处理中
-  // 生产环境建议接入 Sentry 或自建错误上报服务以获取更详细的错误追踪
+  // 将错误信息存储到 localStorage 中，供开发者调试查看
+  // TODO: 生产环境建议接入 Sentry 或自建错误上报服务以获取更详细的错误追踪
   console.warn('[Error Report]', JSON.stringify(report))
+  storeError(report)
 }
