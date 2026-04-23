@@ -88,6 +88,12 @@ export default {
     feature2Desc: 'Enterprise-grade security, multi-tenant data isolation',
     feature3Desc: 'Flexible node and connection configuration to meet diverse needs',
     forgotPassword: 'Forgot Password?',
+    captcha: 'Captcha',
+    captchaPlaceholder: 'Enter the answer',
+    captchaRequired: 'Captcha answer is required',
+    captchaRefresh: 'Refresh',
+    captchaExpired: 'Captcha expired, please get a new one',
+    captchaError: 'Incorrect captcha',
   },
   password: {
     changePassword: 'Change Password',

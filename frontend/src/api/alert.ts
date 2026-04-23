@@ -43,6 +43,13 @@ export function getAlertStats() {
 }
 
 /**
+ * 获取活跃告警列表
+ */
+export function getActiveAlerts() {
+  return request.get('/v1/alerts/records/active')
+}
+
+/**
  * 解决告警记录
  */
 export function resolveAlertRecord(id: number | string) {

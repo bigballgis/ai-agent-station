@@ -8,20 +8,26 @@ import com.aiagent.engine.graph.GraphExecutor;
 import com.aiagent.engine.graph.GraphNode;
 import com.aiagent.engine.graph.GraphParser;
 import com.aiagent.entity.Agent;
+import com.aiagent.entity.ExecutionHistory;
 import com.aiagent.repository.AgentRepository;
-import com.aiagent.service.llm.LangChain4jService;
+import com.aiagent.repository.ExecutionHistoryRepository;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
+import com.aiagent.security.UserPrincipal;
+import com.aiagent.service.llm.LangChain4jService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,6 +55,7 @@ public class StreamController {
     private final GraphParser graphParser;
     private final GraphExecutor graphExecutor;
     private final AgentRepository agentRepository;
+    private final ExecutionHistoryRepository executionHistoryRepository;
     private final Executor sseExecutor;
     private final ObjectMapper objectMapper;
 
@@ -57,6 +64,7 @@ public class StreamController {
                             GraphParser graphParser,
                             GraphExecutor graphExecutor,
                             AgentRepository agentRepository,
+                            ExecutionHistoryRepository executionHistoryRepository,
                             @Qualifier("sseExecutor") Executor sseExecutor,
                             ObjectMapper objectMapper) {
         this.langChain4jService = langChain4jService;
@@ -64,6 +72,7 @@ public class StreamController {
         this.graphParser = graphParser;
         this.graphExecutor = graphExecutor;
         this.agentRepository = agentRepository;
+        this.executionHistoryRepository = executionHistoryRepository;
         this.sseExecutor = sseExecutor;
         this.objectMapper = objectMapper;
     }
@@ -254,6 +263,9 @@ public class StreamController {
 
         log.info("[SSE] Agent 流式执行: agentId={}", agentId);
 
+        // 保存用户消息到执行历史
+        saveExecutionHistory(agentId, message, "user");
+
         SseEmitter emitter = new SseEmitter(300_000L);
 
         sseExecutor.execute(() -> {
@@ -431,6 +443,12 @@ public class StreamController {
 
                 // 5. 发送 done 事件
                 String finalOutput = fullOutput.toString();
+
+                // 保存助手回复到执行历史
+                if (!finalOutput.isEmpty()) {
+                    saveExecutionHistory(agentId, finalOutput, "assistant");
+                }
+
                 Map<String, String> doneData = new LinkedHashMap<>();
                 doneData.put("type", "done");
                 doneData.put("content", finalOutput);
@@ -519,5 +537,29 @@ public class StreamController {
             }
         }
         return null;
+    }
+
+    /**
+     * 保存执行历史记录到数据库
+     */
+    private void saveExecutionHistory(Long agentId, String messageContent, String role) {
+        try {
+            ExecutionHistory history = new ExecutionHistory();
+            history.setAgentId(agentId);
+            history.setMessage(messageContent);
+            history.setRole(role);
+            history.setTimestamp(LocalDateTime.now());
+
+            // 获取当前登录用户信息
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+                history.setUserId(principal.getId());
+                history.setTenantId(principal.getTenantId());
+            }
+
+            executionHistoryRepository.save(history);
+        } catch (Exception e) {
+            log.warn("[SSE] 保存执行历史失败: {}", e.getMessage());
+        }
     }
 }

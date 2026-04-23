@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.dto.CaptchaResponseDTO;
 import com.aiagent.dto.ChangePasswordRequestDTO;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.RegisterRequestDTO;
@@ -16,10 +17,15 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -29,11 +35,59 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final StringRedisTemplate redisTemplate;
+
+    private static final String CAPTCHA_PREFIX = "captcha:";
+    private static final long CAPTCHA_TTL_MINUTES = 5;
+
+    /**
+     * 获取数学验证码
+     */
+    @GetMapping("/captcha")
+    @Operation(summary = "获取数学验证码")
+    public Result<CaptchaResponseDTO> getCaptcha() {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        int a = random.nextInt(1, 21);
+        int b = random.nextInt(1, 21);
+        String operator = random.nextBoolean() ? "+" : "-";
+        int answer;
+        if ("+".equals(operator)) {
+            answer = a + b;
+        } else {
+            // 确保 a >= b，避免负数答案
+            if (a < b) {
+                int temp = a;
+                a = b;
+                b = temp;
+            }
+            answer = a - b;
+        }
+        String captchaId = UUID.randomUUID().toString().replace("-", "");
+        String question = a + " " + operator + " " + b + " = ?";
+        String redisKey = CAPTCHA_PREFIX + captchaId;
+        redisTemplate.opsForValue().set(redisKey, String.valueOf(answer), CAPTCHA_TTL_MINUTES, TimeUnit.MINUTES);
+
+        CaptchaResponseDTO dto = new CaptchaResponseDTO(captchaId, question);
+        return Result.success(dto);
+    }
 
     @PostMapping("/login")
     @Operation(summary = "用户登录")
     @OperationLog(value = "用户登录", module = "认证")
     public Result<?> login(@Valid @RequestBody LoginRequest request) {
+        // 如果提供了验证码，先验证
+        if (request.getCaptchaId() != null && !request.getCaptchaId().isBlank()) {
+            String redisKey = CAPTCHA_PREFIX + request.getCaptchaId();
+            String storedAnswer = redisTemplate.opsForValue().get(redisKey);
+            // 验证后删除（一次性使用）
+            redisTemplate.delete(redisKey);
+            if (storedAnswer == null) {
+                return Result.fail(400, "验证码已过期，请重新获取");
+            }
+            if (!storedAnswer.equals(request.getCaptchaAnswer())) {
+                return Result.fail(400, "验证码错误");
+            }
+        }
         return Result.success(authService.login(request.getUsername(), request.getPassword(), request.getTenantId()));
     }
 
@@ -122,6 +176,8 @@ public class AuthController {
         @Size(min = 6, max = 100, message = "密码长度为6-100个字符")
         private String password;
         private Long tenantId;
+        private String captchaId;
+        private String captchaAnswer;
 
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
@@ -129,6 +185,10 @@ public class AuthController {
         public void setPassword(String password) { this.password = password; }
         public Long getTenantId() { return tenantId; }
         public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+        public String getCaptchaId() { return captchaId; }
+        public void setCaptchaId(String captchaId) { this.captchaId = captchaId; }
+        public String getCaptchaAnswer() { return captchaAnswer; }
+        public void setCaptchaAnswer(String captchaAnswer) { this.captchaAnswer = captchaAnswer; }
     }
 
     public static class RefreshRequest {

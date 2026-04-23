@@ -87,6 +87,12 @@ export default {
     feature1Desc: '可视化拖拽编排，零代码构建智能工作流',
     feature2Desc: '企业级安全防护，多租户数据隔离',
     feature3Desc: '灵活配置节点与连接，满足多样化需求',
+    captcha: '验证码',
+    captchaPlaceholder: '请输入计算结果',
+    captchaRequired: '请输入验证码答案',
+    captchaRefresh: '换一道',
+    captchaExpired: '验证码已过期，请重新获取',
+    captchaError: '验证码错误',
   },
   password: {
     changePassword: '修改密码',

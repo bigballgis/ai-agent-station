@@ -4,6 +4,10 @@ import type { LoginRequest, LoginResultData, RegisterRequest, User, UserInfo } f
 
 // ==================== Auth ====================
 
+export function getCaptcha(): Promise<ApiResponse<{ captchaId: string; question: string }>> {
+  return request.get('/v1/auth/captcha')
+}
+
 export function login(data: LoginRequest): Promise<ApiResponse<LoginResultData>> {
   return request.post('/v1/auth/login', data)
 }

@@ -304,6 +304,7 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { getAllAgents } from '@/api/agent'
 import { streamAgentExecution } from '@/api/stream'
+import { getExecutionHistory, deleteExecutionHistory } from '@/api/executionHistory'
 
 const { t } = useI18n()
 
@@ -327,12 +328,12 @@ function saveHistory(agentId: string, msgs: typeof messages.value) {
 
 function loadHistory(agentId: string): typeof messages.value {
   if (!agentId) return []
+  // Try localStorage first for immediate display
   try {
     const raw = localStorage.getItem(getHistoryKey(agentId))
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed) && parsed.length > 0) {
-        message.info(t('debugger.historyLoaded'))
         return parsed
       }
     }
@@ -340,6 +341,30 @@ function loadHistory(agentId: string): typeof messages.value {
     // invalid data, ignore
   }
   return []
+}
+
+async function loadHistoryFromBackend(agentId: string) {
+  if (!agentId) return
+  try {
+    const res = await getExecutionHistory(Number(agentId))
+    if (res.code === 200 && res.data && Array.isArray(res.data) && res.data.length > 0) {
+      // Backend returns newest first, reverse to get chronological order
+      const historyMsgs = res.data
+        .slice()
+        .reverse()
+        .map((item: any) => ({
+          role: item.role === 'user' ? 'user' as const : 'agent' as const,
+          content: item.message,
+        }))
+      messages.value = historyMsgs
+      // Sync to localStorage as offline fallback
+      saveHistory(agentId, messages.value)
+      message.info(t('debugger.historyLoaded'))
+    }
+    // If backend returns empty, keep whatever localStorage had (if anything)
+  } catch {
+    // Backend unavailable, localStorage data already loaded by loadHistory()
+  }
 }
 
 function clearHistoryStorage(agentId: string) {
@@ -579,7 +604,7 @@ function clearHistory() {
     okText: t('common.confirm'),
     okType: 'danger',
     cancelText: t('common.cancel'),
-    onOk: () => {
+    onOk: async () => {
       clearHistoryStorage(selectedAgent.value)
       messages.value = []
       // 同时清空执行数据
@@ -590,6 +615,14 @@ function clearHistory() {
       executionStatus.value = 'idle'
       totalDuration.value = 0
       tokenUsage.value = 0
+      // Try to delete from backend
+      try {
+        if (selectedAgent.value) {
+          await deleteExecutionHistory(Number(selectedAgent.value))
+        }
+      } catch {
+        // Backend delete failed, localStorage already cleared
+      }
       message.success(t('debugger.clearHistorySuccess'))
     },
   })
@@ -598,7 +631,10 @@ function clearHistory() {
 // 监听 Agent 切换，加载对应历史记录
 watch(selectedAgent, (newAgentId) => {
   if (newAgentId) {
+    // Immediately load from localStorage for fast display
     messages.value = loadHistory(newAgentId)
+    // Then try to load from backend (may override with more complete data)
+    loadHistoryFromBackend(newAgentId)
   } else {
     messages.value = []
   }

@@ -160,6 +160,24 @@
               </a-input-password>
             </a-form-item>
 
+            <!-- 验证码 -->
+            <a-form-item name="captchaAnswer" class="form-item-custom">
+              <label class="form-label">{{ t('login.captcha') }}</label>
+              <div class="captcha-row">
+                <a-input
+                  v-model:value="loginForm.captchaAnswer"
+                  size="large"
+                  :placeholder="t('login.captchaPlaceholder')"
+                  class="input-custom captcha-input"
+                />
+                <div class="captcha-display" @click="fetchCaptcha" :title="t('login.captchaRefresh')">
+                  <span v-if="captchaLoading" class="captcha-loading">...</span>
+                  <span v-else-if="captchaQuestion" class="captcha-text">{{ captchaQuestion }}</span>
+                  <span v-else class="captcha-text" @click="fetchCaptcha">{{ t('login.captchaRefresh') }}</span>
+                </div>
+              </div>
+            </a-form-item>
+
             <!-- 记住我 -->
             <div class="flex items-center justify-between mb-6">
               <a-checkbox v-model:checked="rememberMe" class="checkbox-custom">
@@ -364,14 +382,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
-import { register } from '@/api/user'
+import { register, getCaptcha } from '@/api/user'
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()
@@ -385,9 +403,32 @@ const registerFormRef = ref()
 const loading = ref(false)
 const rememberMe = ref(false)
 
+// Captcha state
+const captchaId = ref('')
+const captchaQuestion = ref('')
+const captchaAnswer = ref('')
+const captchaLoading = ref(false)
+
+async function fetchCaptcha() {
+  try {
+    captchaLoading.value = true
+    const res = await getCaptcha()
+    if (res.code === 200 && res.data) {
+      captchaId.value = res.data.captchaId
+      captchaQuestion.value = res.data.question
+      captchaAnswer.value = ''
+    }
+  } catch {
+    // silently fail
+  } finally {
+    captchaLoading.value = false
+  }
+}
+
 const loginForm = reactive({
   username: '',
-  password: ''
+  password: '',
+  captchaAnswer: ''
 })
 
 const registerForm = reactive({
@@ -404,6 +445,9 @@ const loginRules = {
   password: [
     { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
     { min: 6, message: t('login.passwordMinLength'), trigger: 'blur' }
+  ],
+  captchaAnswer: [
+    { required: true, message: t('login.captchaRequired'), trigger: 'blur' }
   ]
 }
 
@@ -435,7 +479,14 @@ const registerRules = {
 
 function switchTab(tab: 'login' | 'register') {
   activeTab.value = tab
+  if (tab === 'login' && !captchaQuestion.value) {
+    fetchCaptcha()
+  }
 }
+
+onMounted(() => {
+  fetchCaptcha()
+})
 
 async function handleLogin() {
   try {
@@ -445,7 +496,9 @@ async function handleLogin() {
     const success = await userStore.login({
       username: loginForm.username,
       password: loginForm.password,
-      remember: rememberMe.value
+      remember: rememberMe.value,
+      captchaId: captchaId.value,
+      captchaAnswer: loginForm.captchaAnswer
     })
 
     if (success) {
@@ -453,12 +506,14 @@ async function handleLogin() {
       router.push('/dashboard')
     } else {
       message.error(t('login.loginFailed'))
+      fetchCaptcha()
     }
   } catch (error: unknown) {
     console.error('Login error:', error)
     const errMessage = error instanceof Error ? error.message : undefined
     const axiosError = error as { response?: { data?: { message?: string } } }
     message.error(axiosError?.response?.data?.message || errMessage || t('login.loginFailed'))
+    fetchCaptcha()
   } finally {
     loading.value = false
   }
@@ -1030,5 +1085,68 @@ function particleStyle(_n: number) {
   .login-card {
     max-width: 420px;
   }
+}
+
+/* ===========================================
+   验证码样式
+   =========================================== */
+
+.captcha-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.captcha-input {
+  flex: 1;
+}
+
+.captcha-display {
+  flex-shrink: 0;
+  width: 140px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1.5px solid #c7d2fe;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+:deep(.dark) .captcha-display {
+  background: linear-gradient(135deg, #312e81 0%, #3730a3 100%);
+  border-color: #4338ca;
+}
+
+.captcha-display:hover {
+  border-color: #818cf8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+}
+
+.captcha-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4338ca;
+  letter-spacing: 1px;
+  font-family: 'Courier New', monospace;
+}
+
+:deep(.dark) .captcha-text {
+  color: #a5b4fc;
+}
+
+.captcha-loading {
+  font-size: 20px;
+  color: #6366f1;
+  animation: captchaPulse 1s ease-in-out infinite;
+}
+
+@keyframes captchaPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 </style>

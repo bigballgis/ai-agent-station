@@ -16,6 +16,8 @@ export interface LoginRequest {
   username: string
   password: string
   tenantId?: string
+  captchaId?: string
+  captchaAnswer?: string
 }
 
 export interface RegisterRequest {

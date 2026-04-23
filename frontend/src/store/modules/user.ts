@@ -26,7 +26,7 @@ export const useUserStore = defineStore('user', () => {
     otherStorage.removeItem('userInfo')
   }
 
-  async function login(loginData: { username: string; password: string; remember?: boolean }) {
+  async function login(loginData: { username: string; password: string; remember?: boolean; captchaId?: string; captchaAnswer?: string }) {
     try {
       const res = await userApi.login(loginData)
       if (res.code === 200 || res.code === 0) {
