@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import type { ApiResponse, PageResult } from '@/types/common'
 
 // ==================== Types ====================
 
@@ -64,17 +65,6 @@ export interface WorkflowNodeLog {
   duration?: number
 }
 
-export interface PageResult<T> {
-  total: number
-  records: T[]
-}
-
-export interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
-}
-
 // ==================== API ====================
 
 export const workflowApi = {
@@ -82,11 +72,11 @@ export const workflowApi = {
   getDefinitions: (page = 0, size = 10, status?: string) => {
     const params: Record<string, unknown> = { page, size }
     if (status) params.status = status
-    return request.get<ApiResponse<PageResult<WorkflowDefinition>>>('/workflows/definitions', { params })
+    return request.get<ApiResponse<PageResult<WorkflowDefinition>>>('/v1/workflows/definitions', { params })
   },
 
   getDefinition: (id: number) => {
-    return request.get<ApiResponse<WorkflowDefinition>>(`/workflows/definitions/${id}`)
+    return request.get<ApiResponse<WorkflowDefinition>>(`/v1/workflows/definitions/${id}`)
   },
 
   createDefinition: (data: {
@@ -96,7 +86,7 @@ export const workflowApi = {
     edges?: Record<string, unknown>
     triggers?: Record<string, unknown>
   }) => {
-    return request.post<ApiResponse<WorkflowDefinition>>('/workflows/definitions', data)
+    return request.post<ApiResponse<WorkflowDefinition>>('/v1/workflows/definitions', data)
   },
 
   updateDefinition: (id: number, data: {
@@ -106,15 +96,15 @@ export const workflowApi = {
     edges?: Record<string, unknown>
     triggers?: Record<string, unknown>
   }) => {
-    return request.put<ApiResponse<WorkflowDefinition>>(`/workflows/definitions/${id}`, data)
+    return request.put<ApiResponse<WorkflowDefinition>>(`/v1/workflows/definitions/${id}`, data)
   },
 
   deleteDefinition: (id: number) => {
-    return request.delete<ApiResponse<void>>(`/workflows/definitions/${id}`)
+    return request.delete<ApiResponse<void>>(`/v1/workflows/definitions/${id}`)
   },
 
   publishDefinition: (id: number) => {
-    return request.post<ApiResponse<WorkflowDefinition>>(`/workflows/definitions/${id}/publish`)
+    return request.post<ApiResponse<WorkflowDefinition>>(`/v1/workflows/definitions/${id}/publish`)
   },
 
   // Instance APIs
@@ -122,38 +112,38 @@ export const workflowApi = {
     const params: Record<string, unknown> = { page, size }
     if (filters?.status) params.status = filters.status
     if (filters?.definitionId) params.definitionId = filters.definitionId
-    return request.get<ApiResponse<PageResult<WorkflowInstance>>>('/workflows/instances', { params })
+    return request.get<ApiResponse<PageResult<WorkflowInstance>>>('/v1/workflows/instances', { params })
   },
 
   getInstance: (id: number) => {
-    return request.get<ApiResponse<WorkflowInstance>>(`/workflows/instances/${id}`)
+    return request.get<ApiResponse<WorkflowInstance>>(`/v1/workflows/instances/${id}`)
   },
 
   startWorkflow: (definitionId: number, variables?: Record<string, unknown>) => {
-    return request.post<ApiResponse<WorkflowInstance>>('/workflows/instances/start', {
+    return request.post<ApiResponse<WorkflowInstance>>('/v1/workflows/instances/start', {
       definitionId,
       variables
     })
   },
 
   getInstanceHistory: (id: number) => {
-    return request.get<ApiResponse<WorkflowNodeLog[]>>(`/workflows/instances/${id}/history`)
+    return request.get<ApiResponse<WorkflowNodeLog[]>>(`/v1/workflows/instances/${id}/history`)
   },
 
   cancelWorkflow: (id: number, reason?: string) => {
-    return request.post<ApiResponse<WorkflowInstance>>(`/workflows/instances/${id}/cancel`, { reason })
+    return request.post<ApiResponse<WorkflowInstance>>(`/v1/workflows/instances/${id}/cancel`, { reason })
   },
 
   approveNode: (instanceId: number, nodeId: string, comment?: string) => {
     return request.post<ApiResponse<WorkflowNodeLog>>(
-      `/workflows/instances/${instanceId}/nodes/${nodeId}/approve`,
+      `/v1/workflows/instances/${instanceId}/nodes/${nodeId}/approve`,
       { comment }
     )
   },
 
   rejectNode: (instanceId: number, nodeId: string, comment?: string) => {
     return request.post<ApiResponse<WorkflowNodeLog>>(
-      `/workflows/instances/${instanceId}/nodes/${nodeId}/reject`,
+      `/v1/workflows/instances/${instanceId}/nodes/${nodeId}/reject`,
       { comment }
     )
   }

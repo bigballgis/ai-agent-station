@@ -3,7 +3,9 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
+import com.aiagent.dto.CreateTenantRequestDTO;
 import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.UpdateTenantRequestDTO;
 import com.aiagent.entity.Tenant;
 import com.aiagent.service.TenantService;
 import com.aiagent.vo.TenantVO;
@@ -43,7 +45,8 @@ public class TenantController {
     @Operation(summary = "创建租户")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<TenantVO> createTenant(@RequestBody Tenant tenant) {
+    public Result<TenantVO> createTenant(@RequestBody CreateTenantRequestDTO requestDTO) {
+        Tenant tenant = DTOConverter.toTenantEntity(requestDTO);
         return Result.success(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
     }
 
@@ -51,8 +54,10 @@ public class TenantController {
     @Operation(summary = "更新租户信息")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
-    public Result<TenantVO> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
-        return Result.success(DTOConverter.toTenantVO(tenantService.updateTenant(id, tenant)));
+    public Result<TenantVO> updateTenant(@PathVariable Long id, @RequestBody UpdateTenantRequestDTO requestDTO) {
+        Tenant existing = tenantService.getTenantById(id);
+        DTOConverter.updateTenantFromDTO(requestDTO, existing);
+        return Result.success(DTOConverter.toTenantVO(tenantService.updateTenant(id, existing)));
     }
 
     @DeleteMapping("/{id}")

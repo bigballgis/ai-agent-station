@@ -3,6 +3,8 @@ export interface SSEOptions {
   onError?: (err: Error) => void
 }
 
+import { getToken } from '@/utils/authStorage'
+
 export function streamChat(
   params: {
     provider?: string
@@ -30,7 +32,7 @@ export function createSSEConnection(
   onError?: (err: Error) => void
 ): { close: () => void } {
   const controller = new AbortController()
-  const token = localStorage.getItem('token')
+  const token = getToken()
   const tenantId = localStorage.getItem('tenantId')
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 

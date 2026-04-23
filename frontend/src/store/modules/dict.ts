@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { DictType, DictItem, ApiResponse } from '@/types'
+import type { DictType, DictItem } from '@/types'
 import request from '@/utils/request'
 
 export const useDictStore = defineStore('dict', () => {
@@ -25,9 +25,9 @@ export const useDictStore = defineStore('dict', () => {
 
   // Actions
   async function fetchDictTypes() {
-    const res = await request.get<ApiResponse<DictType[]>>('/api/dict/types')
-    dictTypes.value = res.data.data || []
-    return res.data.data
+    const res = await request.get<DictType[]>('/v1/dict/types')
+    dictTypes.value = res.data || []
+    return res.data
   }
 
   async function fetchDictItems(dictType: string) {
@@ -35,10 +35,10 @@ export const useDictStore = defineStore('dict', () => {
       return dictItems.value.get(dictType)!
     }
 
-    const res = await request.get<ApiResponse<DictItem[]>>(
-      `/api/dict/items/${dictType}`
+    const res = await request.get<DictItem[]>(
+      `/v1/dict/items/${dictType}`
     )
-    const items = res.data.data || []
+    const items = res.data || []
     dictItems.value.set(dictType, items)
     return items
   }

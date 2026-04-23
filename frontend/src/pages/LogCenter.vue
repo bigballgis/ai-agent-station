@@ -421,7 +421,7 @@ interface OperationLog {
 }
 
 const operationFilters = ref({
-  dateRange: null as any,
+  dateRange: null as { start: string; end: string } | null,
   module: '',
   operator: '',
 })
@@ -508,7 +508,7 @@ interface ApiLog {
 }
 
 const apiFilters = ref({
-  dateRange: null as any,
+  dateRange: null as { start: string; end: string } | null,
   agent: '',
   status: '',
 })
@@ -595,7 +595,7 @@ const expandedErrors = ref<Set<string>>(new Set())
 
 // 异常日志筛选
 const errorFilters = ref({
-  dateRange: null as any,
+  dateRange: null as { start: string; end: string } | null,
   module: '',
   level: '',
 })

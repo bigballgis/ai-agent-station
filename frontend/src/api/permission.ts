@@ -3,67 +3,67 @@ import request from '@/utils/request'
 // ==================== Permissions ====================
 
 export function getPermissions() {
-  return request.get('/permissions')
+  return request.get('/v1/permissions')
 }
 
 export function getPermissionById(id: number) {
-  return request.get(`/permissions/${id}`)
+  return request.get(`/v1/permissions/${id}`)
 }
 
 export function createPermission(data: Record<string, unknown>) {
-  return request.post('/permissions', data)
+  return request.post('/v1/permissions', data)
 }
 
 export function updatePermission(id: number, data: Record<string, unknown>) {
-  return request.put(`/permissions/${id}`, data)
+  return request.put(`/v1/permissions/${id}`, data)
 }
 
 export function deletePermission(id: number) {
-  return request.delete(`/permissions/${id}`)
+  return request.delete(`/v1/permissions/${id}`)
 }
 
 export function assignPermission(roleId: number, permissionId: number) {
-  return request.post('/permissions/assign', { roleId, permissionId })
+  return request.post(`/v1/permissions/roles/${roleId}/permissions/${permissionId}`)
 }
 
 export function removePermission(roleId: number, permissionId: number) {
-  return request.delete('/permissions/remove', { params: { roleId, permissionId } })
+  return request.delete(`/v1/permissions/roles/${roleId}/permissions/${permissionId}`)
 }
 
 export function getRolePermissions(roleId: number) {
-  return request.get(`/permissions/role/${roleId}`)
+  return request.get(`/v1/permissions/role/${roleId}`)
 }
 
 // ==================== Roles ====================
 
 export function getRoles() {
-  return request.get('/roles')
+  return request.get('/v1/roles')
 }
 
 export function getRoleById(id: number) {
-  return request.get(`/roles/${id}`)
+  return request.get(`/v1/roles/${id}`)
 }
 
 export function createRole(data: Record<string, unknown>) {
-  return request.post('/roles', data)
+  return request.post('/v1/roles', data)
 }
 
 export function updateRole(id: number, data: Record<string, unknown>) {
-  return request.put(`/roles/${id}`, data)
+  return request.put(`/v1/roles/${id}`, data)
 }
 
 export function deleteRole(id: number) {
-  return request.delete(`/roles/${id}`)
+  return request.delete(`/v1/roles/${id}`)
 }
 
 export function assignRole(userId: number, roleId: number) {
-  return request.post('/roles/assign', { userId, roleId })
+  return request.post(`/v1/roles/users/${userId}/roles/${roleId}`)
 }
 
 export function removeRole(userId: number, roleId: number) {
-  return request.delete('/roles/remove', { params: { userId, roleId } })
+  return request.delete(`/v1/roles/users/${userId}/roles/${roleId}`)
 }
 
 export function getUserRoles(userId: number) {
-  return request.get(`/roles/user/${userId}`)
+  return request.get(`/v1/roles/user/${userId}`)
 }

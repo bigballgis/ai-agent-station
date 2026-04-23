@@ -3,12 +3,17 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.Result;
+import com.aiagent.dto.CreateTestCaseRequestDTO;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.TestCaseResponseDTO;
+import com.aiagent.dto.UpdateTestCaseRequestDTO;
 import com.aiagent.entity.AgentTestCase;
 import com.aiagent.service.AgentTestCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,39 +29,50 @@ public class AgentTestCaseController {
     @RequiresPermission("test:manage")
     @PostMapping
     @Operation(summary = "创建测试用例")
-    public Result<AgentTestCase> createTestCase(@RequestBody AgentTestCase testCase) {
+    public Result<TestCaseResponseDTO> createTestCase(@RequestBody CreateTestCaseRequestDTO request) {
+        AgentTestCase testCase = DTOConverter.toTestCaseEntity(request);
         AgentTestCase createdTestCase = testCaseService.createTestCase(testCase);
-        return Result.success(createdTestCase);
+        return Result.success(DTOConverter.toTestCaseResponseDTO(createdTestCase));
     }
 
     @RequiresPermission("test:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取测试用例详情")
-    public Result<AgentTestCase> getTestCaseById(@PathVariable Long id) {
+    public Result<TestCaseResponseDTO> getTestCaseById(@PathVariable Long id) {
         return testCaseService.getTestCaseById(id)
+                .map(DTOConverter::toTestCaseResponseDTO)
                 .map(Result::success)
                 .orElse(Result.fail("Test case not found"));
     }
 
     @GetMapping("/tenant/{tenantId}")
     @Operation(summary = "根据租户ID获取测试用例列表")
-    public Result<List<AgentTestCase>> getTestCasesByTenantId(@PathVariable Long tenantId) {
+    public Result<List<TestCaseResponseDTO>> getTestCasesByTenantId(@PathVariable Long tenantId) {
         List<AgentTestCase> testCases = testCaseService.getTestCasesByTenantId(tenantId);
-        return Result.success(testCases);
+        List<TestCaseResponseDTO> dtoList = testCases.stream()
+                .map(DTOConverter::toTestCaseResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取测试用例列表")
-    public Result<List<AgentTestCase>> getTestCasesByAgentId(@PathVariable Long agentId) {
+    public Result<List<TestCaseResponseDTO>> getTestCasesByAgentId(@PathVariable Long agentId) {
         List<AgentTestCase> testCases = testCaseService.getTestCasesByAgentId(agentId);
-        return Result.success(testCases);
+        List<TestCaseResponseDTO> dtoList = testCases.stream()
+                .map(DTOConverter::toTestCaseResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新测试用例")
-    public Result<AgentTestCase> updateTestCase(@PathVariable Long id, @RequestBody AgentTestCase testCase) {
+    public Result<TestCaseResponseDTO> updateTestCase(@PathVariable Long id, @RequestBody UpdateTestCaseRequestDTO request) {
+        AgentTestCase testCase = testCaseService.getTestCaseById(id)
+                .orElseThrow(() -> new RuntimeException("Test case not found"));
+        DTOConverter.updateTestCaseFromDTO(request, testCase);
         AgentTestCase updatedTestCase = testCaseService.updateTestCase(id, testCase);
-        return Result.success(updatedTestCase);
+        return Result.success(DTOConverter.toTestCaseResponseDTO(updatedTestCase));
     }
 
     @DeleteMapping("/{id}")
@@ -68,23 +84,29 @@ public class AgentTestCaseController {
 
     @GetMapping("/code/{tenantId}/{testCode}")
     @Operation(summary = "根据编码获取测试用例")
-    public Result<AgentTestCase> getTestCaseByCode(@PathVariable Long tenantId, @PathVariable String testCode) {
+    public Result<TestCaseResponseDTO> getTestCaseByCode(@PathVariable Long tenantId, @PathVariable String testCode) {
         AgentTestCase testCase = testCaseService.getTestCaseByCode(tenantId, testCode);
-        return testCase != null ? Result.success(testCase) : Result.fail("Test case not found");
+        return testCase != null ? Result.success(DTOConverter.toTestCaseResponseDTO(testCase)) : Result.fail("Test case not found");
     }
 
     @GetMapping("/status/{tenantId}/{status}")
     @Operation(summary = "根据状态获取测试用例列表")
-    public Result<List<AgentTestCase>> getTestCasesByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
+    public Result<List<TestCaseResponseDTO>> getTestCasesByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
         List<AgentTestCase> testCases = testCaseService.getTestCasesByStatus(tenantId, status);
-        return Result.success(testCases);
+        List<TestCaseResponseDTO> dtoList = testCases.stream()
+                .map(DTOConverter::toTestCaseResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/type/{tenantId}/{testType}")
     @Operation(summary = "根据类型获取测试用例列表")
-    public Result<List<AgentTestCase>> getTestCasesByType(@PathVariable Long tenantId, @PathVariable String testType) {
+    public Result<List<TestCaseResponseDTO>> getTestCasesByType(@PathVariable Long tenantId, @PathVariable String testType) {
         List<AgentTestCase> testCases = testCaseService.getTestCasesByType(tenantId, testType);
-        return Result.success(testCases);
+        List<TestCaseResponseDTO> dtoList = testCases.stream()
+                .map(DTOConverter::toTestCaseResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @GetMapping("/count/tenant/{tenantId}")

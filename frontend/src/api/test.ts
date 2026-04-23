@@ -57,77 +57,77 @@ export interface TestCaseVersion {
 export const testApi = {
   // 测试用例相关
   getAllTestCases: () => {
-    return request.get<TestCase[]>('/test-cases')
+    return request.get<TestCase[]>('/v1/test-cases')
   },
 
   getTestCaseById: (id: number) => {
-    return request.get<TestCase>(`/test-cases/${id}`)
+    return request.get<TestCase>(`/v1/test-cases/${id}`)
   },
 
   createTestCase: (data: Partial<TestCase>) => {
-    return request.post<TestCase>('/test-cases', data)
+    return request.post<TestCase>('/v1/test-cases', data)
   },
 
   updateTestCase: (id: number, data: Partial<TestCase>) => {
-    return request.put<TestCase>(`/test-cases/${id}`, data)
+    return request.put<TestCase>(`/v1/test-cases/${id}`, data)
   },
 
   deleteTestCase: (id: number) => {
-    return request.delete(`/test-cases/${id}`)
+    return request.delete(`/v1/test-cases/${id}`)
   },
 
   copyTestCase: (id: number, newName: string) => {
-    return request.post<TestCase>(`/test-cases/${id}/copy`, { newName })
+    return request.post<TestCase>(`/v1/test-cases/${id}/copy`, { newName })
   },
 
   // 测试用例版本管理
   getTestCaseVersions: (id: number) => {
-    return request.get<TestCaseVersion[]>(`/test-cases/${id}/versions`)
+    return request.get<TestCaseVersion[]>(`/v1/test-cases/${id}/versions`)
   },
 
   getTestCaseVersion: (id: number, versionNumber: number) => {
-    return request.get<TestCaseVersion>(`/test-cases/${id}/versions/${versionNumber}`)
+    return request.get<TestCaseVersion>(`/v1/test-cases/${id}/versions/${versionNumber}`)
   },
 
   rollbackToVersion: (id: number, versionNumber: number) => {
-    return request.post<TestCase>(`/test-cases/${id}/versions/${versionNumber}/rollback`)
+    return request.post<TestCase>(`/v1/test-cases/${id}/versions/${versionNumber}/rollback`)
   },
 
   // 测试执行相关
   createTestExecution: (data: Partial<TestExecution>) => {
-    return request.post<TestExecution>('/test-executions', data)
+    return request.post<TestExecution>('/v1/test-executions', data)
   },
 
   createBatchTestExecutions: (testCaseIds: number[]) => {
-    return request.post<TestExecution[]>('/test-executions/batch', { testCaseIds })
+    return request.post<TestExecution[]>('/v1/test-executions/batch', { testCaseIds })
   },
 
   getTestExecutionById: (id: number) => {
-    return request.get<TestExecution>(`/test-executions/${id}`)
+    return request.get<TestExecution>(`/v1/test-executions/${id}`)
   },
 
   getTestExecutions: (params?: Record<string, any>) => {
-    return request.get<TestExecution[]>('/test-executions', { params })
+    return request.get<TestExecution[]>('/v1/test-executions', { params })
   },
 
   cancelTestExecution: (id: number) => {
-    return request.post(`/test-executions/${id}/cancel`)
+    return request.post(`/v1/test-executions/${id}/cancel`)
   },
 
   // 测试结果相关
   getTestResults: (params?: Record<string, any>) => {
-    return request.get<TestResult[]>('/test-results', { params })
+    return request.get<TestResult[]>('/v1/test-results', { params })
   },
 
   getTestResultById: (id: number) => {
-    return request.get<TestResult>(`/test-results/${id}`)
+    return request.get<TestResult>(`/v1/test-results/${id}`)
   },
 
   getTestResultsByExecutionId: (executionId: number) => {
-    return request.get<TestResult[]>(`/test-executions/${executionId}/results`)
+    return request.get<TestResult[]>(`/v1/test-results/execution/${executionId}`)
   },
 
   exportTestResults: (params?: Record<string, any>) => {
-    return request.get('/test-results/export', { params, responseType: 'blob' })
+    return request.get('/v1/export/test-results', { params, responseType: 'blob' })
   }
 }

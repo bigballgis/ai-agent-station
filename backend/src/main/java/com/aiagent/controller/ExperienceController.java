@@ -2,7 +2,12 @@ package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
 
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.CreateExperienceRequestDTO;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.ExperienceResponseDTO;
+import com.aiagent.dto.UpdateExperienceRequestDTO;
 import com.aiagent.entity.AgentEvolutionExperience;
 import com.aiagent.service.ExperienceService;
 import lombok.RequiredArgsConstructor;
@@ -32,18 +37,21 @@ public class ExperienceController {
     @RequiresPermission("experience:manage")
     @PostMapping
     @Operation(summary = "创建经验")
-    public Result<AgentEvolutionExperience> createExperience(@RequestBody AgentEvolutionExperience experience) {
+    public Result<ExperienceResponseDTO> createExperience(@RequestBody CreateExperienceRequestDTO requestDTO) {
+        AgentEvolutionExperience experience = DTOConverter.toExperienceEntity(requestDTO);
         AgentEvolutionExperience createdExperience = experienceService.createExperience(experience);
-        return Result.success(createdExperience);
+        return Result.success(DTOConverter.toExperienceResponseDTO(createdExperience));
     }
 
     // 更新经验
     @RequiresPermission("experience:manage")
     @Operation(summary = "更新经验")
     @PutMapping("/{id}")
-    public Result<AgentEvolutionExperience> updateExperience(@PathVariable Long id, @RequestBody AgentEvolutionExperience experienceDetails) {
-        AgentEvolutionExperience updatedExperience = experienceService.updateExperience(id, experienceDetails);
-        return Result.success(updatedExperience);
+    public Result<ExperienceResponseDTO> updateExperience(@PathVariable Long id, @RequestBody UpdateExperienceRequestDTO requestDTO) {
+        AgentEvolutionExperience existing = experienceService.getExperienceById(id);
+        DTOConverter.updateExperienceFromDTO(requestDTO, existing);
+        AgentEvolutionExperience updatedExperience = experienceService.updateExperience(id, existing);
+        return Result.success(DTOConverter.toExperienceResponseDTO(updatedExperience));
     }
 
     // 删除经验
@@ -59,25 +67,25 @@ public class ExperienceController {
     @RequiresPermission("experience:view")
     @Operation(summary = "根据ID获取经验详情")
     @GetMapping("/{id}")
-    public Result<AgentEvolutionExperience> getExperienceById(@PathVariable Long id) {
+    public Result<ExperienceResponseDTO> getExperienceById(@PathVariable Long id) {
         AgentEvolutionExperience experience = experienceService.getExperienceById(id);
-        return Result.success(experience);
+        return Result.success(DTOConverter.toExperienceResponseDTO(experience));
     }
 
     // 获取所有经验
     @RequiresPermission("experience:view")
     @Operation(summary = "获取所有经验列表")
     @GetMapping
-    public Result<List<AgentEvolutionExperience>> getAllExperiences() {
+    public Result<List<ExperienceResponseDTO>> getAllExperiences() {
         List<AgentEvolutionExperience> experiences = experienceService.getAllExperiences();
-        return Result.success(experiences);
+        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
     }
 
     // 搜索经验
     @RequiresPermission("experience:view")
     @Operation(summary = "搜索经验")
     @GetMapping("/search")
-    public Result<Page<AgentEvolutionExperience>> searchExperiences(
+    public Result<PageResult<ExperienceResponseDTO>> searchExperiences(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String experienceType,
             @RequestParam(required = false) List<String> tags,
@@ -90,25 +98,26 @@ public class ExperienceController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<AgentEvolutionExperience> result = experienceService.searchExperiences(keyword, experienceType, tags, pageable);
-        return Result.success(result);
+        Page<ExperienceResponseDTO> dtoPage = result.map(DTOConverter::toExperienceResponseDTO);
+        return Result.success(PageResult.from(dtoPage));
     }
 
     // 按Agent ID获取经验
     @RequiresPermission("experience:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取经验列表")
-    public Result<List<AgentEvolutionExperience>> getExperiencesByAgentId(@PathVariable Long agentId) {
+    public Result<List<ExperienceResponseDTO>> getExperiencesByAgentId(@PathVariable Long agentId) {
         List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByAgentId(agentId);
-        return Result.success(experiences);
+        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
     }
 
     // 按类型获取经验
     @RequiresPermission("experience:view")
     @Operation(summary = "根据类型获取经验列表")
     @GetMapping("/type/{experienceType}")
-    public Result<List<AgentEvolutionExperience>> getExperiencesByType(@PathVariable String experienceType) {
+    public Result<List<ExperienceResponseDTO>> getExperiencesByType(@PathVariable String experienceType) {
         List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByType(experienceType);
-        return Result.success(experiences);
+        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
     }
 
     // 分析经验有效性

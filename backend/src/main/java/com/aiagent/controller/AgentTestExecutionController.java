@@ -3,12 +3,16 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.Result;
+import com.aiagent.dto.CreateExecutionRequestDTO;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.ExecutionResponseDTO;
 import com.aiagent.entity.AgentTestExecution;
 import com.aiagent.service.AgentTestExecutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,59 +28,76 @@ public class AgentTestExecutionController {
     @RequiresPermission("test:execute")
     @PostMapping
     @Operation(summary = "创建测试执行")
-    public Result<AgentTestExecution> createExecution(@RequestBody AgentTestExecution execution) {
+    public Result<ExecutionResponseDTO> createExecution(@RequestBody CreateExecutionRequestDTO request) {
+        AgentTestExecution execution = DTOConverter.toExecutionEntity(request);
         AgentTestExecution createdExecution = executionService.createExecution(execution);
-        return Result.success(createdExecution);
+        return Result.success(DTOConverter.toExecutionResponseDTO(createdExecution));
     }
 
     @Operation(summary = "创建测试执行")
     @PostMapping("/{id}/execute")
-    public Result<AgentTestExecution> executeTest(@PathVariable Long id) {
+    public Result<ExecutionResponseDTO> executeTest(@PathVariable Long id) {
         AgentTestExecution execution = executionService.executeTest(id);
-        return Result.success(execution);
+        return Result.success(DTOConverter.toExecutionResponseDTO(execution));
     }
 
     @Operation(summary = "执行测试")
     @GetMapping("/{id}")
-    public Result<AgentTestExecution> getExecutionById(@PathVariable Long id) {
+    public Result<ExecutionResponseDTO> getExecutionById(@PathVariable Long id) {
         return executionService.getExecutionById(id)
+                .map(DTOConverter::toExecutionResponseDTO)
                 .map(Result::success)
                 .orElse(Result.fail("Test execution not found"));
     }
 
     @Operation(summary = "根据ID获取测试执行详情")
     @GetMapping("/tenant/{tenantId}")
-    public Result<List<AgentTestExecution>> getExecutionsByTenantId(@PathVariable Long tenantId) {
+    public Result<List<ExecutionResponseDTO>> getExecutionsByTenantId(@PathVariable Long tenantId) {
         List<AgentTestExecution> executions = executionService.getExecutionsByTenantId(tenantId);
-        return Result.success(executions);
+        List<ExecutionResponseDTO> dtoList = executions.stream()
+                .map(DTOConverter::toExecutionResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据租户ID获取测试执行列表")
     @GetMapping("/agent/{agentId}")
-    public Result<List<AgentTestExecution>> getExecutionsByAgentId(@PathVariable Long agentId) {
+    public Result<List<ExecutionResponseDTO>> getExecutionsByAgentId(@PathVariable Long agentId) {
         List<AgentTestExecution> executions = executionService.getExecutionsByAgentId(agentId);
-        return Result.success(executions);
+        List<ExecutionResponseDTO> dtoList = executions.stream()
+                .map(DTOConverter::toExecutionResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据Agent ID获取测试执行列表")
     @GetMapping("/test-case/{testCaseId}")
-    public Result<List<AgentTestExecution>> getExecutionsByTestCaseId(@PathVariable Long testCaseId) {
+    public Result<List<ExecutionResponseDTO>> getExecutionsByTestCaseId(@PathVariable Long testCaseId) {
         List<AgentTestExecution> executions = executionService.getExecutionsByTestCaseId(testCaseId);
-        return Result.success(executions);
+        List<ExecutionResponseDTO> dtoList = executions.stream()
+                .map(DTOConverter::toExecutionResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据测试用例ID获取执行列表")
     @GetMapping("/status/{tenantId}/{status}")
-    public Result<List<AgentTestExecution>> getExecutionsByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
+    public Result<List<ExecutionResponseDTO>> getExecutionsByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
         List<AgentTestExecution> executions = executionService.getExecutionsByStatus(tenantId, status);
-        return Result.success(executions);
+        List<ExecutionResponseDTO> dtoList = executions.stream()
+                .map(DTOConverter::toExecutionResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据状态获取测试执行列表")
     @GetMapping("/type/{tenantId}/{executionType}")
-    public Result<List<AgentTestExecution>> getExecutionsByType(@PathVariable Long tenantId, @PathVariable String executionType) {
+    public Result<List<ExecutionResponseDTO>> getExecutionsByType(@PathVariable Long tenantId, @PathVariable String executionType) {
         List<AgentTestExecution> executions = executionService.getExecutionsByType(tenantId, executionType);
-        return Result.success(executions);
+        List<ExecutionResponseDTO> dtoList = executions.stream()
+                .map(DTOConverter::toExecutionResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据类型获取测试执行列表")

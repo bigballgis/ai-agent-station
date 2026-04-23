@@ -1,37 +1,45 @@
 import request from '@/utils/request'
+import type { ApiResponse } from '@/types/common'
+import type { LoginRequest, LoginResultData, User, UserInfo } from '@/types/user'
 
 // ==================== Auth ====================
 
-export function login(data: {
-  username: string
-  password: string
-  tenantId?: string
-}) {
-  return request.post('/auth/login', data)
+export function login(data: LoginRequest): Promise<ApiResponse<LoginResultData>> {
+  return request.post('/v1/auth/login', data)
+}
+
+/** 获取当前登录用户信息 */
+export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
+  return request.get('/v1/auth/userinfo')
+}
+
+/** 登出 */
+export function logout(): Promise<ApiResponse<void>> {
+  return request.post('/v1/auth/logout')
 }
 
 // ==================== Users ====================
 
-export function getUsers() {
-  return request.get('/users')
+export function getUsers(): Promise<ApiResponse<User[]>> {
+  return request.get('/v1/users')
 }
 
-export function getUserById(id: number) {
-  return request.get(`/users/${id}`)
+export function getUserById(id: number): Promise<ApiResponse<User>> {
+  return request.get(`/v1/users/${id}`)
 }
 
-export function createUser(data: Record<string, unknown>) {
-  return request.post('/users', data)
+export function createUser(data: Record<string, unknown>): Promise<ApiResponse<User>> {
+  return request.post('/v1/users', data)
 }
 
-export function updateUser(id: number, data: Record<string, unknown>) {
-  return request.put(`/users/${id}`, data)
+export function updateUser(id: number, data: Record<string, unknown>): Promise<ApiResponse<User>> {
+  return request.put(`/v1/users/${id}`, data)
 }
 
-export function deleteUser(id: number) {
-  return request.delete(`/users/${id}`)
+export function deleteUser(id: number): Promise<ApiResponse<void>> {
+  return request.delete(`/v1/users/${id}`)
 }
 
-export function resetUserPassword(id: number, newPassword: string) {
-  return request.post(`/users/${id}/reset-password`, { newPassword })
+export function resetUserPassword(id: number, newPassword: string): Promise<ApiResponse<void>> {
+  return request.post(`/v1/users/${id}/reset-password`, { newPassword })
 }

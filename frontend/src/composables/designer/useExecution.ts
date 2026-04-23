@@ -14,7 +14,7 @@ import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { CanvasNode, Connection, ConsoleLog } from './types'
 import { useGraphValidation } from './useGraphValidation'
-import { executeAgentStream } from '@/api/agent'
+import { streamAgentExecution } from '@/api/stream'
 
 // Get execution order helper from graph validation
 const { getExecutionOrder } = useGraphValidation()
@@ -266,87 +266,81 @@ export function useExecution(
       // SSE重连逻辑
       let retryCount = 0
       const attemptSSEExecution = () => {
-        executionCancel = executeAgentStream(
-          agentId,
-          message_text,
-          // onMessage
-          (event) => {
-            const data = event.data as Record<string, unknown>
-            switch (event.type) {
-              case 'node_start': {
-                const nodeId = data.nodeId as string
-                const nodeType = data.nodeType as string
-                runningNodeIds.value.add(nodeId)
-                const node = nodes.value.find(n => n.id === nodeId)
-                const label = node?.label || nodeId
-                addLog('info', `${t('designer.messages.nodeRunning')}: ${label} (${nodeType})`)
-                break
-              }
-              case 'node_end': {
-                const nodeId = data.nodeId as string
-                const status = data.status as string
-                runningNodeIds.value.delete(nodeId)
-                const node = nodes.value.find(n => n.id === nodeId)
-                const label = node?.label || nodeId
-                if (status === 'failed') {
-                  failedNodeIds.value.add(nodeId)
-                  addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${(data.error as string) || ''}`)
-                } else {
-                  completedNodeIds.value.add(nodeId)
-                  addLog('success', `${t('designer.messages.nodeComplete')}: ${label}`)
+        const handle = streamAgentExecution(
+          Number(agentId),
+          { message: message_text },
+          {
+            onMessage: (data: unknown) => {
+              const d = data as Record<string, unknown>
+              const type = (d.type as string) || 'message'
+              switch (type) {
+                case 'node_start': {
+                  const nodeId = d.nodeId as string
+                  const nodeType = d.nodeType as string
+                  runningNodeIds.value.add(nodeId)
+                  const node = nodes.value.find(n => n.id === nodeId)
+                  const label = node?.label || nodeId
+                  addLog('info', `${t('designer.messages.nodeRunning')}: ${label} (${nodeType})`)
+                  break
                 }
-                break
+                case 'node_end': {
+                  const nodeId = d.nodeId as string
+                  const status = d.status as string
+                  runningNodeIds.value.delete(nodeId)
+                  const node = nodes.value.find(n => n.id === nodeId)
+                  const label = node?.label || nodeId
+                  if (status === 'failed') {
+                    failedNodeIds.value.add(nodeId)
+                    addLog('error', `${t('designer.messages.nodeFailed')}: ${label} - ${(d.error as string) || ''}`)
+                  } else {
+                    completedNodeIds.value.add(nodeId)
+                    addLog('success', `${t('designer.messages.nodeComplete')}: ${label}`)
+                  }
+                  break
+                }
+                case 'token': {
+                  // LLM streaming token
+                  addLog('info', (d.content as string) || '', false)
+                  break
+                }
+                case 'done': {
+                  addLog('success', t('designer.messages.runComplete'))
+                  message.success(t('designer.messages.runComplete'))
+                  isRunning.value = false
+                  executionCancel = null
+                  break
+                }
+                case 'error': {
+                  addLog('error', `${t('designer.messages.runFailed')}: ${(d.content as string) || (d.error as string) || 'Unknown error'}`)
+                  message.error(t('designer.messages.runFailed'))
+                  isRunning.value = false
+                  executionCancel = null
+                  break
+                }
               }
-              case 'token': {
-                // LLM streaming token
-                addLog('info', (data.content as string) || '', false)
-                break
-              }
-              case 'done': {
-                addLog('success', t('designer.messages.runComplete'))
-                message.success(t('designer.messages.runComplete'))
+            },
+            onError: (error) => {
+              retryCount++
+              if (retryCount <= MAX_SSE_RETRIES) {
+                const delay = SSE_RETRY_DELAYS[retryCount - 1] || 3000
+                addLog('warn', `后端 SSE 连接失败，${delay}ms后重试(${retryCount}/${MAX_SSE_RETRIES})...`)
+                console.warn(`SSE连接失败，${delay}ms后重试(${retryCount}/${MAX_SSE_RETRIES})...`)
+                setTimeout(() => {
+                  if (isRunning.value) {
+                    attemptSSEExecution()
+                  }
+                }, delay)
+              } else {
+                addLog('warn', `后端 SSE 连接失败: ${error.message}，SSE重试耗尽，回退到模拟执行...`)
+                console.warn('SSE重试耗尽，回退到模拟执行')
                 isRunning.value = false
                 executionCancel = null
-                break
+                runAgentSimulated(t)
               }
-              case 'error': {
-                addLog('error', `${t('designer.messages.runFailed')}: ${(data.content as string) || (data.error as string) || 'Unknown error'}`)
-                message.error(t('designer.messages.runFailed'))
-                isRunning.value = false
-                executionCancel = null
-                break
-              }
-            }
-          },
-          // onError - 带重试逻辑
-          (error) => {
-            retryCount++
-            if (retryCount <= MAX_SSE_RETRIES) {
-              const delay = SSE_RETRY_DELAYS[retryCount - 1] || 3000
-              addLog('warn', `后端 SSE 连接失败，${delay}ms后重试(${retryCount}/${MAX_SSE_RETRIES})...`)
-              console.warn(`SSE连接失败，${delay}ms后重试(${retryCount}/${MAX_SSE_RETRIES})...`)
-              setTimeout(() => {
-                if (isRunning.value) {
-                  attemptSSEExecution()
-                }
-              }, delay)
-            } else {
-              addLog('warn', `后端 SSE 连接失败: ${error.message}，SSE重试耗尽，回退到模拟执行...`)
-              console.warn('SSE重试耗尽，回退到模拟执行')
-              isRunning.value = false
-              executionCancel = null
-              runAgentSimulated(t)
-            }
-          },
-          // onComplete
-          () => {
-            if (isRunning.value) {
-              addLog('success', t('designer.messages.runComplete'))
-              isRunning.value = false
-              executionCancel = null
-            }
+            },
           }
         )
+        executionCancel = { cancel: () => handle.close() }
       }
 
       attemptSSEExecution()

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Agent, PageRequest, PageResult, ApiResponse } from '@/types'
+import type { Agent, PageRequest, PageResult } from '@/types'
 import request from '@/utils/request'
 
 export const useAgentStore = defineStore('agent', () => {
@@ -58,12 +58,12 @@ export const useAgentStore = defineStore('agent', () => {
       if (params) {
         filters.value = { ...filters.value, ...params }
       }
-      const res = await request.get<ApiResponse<PageResult<Agent>>>(
-        '/api/agents',
+      const res = await request.get<PageResult<Agent>>(
+        '/v1/agents',
         { params: { ...filters.value, ...params } }
       )
-      agents.value = res.data.data.content
-      return res.data.data
+      agents.value = res.data.content
+      return res.data
     } finally {
       loading.value = false
     }
@@ -72,34 +72,34 @@ export const useAgentStore = defineStore('agent', () => {
   async function fetchAgentById(id: string | number) {
     loading.value = true
     try {
-      const res = await request.get<ApiResponse<Agent>>(`/api/agents/${id}`)
-      currentAgent.value = res.data.data
-      return res.data.data
+      const res = await request.get<Agent>(`/v1/agents/${id}`)
+      currentAgent.value = res.data
+      return res.data
     } finally {
       loading.value = false
     }
   }
 
   async function createAgent(data: Partial<Agent>) {
-    const res = await request.post<ApiResponse<Agent>>('/api/agents', data)
-    agents.value.push(res.data.data)
-    return res.data.data
+    const res = await request.post<Agent>('/v1/agents', data)
+    agents.value.push(res.data)
+    return res.data
   }
 
   async function updateAgent(id: string | number, data: Partial<Agent>) {
-    const res = await request.put<ApiResponse<Agent>>(`/api/agents/${id}`, data)
+    const res = await request.put<Agent>(`/v1/agents/${id}`, data)
     const index = agents.value.findIndex((a) => a.id === id)
     if (index !== -1) {
-      agents.value[index] = res.data.data
+      agents.value[index] = res.data
     }
     if (currentAgent.value?.id === id) {
-      currentAgent.value = res.data.data
+      currentAgent.value = res.data
     }
-    return res.data.data
+    return res.data
   }
 
   async function deleteAgent(id: string | number) {
-    await request.delete(`/api/agents/${id}`)
+    await request.delete(`/v1/agents/${id}`)
     agents.value = agents.value.filter((a) => a.id !== id)
     if (currentAgent.value?.id === id) {
       currentAgent.value = null

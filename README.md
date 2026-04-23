@@ -98,6 +98,63 @@ docker compose up -d
 - **安全**: JWT认证、Prompt注入防御、文件上传安全
 - **监控**: 实时告警、操作审计、登录审计
 
+## API 路径规范
+
+### 前后端路径约定
+
+| 层级 | 路径规则 | 示例 |
+|------|----------|------|
+| 后端 context-path | `/api` | Spring Boot `server.servlet.context-path=/api` |
+| 后端 Controller 路由 | `/v1/*` | `@RequestMapping("/v1/auth")` |
+| 完整后端路径 | `/api/v1/*` | `POST /api/v1/auth/login` |
+| 前端 API 调用 | `/v1/*`（baseURL 已含 `/api`） | `request.ts` baseURL = `http://localhost:8080/api` |
+
+所有 27 个 Controller 均已统一使用 `/v1/*` 前缀，前端通过 `request.ts` 的 `BASE_URL` 拼接完整路径。
+
+### 认证接口
+
+| 接口 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 登录 | POST | `/api/v1/auth/login` | 返回 accessToken + refreshToken |
+| 刷新 Token | POST | `/api/v1/auth/refresh` | 需传 refreshToken，返回新 accessToken |
+| 登出 | POST | `/api/v1/auth/logout` | 使 refreshToken 失效，accessToken 加入黑名单 |
+| 用户信息 | GET | `/api/v1/auth/userinfo | 返回当前登录用户信息 |
+
+### Token 存储策略
+
+前端通过 `authStorage.ts` 工具管理 Token，支持 **localStorage / sessionStorage 双存储**：
+
+- `setToken(token, remember)` — `remember=true` 存 localStorage，否则存 sessionStorage
+- `getToken()` — 优先读 localStorage，fallback 到 sessionStorage
+- `clearAuth()` — 同时清除两个存储中的 token、refreshToken、userInfo
+- Token 自动刷新：`request.ts` 响应拦截器在 401 时自动调用 `/v1/auth/refresh`
+
+### SSE 流式接口
+
+SSE 使用 **POST 方法**，通过 `stream.ts` 调用：
+
+- `streamChat(params)` — `POST /api/v1/stream/chat`，流式对话
+- `streamAgentExecution(agentId, params)` — `POST /api/v1/stream/agent/{agentId}`，流式 Agent 执行
+- 底层使用 `fetch` + `ReadableStream` 接收 SSE 事件流
+
+### DTO 改造
+
+所有 27 个 Controller 均已完成 DTO 化，Controller 层接收 RequestDTO、返回 `Result<ResponseDTO>`，不再直接暴露 Entity。敏感字段（password、apiKey、apiSecret）已通过 DTO 隔离。
+
+### 环境变量与密钥策略
+
+所有敏感配置通过环境变量注入，无硬编码默认值：
+
+| 环境变量 | 用途 | 配置项 |
+|----------|------|--------|
+| `JWT_SECRET` | JWT 签名密钥（必填，无默认值） | `jwt.secret` |
+| `JWT_EXPIRATION` | Access Token 过期时间 | `jwt.expiration` |
+| `JWT_REFRESH_EXPIRATION` | Refresh Token 过期时间 | `jwt.refresh-expiration` |
+| `DB_PASSWORD` | PostgreSQL 密码 | `spring.datasource.password` |
+| `REDIS_PASSWORD` | Redis 密码 | `spring.data.redis.password` |
+| `OPENAI_API_KEY` | OpenAI API Key | `ai-agent.llm.openai.api-key` |
+| `QWEN_API_KEY` | 通义千问 API Key | `ai-agent.llm.qwen.api-key` |
+
 ## API文档
 
 启动后端后访问: http://localhost:8080/api/swagger-ui.html

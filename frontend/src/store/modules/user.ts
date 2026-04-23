@@ -1,15 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import request from '@/utils/request'
-
-interface UserInfo {
-  id?: number
-  username?: string
-  nickname?: string
-  avatar?: string
-  roles?: string[]
-  permissions?: string[]
-}
+import * as userApi from '@/api/user'
+import type { UserInfo } from '@/types/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || sessionStorage.getItem('token') || '')
@@ -36,7 +28,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function login(loginData: { username: string; password: string; remember?: boolean }) {
     try {
-      const res = await request.post('/auth/login', loginData) as any
+      const res = await userApi.login(loginData)
       if (res.code === 200 || res.code === 0) {
         const remember = loginData.remember ?? false
         setToken(res.data.token, remember)
@@ -52,7 +44,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function logout() {
     try {
-      await request.post('/auth/logout')
+      await userApi.logout()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
@@ -67,7 +59,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function getUserInfo() {
     try {
-      const res = await request.get('/auth/userinfo') as any
+      const res = await userApi.getUserInfo()
       if (res.code === 200 || res.code === 0) {
         setUserInfo(res.data)
       }

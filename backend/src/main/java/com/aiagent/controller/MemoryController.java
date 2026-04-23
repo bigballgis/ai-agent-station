@@ -4,8 +4,10 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.CreateMemoryRequestDTO;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.MemoryResponseDTO;
 import com.aiagent.entity.AgentMemory;
-import com.aiagent.entity.AgentMemory.MemoryType;
 import com.aiagent.service.MemoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,28 +26,31 @@ public class MemoryController {
     @RequiresPermission("memory:manage")
     @PostMapping
     @Operation(summary = "创建Agent记忆")
-    public Result<AgentMemory> createMemory(@RequestBody AgentMemory memory) {
-        return Result.success(memoryService.createMemory(memory));
+    public Result<MemoryResponseDTO> createMemory(@RequestBody CreateMemoryRequestDTO requestDTO) {
+        AgentMemory memory = DTOConverter.toMemoryEntity(requestDTO);
+        return Result.success(DTOConverter.toMemoryResponseDTO(memoryService.createMemory(memory)));
     }
 
     @RequiresPermission("memory:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "获取Agent记忆列表")
-    public Result<PageResult<AgentMemory>> getMemories(
+    public Result<PageResult<MemoryResponseDTO>> getMemories(
             @PathVariable Long agentId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) MemoryType memoryType,
+            @RequestParam(required = false) String memoryType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<AgentMemory> result = memoryService.getMemories(agentId, keyword, memoryType, page, size);
-        return Result.success(PageResult.from(result));
+        AgentMemory.MemoryType type = memoryType != null ? AgentMemory.MemoryType.valueOf(memoryType) : null;
+        Page<AgentMemory> result = memoryService.getMemories(agentId, keyword, type, page, size);
+        Page<MemoryResponseDTO> dtoPage = result.map(DTOConverter::toMemoryResponseDTO);
+        return Result.success(PageResult.from(dtoPage));
     }
 
     @RequiresPermission("memory:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取记忆详情")
-    public Result<AgentMemory> getMemory(@PathVariable Long id) {
-        return Result.success(memoryService.getMemory(id));
+    public Result<MemoryResponseDTO> getMemory(@PathVariable Long id) {
+        return Result.success(DTOConverter.toMemoryResponseDTO(memoryService.getMemory(id)));
     }
 
     @RequiresPermission("memory:manage")

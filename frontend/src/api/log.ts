@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 export function getLogs(params?: { page?: number; size?: number }) {
-  return request.get('/logs', { params })
+  return request.get('/v1/logs', { params })
 }
 
 export function getLogsByDateRange(params: {
@@ -10,16 +10,16 @@ export function getLogsByDateRange(params: {
   page?: number
   size?: number
 }) {
-  return request.get('/logs/date-range', { params })
+  return request.get('/v1/logs/date-range', { params })
 }
 
 export function getLogsByModule(
   module: string,
   params?: { page?: number; size?: number }
 ) {
-  return request.get(`/logs/module/${module}`, { params })
+  return request.get(`/v1/logs/module/${module}`, { params })
 }
 
 export function getLogById(id: number) {
-  return request.get(`/logs/${id}`)
+  return request.get(`/v1/logs/${id}`)
 }

@@ -1,22 +1,6 @@
-/**
- * 统一 API 响应类型
- */
-export interface ApiResponse<T = any> {
-  code: number
-  message: string
-  data: T
-}
+import type { ApiResponse, PageResult } from './common'
 
-/**
- * 分页结果
- */
-export interface PageResult<T = any> {
-  total: number
-  records: T[]
-  page?: number
-  size?: number
-  totalPages?: number
-}
+export type { ApiResponse, PageResult }
 
 /**
  * 分页查询参数

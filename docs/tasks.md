@@ -10,7 +10,7 @@
 
 ### Sprint 1.1: 敏感信息与认证安全（8h）
 
-#### TASK-001: 移除所有硬编码敏感信息
+#### TASK-001: 移除所有硬编码敏感信息 [已完成]
 - **优先级**: P0 | **预估**: 2h | **依赖**: 无
 - **描述**: 将 application.yml、docker-compose.yml、k8s/*.yml 中所有密码、密钥改为环境变量引用
 - **涉及文件**:
@@ -25,6 +25,7 @@
 - **验收标准**:
   - `grep -r "password.*postgres\|secret.*2024\|admin.*password" backend/src/main/resources/ docker/ k8s/` 返回空
   - `.env.example` 包含所有必需环境变量及说明
+- **完成状态**: 已完成。`jwt.secret: ${JWT_SECRET}` 无默认值，`DB_PASSWORD`/`REDIS_PASSWORD`/`OPENAI_API_KEY`/`QWEN_API_KEY` 均通过环境变量注入。`.env.example` 已创建。
 
 #### TASK-002: 完善 RBAC 权限控制
 - **优先级**: P0 | **预估**: 4h | **依赖**: TASK-001
@@ -75,7 +76,7 @@
 
 ### Sprint 1.2: 架构基础（DTO 层 + TypeScript）（13h）
 
-#### TASK-005: 引入 DTO 层
+#### TASK-005: 引入 DTO 层 [已完成]
 - **优先级**: P0 | **预估**: 6h | **依赖**: TASK-003
 - **描述**: 为所有 Entity 创建 RequestDTO/ResponseDTO，使用 MapStruct 转换
 - **涉及文件**:
@@ -91,6 +92,7 @@
 - **验收标准**:
   - API 响应 JSON 中不包含 password, apiKey, apiSecret 字段
   - 所有 Controller 方法参数类型为 DTO 而非 Entity
+- **完成状态**: 已完成。所有 27 个 Controller 均使用 DTO。`dto/` 包含 30+ DTO 类，`DTOConverter` 提供转换方法。
 
 #### TASK-006: 消除 Map<String, Object> 参数
 - **优先级**: P0 | **预估**: 2h | **依赖**: TASK-005
@@ -220,9 +222,10 @@
 
 ### Sprint 2.2: 后端架构优化（18h）
 
-#### TASK-019: API 路径版本统一 + RESTful 规范
+#### TASK-019: API 路径版本统一 + RESTful 规范 [已完成]
 - **优先级**: P1 | **预估**: 5h
 - **涉及文件**: 所有 Controller, 前端 `request.ts`, 所有 `api/*.ts`
+- **完成状态**: API 路径统一已完成。后端 context-path=/api，所有 Controller 使用 `/v1/*` 前缀，前端 baseURL 为 `http://localhost:8080/api`。RESTful 规范部分待完善。
 
 #### TASK-020: 响应格式统一 + SecurityUtils 提取
 - **优先级**: P1 | **预估**: 2h

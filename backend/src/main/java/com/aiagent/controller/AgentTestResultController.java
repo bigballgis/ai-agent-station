@@ -3,12 +3,16 @@ package com.aiagent.controller;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.Result;
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.TestResultResponseDTO;
+import com.aiagent.dto.UpdateTestResultRequestDTO;
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.service.AgentTestResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,8 +28,9 @@ public class AgentTestResultController {
     @RequiresPermission("test:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取测试结果详情")
-    public Result<AgentTestResult> getResultById(@PathVariable Long id) {
+    public Result<TestResultResponseDTO> getResultById(@PathVariable Long id) {
         return resultService.getResultById(id)
+                .map(DTOConverter::toTestResultResponseDTO)
                 .map(Result::success)
                 .orElse(Result.fail("Test result not found"));
     }
@@ -33,49 +38,67 @@ public class AgentTestResultController {
     @Operation(summary = "根据ID获取测试结果详情")
     @RequiresPermission("test:view")
     @GetMapping("/execution/{executionId}")
-    public Result<List<AgentTestResult>> getResultsByExecutionId(@PathVariable Long executionId) {
+    public Result<List<TestResultResponseDTO>> getResultsByExecutionId(@PathVariable Long executionId) {
         List<AgentTestResult> results = resultService.getResultsByExecutionId(executionId);
-        return Result.success(results);
+        List<TestResultResponseDTO> dtoList = results.stream()
+                .map(DTOConverter::toTestResultResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据执行ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/tenant/{tenantId}")
-    public Result<List<AgentTestResult>> getResultsByTenantId(@PathVariable Long tenantId) {
+    public Result<List<TestResultResponseDTO>> getResultsByTenantId(@PathVariable Long tenantId) {
         List<AgentTestResult> results = resultService.getResultsByTenantId(tenantId);
-        return Result.success(results);
+        List<TestResultResponseDTO> dtoList = results.stream()
+                .map(DTOConverter::toTestResultResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据租户ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/agent/{agentId}")
-    public Result<List<AgentTestResult>> getResultsByAgentId(@PathVariable Long agentId) {
+    public Result<List<TestResultResponseDTO>> getResultsByAgentId(@PathVariable Long agentId) {
         List<AgentTestResult> results = resultService.getResultsByAgentId(agentId);
-        return Result.success(results);
+        List<TestResultResponseDTO> dtoList = results.stream()
+                .map(DTOConverter::toTestResultResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据Agent ID获取测试结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/test-case/{testCaseId}")
-    public Result<List<AgentTestResult>> getResultsByTestCaseId(@PathVariable Long testCaseId) {
+    public Result<List<TestResultResponseDTO>> getResultsByTestCaseId(@PathVariable Long testCaseId) {
         List<AgentTestResult> results = resultService.getResultsByTestCaseId(testCaseId);
-        return Result.success(results);
+        List<TestResultResponseDTO> dtoList = results.stream()
+                .map(DTOConverter::toTestResultResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据测试用例ID获取结果列表")
     @RequiresPermission("test:view")
     @GetMapping("/status/{tenantId}/{status}")
-    public Result<List<AgentTestResult>> getResultsByStatus(@PathVariable Long tenantId, @PathVariable String status) {
+    public Result<List<TestResultResponseDTO>> getResultsByStatus(@PathVariable Long tenantId, @PathVariable String status) {
         List<AgentTestResult> results = resultService.getResultsByStatus(tenantId, status);
-        return Result.success(results);
+        List<TestResultResponseDTO> dtoList = results.stream()
+                .map(DTOConverter::toTestResultResponseDTO)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
 
     @Operation(summary = "根据状态获取测试结果列表")
     @RequiresPermission("test:manage")
     @PutMapping("/{id}")
-    public Result<AgentTestResult> updateResult(@PathVariable Long id, @RequestBody AgentTestResult result) {
+    public Result<TestResultResponseDTO> updateResult(@PathVariable Long id, @RequestBody UpdateTestResultRequestDTO request) {
+        AgentTestResult result = resultService.getResultById(id)
+                .orElseThrow(() -> new RuntimeException("Test result not found"));
+        DTOConverter.updateTestResultFromDTO(request, result);
         AgentTestResult updatedResult = resultService.updateResult(id, result);
-        return Result.success(updatedResult);
+        return Result.success(DTOConverter.toTestResultResponseDTO(updatedResult));
     }
 
     @Operation(summary = "更新测试结果")

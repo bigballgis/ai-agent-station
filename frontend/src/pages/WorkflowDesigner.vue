@@ -346,7 +346,7 @@ async function loadDefinitions() {
   loading.value = true
   try {
     const res = await workflowApi.getDefinitions(0, 100, statusFilter.value)
-    definitions.value = res.data?.data?.records || []
+    definitions.value = res.data?.data?.content || []
   } catch (error) {
     message.error('加载工作流定义失败')
   } finally {
@@ -363,7 +363,7 @@ async function loadDefinitionInstances(definitionId: number) {
   loadingInstances.value = true
   try {
     const res = await workflowApi.getInstances(0, 10, { definitionId })
-    definitionInstances.value = res.data?.data?.records || []
+    definitionInstances.value = res.data?.data?.content || []
   } catch (error) {
     message.error('加载实例列表失败')
   } finally {

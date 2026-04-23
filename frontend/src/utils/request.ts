@@ -1,14 +1,7 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { message } from 'ant-design-vue'
-
-/** 后端 API 统一响应格式 */
-interface ApiResponse<T = unknown> {
-  code: number
-  message?: string
-  data?: T
-  [key: string]: unknown
-}
+import type { ApiResponse } from '@/types/common'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -50,7 +43,7 @@ async function refreshAccessToken(): Promise<string> {
     throw new Error('No refresh token available')
   }
 
-  const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+  const response = await axios.post(`${BASE_URL}/v1/auth/refresh`, {
     refreshToken
   })
 
@@ -86,11 +79,6 @@ service.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    // 添加租户 ID
-    const tenantId = localStorage.getItem('tenantId')
-    if (tenantId && config.headers) {
-      config.headers['X-Tenant-ID'] = tenantId
-    }
     return config
   },
   (error) => {
@@ -108,7 +96,9 @@ service.interceptors.response.use(
       message.error(res.message || 'Error')
       return Promise.reject(new Error(res.message || 'Error'))
     }
-    return response
+    // 返回 response.data，保留 ApiResponse<T> 结构供调用方使用
+    // 注意：axios 拦截器中无法自动推断泛型 T，调用方需通过 ApiResponse<T> 断言具体 data 类型
+    return response.data as ApiResponse
   },
   async (error) => {
     const originalRequest = error.config

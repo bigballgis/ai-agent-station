@@ -1,0 +1,26 @@
+package com.aiagent.dto;
+
+import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * 测试执行响应 DTO
+ */
+@Data
+public class ExecutionResponseDTO implements Serializable {
+    private Long id;
+    private Long tenantId;
+    private Long agentId;
+    private Long testCaseId;
+    private String executionType;
+    private Long executorId;
+    private Integer status;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Integer executionTime;
+    private String errorMessage;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

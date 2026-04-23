@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { ApiResponse, PageResult } from '@/types/common'
 import request from '@/utils/request'
 
 interface Notification {
@@ -37,14 +38,20 @@ export const useNotificationStore = defineStore('notification', () => {
 
   // Actions
   async function fetchNotifications(params?: { page?: number; size?: number }) {
-    const res = await request.get('/api/notifications', { params })
-    notifications.value = res.data.data?.content || res.data.data || []
+    const res = await request.get('/v1/notifications', { params }) as ApiResponse<PageResult<Notification> | Notification[]>
+    // 兼容分页和非分页两种返回格式
+    const data = res.data
+    if (Array.isArray(data)) {
+      notifications.value = data
+    } else {
+      notifications.value = data?.content || []
+    }
     unreadCount.value = notifications.value.filter((n) => !n.read).length
-    return res.data.data
+    return res.data
   }
 
   async function markAsRead(id: number) {
-    await request.put(`/api/notifications/${id}/read`)
+    await request.put(`/v1/notifications/${id}/read`)
     const notification = notifications.value.find((n) => n.id === id)
     if (notification && !notification.read) {
       notification.read = true
@@ -53,7 +60,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   async function markAllAsRead() {
-    await request.put('/api/notifications/read-all')
+    await request.put('/v1/notifications/read-all')
     notifications.value.forEach((n) => {
       n.read = true
     })

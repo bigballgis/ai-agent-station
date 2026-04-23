@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { TreeNode } from '@/types'
+import type { ApiResponse } from '@/types/common'
 import request from '@/utils/request'
 
 interface Permission {
@@ -56,20 +57,20 @@ export const usePermissionStore = defineStore('permission', () => {
 
   // Actions
   async function fetchPermissions() {
-    const res = await request.get('/api/permissions/current')
-    permissions.value = res.data.data || []
+    const res = await request.get('/v1/permissions/current') as ApiResponse<Permission[]>
+    permissions.value = res.data || []
     menuTree.value = buildMenuTree(permissions.value)
   }
 
   async function fetchRoles() {
-    const res = await request.get('/api/roles')
-    roles.value = res.data.data || []
+    const res = await request.get('/v1/roles') as ApiResponse<Role[]>
+    roles.value = res.data || []
   }
 
   async function checkPermission(code: string): Promise<boolean> {
     try {
-      const res = await request.get('/api/permissions/check', { params: { code } })
-      return res.data.data === true
+      const res = await request.get('/v1/permissions/check', { params: { code } }) as ApiResponse<boolean>
+      return res.data === true
     } catch {
       return false
     }

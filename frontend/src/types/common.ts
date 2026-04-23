@@ -1,10 +1,16 @@
+/**
+ * 统一 API 响应类型
+ */
 export interface ApiResponse<T = unknown> {
   code: number
   message: string
   data: T
 }
 
-export interface PageResult<T> {
+/**
+ * 分页结果（对齐后端 Spring Data 分页结构）
+ */
+export interface PageResult<T = unknown> {
   content: T[]
   totalElements: number
   totalPages: number
@@ -12,6 +18,9 @@ export interface PageResult<T> {
   size: number
 }
 
+/**
+ * 分页查询参数
+ */
 export interface PageRequest {
   page?: number
   size?: number

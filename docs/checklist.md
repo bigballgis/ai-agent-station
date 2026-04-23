@@ -8,11 +8,11 @@
 ## A. 安全性验收
 
 ### A1. 敏感信息管理
-- [ ] `application.yml` 中无硬编码密码（数据库、Redis、JWT）
-- [ ] `docker-compose.yml` 中无硬编码密码
+- [x] `application.yml` 中无硬编码密码（数据库、Redis、JWT）
+- [x] `docker-compose.yml` 中无硬编码密码
 - [ ] `k8s/*.yml` 中无明文密码，全部通过 Secret 引用
-- [ ] `.env.example` 文件存在，包含所有必需环境变量及说明
-- [ ] JWT Secret 无默认值，强制从环境变量读取
+- [x] `.env.example` 文件存在，包含所有必需环境变量及说明
+- [x] JWT Secret 无默认值，强制从环境变量读取
 
 ### A2. 认证与授权
 - [ ] 未登录用户访问受保护接口返回 401
@@ -42,14 +42,14 @@
 ## B. 代码架构验收
 
 ### B1. DTO 层
-- [ ] 所有 Controller 方法参数类型为 DTO 而非 Entity
-- [ ] 所有 Controller 方法返回类型为 DTO 或 `Result<DTO>`
-- [ ] API 响应 JSON 中不包含 password, apiKey, apiSecret 字段
-- [ ] MapStruct Mapper 接口存在且被使用
+- [x] 所有 Controller 方法参数类型为 DTO 而非 Entity
+- [x] 所有 Controller 方法返回类型为 DTO 或 `Result<DTO>`
+- [x] API 响应 JSON 中不包含 password, apiKey, apiSecret 字段
+- [x] MapStruct Mapper 接口存在且被使用
 - [ ] 无 `Map<String, Object>` 作为 Controller 方法参数
 
 ### B2. API 设计
-- [ ] 所有 API 路径统一使用 `/api/v1/` 前缀
+- [x] 所有 API 路径统一使用 `/api/v1/` 前缀
 - [ ] RESTful 规范：无 `/assign`, `/remove` 等动词路径
 - [ ] 所有接口统一使用 `Result<T>` 包装响应
 - [ ] AgentApiController 不再使用 `ResponseEntity` 直接返回
@@ -234,3 +234,48 @@
 - [ ] 国际化切换正常
 - [ ] 暗色模式切换正常
 - [ ] 所有页面无控制台错误
+
+---
+
+## H. 架构约定同步检查
+
+### H1. API 路径规范
+- [x] 后端 `server.servlet.context-path=/api`
+- [x] 所有 27 个 Controller 使用 `@RequestMapping("/v1/*")`
+- [x] 前端 `request.ts` baseURL 为 `http://localhost:8080/api`
+- [x] 前端 API 调用使用 `/v1/*` 相对路径
+- [x] 完整后端路径格式为 `/api/v1/*`
+
+### H2. 认证接口
+- [x] 登录接口: `POST /api/v1/auth/login`，返回 accessToken + refreshToken
+- [x] 刷新 Token: `POST /api/v1/auth/refresh`，需传 refreshToken
+- [x] 登出接口: `POST /api/v1/auth/logout`，使 refreshToken 失效 + accessToken 黑名单
+- [x] 用户信息: `GET /api/v1/auth/userinfo`，返回 UserResponseDTO
+
+### H3. Token 存储策略
+- [x] `authStorage.ts` 提供 localStorage/sessionStorage 双存储
+- [x] `setToken(token, remember)` 根据 remember 参数选择存储
+- [x] `getToken()` 优先读 localStorage，fallback sessionStorage
+- [x] `clearAuth()` 同时清除两个存储
+- [x] `request.ts` 响应拦截器支持 401 自动刷新 Token
+
+### H4. SSE 流式接口
+- [x] `stream.ts` 使用 POST 方法调用 SSE 接口
+- [x] `streamChat()` 调用 `POST /api/v1/stream/chat`
+- [x] `streamAgentExecution()` 调用 `POST /api/v1/stream/agent/{agentId}`
+- [x] 底层使用 `fetch` + `ReadableStream` 接收事件流
+- [x] 后端 `StreamController` 同时支持 GET 和 POST
+
+### H5. DTO 改造
+- [x] 所有 27 个 Controller 已完成 DTO 化
+- [x] `dto/` 包包含 30+ DTO 类
+- [x] `DTOConverter` 提供 Entity ↔ DTO 转换
+- [x] 敏感字段（password、apiKey、apiSecret）已通过 DTO 隔离
+
+### H6. 环境变量与密钥
+- [x] `JWT_SECRET` 无默认值（必填）
+- [x] `DB_PASSWORD` 通过环境变量注入
+- [x] `REDIS_PASSWORD` 通过环境变量注入
+- [x] `OPENAI_API_KEY` 通过环境变量注入
+- [x] `QWEN_API_KEY` 通过环境变量注入
+- [x] `.env.example` 包含所有必需环境变量

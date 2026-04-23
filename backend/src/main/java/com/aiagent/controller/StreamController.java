@@ -170,6 +170,7 @@ public class StreamController {
      * POST /api/v1/stream/chat
      * Body: { "provider": "openai", "systemPrompt": "...", "message": "...", "sessionId": "..." }
      */
+    @RequiresPermission("agent:invoke")
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE流式对话(POST)")
     public SseEmitter streamChatPost(@RequestBody Map<String, Object> request) {
@@ -193,6 +194,38 @@ public class StreamController {
         }
 
         return streamChat(provider, systemPrompt, message, sessionId);
+    }
+
+    /**
+     * SSE Agent 执行流（POST，支持复杂参数）
+     *
+     * POST /api/v1/stream/agent/{agentId}
+     * Body: { "message": "你好", "sessionId": "..." }
+     */
+    @RequiresPermission("agent:invoke")
+    @PostMapping(value = "/agent/{agentId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "SSE流式Agent执行(POST)")
+    public SseEmitter streamAgentExecutionPost(
+            @PathVariable Long agentId,
+            @RequestBody Map<String, Object> request) {
+        String message = (String) request.get("message");
+        String sessionId = (String) request.get("sessionId");
+
+        if (message == null || message.isBlank()) {
+            SseEmitter emitter = new SseEmitter(1_000L);
+            try {
+                Map<String, String> eventData = new LinkedHashMap<>();
+                eventData.put("type", "error");
+                eventData.put("content", "message is required");
+                emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data(objectMapper.writeValueAsString(eventData)));
+                emitter.complete();
+            } catch (Exception ignored) {}
+            return emitter;
+        }
+
+        return streamAgentExecution(agentId, message, sessionId);
     }
 
     /**

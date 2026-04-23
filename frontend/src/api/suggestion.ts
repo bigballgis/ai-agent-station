@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 生成建议
 export const generateSuggestions = (agentId: number) => {
   return request({
-    url: `/suggestions/generate/${agentId}`,
+    url: `/v1/suggestions/generate/${agentId}`,
     method: 'post'
   })
 }
@@ -11,7 +11,7 @@ export const generateSuggestions = (agentId: number) => {
 // 创建建议
 export const createSuggestion = (data: Record<string, unknown>) => {
   return request({
-    url: '/suggestions',
+    url: '/v1/suggestions',
     method: 'post',
     data
   })
@@ -20,7 +20,7 @@ export const createSuggestion = (data: Record<string, unknown>) => {
 // 更新建议
 export const updateSuggestion = (id: number, data: Record<string, unknown>) => {
   return request({
-    url: `/suggestions/${id}`,
+    url: `/v1/suggestions/${id}`,
     method: 'put',
     data
   })
@@ -29,7 +29,7 @@ export const updateSuggestion = (id: number, data: Record<string, unknown>) => {
 // 删除建议
 export const deleteSuggestion = (id: number) => {
   return request({
-    url: `/suggestions/${id}`,
+    url: `/v1/suggestions/${id}`,
     method: 'delete'
   })
 }
@@ -37,7 +37,7 @@ export const deleteSuggestion = (id: number) => {
 // 获取单个建议
 export const getSuggestion = (id: number) => {
   return request({
-    url: `/suggestions/${id}`,
+    url: `/v1/suggestions/${id}`,
     method: 'get'
   })
 }
@@ -45,7 +45,7 @@ export const getSuggestion = (id: number) => {
 // 获取所有建议
 export const getAllSuggestions = () => {
   return request({
-    url: '/suggestions',
+    url: '/v1/suggestions',
     method: 'get'
   })
 }
@@ -53,7 +53,7 @@ export const getAllSuggestions = () => {
 // 搜索建议
 export const searchSuggestions = (params: Record<string, unknown>) => {
   return request({
-    url: '/suggestions/search',
+    url: '/v1/suggestions/search',
     method: 'get',
     params
   })
@@ -62,7 +62,7 @@ export const searchSuggestions = (params: Record<string, unknown>) => {
 // 按Agent ID获取建议
 export const getSuggestionsByAgentId = (agentId: number) => {
   return request({
-    url: `/suggestions/agent/${agentId}`,
+    url: `/v1/suggestions/agent/${agentId}`,
     method: 'get'
   })
 }
@@ -70,7 +70,7 @@ export const getSuggestionsByAgentId = (agentId: number) => {
 // 按类型获取建议
 export const getSuggestionsByType = (type: string) => {
   return request({
-    url: `/suggestions/type/${type}`,
+    url: `/v1/suggestions/type/${type}`,
     method: 'get'
   })
 }
@@ -78,7 +78,7 @@ export const getSuggestionsByType = (type: string) => {
 // 按优先级获取建议
 export const getSuggestionsByPriority = (agentId: number) => {
   return request({
-    url: `/suggestions/priority/${agentId}`,
+    url: `/v1/suggestions/priority/${agentId}`,
     method: 'get'
   })
 }
@@ -86,7 +86,7 @@ export const getSuggestionsByPriority = (agentId: number) => {
 // 更新建议状态
 export const updateSuggestionStatus = (id: number, status: string) => {
   return request({
-    url: `/suggestions/${id}/status`,
+    url: `/v1/suggestions/${id}/status`,
     method: 'put',
     params: { status }
   })
@@ -95,7 +95,7 @@ export const updateSuggestionStatus = (id: number, status: string) => {
 // 更新实现状态
 export const updateImplementationStatus = (id: number, implementationStatus: string) => {
   return request({
-    url: `/suggestions/${id}/implementation-status`,
+    url: `/v1/suggestions/${id}/implementation-status`,
     method: 'put',
     params: { implementationStatus }
   })
@@ -104,7 +104,7 @@ export const updateImplementationStatus = (id: number, implementationStatus: str
 // 分析建议效果
 export const analyzeSuggestionEffectiveness = () => {
   return request({
-    url: '/suggestions/analysis/effectiveness',
+    url: '/v1/suggestions/analysis/effectiveness',
     method: 'get'
   })
 }

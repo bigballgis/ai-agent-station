@@ -1,5 +1,9 @@
 package com.aiagent.controller;
 
+import com.aiagent.dto.DTOConverter;
+import com.aiagent.dto.UserResponseDTO;
+import com.aiagent.entity.User;
+import com.aiagent.service.UserService;
 import com.aiagent.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.aiagent.annotation.OperationLog;
@@ -22,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     @PostMapping("/login")
     @Operation(summary = "用户登录")
@@ -59,6 +64,16 @@ public class AuthController {
             authService.logout(principal.getId(), accessToken);
         }
         return Result.success("登出成功");
+    }
+
+    @GetMapping("/userinfo")
+    @Operation(summary = "获取当前用户信息")
+    public Result<UserResponseDTO> getUserInfo(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null || principal.getId() == null) {
+            return Result.fail(401, "未认证");
+        }
+        User user = userService.getById(principal.getId());
+        return Result.success(DTOConverter.toUserResponseDTO(user));
     }
 
     // ==================== Request DTOs ====================
