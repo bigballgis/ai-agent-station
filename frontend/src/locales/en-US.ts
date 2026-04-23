@@ -564,6 +564,10 @@ export default {
     actionFailed: 'Failed to {action} tenant',
     enable: 'Enable',
     disable: 'Disable',
+    nameRequired: 'Please enter tenant name',
+    contactRequired: 'Please enter contact name',
+    emailRequired: 'Please enter email address',
+    emailInvalid: 'Please enter a valid email address',
   },
   error: {
     '403': 'Sorry, you don\'t have permission to access this page',
@@ -761,6 +765,7 @@ export default {
     fetchRolesFailed: 'Failed to fetch roles',
     fetchUsersFailed: 'Failed to fetch users',
     roleNameRequired: 'Role name is required',
+    roleCodeRequired: 'Role code is required',
     roleNameAndCodeRequired: 'Please fill in role name and code',
     createRoleFailed: 'Failed to create role',
     updateRoleFailed: 'Failed to update role',

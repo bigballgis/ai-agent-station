@@ -513,8 +513,12 @@ function handleCreateRole() {
 }
 
 function handleCreateRoleSubmit() {
-  if (!createForm.value.name || !createForm.value.code) {
-    message.error(t('permission.roleNameAndCodeRequired'))
+  if (!createForm.value.name) {
+    message.error(t('permission.roleNameRequired'))
+    return
+  }
+  if (!createForm.value.code) {
+    message.error(t('permission.roleCodeRequired'))
     return
   }
   createRole(createForm.value)

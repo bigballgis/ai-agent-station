@@ -32,7 +32,7 @@
               />
             </template>
             <template v-else-if="column.key === 'trend'">
-              <span :class="record.trend > 0 ? 'text-green-500' : record.trend < 0 ? 'text-red-500' : 'text-gray-500'">
+              <span :class="record.trend > 0 ? 'text-green-500 dark:text-green-400' : record.trend < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-neutral-400'">
                 {{ record.trend > 0 ? '↑' : record.trend < 0 ? '↓' : '→' }} {{ Math.abs(record.trend) }}%
               </span>
             </template>
@@ -56,28 +56,28 @@ const evaluationMetrics = [
     title: '总体评分',
     value: 85.5,
     icon: CheckCircleOutlined,
-    iconClass: 'text-green-500'
+    iconClass: 'text-green-500 dark:text-green-400'
   },
   {
     key: 'accuracy',
     title: '准确率',
     value: 92.3,
     icon: CheckCircleOutlined,
-    iconClass: 'text-green-500'
+    iconClass: 'text-green-500 dark:text-green-400'
   },
   {
     key: 'efficiency',
     title: '效率',
     value: 78.9,
     icon: WarningOutlined,
-    iconClass: 'text-yellow-500'
+    iconClass: 'text-yellow-500 dark:text-yellow-400'
   },
   {
     key: 'reliability',
     title: '可靠性',
     value: 88.7,
     icon: CheckCircleOutlined,
-    iconClass: 'text-green-500'
+    iconClass: 'text-green-500 dark:text-green-400'
   }
 ]
 

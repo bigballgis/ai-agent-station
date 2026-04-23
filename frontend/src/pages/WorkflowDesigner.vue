@@ -718,4 +718,94 @@ onMounted(() => {
 .edge-arrow {
   color: #999;
 }
+
+/* Dark mode overrides */
+:global(.dark) .left-panel {
+  background: #171717;
+  border-color: #262626;
+}
+
+:global(.dark) .panel-header {
+  border-bottom-color: #262626;
+}
+
+:global(.dark) .panel-header h3 {
+  color: #e5e5e5;
+}
+
+:global(.dark) .filter-bar {
+  border-bottom-color: #262626;
+}
+
+:global(.dark) .definition-item:hover {
+  background: #262626;
+}
+
+:global(.dark) .definition-item.active {
+  background: #0c1a2e;
+  border-color: #1890ff;
+}
+
+:global(.dark) .def-name {
+  color: #e5e5e5;
+}
+
+:global(.dark) .def-version {
+  color: #737373;
+}
+
+:global(.dark) .def-desc {
+  color: #a3a3a3;
+}
+
+:global(.dark) .center-panel {
+  background: #171717;
+  border-color: #262626;
+}
+
+:global(.dark) .detail-title h2 {
+  color: #e5e5e5;
+}
+
+:global(.dark) .node-card {
+  border-color: #262626;
+}
+
+:global(.dark) .node-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .node-index {
+  color: #737373;
+}
+
+:global(.dark) .node-type-tag {
+  background: #262626;
+  color: #a3a3a3;
+}
+
+:global(.dark) .node-name {
+  color: #e5e5e5;
+}
+
+:global(.dark) .node-config {
+  color: #a3a3a3;
+}
+
+:global(.dark) .config-key {
+  color: #737373;
+}
+
+:global(.dark) .edge-item {
+  background: #262626;
+}
+
+:global(.dark) .edge-source,
+:global(.dark) .edge-target {
+  color: #e5e5e5;
+}
+
+:global(.dark) .edge-arrow {
+  color: #737373;
+}
 </style>

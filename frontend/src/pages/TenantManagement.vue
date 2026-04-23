@@ -577,8 +577,21 @@ function openEditModal(tenant: Tenant) {
 }
 
 function saveTenant() {
-  if (!form.value.name || !form.value.contact || !form.value.email) {
-    message.warning(t('tenant.requiredFields'))
+  if (!form.value.name) {
+    message.warning(t('tenant.nameRequired'))
+    return
+  }
+  if (!form.value.contact) {
+    message.warning(t('tenant.contactRequired'))
+    return
+  }
+  if (!form.value.email) {
+    message.warning(t('tenant.emailRequired'))
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.value.email)) {
+    message.warning(t('tenant.emailInvalid'))
     return
   }
   if (editingTenant.value) {

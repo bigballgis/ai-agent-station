@@ -302,4 +302,66 @@ onMounted(() => {
 .btn-success:hover {
   background: #73d13d;
 }
+
+/* Dark mode overrides */
+:global(.dark) .agent-edit-page {
+  background-color: #171717;
+  color: #e5e5e5;
+}
+
+:global(.dark) .edit-header {
+  background: #171717;
+  border-bottom-color: #262626;
+}
+
+:global(.dark) .edit-header h1 {
+  color: #e5e5e5;
+}
+
+:global(.dark) .info-section {
+  background: #171717;
+  border-bottom-color: #262626;
+}
+
+:global(.dark) .info-item label {
+  color: #e5e5e5;
+}
+
+:global(.dark) .info-item input,
+:global(.dark) .info-item textarea,
+:global(.dark) .info-item select {
+  background-color: #262626;
+  color: #e5e5e5;
+  border-color: #404040;
+}
+
+:global(.dark) .btn-secondary {
+  background: #262626;
+  border-color: #404040;
+  color: #e5e5e5;
+}
+
+:global(.dark) .btn-secondary:hover {
+  background: #333333;
+}
+
+:global(.dark) .status-draft {
+  background: #262626;
+  color: #a3a3a3;
+}
+
+:global(.dark) .status-pending {
+  background: #422006;
+  color: #fbbf24;
+}
+
+:global(.dark) .status-approved {
+  background: #052e16;
+  color: #4ade80;
+}
+
+:global(.dark) .status-published {
+  background: #083344;
+  color: #22d3ee;
+}
 </style>

@@ -564,6 +564,10 @@ export default {
     actionFailed: '{action}租户失败',
     enable: '启用',
     disable: '停用',
+    nameRequired: '请输入租户名称',
+    contactRequired: '请输入联系人',
+    emailRequired: '请输入邮箱地址',
+    emailInvalid: '请输入有效的邮箱地址',
   },
   error: {
     '403': '抱歉，您无权访问该页面',
@@ -761,6 +765,7 @@ export default {
     fetchRolesFailed: '获取角色列表失败',
     fetchUsersFailed: '获取用户列表失败',
     roleNameRequired: '角色名称不能为空',
+    roleCodeRequired: '角色标识不能为空',
     roleNameAndCodeRequired: '请填写角色名称和标识',
     createRoleFailed: '创建角色失败',
     updateRoleFailed: '更新角色信息失败',
