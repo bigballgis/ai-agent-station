@@ -107,7 +107,7 @@ service.interceptors.response.use(
     // Token 过期: 尝试自动刷新
     if (status === 401 && !originalRequest._retry) {
       // 登录接口本身 401 不刷新
-      if (originalRequest.url?.includes('/auth/')) {
+      if (originalRequest.url?.includes('/v1/auth/login')) {
         clearAuthAndRedirect()
         return Promise.reject(error)
       }
