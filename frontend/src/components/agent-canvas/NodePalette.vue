@@ -1,6 +1,6 @@
 <template>
   <div class="node-panel">
-    <h3 class="panel-title">节点库</h3>
+    <h3 class="panel-title">{{ t('canvas.nodePalette.title') }}</h3>
     <div v-for="cat in categories" :key="cat.key" class="node-category">
       <div class="category-header" @click="$emit('toggleCategory', cat.key)">
         <span class="category-arrow" :class="{ collapsed: collapsedCategories[cat.key] }">&#9660;</span>
@@ -24,6 +24,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export interface NodeType {
   type: string
   label: string

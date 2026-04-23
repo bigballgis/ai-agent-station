@@ -10,6 +10,8 @@
     :ok-type="okType"
     :closable="closable"
     :mask-closable="maskClosable"
+    role="alertdialog"
+    aria-modal="true"
     @ok="handleOk"
     @cancel="handleCancel"
   >

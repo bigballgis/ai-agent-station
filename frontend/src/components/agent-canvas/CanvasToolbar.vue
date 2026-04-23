@@ -1,17 +1,17 @@
 <template>
   <div class="canvas-toolbar">
-    <button @click="$emit('save')" class="btn btn-primary" title="保存">保存</button>
-    <button @click="$emit('clear')" class="btn btn-secondary" title="清空画布">清空</button>
+    <button @click="$emit('save')" class="btn btn-primary" :title="t('canvas.toolbar.save')">{{ t('canvas.toolbar.save') }}</button>
+    <button @click="$emit('clear')" class="btn btn-secondary" :title="t('canvas.toolbar.clear')">{{ t('canvas.toolbar.clear') }}</button>
     <div class="toolbar-separator"></div>
-    <button @click="$emit('undo')" class="btn btn-secondary" title="撤销" :disabled="undoStackLength === 0">撤销</button>
+    <button @click="$emit('undo')" class="btn btn-secondary" :title="t('canvas.toolbar.undo')" :disabled="undoStackLength === 0">{{ t('canvas.toolbar.undo') }}</button>
     <div class="toolbar-separator"></div>
-    <button @click="$emit('zoomIn')" class="btn btn-icon" title="放大">+</button>
+    <button @click="$emit('zoomIn')" class="btn btn-icon" :title="t('canvas.toolbar.zoomIn')">+</button>
     <span class="zoom-label">{{ Math.round(scale * 100) }}%</span>
-    <button @click="$emit('zoomOut')" class="btn btn-icon" title="缩小">-</button>
-    <button @click="$emit('zoomReset')" class="btn btn-secondary" title="重置缩放">重置</button>
+    <button @click="$emit('zoomOut')" class="btn btn-icon" :title="t('canvas.toolbar.zoomOut')">-</button>
+    <button @click="$emit('zoomReset')" class="btn btn-secondary" :title="t('canvas.toolbar.resetZoom')">{{ t('canvas.toolbar.resetZoom') }}</button>
     <div class="toolbar-separator"></div>
-    <button @click="$emit('autoLayout')" class="btn btn-secondary" title="自动布局">自动布局</button>
-    <button @click="$emit('validate')" class="btn btn-secondary" title="验证图结构">验证</button>
+    <button @click="$emit('autoLayout')" class="btn btn-secondary" :title="t('canvas.toolbar.autoLayout')">{{ t('canvas.toolbar.autoLayout') }}</button>
+    <button @click="$emit('validate')" class="btn btn-secondary" :title="t('canvas.toolbar.validate')">{{ t('canvas.toolbar.validate') }}</button>
     <div class="toolbar-spacer"></div>
     <span v-if="validationMessage" class="validation-msg" :class="validationType">
       {{ validationMessage }}
@@ -20,6 +20,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps<{
   scale: number
   undoStackLength: number

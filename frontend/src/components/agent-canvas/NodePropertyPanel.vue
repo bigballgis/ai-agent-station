@@ -1,30 +1,30 @@
 <template>
   <div class="properties-panel">
     <h3 class="panel-title">
-      属性配置
+      {{ t('canvas.propertyPanel.title') }}
       <button class="btn-close" @click="$emit('close')">&times;</button>
     </h3>
 
     <!-- 通用属性 -->
     <div class="property-group">
-      <label>节点名称</label>
+      <label>{{ t('canvas.propertyPanel.nodeName') }}</label>
       <input :value="node.label" @input="$emit('updateLabel', ($event.target as HTMLInputElement).value)" />
     </div>
 
     <!-- start 节点 -->
     <template v-if="node.type === 'start'">
-      <div class="property-hint">开始节点，无特殊配置</div>
+      <div class="property-hint">{{ t('canvas.propertyPanel.startHint') }}</div>
     </template>
 
     <!-- end 节点 -->
     <template v-if="node.type === 'end'">
-      <div class="property-hint">结束节点，无特殊配置</div>
+      <div class="property-hint">{{ t('canvas.propertyPanel.endHint') }}</div>
     </template>
 
     <!-- llm 节点 -->
     <template v-if="node.type === 'llm'">
       <div class="property-group">
-        <label>Provider</label>
+        <label>{{ t('canvas.propertyPanel.provider') }}</label>
         <select :value="node.data.provider" @change="updateData('provider', ($event.target as HTMLSelectElement).value)">
           <option value="openai">OpenAI</option>
           <option value="anthropic">Anthropic</option>
@@ -34,11 +34,11 @@
         </select>
       </div>
       <div class="property-group">
-        <label>模型</label>
+        <label>{{ t('canvas.propertyPanel.model') }}</label>
         <input :value="node.data.model" @input="updateData('model', ($event.target as HTMLInputElement).value)" placeholder="gpt-4 / claude-3" />
       </div>
       <div class="property-group">
-        <label>Temperature: {{ node.data.temperature ?? 0.7 }}</label>
+        <label>{{ t('canvas.propertyPanel.temperature') }}: {{ node.data.temperature ?? 0.7 }}</label>
         <input
           type="range"
           min="0"
@@ -50,7 +50,7 @@
         />
       </div>
       <div class="property-group">
-        <label>Top P: {{ node.data.topP ?? 1.0 }}</label>
+        <label>{{ t('canvas.propertyPanel.topP') }}: {{ node.data.topP ?? 1.0 }}</label>
         <input
           type="range"
           min="0"
@@ -62,7 +62,7 @@
         />
       </div>
       <div class="property-group">
-        <label>Max Tokens</label>
+        <label>{{ t('canvas.propertyPanel.maxTokens') }}</label>
         <input
           type="number"
           :value="node.data.maxTokens"
@@ -71,21 +71,21 @@
         />
       </div>
       <div class="property-group">
-        <label>System Prompt</label>
+        <label>{{ t('canvas.propertyPanel.systemPrompt') }}</label>
         <textarea
           :value="node.data.systemPrompt"
           @input="updateData('systemPrompt', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="系统提示词..."
+          :placeholder="t('canvas.propertyPanel.systemPromptPlaceholder')"
           rows="3"
           class="textarea"
         ></textarea>
       </div>
       <div class="property-group">
-        <label>Prompt (支持 &#123;&#123;变量&#125;&#125; 模板)</label>
+        <label>{{ t('canvas.propertyPanel.prompt') }}</label>
         <textarea
           :value="node.data.prompt"
           @input="updateData('prompt', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="请根据以下内容回答: {{input}}"
+          :placeholder="t('canvas.propertyPanel.promptPlaceholder')"
           rows="3"
           class="textarea"
         ></textarea>
@@ -95,11 +95,11 @@
     <!-- condition 节点 -->
     <template v-if="node.type === 'condition'">
       <div class="property-group">
-        <label>表达式</label>
+        <label>{{ t('canvas.propertyPanel.expression') }}</label>
         <input :value="node.data.expression" @input="updateData('expression', ($event.target as HTMLInputElement).value)" placeholder="value > 0" />
       </div>
       <div class="property-group">
-        <label>变量</label>
+        <label>{{ t('canvas.propertyPanel.variable') }}</label>
         <input :value="node.data.variable" @input="updateData('variable', ($event.target as HTMLInputElement).value)" placeholder="result" />
       </div>
     </template>
@@ -107,61 +107,61 @@
     <!-- tool 节点 -->
     <template v-if="node.type === 'tool'">
       <div class="property-group">
-        <label>工具 ID</label>
+        <label>{{ t('canvas.propertyPanel.toolId') }}</label>
         <select :value="node.data.toolId" @change="updateData('toolId', ($event.target as HTMLSelectElement).value)">
-          <option value="">请选择...</option>
-          <option value="web_search">Web 搜索</option>
-          <option value="calculator">计算器</option>
-          <option value="weather">天气查询</option>
-          <option value="database">数据库查询</option>
-          <option value="email">邮件发送</option>
-          <option value="file_read">文件读取</option>
-          <option value="file_write">文件写入</option>
-          <option value="custom">自定义工具</option>
+          <option value="">{{ t('canvas.propertyPanel.toolIdPlaceholder') }}</option>
+          <option value="web_search">{{ t('canvas.propertyPanel.webSearch') }}</option>
+          <option value="calculator">{{ t('canvas.propertyPanel.calculator') }}</option>
+          <option value="weather">{{ t('canvas.propertyPanel.weather') }}</option>
+          <option value="database">{{ t('canvas.propertyPanel.database') }}</option>
+          <option value="email">{{ t('canvas.propertyPanel.email') }}</option>
+          <option value="file_read">{{ t('canvas.propertyPanel.fileRead') }}</option>
+          <option value="file_write">{{ t('canvas.propertyPanel.fileWrite') }}</option>
+          <option value="custom">{{ t('canvas.propertyPanel.customTool') }}</option>
         </select>
       </div>
       <div class="property-group">
-        <label>工具名称</label>
+        <label>{{ t('canvas.propertyPanel.toolName') }}</label>
         <input :value="node.data.toolName" @input="updateData('toolName', ($event.target as HTMLInputElement).value)" placeholder="my_tool" />
       </div>
       <div class="property-group">
-        <label>输入映射 (Key-Value)</label>
+        <label>{{ t('canvas.propertyPanel.inputMapping') }}</label>
         <div v-for="(kv, idx) in (node.data.inputMapping || [])" :key="idx" class="kv-row">
           <input :value="kv.key" @input="updateKV(idx, 'key', ($event.target as HTMLInputElement).value)" placeholder="key" class="kv-input" />
           <input :value="kv.value" @input="updateKV(idx, 'value', ($event.target as HTMLInputElement).value)" placeholder="value" class="kv-input" />
           <button class="btn btn-remove" @click="$emit('removeKV', idx)">-</button>
         </div>
-        <button class="btn btn-add-kv" @click="$emit('addKV')">+ 添加映射</button>
+        <button class="btn btn-add-kv" @click="$emit('addKV')">{{ t('canvas.propertyPanel.addMapping') }}</button>
       </div>
     </template>
 
     <!-- memory 节点 -->
     <template v-if="node.type === 'memory'">
       <div class="property-group">
-        <label>操作</label>
+        <label>{{ t('canvas.propertyPanel.action') }}</label>
         <select :value="node.data.action" @change="updateData('action', ($event.target as HTMLSelectElement).value)">
-          <option value="load">加载 (Load)</option>
-          <option value="save">保存 (Save)</option>
+          <option value="load">{{ t('canvas.propertyPanel.actionLoad') }}</option>
+          <option value="save">{{ t('canvas.propertyPanel.actionSave') }}</option>
         </select>
       </div>
       <div class="property-group">
-        <label>记忆类型</label>
+        <label>{{ t('canvas.propertyPanel.memoryType') }}</label>
         <select :value="node.data.memoryType" @change="updateData('memoryType', ($event.target as HTMLSelectElement).value)">
-          <option value="SHORT_TERM">短期记忆</option>
-          <option value="LONG_TERM">长期记忆</option>
-          <option value="BUSINESS">业务记忆</option>
+          <option value="SHORT_TERM">{{ t('canvas.propertyPanel.shortTerm') }}</option>
+          <option value="LONG_TERM">{{ t('canvas.propertyPanel.longTerm') }}</option>
+          <option value="BUSINESS">{{ t('canvas.propertyPanel.business') }}</option>
         </select>
       </div>
       <div class="property-group">
-        <label>查询</label>
-        <input :value="node.data.query" @input="updateData('query', ($event.target as HTMLInputElement).value)" placeholder="查询内容..." />
+        <label>{{ t('canvas.propertyPanel.query') }}</label>
+        <input :value="node.data.query" @input="updateData('query', ($event.target as HTMLInputElement).value)" :placeholder="t('canvas.propertyPanel.queryPlaceholder')" />
       </div>
       <div class="property-group">
-        <label>摘要</label>
+        <label>{{ t('canvas.propertyPanel.summary') }}</label>
         <textarea
           :value="node.data.summary"
           @input="updateData('summary', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="记忆摘要..."
+          :placeholder="t('canvas.propertyPanel.summaryPlaceholder')"
           rows="2"
           class="textarea"
         ></textarea>
@@ -171,14 +171,14 @@
     <!-- retriever 节点 -->
     <template v-if="node.type === 'retriever'">
       <div class="property-group">
-        <label>查询</label>
-        <input :value="node.data.query" @input="updateData('query', ($event.target as HTMLInputElement).value)" placeholder="检索查询..." />
+        <label>{{ t('canvas.propertyPanel.query') }}</label>
+        <input :value="node.data.query" @input="updateData('query', ($event.target as HTMLInputElement).value)" placeholder="..." />
       </div>
       <div class="property-group">
-        <label>检索类型</label>
+        <label>{{ t('canvas.propertyPanel.retrieverType') }}</label>
         <select :value="node.data.retrieverType" @change="updateData('retrieverType', ($event.target as HTMLSelectElement).value)">
-          <option value="memory">记忆检索</option>
-          <option value="vector_db">向量数据库</option>
+          <option value="memory">{{ t('canvas.propertyPanel.memoryRetrieval') }}</option>
+          <option value="vector_db">{{ t('canvas.propertyPanel.vectorDb') }}</option>
         </select>
       </div>
     </template>
@@ -186,43 +186,43 @@
     <!-- variable 节点 -->
     <template v-if="node.type === 'variable'">
       <div class="property-group">
-        <label>变量名</label>
+        <label>{{ t('canvas.propertyPanel.variableName') }}</label>
         <input :value="node.data.name" @input="updateData('name', ($event.target as HTMLInputElement).value)" placeholder="variable_name" />
       </div>
       <div class="property-group">
-        <label>值</label>
+        <label>{{ t('canvas.propertyPanel.variableValue') }}</label>
         <input :value="node.data.value" @input="updateData('value', ($event.target as HTMLInputElement).value)" placeholder="value" />
       </div>
       <div class="property-group">
-        <label>来源</label>
-        <input :value="node.data.source" @input="updateData('source', ($event.target as HTMLInputElement).value)" placeholder="来源节点/表达式" />
+        <label>{{ t('canvas.propertyPanel.variableSource') }}</label>
+        <input :value="node.data.source" @input="updateData('source', ($event.target as HTMLInputElement).value)" :placeholder="t('canvas.propertyPanel.sourcePlaceholder')" />
       </div>
     </template>
 
     <!-- exception 节点 -->
     <template v-if="node.type === 'exception'">
       <div class="property-group">
-        <label>处理方式</label>
+        <label>{{ t('canvas.propertyPanel.exceptionAction') }}</label>
         <select :value="node.data.action" @change="updateData('action', ($event.target as HTMLSelectElement).value)">
-          <option value="log">记录日志</option>
-          <option value="retry">重试</option>
-          <option value="fallback">降级处理</option>
+          <option value="log">{{ t('canvas.propertyPanel.logAction') }}</option>
+          <option value="retry">{{ t('canvas.propertyPanel.retryAction') }}</option>
+          <option value="fallback">{{ t('canvas.propertyPanel.fallbackAction') }}</option>
         </select>
       </div>
       <div class="property-group">
-        <label>降级值</label>
-        <input :value="node.data.fallbackValue" @input="updateData('fallbackValue', ($event.target as HTMLInputElement).value)" placeholder="默认降级值" />
+        <label>{{ t('canvas.propertyPanel.fallbackValue') }}</label>
+        <input :value="node.data.fallbackValue" @input="updateData('fallbackValue', ($event.target as HTMLInputElement).value)" :placeholder="t('canvas.propertyPanel.fallbackValuePlaceholder')" />
       </div>
     </template>
 
     <!-- http 节点 -->
     <template v-if="node.type === 'http'">
       <div class="property-group">
-        <label>URL</label>
+        <label>{{ t('canvas.propertyPanel.url') }}</label>
         <input :value="node.data.url" @input="updateData('url', ($event.target as HTMLInputElement).value)" placeholder="https://api.example.com" />
       </div>
       <div class="property-group">
-        <label>Method</label>
+        <label>{{ t('canvas.propertyPanel.method') }}</label>
         <select :value="node.data.method" @change="updateData('method', ($event.target as HTMLSelectElement).value)">
           <option value="GET">GET</option>
           <option value="POST">POST</option>
@@ -235,18 +235,18 @@
     <!-- code 节点 -->
     <template v-if="node.type === 'code'">
       <div class="property-group">
-        <label>语言</label>
+        <label>{{ t('canvas.propertyPanel.language') }}</label>
         <select :value="node.data.language" @change="updateData('language', ($event.target as HTMLSelectElement).value)">
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
         </select>
       </div>
       <div class="property-group">
-        <label>代码</label>
+        <label>{{ t('canvas.propertyPanel.code') }}</label>
         <textarea
           :value="node.data.code"
           @input="updateData('code', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="// 在此编写代码..."
+          :placeholder="t('canvas.propertyPanel.codePlaceholder')"
           rows="8"
           class="textarea code-area"
         ></textarea>
@@ -256,7 +256,7 @@
     <!-- delay 节点 -->
     <template v-if="node.type === 'delay'">
       <div class="property-group">
-        <label>等待时间 (秒)</label>
+        <label>{{ t('canvas.propertyPanel.waitSeconds') }}</label>
         <input
           type="number"
           :value="node.data.seconds"
@@ -269,12 +269,16 @@
 
     <!-- 删除按钮 -->
     <div class="property-actions">
-      <button @click="$emit('deleteNode')" class="btn btn-danger">删除节点</button>
+      <button @click="$emit('deleteNode')" class="btn btn-danger">{{ t('canvas.propertyPanel.deleteNode') }}</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export interface CanvasNode {
   id: string
   type: string

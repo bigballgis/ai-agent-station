@@ -99,6 +99,7 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      show-components: when_authorized
       probes:
         enabled: true
   metrics:
@@ -110,13 +111,27 @@ management:
 
 # 日志配置
 logging:
+  file:
+    name: logs/application.log
+    max-size: 100MB
+    max-history: 30
   level:
     com.aiagent: ${LOG_LEVEL:info}
     org.springframework.web: info
     org.hibernate: warn
+    org.hibernate.SQL: warn
+    org.springframework.security: warn
+    com.zaxxer.hikari: warn
     org.flywaydb: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [traceId=%X{traceId}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [traceId=%X{traceId}] %-5level %logger{36} - %msg%n"
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/application.%d{yyyy-MM-dd}.%i.log
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 3GB
 
 # AI Agent配置
 ai-agent:

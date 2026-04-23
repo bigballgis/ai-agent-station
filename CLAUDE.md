@@ -86,3 +86,14 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - P0: PageResult type mismatch fix (14 files), Dict Store path fix, X-Tenant-ID headers, copyAgent param fix
 - P1: Token refresh mechanism, breadcrumb i18n, login redirect, captcha error handling
 - P2: Public component i18n (5 components), core page i18n (6 pages, 150+ keys), dark mode (5 pages), form validation (3 pages)
+
+### Round 5 (Final Polish)
+- AgentCanvas i18n: 4 components, 100+ canvas namespace keys in zh-CN/en-US
+- BrandPanel i18n: brand title and copyright text
+- Backend structured logging: file output with date rolling, per-package log levels
+- .env.production.example: security warning header
+- NotFound.vue: dark mode verified complete
+- ConfirmModal a11y: role="alertdialog" and aria-modal="true"
+- ProTable a11y: aria-label on table
+- Health Check: show-components enabled for DB/Redis visibility
+- Vite gzip: checked, plugin not installed, skipped per requirements

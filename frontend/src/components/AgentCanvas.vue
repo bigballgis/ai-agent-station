@@ -168,9 +168,12 @@
  * 计划在下一版本中移除。
  */
 import { ref, computed, reactive, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import CanvasToolbar from './agent-canvas/CanvasToolbar.vue'
 import NodePalette from './agent-canvas/NodePalette.vue'
 import NodePropertyPanel from './agent-canvas/NodePropertyPanel.vue'
+
+const { t } = useI18n()
 
 // ========== 类型定义 ==========
 
@@ -221,25 +224,25 @@ const emit = defineEmits<{
 // ========== 节点类型定义 (12种) ==========
 
 const nodeTypes: NodeType[] = [
-  { type: 'start', label: '开始', icon: '\u25B6\uFE0F', category: 'flow' },
-  { type: 'end', label: '结束', icon: '\u23F9\uFE0F', category: 'flow' },
-  { type: 'llm', label: 'LLM 调用', icon: '\uD83E\uDDE0', category: 'ai' },
-  { type: 'condition', label: '条件分支', icon: '\uD83D\uDD00', category: 'flow' },
-  { type: 'tool', label: '工具调用', icon: '\uD83D\uDD27', category: 'integration' },
-  { type: 'memory', label: '记忆管理', icon: '\uD83D\uDCBE', category: 'ai' },
-  { type: 'retriever', label: '信息检索', icon: '\uD83D\uDD0D', category: 'ai' },
-  { type: 'variable', label: '变量赋值', icon: '\uD83D\uDCE6', category: 'flow' },
-  { type: 'exception', label: '异常处理', icon: '\u26A0\uFE0F', category: 'flow' },
-  { type: 'http', label: 'HTTP 请求', icon: '\uD83C\uDF10', category: 'integration' },
-  { type: 'code', label: '代码执行', icon: '\uD83D\uDCBB', category: 'advanced' },
-  { type: 'delay', label: '延时等待', icon: '\u23F1\uFE0F', category: 'flow' },
+  { type: 'start', label: t('canvas.nodeTypes.start'), icon: '\u25B6\uFE0F', category: 'flow' },
+  { type: 'end', label: t('canvas.nodeTypes.end'), icon: '\u23F9\uFE0F', category: 'flow' },
+  { type: 'llm', label: t('canvas.nodeTypes.llm'), icon: '\uD83E\uDDE0', category: 'ai' },
+  { type: 'condition', label: t('canvas.nodeTypes.condition'), icon: '\uD83D\uDD00', category: 'flow' },
+  { type: 'tool', label: t('canvas.nodeTypes.tool'), icon: '\uD83D\uDD27', category: 'integration' },
+  { type: 'memory', label: t('canvas.nodeTypes.memory'), icon: '\uD83D\uDCBE', category: 'ai' },
+  { type: 'retriever', label: t('canvas.nodeTypes.retriever'), icon: '\uD83D\uDD0D', category: 'ai' },
+  { type: 'variable', label: t('canvas.nodeTypes.variable'), icon: '\uD83D\uDCE6', category: 'flow' },
+  { type: 'exception', label: t('canvas.nodeTypes.exception'), icon: '\u26A0\uFE0F', category: 'flow' },
+  { type: 'http', label: t('canvas.nodeTypes.http'), icon: '\uD83C\uDF10', category: 'integration' },
+  { type: 'code', label: t('canvas.nodeTypes.code'), icon: '\uD83D\uDCBB', category: 'advanced' },
+  { type: 'delay', label: t('canvas.nodeTypes.delay'), icon: '\u23F1\uFE0F', category: 'flow' },
 ]
 
 const categories: Category[] = [
-  { key: 'flow', label: '流程控制' },
-  { key: 'ai', label: 'AI 能力' },
-  { key: 'integration', label: '集成' },
-  { key: 'advanced', label: '高级' },
+  { key: 'flow', label: t('canvas.categories.flow') },
+  { key: 'ai', label: t('canvas.categories.ai') },
+  { key: 'integration', label: t('canvas.categories.integration') },
+  { key: 'advanced', label: t('canvas.categories.advanced') },
 ]
 
 // ========== 节点颜色映射 ==========
@@ -333,15 +336,15 @@ function getNodeColor(type: string): string {
 function getNodeSummary(node: CanvasNode): string {
   const d = node.data
   switch (node.type) {
-    case 'start': return '流程入口'
-    case 'end': return '流程出口'
-    case 'llm': return `模型: ${d.model || '未设置'} | T: ${d.temperature ?? 0.7}`
-    case 'condition': return `表达式: ${d.expression || '未设置'}`
-    case 'tool': return `工具: ${d.toolName || d.toolId || '未选择'}`
-    case 'memory': return `${d.action === 'save' ? '保存' : '加载'} | ${d.memoryType || 'SHORT_TERM'}`
-    case 'retriever': return `检索: ${d.retrieverType || 'memory'}`
+    case 'start': return t('canvas.nodeSummary.startEntry')
+    case 'end': return t('canvas.nodeSummary.endExit')
+    case 'llm': return `Model: ${d.model || t('canvas.nodeSummary.modelNotSet')} | T: ${d.temperature ?? 0.7}`
+    case 'condition': return `Expr: ${d.expression || t('canvas.nodeSummary.expressionNotSet')}`
+    case 'tool': return `Tool: ${d.toolName || d.toolId || t('canvas.nodeSummary.toolNotSelected')}`
+    case 'memory': return `${d.action === 'save' ? t('canvas.nodeSummary.save') : t('canvas.nodeSummary.load')} | ${d.memoryType || t('canvas.nodeSummary.shortTerm')}`
+    case 'retriever': return `Search: ${d.retrieverType || 'memory'}`
     case 'variable': return `${d.name || 'var'} = ${d.value || '...'}`
-    case 'exception': return `处理: ${d.action || 'log'}`
+    case 'exception': return `Action: ${d.action || 'log'}`
     case 'http': return `${d.method || 'GET'} ${d.url || '...'}`
     case 'code': return `${d.language || 'javascript'}`
     case 'delay': return `${d.seconds ?? 1}s`
@@ -427,7 +430,7 @@ function handleDrop(event: DragEvent) {
   const newNode: CanvasNode = {
     id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 6),
     type,
-    label: nodeTypes.find(n => n.type === type)?.label || '节点',
+    label: nodeTypes.find(n => n.type === type)?.label || t('canvas.nodeTypes.node'),
     x,
     y,
     data: defaultData,
@@ -690,7 +693,7 @@ function handleSave() {
 
 function handleClear() {
   if (nodes.value.length === 0 && connections.value.length === 0) return
-  if (confirm('确定要清空画布吗？此操作不可撤销。')) {
+  if (confirm(t('canvas.validation.confirmClear'))) {
     pushUndo()
     nodes.value = []
     connections.value = []
@@ -729,7 +732,7 @@ function handleAutoLayout() {
   // 按照拓扑排序进行自动布局
   const sorted = topologicalSort()
   if (!sorted) {
-    validationMessage.value = '图中存在循环依赖，无法自动布局'
+    validationMessage.value = t('canvas.validation.autoLayoutCircular')
     validationType.value = 'error'
     return
   }
@@ -848,7 +851,7 @@ function handleValidate() {
 
   // 1. 检查是否有节点
   if (nodes.value.length === 0) {
-    validationMessage.value = '画布为空'
+    validationMessage.value = t('canvas.validation.canvasEmpty')
     validationType.value = 'warning'
     return
   }
@@ -856,15 +859,15 @@ function handleValidate() {
   // 2. 检查是否有 start 节点
   const startNodes = nodes.value.filter(n => n.type === 'start')
   if (startNodes.length === 0) {
-    errors.push('缺少开始节点')
+    errors.push(t('canvas.validation.missingStartNode'))
   } else if (startNodes.length > 1) {
-    errors.push('存在多个开始节点')
+    errors.push(t('canvas.validation.multipleStartNodes'))
   }
 
   // 3. 检查是否有 end 节点
   const endNodes = nodes.value.filter(n => n.type === 'end')
   if (endNodes.length === 0) {
-    warnings.push('缺少结束节点')
+    warnings.push(t('canvas.validation.missingEndNode'))
   }
 
   // 4. 检查孤立节点（无连接的节点，除了 start 和 end）
@@ -875,14 +878,14 @@ function handleValidate() {
   })
   nodes.value.forEach(n => {
     if (n.type !== 'start' && n.type !== 'end' && !connectedNodeIds.has(n.id)) {
-      warnings.push(`节点 "${n.label}" (${n.id}) 是孤立的`)
+      warnings.push(t('canvas.validation.isolatedNode', { label: n.label, id: n.id }))
     }
   })
 
   // 5. 检查循环依赖
   const sorted = topologicalSort()
   if (!sorted) {
-    errors.push('图中存在循环依赖')
+    errors.push(t('canvas.validation.circularDependency'))
   }
 
   // 6. 检查 condition 节点的连接
@@ -890,40 +893,40 @@ function handleValidate() {
     const hasTrue = connections.value.some(c => c.fromNodeId === n.id && c.fromPort === 'output-true')
     const hasFalse = connections.value.some(c => c.fromNodeId === n.id && c.fromPort === 'output-false')
     if (!hasTrue && !hasFalse) {
-      warnings.push(`条件分支 "${n.label}" 没有输出连接`)
+      warnings.push(t('canvas.validation.conditionNoOutput', { label: n.label }))
     } else if (!hasTrue) {
-      warnings.push(`条件分支 "${n.label}" 缺少 True 分支`)
+      warnings.push(t('canvas.validation.conditionMissingTrue', { label: n.label }))
     } else if (!hasFalse) {
-      warnings.push(`条件分支 "${n.label}" 缺少 False 分支`)
+      warnings.push(t('canvas.validation.conditionMissingFalse', { label: n.label }))
     }
   })
 
   // 7. 检查 LLM 节点配置
   nodes.value.filter(n => n.type === 'llm').forEach(n => {
     if (!n.data.model) {
-      warnings.push(`LLM 节点 "${n.label}" 未配置模型`)
+      warnings.push(t('canvas.validation.llmNoModel', { label: n.label }))
     }
     if (!n.data.prompt && !n.data.systemPrompt) {
-      warnings.push(`LLM 节点 "${n.label}" 未配置提示词`)
+      warnings.push(t('canvas.validation.llmNoPrompt', { label: n.label }))
     }
   })
 
   // 8. 检查 HTTP 节点配置
   nodes.value.filter(n => n.type === 'http').forEach(n => {
     if (!n.data.url) {
-      warnings.push(`HTTP 节点 "${n.label}" 未配置 URL`)
+      warnings.push(t('canvas.validation.httpNoUrl', { label: n.label }))
     }
   })
 
   // 显示结果
   if (errors.length > 0) {
-    validationMessage.value = `验证失败: ${errors.join('; ')}`
+    validationMessage.value = `${t('canvas.validation.validationFailed')}: ${errors.join('; ')}`
     validationType.value = 'error'
   } else if (warnings.length > 0) {
-    validationMessage.value = `验证通过 (有警告): ${warnings.join('; ')}`
+    validationMessage.value = `${t('canvas.validation.validationPassedWithWarnings')}: ${warnings.join('; ')}`
     validationType.value = 'warning'
   } else {
-    validationMessage.value = '验证通过，图结构合法'
+    validationMessage.value = t('canvas.validation.validationPassed')
     validationType.value = 'success'
   }
 

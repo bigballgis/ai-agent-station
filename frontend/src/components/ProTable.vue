@@ -34,6 +34,7 @@
       :size="size"
       bordered
       class="pro-table-wrapper"
+      :aria-label="t('common.dataTable') || 'Data Table'"
     >
       <!-- 透传所有具名插槽 -->
       <template v-for="(_, name) in $slots" #[name]="slotData">
