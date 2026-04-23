@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.Result;
@@ -41,6 +42,7 @@ public class FileController {
     @RequiresPermission("file:upload")
     @PostMapping("/upload")
     @Operation(summary = "上传文件")
+    @OperationLog(value = "上传文件", module = "文件管理")
     public Result<FileInfo> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "subDir", required = false) String subDir) {
@@ -116,6 +118,7 @@ public class FileController {
     @RequiresPermission("file:delete")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除文件")
+    @OperationLog(value = "删除文件", module = "文件管理")
     public Result<Void> delete(@PathVariable String id) {
         log.info("File delete request: {}", id);
         try {

@@ -9,6 +9,7 @@ import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.service.AgentService;
+import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.vo.AgentVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,28 +40,12 @@ public class AgentController {
             @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size,
             @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
             @RequestParam(required = false) @Parameter(description = "状态筛选") String status) {
-        // TODO: 后续应改为数据库层面分页，避免内存中处理大量数据
-        List<AgentVO> allAgents = agentService.getAllAgents().stream()
+        Long tenantId = TenantContextHolder.getTenantId();
+        Page<Agent> agentPage = agentService.getAgentsPaged(tenantId, keyword, status, page, size);
+        List<AgentVO> voList = agentPage.getContent().stream()
                 .map(DTOConverter::toAgentVO)
                 .collect(Collectors.toList());
-
-        // 关键词过滤
-        if (keyword != null && !keyword.isBlank()) {
-            String lowerKeyword = keyword.toLowerCase();
-            allAgents = allAgents.stream()
-                    .filter(a -> (a.getName() != null && a.getName().toLowerCase().contains(lowerKeyword))
-                            || (a.getDescription() != null && a.getDescription().toLowerCase().contains(lowerKeyword)))
-                    .collect(Collectors.toList());
-        }
-
-        // 状态过滤
-        if (status != null && !status.isBlank()) {
-            allAgents = allAgents.stream()
-                    .filter(a -> status.equalsIgnoreCase(a.getStatus()))
-                    .collect(Collectors.toList());
-        }
-
-        return Result.success(PageResult.paginate(allAgents, page, size));
+        return Result.success(PageResult.from(agentPage.map(DTOConverter::toAgentVO)));
     }
 
     @GetMapping("/{id}")

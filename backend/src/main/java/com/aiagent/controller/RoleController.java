@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
@@ -77,6 +78,7 @@ public class RoleController {
 
     @PostMapping("/users/{userId}/roles/{roleId}")
     @Operation(summary = "分配角色给用户")
+    @OperationLog(value = "分配角色给用户", module = "角色管理")
     @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
     public Result<Void> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
@@ -86,6 +88,7 @@ public class RoleController {
 
     @DeleteMapping("/users/{userId}/roles/{roleId}")
     @Operation(summary = "从用户移除角色")
+    @OperationLog(value = "从用户移除角色", module = "角色管理")
     @RequiresPermission("role:manage")
     @RequiresRole("ADMIN")
     public Result<Void> removeRoleFromUser(@PathVariable Long userId, @PathVariable Long roleId) {

@@ -2,6 +2,7 @@ package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
 
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.dto.CreateExecutionRequestDTO;
 import com.aiagent.dto.DTOConverter;
@@ -9,6 +10,7 @@ import com.aiagent.dto.ExecutionResponseDTO;
 import com.aiagent.entity.AgentTestExecution;
 import com.aiagent.service.AgentTestExecutionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,62 +55,64 @@ public class AgentTestExecutionController {
     }
 
     @RequiresPermission("test:view")
-    @Operation(summary = "根据ID获取测试执行详情")
-    @GetMapping("/tenant/{tenantId}")
-    public Result<List<ExecutionResponseDTO>> getExecutionsByTenantId(@PathVariable Long tenantId) {
-        List<AgentTestExecution> executions = executionService.getExecutionsByTenantId(tenantId);
-        List<ExecutionResponseDTO> dtoList = executions.stream()
-                .map(DTOConverter::toExecutionResponseDTO)
-                .collect(Collectors.toList());
-        return Result.success(dtoList);
-    }
-
-    @RequiresPermission("test:view")
     @Operation(summary = "根据租户ID获取测试执行列表")
-    @GetMapping("/agent/{agentId}")
-    public Result<List<ExecutionResponseDTO>> getExecutionsByAgentId(@PathVariable Long agentId) {
-        List<AgentTestExecution> executions = executionService.getExecutionsByAgentId(agentId);
-        List<ExecutionResponseDTO> dtoList = executions.stream()
-                .map(DTOConverter::toExecutionResponseDTO)
-                .collect(Collectors.toList());
-        return Result.success(dtoList);
+    @GetMapping("/tenant/{tenantId}")
+    public Result<PageResult<ExecutionResponseDTO>> getExecutionsByTenantId(
+            @PathVariable Long tenantId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Page<AgentTestExecution> executionPage = executionService.getExecutionsByTenantId(tenantId, page, size);
+        return Result.success(PageResult.from(executionPage.map(DTOConverter::toExecutionResponseDTO)));
     }
 
     @RequiresPermission("test:view")
     @Operation(summary = "根据Agent ID获取测试执行列表")
-    @GetMapping("/test-case/{testCaseId}")
-    public Result<List<ExecutionResponseDTO>> getExecutionsByTestCaseId(@PathVariable Long testCaseId) {
-        List<AgentTestExecution> executions = executionService.getExecutionsByTestCaseId(testCaseId);
-        List<ExecutionResponseDTO> dtoList = executions.stream()
-                .map(DTOConverter::toExecutionResponseDTO)
-                .collect(Collectors.toList());
-        return Result.success(dtoList);
+    @GetMapping("/agent/{agentId}")
+    public Result<PageResult<ExecutionResponseDTO>> getExecutionsByAgentId(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Page<AgentTestExecution> executionPage = executionService.getExecutionsByAgentId(agentId, page, size);
+        return Result.success(PageResult.from(executionPage.map(DTOConverter::toExecutionResponseDTO)));
     }
 
     @RequiresPermission("test:view")
     @Operation(summary = "根据测试用例ID获取执行列表")
-    @GetMapping("/status/{tenantId}/{status}")
-    public Result<List<ExecutionResponseDTO>> getExecutionsByStatus(@PathVariable Long tenantId, @PathVariable Integer status) {
-        List<AgentTestExecution> executions = executionService.getExecutionsByStatus(tenantId, status);
-        List<ExecutionResponseDTO> dtoList = executions.stream()
-                .map(DTOConverter::toExecutionResponseDTO)
-                .collect(Collectors.toList());
-        return Result.success(dtoList);
+    @GetMapping("/test-case/{testCaseId}")
+    public Result<PageResult<ExecutionResponseDTO>> getExecutionsByTestCaseId(
+            @PathVariable Long testCaseId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Page<AgentTestExecution> executionPage = executionService.getExecutionsByTestCaseId(testCaseId, page, size);
+        return Result.success(PageResult.from(executionPage.map(DTOConverter::toExecutionResponseDTO)));
     }
 
     @RequiresPermission("test:view")
     @Operation(summary = "根据状态获取测试执行列表")
+    @GetMapping("/status/{tenantId}/{status}")
+    public Result<PageResult<ExecutionResponseDTO>> getExecutionsByStatus(
+            @PathVariable Long tenantId,
+            @PathVariable Integer status,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Page<AgentTestExecution> executionPage = executionService.getExecutionsByStatus(tenantId, status, page, size);
+        return Result.success(PageResult.from(executionPage.map(DTOConverter::toExecutionResponseDTO)));
+    }
+
+    @RequiresPermission("test:view")
+    @Operation(summary = "根据类型获取测试执行列表")
     @GetMapping("/type/{tenantId}/{executionType}")
-    public Result<List<ExecutionResponseDTO>> getExecutionsByType(@PathVariable Long tenantId, @PathVariable String executionType) {
-        List<AgentTestExecution> executions = executionService.getExecutionsByType(tenantId, executionType);
-        List<ExecutionResponseDTO> dtoList = executions.stream()
-                .map(DTOConverter::toExecutionResponseDTO)
-                .collect(Collectors.toList());
-        return Result.success(dtoList);
+    public Result<PageResult<ExecutionResponseDTO>> getExecutionsByType(
+            @PathVariable Long tenantId,
+            @PathVariable String executionType,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Page<AgentTestExecution> executionPage = executionService.getExecutionsByType(tenantId, executionType, page, size);
+        return Result.success(PageResult.from(executionPage.map(DTOConverter::toExecutionResponseDTO)));
     }
 
     @RequiresPermission("test:execute")
-    @Operation(summary = "根据类型获取测试执行列表")
+    @Operation(summary = "取消测试执行")
     @PostMapping("/{id}/cancel")
     public Result<Void> cancelExecution(@PathVariable Long id) {
         executionService.cancelExecution(id);
@@ -116,7 +120,7 @@ public class AgentTestExecutionController {
     }
 
     @RequiresPermission("test:view")
-    @Operation(summary = "取消测试执行")
+    @Operation(summary = "统计租户下测试执行数量")
     @GetMapping("/count/tenant/{tenantId}")
     public Result<Long> countExecutionsByTenant(@PathVariable Long tenantId) {
         long count = executionService.countExecutionsByTenant(tenantId);
@@ -124,7 +128,7 @@ public class AgentTestExecutionController {
     }
 
     @RequiresPermission("test:view")
-    @Operation(summary = "统计租户下测试执行数量")
+    @Operation(summary = "统计Agent下测试执行数量")
     @GetMapping("/count/agent/{agentId}")
     public Result<Long> countExecutionsByAgent(@PathVariable Long agentId) {
         long count = executionService.countExecutionsByAgent(agentId);
@@ -132,7 +136,7 @@ public class AgentTestExecutionController {
     }
 
     @RequiresPermission("test:view")
-    @Operation(summary = "统计Agent下测试执行数量")
+    @Operation(summary = "统计测试用例下测试执行数量")
     @GetMapping("/count/test-case/{testCaseId}")
     public Result<Long> countExecutionsByTestCase(@PathVariable Long testCaseId) {
         long count = executionService.countExecutionsByTestCase(testCaseId);

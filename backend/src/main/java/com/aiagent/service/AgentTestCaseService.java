@@ -4,6 +4,10 @@ import com.aiagent.entity.AgentTestCase;
 import com.aiagent.repository.AgentTestCaseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +41,20 @@ public class AgentTestCaseService {
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestCase> getTestCasesByTenantId(Long tenantId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return testCaseRepository.findByTenantId(tenantId, pageable);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByAgentId(Long agentId) {
         return testCaseRepository.findByAgentId(agentId);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestCase> getTestCasesByAgentId(Long agentId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return testCaseRepository.findByAgentId(agentId, pageable);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -76,8 +92,20 @@ public class AgentTestCaseService {
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestCase> getTestCasesByStatus(Long tenantId, Integer status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return testCaseRepository.findByTenantIdAndStatus(tenantId, status, pageable);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestCase> getTestCasesByType(Long tenantId, String testType) {
         return testCaseRepository.findByTenantIdAndTestType(tenantId, testType);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestCase> getTestCasesByType(Long tenantId, String testType, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return testCaseRepository.findByTenantIdAndTestType(tenantId, testType, pageable);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)

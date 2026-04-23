@@ -11,6 +11,10 @@ import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,14 @@ public class AgentService {
             return agentRepository.findByTenantId(tenantId);
         }
         return agentRepository.findAll();
+    }
+
+    /**
+     * 数据库层面分页查询 Agent，支持关键词搜索和状态过滤
+     */
+    public Page<Agent> getAgentsPaged(Long tenantId, String keyword, String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        return agentRepository.findByTenantIdWithFilters(tenantId, keyword, status, pageable);
     }
 
     public Agent getAgentById(Long id) {

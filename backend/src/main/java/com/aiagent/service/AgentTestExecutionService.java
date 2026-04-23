@@ -7,6 +7,10 @@ import com.aiagent.repository.AgentTestExecutionRepository;
 import com.aiagent.repository.AgentTestResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,8 +90,20 @@ public class AgentTestExecutionService {
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestExecution> getExecutionsByTenantId(Long tenantId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startTime"));
+        return executionRepository.findByTenantId(tenantId, pageable);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByAgentId(Long agentId) {
         return executionRepository.findByAgentId(agentId);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestExecution> getExecutionsByAgentId(Long agentId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startTime"));
+        return executionRepository.findByAgentId(agentId, pageable);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
@@ -96,13 +112,31 @@ public class AgentTestExecutionService {
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestExecution> getExecutionsByTestCaseId(Long testCaseId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startTime"));
+        return executionRepository.findByTestCaseId(testCaseId, pageable);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByStatus(Long tenantId, Integer status) {
         return executionRepository.findByTenantIdAndStatus(tenantId, status);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestExecution> getExecutionsByStatus(Long tenantId, Integer status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startTime"));
+        return executionRepository.findByTenantIdAndStatus(tenantId, status, pageable);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestExecution> getExecutionsByType(Long tenantId, String executionType) {
         return executionRepository.findByTenantIdAndExecutionType(tenantId, executionType);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public Page<AgentTestExecution> getExecutionsByType(Long tenantId, String executionType, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startTime"));
+        return executionRepository.findByTenantIdAndExecutionType(tenantId, executionType, pageable);
     }
 
     @Transactional(rollbackFor = Exception.class)

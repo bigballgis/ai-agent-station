@@ -72,8 +72,10 @@ public class SecurityHeadersConfig {
             HEADERS.forEach(httpResponse::setHeader);
 
             // CSP: 仅允许同源资源 + CDN + 连接 API
+            // 注意: style-src 保留 'unsafe-inline'（Tailwind CSS 依赖内联样式）
+            // TODO: 未来应引入 nonce/hash 机制替代 'unsafe-inline'，进一步提升安全性
             String csp = "default-src 'self'; " +
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                    "script-src 'self'; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                     "font-src 'self' https://fonts.gstatic.com; " +
                     "img-src 'self' data: blob: https:; " +

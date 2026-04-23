@@ -9,16 +9,9 @@ import com.aiagent.service.tool.CompositeToolProvider;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.output.Response;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,13 +28,28 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class GraphExecutor {
 
     private final LangChain4jService langChain4jService;
     private final CompositeToolProvider compositeToolProvider;
     private final McpToolGateway mcpToolGateway;
     private final MemoryService memoryService;
+    private final HttpExecutor httpExecutor;
+    private final NodeExecutors nodeExecutors;
+
+    public GraphExecutor(LangChain4jService langChain4jService,
+                         CompositeToolProvider compositeToolProvider,
+                         McpToolGateway mcpToolGateway,
+                         MemoryService memoryService,
+                         HttpExecutor httpExecutor,
+                         NodeExecutors nodeExecutors) {
+        this.langChain4jService = langChain4jService;
+        this.compositeToolProvider = compositeToolProvider;
+        this.mcpToolGateway = mcpToolGateway;
+        this.memoryService = memoryService;
+        this.httpExecutor = httpExecutor;
+        this.nodeExecutors = nodeExecutors;
+    }
 
     /**
      * 执行图定义
@@ -110,61 +118,12 @@ public class GraphExecutor {
                         case "subgraph" -> executeSubgraphNode(node, state);
                         case "human_approval" -> executeHumanApprovalNode(node, state);
                         case "code" -> {
-                            Map<String, Object> config = node.getConfig();
-                            String language = (String) config.getOrDefault("language", "javascript");
-                            String code = (String) config.get("code");
-
-                            if (code == null || code.isBlank()) {
-                                throw new BusinessException("Code 节点代码为空: " + node.getId());
-                            }
-
-                            String result;
-
-                            if ("javascript".equalsIgnoreCase(language) || "js".equalsIgnoreCase(language)) {
-                                try {
-                                    ScriptEngineManager manager = new ScriptEngineManager();
-                                    ScriptEngine engine = manager.getEngineByName("js");
-                                    if (engine != null) {
-                                        // 注入上游节点输出作为变量
-                                        for (Map.Entry<String, Object> entry : nodeOutputs.entrySet()) {
-                                            engine.put(entry.getKey(), entry.getValue());
-                                        }
-                                        Object evalResult = engine.eval(code);
-                                        result = evalResult != null ? evalResult.toString() : "";
-                                    } else {
-                                        log.warn("JavaScript 引擎不可用，Code 节点 {} 跳过执行", node.getId());
-                                        result = "[JavaScript engine not available]";
-                                    }
-                                } catch (ScriptException e) {
-                                    throw new BusinessException("Code 节点执行失败: " + e.getMessage(), e);
-                                }
-                            } else {
-                                throw new BusinessException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
-                            }
-
+                            String result = nodeExecutors.executeCodeNode(node.getId(), node.getConfig(), nodeOutputs);
                             node.setOutput(result);
                             nodeOutputs.put(node.getId(), result);
                         }
                         case "delay" -> {
-                            Map<String, Object> config = node.getConfig();
-                            Object secondsObj = config.get("seconds");
-                            int seconds = 1;
-                            if (secondsObj instanceof Number) {
-                                seconds = ((Number) secondsObj).intValue();
-                            } else if (secondsObj instanceof String) {
-                                try { seconds = Integer.parseInt((String) secondsObj); } catch (NumberFormatException e) { /* use default */ }
-                            }
-                            seconds = Math.max(1, Math.min(seconds, 300)); // 限制 1-300 秒
-
-                            log.info("Delay 节点 {} 等待 {} 秒", node.getId(), seconds);
-                            try {
-                                Thread.sleep(seconds * 1000L);
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                throw new BusinessException("Delay 节点被中断: " + node.getId(), e);
-                            }
-
-                            String result = "delayed_" + seconds + "s";
+                            String result = nodeExecutors.executeDelayNode(node.getId(), node.getConfig());
                             node.setOutput(result);
                             nodeOutputs.put(node.getId(), result);
                         }
@@ -577,69 +536,21 @@ public class GraphExecutor {
         Map<String, Object> nodeConfig = node.getConfig();
         String url = resolveVariableReferences((String) nodeConfig.getOrDefault("url", ""), nodeOutputs, graph);
         String method = (String) nodeConfig.getOrDefault("method", "GET");
-        log.info("HTTP 节点: {} {}", method, url);
 
-        if (url == null || url.isBlank()) {
-            log.error("HTTP 节点缺少 url 配置");
-            state.getOutputs().put("httpResponse", "");
-            state.getOutputs().put("httpError", "Missing URL configuration");
-            return;
+        HttpExecutor.HttpResult result = httpExecutor.execute(url, method, nodeConfig, state.getInputs());
+
+        if (result.hasError()) {
+            state.getOutputs().put("httpResponse", result.getBody());
+            state.getOutputs().put("httpError", result.getError());
+            if (result.getBody().isEmpty()) {
+                return; // URL 配置缺失等非异常情况
+            }
+            throw new BusinessException("HTTP 调用失败: " + result.getError());
         }
 
-        try {
-            // SSRF防护：验证URL安全性
-            validateHttpUrl(url);
-
-            RestTemplate restTemplate = new RestTemplate();
-            SimpleClientHttpRequestFactory reqFactory = (SimpleClientHttpRequestFactory) restTemplate.getRequestFactory();
-            reqFactory.setConnectTimeout(10_000);
-            reqFactory.setReadTimeout(30_000);
-
-            // 构建请求头
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            if (nodeConfig.containsKey("headers")) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> headerMap = (Map<String, String>) nodeConfig.get("headers");
-                for (Map.Entry<String, String> header : headerMap.entrySet()) {
-                    // 过滤敏感头，防止SSRF攻击
-                    if ("host".equalsIgnoreCase(header.getKey()) ||
-                        "authorization".equalsIgnoreCase(header.getKey()) ||
-                        "cookie".equalsIgnoreCase(header.getKey()) ||
-                        "set-cookie".equalsIgnoreCase(header.getKey())) {
-                        continue;
-                    }
-                    headers.set(header.getKey(), header.getValue());
-                }
-            }
-
-            // 构建请求体
-            Object body = null;
-            if (nodeConfig.containsKey("body")) {
-                body = nodeConfig.get("body");
-            } else if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method)) {
-                body = state.getInputs();
-            }
-
-            HttpEntity<Object> entity = new HttpEntity<>(body, headers);
-            HttpMethod httpMethod = HttpMethod.valueOf(method.toUpperCase());
-
-            log.info("HTTP 节点发送请求: {} {}", httpMethod, url);
-            ResponseEntity<String> response = restTemplate.exchange(url, httpMethod, entity, String.class);
-
-            String responseBody = response.getBody();
-            log.info("HTTP 节点响应: status={}, bodyLength={}", response.getStatusCode(), responseBody != null ? responseBody.length() : 0);
-
-            state.getOutputs().put("httpResponse", responseBody != null ? responseBody : "");
-            state.getOutputs().put("httpStatus", response.getStatusCode().value());
-            node.setOutput(responseBody != null ? responseBody : "");
-
-        } catch (Exception e) {
-            log.error("HTTP 节点调用失败: {} {} - {}", method, url, e.getMessage());
-            state.getOutputs().put("httpResponse", "");
-            state.getOutputs().put("httpError", e.getMessage());
-            throw new BusinessException("HTTP 调用失败: " + e.getMessage(), e);
-        }
+        state.getOutputs().put("httpResponse", result.getBody());
+        state.getOutputs().put("httpStatus", result.getStatusCode());
+        node.setOutput(result.getBody());
     }
 
     private void executeSwitchNode(GraphNode node, AgentState state) {
@@ -983,60 +894,12 @@ public class GraphExecutor {
             case "parallel" -> executeParallelNode(node, state, nodeOutputs, graph);
             case "merge" -> executeMergeNode(node, state, nodeOutputs, graph);
             case "code" -> {
-                Map<String, Object> config = node.getConfig();
-                String language = (String) config.getOrDefault("language", "javascript");
-                String code = (String) config.get("code");
-
-                if (code == null || code.isBlank()) {
-                    throw new BusinessException("Code 节点代码为空: " + node.getId());
-                }
-
-                String result;
-
-                if ("javascript".equalsIgnoreCase(language) || "js".equalsIgnoreCase(language)) {
-                    try {
-                        ScriptEngineManager manager = new ScriptEngineManager();
-                        ScriptEngine engine = manager.getEngineByName("js");
-                        if (engine != null) {
-                            for (Map.Entry<String, Object> entry : nodeOutputs.entrySet()) {
-                                engine.put(entry.getKey(), entry.getValue());
-                            }
-                            Object evalResult = engine.eval(code);
-                            result = evalResult != null ? evalResult.toString() : "";
-                        } else {
-                            log.warn("JavaScript 引擎不可用，Code 节点 {} 跳过执行", node.getId());
-                            result = "[JavaScript engine not available]";
-                        }
-                    } catch (ScriptException e) {
-                        throw new BusinessException("Code 节点执行失败: " + e.getMessage(), e);
-                    }
-                } else {
-                    throw new BusinessException("Code 节点不支持的语言: " + language + " (当前仅支持 javascript)");
-                }
-
+                String result = nodeExecutors.executeCodeNode(node.getId(), node.getConfig(), nodeOutputs);
                 node.setOutput(result);
                 nodeOutputs.put(node.getId(), result);
             }
             case "delay" -> {
-                Map<String, Object> config = node.getConfig();
-                Object secondsObj = config.get("seconds");
-                int seconds = 1;
-                if (secondsObj instanceof Number) {
-                    seconds = ((Number) secondsObj).intValue();
-                } else if (secondsObj instanceof String) {
-                    try { seconds = Integer.parseInt((String) secondsObj); } catch (NumberFormatException e) { /* use default */ }
-                }
-                seconds = Math.max(1, Math.min(seconds, 300));
-
-                log.info("Delay 节点 {} 等待 {} 秒", node.getId(), seconds);
-                try {
-                    Thread.sleep(seconds * 1000L);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new BusinessException("Delay 节点被中断: " + node.getId(), e);
-                }
-
-                String result = "delayed_" + seconds + "s";
+                String result = nodeExecutors.executeDelayNode(node.getId(), node.getConfig());
                 node.setOutput(result);
                 nodeOutputs.put(node.getId(), result);
             }
@@ -1092,32 +955,4 @@ public class GraphExecutor {
         return false;
     }
 
-    /**
-     * SSRF防护：验证HTTP节点URL安全性
-     */
-    private void validateHttpUrl(String url) {
-        try {
-            java.net.URI uri = java.net.URI.create(url);
-            String scheme = uri.getScheme();
-            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-                throw new BusinessException("HTTP节点仅允许http/https协议: " + scheme);
-            }
-            String host = uri.getHost();
-            if (host == null) {
-                throw new BusinessException("HTTP节点URL缺少主机名: " + url);
-            }
-            // 检查内网地址
-            java.net.InetAddress address = java.net.InetAddress.getByName(host);
-            if (address.isLoopbackAddress() || address.isSiteLocalAddress() ||
-                address.isLinkLocalAddress() || address.isAnyLocalAddress()) {
-                throw new BusinessException("HTTP节点不允许访问内网地址: " + host);
-            }
-            // 检查169.254.x.x (云元数据)
-            if (host.startsWith("169.254.")) {
-                throw new BusinessException("HTTP节点不允许访问元数据服务: " + host);
-            }
-        } catch (java.net.UnknownHostException e) {
-            throw new BusinessException("HTTP节点无法解析主机名: " + url);
-        }
-    }
 }

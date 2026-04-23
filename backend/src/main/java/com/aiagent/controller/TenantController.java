@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
@@ -44,6 +45,7 @@ public class TenantController {
 
     @PostMapping
     @Operation(summary = "创建租户")
+    @OperationLog(value = "创建租户", module = "租户管理")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     public Result<TenantVO> createTenant(@Valid @RequestBody CreateTenantRequestDTO requestDTO) {
@@ -53,6 +55,7 @@ public class TenantController {
 
     @PutMapping("/{id}")
     @Operation(summary = "更新租户信息")
+    @OperationLog(value = "更新租户信息", module = "租户管理")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     public Result<TenantVO> updateTenant(@PathVariable Long id, @Valid @RequestBody UpdateTenantRequestDTO requestDTO) {
@@ -63,6 +66,7 @@ public class TenantController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除租户")
+    @OperationLog(value = "删除租户", module = "租户管理")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<Void> deleteTenant(@PathVariable Long id) {
@@ -72,6 +76,7 @@ public class TenantController {
 
     @PostMapping("/{id}/regenerate-api-key")
     @Operation(summary = "重新生成API密钥")
+    @OperationLog(value = "重新生成API密钥", module = "租户管理")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<TenantVO> regenerateApiKey(@PathVariable Long id) {

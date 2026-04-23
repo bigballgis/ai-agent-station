@@ -1,5 +1,6 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.service.DataExportService;
@@ -38,6 +39,7 @@ public class DataExportController {
     @RequiresPermission("data:export")
     @GetMapping("/agents")
     @Operation(summary = "导出Agent数据为CSV")
+    @OperationLog(value = "导出Agent数据", module = "数据导出")
     public void exportAgents(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String status,
@@ -59,6 +61,7 @@ public class DataExportController {
     @RequiresPermission("data:export")
     @GetMapping("/users")
     @Operation(summary = "导出用户数据为CSV")
+    @OperationLog(value = "导出用户数据", module = "数据导出")
     public void exportUsers(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String keyword,
@@ -80,6 +83,7 @@ public class DataExportController {
     @RequiresPermission("data:export")
     @GetMapping("/logs")
     @Operation(summary = "导出系统日志为CSV")
+    @OperationLog(value = "导出系统日志", module = "数据导出")
     public void exportLogs(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String module,
@@ -102,6 +106,7 @@ public class DataExportController {
     @RequiresPermission("data:export")
     @GetMapping("/test-results")
     @Operation(summary = "导出测试结果为CSV")
+    @OperationLog(value = "导出测试结果", module = "数据导出")
     public void exportTestResults(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) Long agentId,
@@ -124,6 +129,7 @@ public class DataExportController {
     @RequiresPermission("data:export")
     @GetMapping("/workflow-instances")
     @Operation(summary = "导出工作流实例为CSV")
+    @OperationLog(value = "导出工作流实例", module = "数据导出")
     public void exportWorkflowInstances(
             @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) String status,

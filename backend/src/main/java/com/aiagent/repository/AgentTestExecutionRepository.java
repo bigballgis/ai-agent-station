@@ -1,6 +1,8 @@
 package com.aiagent.repository;
 
 import com.aiagent.entity.AgentTestExecution;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -19,6 +21,12 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
     List<AgentTestExecution> findByTenantId(Long tenantId);
 
     /**
+     * 根据租户ID分页查询测试执行记录
+     */
+    @EntityGraph(attributePaths = {"testCase"})
+    Page<AgentTestExecution> findByTenantId(Long tenantId, Pageable pageable);
+
+    /**
      * 根据Agent ID查询测试执行记录
      * @param agentId Agent ID
      * @return 测试执行记录列表
@@ -27,11 +35,22 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
     List<AgentTestExecution> findByAgentId(Long agentId);
 
     /**
+     * 根据Agent ID分页查询测试执行记录
+     */
+    @EntityGraph(attributePaths = {"testCase"})
+    Page<AgentTestExecution> findByAgentId(Long agentId, Pageable pageable);
+
+    /**
      * 根据测试用例ID查询测试执行记录
      * @param testCaseId 测试用例ID
      * @return 测试执行记录列表
      */
     List<AgentTestExecution> findByTestCaseId(Long testCaseId);
+
+    /**
+     * 根据测试用例ID分页查询测试执行记录
+     */
+    Page<AgentTestExecution> findByTestCaseId(Long testCaseId, Pageable pageable);
 
     /**
      * 根据租户ID和状态查询测试执行记录
@@ -43,6 +62,12 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
     List<AgentTestExecution> findByTenantIdAndStatus(Long tenantId, Integer status);
 
     /**
+     * 根据租户ID和状态分页查询测试执行记录
+     */
+    @EntityGraph(attributePaths = {"testCase"})
+    Page<AgentTestExecution> findByTenantIdAndStatus(Long tenantId, Integer status, Pageable pageable);
+
+    /**
      * 根据租户ID和执行类型查询测试执行记录
      * @param tenantId 租户ID
      * @param executionType 执行类型
@@ -50,6 +75,12 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      */
     @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByTenantIdAndExecutionType(Long tenantId, String executionType);
+
+    /**
+     * 根据租户ID和执行类型分页查询测试执行记录
+     */
+    @EntityGraph(attributePaths = {"testCase"})
+    Page<AgentTestExecution> findByTenantIdAndExecutionType(Long tenantId, String executionType, Pageable pageable);
 
     /**
      * 统计租户的测试执行记录数量
