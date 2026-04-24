@@ -39,4 +39,10 @@ public interface ApiCallLogRepository extends JpaRepository<ApiCallLog, Long> {
 
     @Query("SELECT a.status, COUNT(a) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.agentId = :agentId AND a.createdAt >= :startTime GROUP BY a.status")
     List<Object[]> countByStatusByTenantIdAndAgentIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("agentId") Long agentId, @Param("startTime") LocalDateTime startTime);
+
+    @Query("SELECT COUNT(a) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.createdAt >= :startTime")
+    Long countByTenantIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("startTime") LocalDateTime startTime);
+
+    @Query("SELECT a.agentId, COUNT(a) as callCount FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.createdAt >= :startTime GROUP BY a.agentId ORDER BY callCount DESC")
+    List<Object[]> findTopAgentsByCallCount(@Param("tenantId") Long tenantId, @Param("startTime") LocalDateTime startTime, Pageable pageable);
 }

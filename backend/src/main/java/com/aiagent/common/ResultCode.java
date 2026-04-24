@@ -20,7 +20,12 @@ public enum ResultCode {
     PERMISSION_DENIED(1009, "权限不足", "error.permission.denied"),
     RESOURCE_ALREADY_EXISTS(1010, "资源已存在", "error.resource.already_exists"),
     OPERATION_FAILED(1011, "操作失败", "error.common.operation_failed"),
-    TOO_MANY_REQUESTS(429, "请求过于频繁", "error.rate_limit.exceeded");
+    TOO_MANY_REQUESTS(429, "请求过于频繁", "error.rate_limit.exceeded"),
+    METHOD_NOT_ALLOWED(405, "不支持的请求方法", "error.common.unsupported_method"),
+    UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型", "error.common.unsupported_media_type"),
+    MISSING_PARAMETER(400, "缺少必要的请求参数", "error.common.missing_param"),
+    CONSTRAINT_VIOLATION(400, "约束校验失败", "error.validation.constraint_violation"),
+    VALIDATION_FAILED(400, "参数校验失败", "error.validation.failed");
 
     private final Integer code;
     private final String message;

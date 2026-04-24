@@ -4,12 +4,15 @@ import { message } from 'ant-design-vue'
 import type { ApiResponse } from '@/types/common'
 import i18n from '@/locales'
 import { getErrorDisplayMessage } from '@/utils/errorMessageMapper'
+import { addPendingRequest, removePendingRequest, cancelAllPendingRequests } from '@/utils/requestManager'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
+const DEFAULT_TIMEOUT = 30000
+
 const service: AxiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: DEFAULT_TIMEOUT,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -28,17 +31,34 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * 判断错误是否可重试（仅网络异常和 5xx 服务端错误可重试）
+ * 判断错误是否可重试
+ * - 网络异常（无响应）可重试
+ * - 5xx 服务端错误可重试
+ * - 429 限流错误可重试（按 Retry-After 头等待）
+ * - 503 服务不可用可重试
  */
 function isRetryableError(error: unknown): boolean {
   if (!error || typeof error !== 'object' || !('response' in error)) {
-    // 无响应对象，可能是网络错误（如断网、DNS 解析失败），可重试
     return true
   }
   const response = (error as { response?: { status?: number } }).response
   if (!response) return true
-  // 仅 5xx 服务端错误可重试，4xx 客户端错误不重试
-  return (response.status ?? 0) >= 500
+  const status = response.status ?? 0
+  return status >= 500 || status === 429
+}
+
+/**
+ * 从 429 响应中获取 Retry-After 值（秒）
+ */
+function getRetryAfterSeconds(error: unknown): number {
+  if (!error || typeof error !== 'object' || !('response' in error)) return RETRY_DELAY_MS / 1000
+  const response = (error as { response?: { headers?: Record<string, string | undefined> } }).response
+  const retryAfter = response?.headers?.['retry-after']
+  if (!retryAfter) return RETRY_DELAY_MS / 1000
+  const seconds = parseInt(retryAfter, 10)
+  if (!isNaN(seconds) && seconds > 0 && seconds <= 60) return seconds
+  // Retry-After 也可能是 HTTP 日期格式，简单处理
+  return RETRY_DELAY_MS / 1000
 }
 
 // ==================== Token 自动刷新机制 ====================
@@ -100,7 +120,7 @@ function clearAuthAndRedirect() {
   }
 }
 
-// ==================== 请求拦截器 ====================
+// ==================== 请求拦截器（去重 + AbortController） ====================
 
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -108,6 +128,16 @@ service.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // 请求去重检查
+    const isDeduped = addPendingRequest(config)
+    if (isDeduped) {
+      // 请求被去重，中止当前请求（返回已存在的请求）
+      const controller = new AbortController()
+      config.signal = controller.signal
+      controller.abort()
+    }
+
     return config
   },
   (error) => {
@@ -116,10 +146,13 @@ service.interceptors.request.use(
   }
 )
 
-// ==================== 响应拦截器（含 Token 自动刷新 + GET 重试） ====================
+// ==================== 响应拦截器（含 Token 自动刷新 + 增强重试） ====================
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {
+    // 请求完成，从 pending map 中移除
+    removePendingRequest(response.config)
+
     const res = response.data as ApiResponse
     if (res.code !== 200 && res.code !== 0) {
       const errorMsg = getErrorDisplayMessage(
@@ -130,22 +163,40 @@ service.interceptors.response.use(
       return Promise.reject(new Error(errorMsg))
     }
     // 返回 response.data，保留 ApiResponse<T> 结构供调用方使用
-    // 注意：axios 拦截器中无法自动推断泛型 T，调用方需通过 ApiResponse<T> 断言具体 data 类型
     return response.data as unknown as AxiosResponse
   },
   async (error) => {
+    // 请求完成（无论成功失败），从 pending map 中移除
+    if (error.config) {
+      removePendingRequest(error.config)
+    }
+
+    // 被去重中止的请求，静默处理
+    if (error.code === 'ERR_CANCELED' || axios.isCancel(error)) {
+      return Promise.reject(error)
+    }
+
     const originalRequest = error.config
     const status = error.response?.status
 
-    // GET 请求自动重试（最多 2 次，间隔 1 秒）
+    // 自动重试逻辑（GET 请求 + 429/503/网络错误）
     if (
-      originalRequest.method?.toLowerCase() === 'get' &&
       isRetryableError(error) &&
       (originalRequest._retryCount ?? 0) < MAX_RETRY_COUNT
     ) {
+      // 429 限流：按 Retry-After 头等待
+      let waitMs = RETRY_DELAY_MS
+      if (status === 429) {
+        const retryAfterSec = getRetryAfterSeconds(error)
+        waitMs = retryAfterSec * 1000
+        message.warning(i18n.global.t('common.error.rateLimit'))
+      }
+
       originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1
-      console.warn(`[Retry] GET ${originalRequest.url} retry #${originalRequest._retryCount}`)
-      await delay(RETRY_DELAY_MS)
+      console.warn(
+        `[Retry] ${originalRequest.method?.toUpperCase()} ${originalRequest.url} retry #${originalRequest._retryCount}, waiting ${waitMs}ms`
+      )
+      await delay(waitMs)
       return service(originalRequest)
     }
 
@@ -192,7 +243,7 @@ service.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // 429 限流: 提示用户稍后重试
+    // 429 限流（已达最大重试次数）: 提示用户稍后重试
     if (status === 429) {
       message.warning(i18n.global.t('common.error.rateLimit'))
       return Promise.reject(error)
@@ -216,5 +267,27 @@ service.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// ==================== 路由切换取消请求 ====================
+
+/**
+ * 在路由切换时取消所有进行中的请求
+ * 在 router afterEach 中调用
+ */
+export function setupRouteChangeCancellation(router: { afterEach: (guard: () => void) => void }) {
+  router.afterEach(() => {
+    cancelAllPendingRequests()
+  })
+}
+
+/**
+ * 创建支持自定义超时的请求方法
+ */
+export function createRequest(config: InternalAxiosRequestConfig & { timeout?: number }) {
+  return service({
+    ...config,
+    timeout: config.timeout ?? DEFAULT_TIMEOUT,
+  })
+}
 
 export default service

@@ -51,6 +51,9 @@ public class AlertRule {
     @Column(name = "notify_targets")
     private String notifyTargets;
 
+    @Column(name = "webhook_url")
+    private String webhookUrl;
+
     @Column(name = "tenant_id")
     private Long tenantId;
 

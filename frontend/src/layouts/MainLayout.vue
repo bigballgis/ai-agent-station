@@ -1,5 +1,17 @@
 <template>
   <div class="h-screen flex flex-col overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+    <!-- ========== 离线状态横幅 ========== -->
+    <div
+      v-if="isOffline"
+      class="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-1.5 bg-amber-500 text-white text-xs font-medium z-[60]"
+    >
+      <WarningOutlined class="text-sm" />
+      <span>{{ t('common.offline') }}</span>
+      <span v-if="queuedRequestCount > 0" class="opacity-80">
+        ({{ t('common.offlineQueuedRequests', { count: queuedRequestCount }) }})
+      </span>
+    </div>
+
     <!-- ========== 顶部导航栏 (h-14, 56px) ========== -->
     <header
       class="h-14 flex-shrink-0 flex items-center justify-between px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 z-50"
@@ -341,11 +353,14 @@ import {
   BugOutlined,
   DatabaseOutlined,
   AlertOutlined,
+  WarningOutlined,
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
 import { useNotificationStore } from '@/store/modules/notification'
 import { useTheme } from '@/composables/useTheme'
+import { useOfflineState } from '@/composables/useNetworkStatus'
+import { getQueuedRequestCount } from '@/composables/useNetworkStatus'
 // ChangePasswordModal 仅在用户点击修改密码时显示，使用异步加载减少首屏包体积
 const ChangePasswordModal = defineAsyncComponent(() => import('@/components/ChangePasswordModal.vue'))
 import type { LocaleType } from '@/locales'
@@ -357,6 +372,11 @@ const userStore = useUserStore()
 const appStore = useAppStore()
 const notificationStore = useNotificationStore()
 const { toggleTheme, isDark } = useTheme()
+const { isOffline } = useOfflineState()
+const queuedRequestCount = ref(0)
+
+// 定期更新队列请求数
+let queueCountTimer: ReturnType<typeof setInterval> | null = null
 
 const collapsed = ref(false)
 const openKeys = ref<string[]>([])
@@ -743,10 +763,18 @@ function handleResize() {
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   handleResize()
+  // 定期更新离线队列请求数
+  queueCountTimer = setInterval(() => {
+    queuedRequestCount.value = getQueuedRequestCount()
+  }, 1000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (queueCountTimer) {
+    clearInterval(queueCountTimer)
+    queueCountTimer = null
+  }
 })
 </script>
 

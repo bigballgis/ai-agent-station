@@ -40,10 +40,10 @@ public class SecurityConfig {
         origins.forEach(config::addAllowedOriginPattern);
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization", "Content-Type", "X-Tenant-ID", "X-API-Key",
-                "X-Request-ID", "Accept", "Origin", "Cache-Control"
+                "X-Request-ID", "X-API-Version", "Accept", "Origin", "Cache-Control"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setExposedHeaders(Arrays.asList("Authorization", "X-Tenant-ID", "X-Request-ID"));
+        config.setExposedHeaders(Arrays.asList("Authorization", "X-Tenant-ID", "X-Request-ID", "X-API-Version"));
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

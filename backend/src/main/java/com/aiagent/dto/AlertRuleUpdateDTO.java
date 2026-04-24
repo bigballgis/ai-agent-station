@@ -43,4 +43,7 @@ public class AlertRuleUpdateDTO {
 
     @Schema(description = "通知目标")
     private String notifyTargets;
+
+    @Schema(description = "Webhook回调地址", example = "https://example.com/webhook/alert")
+    private String webhookUrl;
 }

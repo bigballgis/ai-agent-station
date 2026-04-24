@@ -2,19 +2,23 @@ import { App } from 'vue'
 
 /**
  * 全局错误处理
- * 
+ *
  * 最佳实践:
  * - app.config.errorHandler 捕获 Vue 组件错误
  * - window.onerror 捕获全局 JS 错误
  * - window.onunhandledrejection 捕获未处理的 Promise 异常
  * - 错误上报到监控系统（生产环境）
+ * - 错误分类：network / auth / business / unknown
  */
+
+export type ErrorCategory = 'network' | 'auth' | 'business' | 'unknown'
 
 const ERROR_STORAGE_KEY = '__frontend_error_reports__'
 const MAX_STORED_ERRORS = 50
 
 interface ErrorReport {
   type: 'vue' | 'global' | 'promise'
+  category: ErrorCategory
   message: string
   stack?: string
   source?: string
@@ -98,10 +102,63 @@ export function clearStoredErrors(): void {
     // 忽略
   }
 }
+/**
+ * 将错误信息分类
+ */
+export function categorizeError(error: unknown): ErrorCategory {
+  const msg = String(error).toLowerCase()
+  const stack = error instanceof Error ? (error.stack || '').toLowerCase() : ''
+
+  // 网络错误
+  if (
+    msg.includes('network') ||
+    msg.includes('fetch') ||
+    msg.includes('timeout') ||
+    msg.includes('net::') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('err_network') ||
+    msg.includes('err_connection') ||
+    msg.includes('econnrefused') ||
+    msg.includes('econnreset')
+  ) {
+    return 'network'
+  }
+
+  // 认证错误
+  if (
+    msg.includes('401') ||
+    msg.includes('403') ||
+    msg.includes('unauthorized') ||
+    msg.includes('forbidden') ||
+    msg.includes('token') ||
+    msg.includes('permission') ||
+    msg.includes('认证') ||
+    msg.includes('权限')
+  ) {
+    return 'auth'
+  }
+
+  // 业务错误
+  if (
+    msg.includes('400') ||
+    msg.includes('409') ||
+    msg.includes('422') ||
+    msg.includes('business') ||
+    msg.includes('validation') ||
+    msg.includes('参数') ||
+    msg.includes('校验')
+  ) {
+    return 'business'
+  }
+
+  return 'unknown'
+}
+
 export function setupErrorHandler(app: App) {
   // Vue 组件错误捕获
   app.config.errorHandler = (err, instance, info) => {
-    console.error('[Vue Error]', err)
+    const category = categorizeError(err)
+    console.error(`[Vue Error] [${category}]`, err)
     console.error('[Error Info]', info)
     console.error('[Error Component]', instance?.$options?.name || 'Unknown')
 
@@ -109,6 +166,7 @@ export function setupErrorHandler(app: App) {
     if (import.meta.env.PROD) {
       reportError({
         type: 'vue',
+        category,
         message: String(err),
         stack: err instanceof Error ? err.stack : undefined,
         component: instance?.$options?.name,
@@ -119,10 +177,12 @@ export function setupErrorHandler(app: App) {
 
   // 全局 JS 错误
   window.onerror = (message, source, lineno, colno, error) => {
-    console.error('[Global Error]', { message, source, lineno, colno, error })
+    const category = categorizeError(message)
+    console.error(`[Global Error] [${category}]`, { message, source, lineno, colno, error })
     if (import.meta.env.PROD) {
       reportError({
         type: 'global',
+        category,
         message: String(message),
         source,
         lineno,
@@ -135,10 +195,12 @@ export function setupErrorHandler(app: App) {
 
   // 未处理的 Promise 异常
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('[Unhandled Promise]', event.reason)
+    const category = categorizeError(event.reason)
+    console.error(`[Unhandled Promise] [${category}]`, event.reason)
     if (import.meta.env.PROD) {
       reportError({
         type: 'promise',
+        category,
         message: String(event.reason),
         stack: event.reason instanceof Error ? event.reason.stack : undefined,
       })

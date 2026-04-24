@@ -12,6 +12,8 @@ public class AlertRuleVO {
     private String severity;
     private String status;
     private Boolean enabled;
+    private String notifyChannels;
+    private String webhookUrl;
     private LocalDateTime createdAt;
 
     public static AlertRuleVO fromEntity(AlertRule entity) {
@@ -21,6 +23,8 @@ public class AlertRuleVO {
         vo.setSeverity(entity.getSeverity() != null ? entity.getSeverity().name() : null);
         vo.setStatus("active");
         vo.setEnabled(entity.getIsActive());
+        vo.setNotifyChannels(entity.getNotifyChannels());
+        vo.setWebhookUrl(entity.getWebhookUrl());
         vo.setCreatedAt(entity.getCreatedAt());
         return vo;
     }

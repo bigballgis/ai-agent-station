@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { messages } from '@/locales'
+import { setupRouteChangeCancellation } from '@/utils/request'
 // MainLayout 作为所有认证路由的布局包装器，保持静态导入
 // 避免嵌套懒加载导致的布局闪烁问题
 import MainLayout from '@/layouts/MainLayout.vue'
@@ -228,6 +229,9 @@ const router = createRouter({
     }
   }
 })
+
+// 路由切换时取消未完成的请求（防止数据覆盖）
+setupRouteChangeCancellation(router)
 
 // 路由守卫
 router.beforeEach(async (to, _from, next) => {

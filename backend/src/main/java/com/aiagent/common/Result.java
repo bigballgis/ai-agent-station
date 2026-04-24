@@ -1,6 +1,7 @@
 package com.aiagent.common;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public class Result<T> implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -9,6 +10,8 @@ public class Result<T> implements Serializable {
     private T data;
     private String traceId;
     private String messageCode;
+    private LocalDateTime timestamp;
+    private String path;
 
     public Result() {
     }
@@ -87,6 +90,22 @@ public class Result<T> implements Serializable {
         this.messageCode = messageCode;
     }
 
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     /**
      * 从 MDC 中获取 traceId 并设置到当前 Result 对象
      */
@@ -100,6 +119,22 @@ public class Result<T> implements Serializable {
      */
     public Result<T> withMessageCode(String messageCode) {
         this.messageCode = messageCode;
+        return this;
+    }
+
+    /**
+     * 设置 timestamp 并返回当前 Result 对象（链式调用）
+     */
+    public Result<T> withTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+        return this;
+    }
+
+    /**
+     * 设置 path 并返回当前 Result 对象（链式调用）
+     */
+    public Result<T> withPath(String path) {
+        this.path = path;
         return this;
     }
 }
