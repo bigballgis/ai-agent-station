@@ -236,6 +236,7 @@ import { getAlertRecords } from '@/api/alert'
 import { testApi } from '@/api/test'
 import { getLogs } from '@/api/log'
 import { PageHeader, StatCard, ChartContainer } from '@/components'
+import type { ChartOptions } from 'chart.js'
 
 // ============ 局部类型定义 ============
 interface LogItem {
@@ -460,7 +461,7 @@ const lineChartOptions = computed(() => ({
       beginAtZero: true,
     },
   },
-}) as any)
+}) as ChartOptions)
 
 const doughnutChartData = computed(() => ({
   labels: [
@@ -583,7 +584,7 @@ async function fetchDashboardData() {
       const testData = testRes?.data || testRes || []
       const testList = Array.isArray(testData) ? testData : []
       if (testList.length > 0) {
-        const passed = testList.filter((r: TestResultItem) => r.status === 'passed').length
+        const passed = testList.filter((r: TestResultItem) => r.status === 'SUCCESS').length
         passRate.value = (passed / testList.length) * 100
       } else {
         passRate.value = 0

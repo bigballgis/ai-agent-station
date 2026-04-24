@@ -372,6 +372,7 @@ import {
 } from '@/api/permission'
 import { getUsers } from '@/api/user'
 import { PageHeader, ConfirmModal, LoadingSkeleton } from '@/components'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -415,7 +416,7 @@ async function fetchPermissions() {
     const data = res.data || res || []
     permissionTree.value = Array.isArray(data) ? data : []
   } catch (e: unknown) {
-    console.error('获取权限列表失败:', e)
+    logger.error('获取权限列表失败:', e)
     message.error(t('permission.fetchPermissionsFailed'))
   }
 }
@@ -426,7 +427,7 @@ async function fetchRoles() {
     const res = await getRoles()
     roles.value = res.data || res || []
   } catch (e: unknown) {
-    console.error('获取角色列表失败:', e)
+    logger.error('获取角色列表失败:', e)
     message.error(t('permission.fetchRolesFailed'))
   } finally {
     loading.value = false
@@ -445,7 +446,7 @@ async function fetchUsers() {
       joinedAt: (u.createdAt || '') as string,
     })) : []
   } catch (e: unknown) {
-    console.error('获取用户列表失败:', e)
+    logger.error('获取用户列表失败:', e)
     message.error(t('permission.fetchUsersFailed'))
   }
 }
@@ -463,7 +464,7 @@ async function loadRoleUsers() {
       joinedAt: (u.createdAt || '') as string,
     })) : []
   } catch (e) {
-    console.error('获取角色用户失败:', e)
+    logger.error('获取角色用户失败:', e)
   }
 }
 
@@ -508,7 +509,7 @@ async function selectRole(role: Role) {
       ? data.map((p: Record<string, unknown>) => (p.code || p.key || p.name) as string)
       : []
   } catch (e) {
-    console.error('获取角色权限失败:', e)
+    logger.error('获取角色权限失败:', e)
     checkedPermissions.value = []
   }
   loadRoleUsers()
@@ -545,7 +546,7 @@ function handleCreateRoleSubmit() {
       selectRole(newRole)
     })
     .catch((e: unknown) => {
-      console.error('创建角色失败:', e)
+      logger.error('创建角色失败:', e)
       message.error(t('permission.createRoleFailed'))
     })
 }
@@ -570,7 +571,7 @@ function saveRoleInfo() {
       fetchRoles()
     })
     .catch((e: unknown) => {
-      console.error('更新角色信息失败:', e)
+      logger.error('更新角色信息失败:', e)
       message.error(t('permission.updateRoleFailed'))
     })
 }
@@ -595,7 +596,7 @@ async function confirmDeleteRole() {
     selectedRole.value = null
     message.success(t('permission.roleDeleted'))
   } catch (e: unknown) {
-    console.error('删除角色失败:', e)
+    logger.error('删除角色失败:', e)
     message.error(t('permission.deleteRoleFailed'))
   } finally {
     deleteVisible.value = false
@@ -617,7 +618,7 @@ function removeUser(userId: string) {
         roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
         message.success(t('permission.userRemoved'))
       } catch (e: unknown) {
-        console.error('移除用户失败:', e)
+        logger.error('移除用户失败:', e)
         message.error(t('permission.removeUserFailed'))
       }
     }

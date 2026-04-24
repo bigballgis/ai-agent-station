@@ -22,6 +22,7 @@ public class MemoryService {
 
     private final AgentMemoryRepository memoryRepository;
 
+    @Transactional(rollbackFor = Exception.class)
     public AgentMemory createMemory(AgentMemory memory) {
         Long tenantId = SecurityUtils.getCurrentTenantId();
         memory.setTenantId(tenantId);
@@ -39,6 +40,7 @@ public class MemoryService {
             .orElseThrow(() -> new BusinessException("记忆不存在"));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMemory(Long id) {
         memoryRepository.deleteById(id);
     }

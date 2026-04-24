@@ -103,9 +103,9 @@ const columns = [
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'skipped': return 'warning'
+    case 'SUCCESS': return 'success'
+    case 'FAILED': return 'error'
+    case 'SKIPPED': return 'warning'
     default: return 'default'
   }
 }

@@ -31,7 +31,7 @@ public class WorkflowService {
         return definitionRepository.findByTenantIdAndStatus(tenantId, status, pageable);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowDefinition createDefinition(WorkflowDefinition definition) {
         return definitionRepository.save(definition);
     }
@@ -41,17 +41,17 @@ public class WorkflowService {
                 .orElseThrow(() -> new ResourceNotFoundException("工作流定义不存在"));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowDefinition updateDefinition(WorkflowDefinition definition) {
         return definitionRepository.save(definition);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDefinition(WorkflowDefinition definition) {
         definitionRepository.delete(definition);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowDefinition publishDefinition(WorkflowDefinition definition) {
         definition.setStatus(WorkflowDefinition.WorkflowStatus.PUBLISHED);
         return definitionRepository.save(definition);

@@ -463,6 +463,7 @@ import {
   createTenant as createTenantApi,
   updateTenant as updateTenantApi,
 } from '@/api/tenant'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -499,7 +500,7 @@ async function fetchTenants() {
     const res = await getTenants()
     tenants.value = res.data || res || []
   } catch (e) {
-    console.error(t('tenant.fetchFailed'), e)
+    logger.error(t('tenant.fetchFailed'), e)
     message.error(t('tenant.fetchFailed'))
   } finally {
     loading.value = false
@@ -607,7 +608,7 @@ function saveTenant() {
         fetchTenants()
       })
       .catch((e: Error) => {
-        console.error(t('tenant.updateFailed'), e)
+        logger.error(t('tenant.updateFailed'), e)
         message.error(t('tenant.updateFailed'))
       })
   } else {
@@ -619,7 +620,7 @@ function saveTenant() {
         fetchTenants()
       })
       .catch((e: Error) => {
-        console.error(t('tenant.createFailed'), e)
+        logger.error(t('tenant.createFailed'), e)
         message.error(t('tenant.createFailed'))
       })
   }
@@ -640,7 +641,7 @@ function toggleTenantStatus(tenant: Tenant) {
           fetchTenants()
         })
         .catch((e: Error) => {
-          console.error(t('tenant.actionFailed', { action }), e)
+          logger.error(t('tenant.actionFailed', { action }), e)
           message.error(t('tenant.actionFailed', { action }))
         })
     },
@@ -667,7 +668,7 @@ function saveQuota() {
       fetchTenants()
     })
     .catch((e: Error) => {
-      console.error(t('tenant.updateQuotaFailed'), e)
+      logger.error(t('tenant.updateQuotaFailed'), e)
       message.error(t('tenant.updateQuotaFailed'))
     })
 }

@@ -9,6 +9,7 @@ import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.ExecutionResponseDTO;
 import com.aiagent.entity.AgentTestExecution;
 import com.aiagent.service.AgentTestExecutionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class AgentTestExecutionController {
     @RequiresPermission("test:execute")
     @PostMapping
     @Operation(summary = "创建测试执行")
-    public Result<ExecutionResponseDTO> createExecution(@RequestBody CreateExecutionRequestDTO request) {
+    public Result<ExecutionResponseDTO> createExecution(@Valid @RequestBody CreateExecutionRequestDTO request) {
         AgentTestExecution execution = DTOConverter.toExecutionEntity(request);
         AgentTestExecution createdExecution = executionService.createExecution(execution);
         return Result.success(DTOConverter.toExecutionResponseDTO(createdExecution));

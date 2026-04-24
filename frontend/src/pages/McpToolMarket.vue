@@ -353,6 +353,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { getTools, refreshTools } from '@/api/tool'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -382,7 +383,7 @@ async function fetchTools() {
     const res = await getTools()
     tools.value = res.data || res || []
   } catch (e) {
-    console.error('Failed to fetch tools:', e)
+    logger.error('Failed to fetch tools:', e)
     message.error(t('mcpTool.fetchFailed'))
   } finally {
     loading.value = false
@@ -448,7 +449,7 @@ function connectTool() {
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: Error) => {
-    console.error('刷新工具失败:', e)
+    logger.error('刷新工具失败:', e)
     message.error(t('mcpTool.connectFailed'))
   })
 }
@@ -470,7 +471,7 @@ function saveConfig() {
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: Error) => {
-    console.error('刷新工具失败:', e)
+    logger.error('刷新工具失败:', e)
     message.error(t('mcpTool.configSaveFailed'))
   })
 }
@@ -480,7 +481,7 @@ function toggleTool(tool: McpTool) {
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: Error) => {
-    console.error('切换工具状态失败:', e)
+    logger.error('切换工具状态失败:', e)
     message.error(t('mcpTool.toggleToolFailed'))
   })
 }

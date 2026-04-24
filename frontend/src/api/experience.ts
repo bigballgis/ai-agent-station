@@ -20,14 +20,14 @@ export function deleteExperience(id: number) {
   return request.delete(`/v1/experiences/${id}`)
 }
 
-export function analyzeEffectiveness(agentId: number) {
-  return request.get(`/v1/experiences/agent/${agentId}/effectiveness`)
+export function analyzeEffectiveness() {
+  return request.get('/v1/experiences/analysis/effectiveness')
 }
 
-export function deduplicateExperiences(agentId: number) {
-  return request.post(`/v1/experiences/agent/${agentId}/deduplicate`)
+export function deduplicateExperiences() {
+  return request.post('/v1/experiences/deduplicate')
 }
 
-export function cleanupExperiences(agentId: number) {
-  return request.delete(`/v1/experiences/agent/${agentId}/cleanup`)
+export function cleanupExperiences() {
+  return request.post('/v1/experiences/cleanup')
 }

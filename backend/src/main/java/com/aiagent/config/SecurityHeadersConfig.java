@@ -4,10 +4,12 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,10 +31,13 @@ import java.util.Map;
 @Configuration
 public class SecurityHeadersConfig {
 
+    @Value("${security.csp.connect-src-extra:}")
+    private String connectSrcExtra;
+
     @Bean
-    public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilter() {
+    public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilter(Environment environment) {
         FilterRegistrationBean<SecurityHeadersFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new SecurityHeadersFilter());
+        registration.setFilter(new SecurityHeadersFilter(environment, connectSrcExtra));
         registration.addUrlPatterns("/*");
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         registration.setName("securityHeadersFilter");
@@ -40,6 +45,14 @@ public class SecurityHeadersConfig {
     }
 
     public static class SecurityHeadersFilter implements Filter {
+
+        private final Environment environment;
+        private final String connectSrcExtra;
+
+        public SecurityHeadersFilter(Environment environment, String connectSrcExtra) {
+            this.environment = environment;
+            this.connectSrcExtra = connectSrcExtra;
+        }
 
         private static final Map<String, String> HEADERS = new HashMap<>();
 
@@ -74,12 +87,27 @@ public class SecurityHeadersConfig {
             // CSP: 仅允许同源资源 + CDN + 连接 API
             // 注意: style-src 保留 'unsafe-inline'（Tailwind CSS 依赖内联样式）
             // TODO: 未来应引入 nonce/hash 机制替代 'unsafe-inline'，进一步提升安全性
+            String connectSrc = "'self'";
+            String[] activeProfiles = environment.getActiveProfiles();
+            boolean isProduction = false;
+            for (String profile : activeProfiles) {
+                if ("production".equals(profile)) {
+                    isProduction = true;
+                    break;
+                }
+            }
+            if (!isProduction) {
+                connectSrc += " http://localhost:*";
+            }
+            if (connectSrcExtra != null && !connectSrcExtra.isEmpty()) {
+                connectSrc += " " + connectSrcExtra;
+            }
             String csp = "default-src 'self'; " +
                     "script-src 'self'; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                     "font-src 'self' https://fonts.gstatic.com; " +
                     "img-src 'self' data: blob: https:; " +
-                    "connect-src 'self' http://localhost:* https:; " +
+                    "connect-src " + connectSrc + " https:; " +
                     "frame-ancestors 'none'; " +
                     "base-uri 'self'; " +
                     "form-action 'self'";

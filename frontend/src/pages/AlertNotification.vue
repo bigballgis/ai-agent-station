@@ -471,6 +471,7 @@ import {
   getActiveAlerts,
 } from '@/api/alert'
 import { PageHeader, StatCard, StatusBadge } from '@/components'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -670,7 +671,7 @@ async function fetchAlertData() {
       fetchStats(),
     ])
   } catch (e: unknown) {
-    console.error('获取告警数据失败:', e)
+    logger.error('获取告警数据失败:', e)
     loadError.value = e instanceof Error ? e?.message : t('alert.fetchFailed')
   } finally {
     pageLoading.value = false
@@ -685,7 +686,7 @@ async function fetchRules() {
     alertRules.value = Array.isArray(data) ? data : (data?.records || [])
     tabKeys.value[0].count = alertRules.value.length
   } catch (e) {
-    console.error('获取告警规则失败:', e)
+    logger.error('获取告警规则失败:', e)
     throw e
   } finally {
     rulesLoading.value = false
@@ -706,7 +707,7 @@ async function fetchRecords() {
     recordsPagination.value.total = pageData?.total || 0
     tabKeys.value[1].count = pageData?.total || 0
   } catch (e) {
-    console.error('获取告警记录失败:', e)
+    logger.error('获取告警记录失败:', e)
     throw e
   } finally {
     recordsLoading.value = false
@@ -733,7 +734,7 @@ async function fetchStats() {
     stats.value[2].value = resolvedAlertCount.value
     stats.value[3].value = s.totalRules ?? alertRules.value.length ?? 0
   } catch (e) {
-    console.error('获取告警统计失败:', e)
+    logger.error('获取告警统计失败:', e)
   }
 }
 
@@ -871,7 +872,7 @@ async function toggleRule(rule: AlertRuleVO) {
     message.success(rule.enabled ? t('alert.ruleDisabled') : t('alert.ruleEnabled'))
     await fetchRules()
   } catch (e) {
-    console.error('切换规则状态失败:', e)
+    logger.error('切换规则状态失败:', e)
     message.error(t('common.errorText'))
   }
 }
@@ -902,7 +903,7 @@ function deleteRule(rule: AlertRuleVO) {
         await fetchRules()
         await fetchStats()
       } catch (e) {
-        console.error('删除规则失败:', e)
+        logger.error('删除规则失败:', e)
         message.error(t('alert.deleteFailed'))
       }
     },
@@ -919,7 +920,7 @@ async function resolveRecord(record: AlertRecord) {
     // 刷新统计
     await fetchStats()
   } catch (e) {
-    console.error('解决告警失败:', e)
+    logger.error('解决告警失败:', e)
     message.error(t('alert.operationFailed'))
   }
 }
@@ -964,7 +965,7 @@ async function handleCreateRule() {
     await fetchRules()
     await fetchStats()
   } catch (e) {
-    console.error(editingRuleId.value ? '更新规则失败:' : '创建规则失败:', e)
+    logger.error(editingRuleId.value ? '更新规则失败:' : '创建规则失败:', e)
     message.error(editingRuleId.value ? t('alert.ruleUpdateFailed') : t('alert.ruleCreateFailed'))
   } finally {
     ruleSubmitting.value = false

@@ -56,15 +56,15 @@ const testResult = ref<TestResult>({
   id: 0,
   testExecutionId: 0,
   testCaseId: 0,
-  status: 'passed',
+  status: 'SUCCESS',
   executionTime: 0
 })
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'skipped': return 'warning'
+    case 'SUCCESS': return 'success'
+    case 'FAILED': return 'error'
+    case 'SKIPPED': return 'warning'
     default: return 'default'
   }
 }

@@ -36,7 +36,7 @@ export interface TestResult {
   testExecutionId: number
   testCaseId: number
   testCaseName?: string
-  status: 'passed' | 'failed' | 'skipped'
+  status: 'SUCCESS' | 'FAILED' | 'SKIPPED'
   executionTime: number
   errorMessage?: string
   details?: Record<string, any>
@@ -76,19 +76,23 @@ export const testApi = {
     return request.delete(`/v1/test-cases/${id}`)
   },
 
+  // NOTE: Backend endpoint not yet implemented
   copyTestCase: (id: number, newName: string) => {
     return request.post<TestCase>(`/v1/test-cases/${id}/copy`, { newName })
   },
 
   // 测试用例版本管理
+  // NOTE: Backend endpoint not yet implemented
   getTestCaseVersions: (id: number) => {
     return request.get<TestCaseVersion[]>(`/v1/test-cases/${id}/versions`)
   },
 
+  // NOTE: Backend endpoint not yet implemented
   getTestCaseVersion: (id: number, versionNumber: number) => {
     return request.get<TestCaseVersion>(`/v1/test-cases/${id}/versions/${versionNumber}`)
   },
 
+  // NOTE: Backend endpoint not yet implemented
   rollbackToVersion: (id: number, versionNumber: number) => {
     return request.post<TestCase>(`/v1/test-cases/${id}/versions/${versionNumber}/rollback`)
   },
@@ -98,6 +102,7 @@ export const testApi = {
     return request.post<TestExecution>('/v1/test-executions', data)
   },
 
+  // NOTE: Backend endpoint not yet implemented
   createBatchTestExecutions: (testCaseIds: number[]) => {
     return request.post<TestExecution[]>('/v1/test-executions/batch', { testCaseIds })
   },

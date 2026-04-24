@@ -1,6 +1,7 @@
 package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
+import com.aiagent.annotation.RequiresRole;
 import com.aiagent.common.Result;
 import com.aiagent.service.UserDataService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,7 +61,7 @@ public class UserDataController {
      * @return data retention statistics
      */
     @GetMapping("/retention")
-    @RequiresPermission("userdata:read")
+    @RequiresRole("ADMIN")
     @Operation(summary = "获取数据保留报告(仅管理员)")
     public Result<Map<String, Object>> getDataRetentionReport() {
         Map<String, Object> report = userDataService.getDataRetentionReport();

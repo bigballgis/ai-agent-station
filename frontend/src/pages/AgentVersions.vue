@@ -93,7 +93,7 @@ function submitForApproval(version: AgentVersion) {
         // 检查测试结果
         const testResults = await testApi.getTestResults({
           agentId: Number(route.params.id),
-          status: 'passed'
+          status: 'SUCCESS'
         })
         
         if (testResults.data.length === 0) {

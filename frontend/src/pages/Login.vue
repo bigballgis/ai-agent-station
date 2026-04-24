@@ -328,6 +328,7 @@ import { useAppStore } from '@/store/modules/app'
 import { register, getCaptcha } from '@/api/user'
 import type { LocaleType } from '@/locales'
 import BrandPanel from '@/components/login/BrandPanel.vue'
+import { logger } from '@/utils/logger'
 
 const router = useRouter()
 const route = useRoute()
@@ -446,7 +447,7 @@ async function handleLogin() {
       fetchCaptcha()
     }
   } catch (error: unknown) {
-    console.error('Login error:', error)
+    logger.error('Login error:', error)
     const errMessage = error instanceof Error ? error.message : undefined
     const axiosError = error as { response?: { data?: { message?: string } } }
     message.error(axiosError?.response?.data?.message || errMessage || t('login.loginFailed'))
@@ -485,7 +486,7 @@ async function handleRegister() {
       message.error(res.message || t('login.registerFailed'))
     }
   } catch (error: unknown) {
-    console.error('Register error:', error)
+    logger.error('Register error:', error)
     const errMessage = error instanceof Error ? error.message : undefined
     const axiosError = error as { response?: { data?: { message?: string } } }
     message.error(axiosError?.response?.data?.message || errMessage || t('login.registerFailed'))

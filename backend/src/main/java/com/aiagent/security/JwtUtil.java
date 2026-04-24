@@ -45,7 +45,7 @@ public class JwtUtil {
     }
 
     /**
-     * 生成 Access Token（短有效期，默认24小时）
+     * 生成 Access Token（短有效期，默认30分钟）
      */
     public String generateToken(Long userId, String username, Long tenantId) {
         Date now = new Date();

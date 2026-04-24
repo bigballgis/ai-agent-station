@@ -303,6 +303,7 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { testApi, type TestCase } from '@/api/test'
 import { agentApi, type Agent } from '@/api/agent'
+import { logger } from '@/utils/logger'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -422,7 +423,7 @@ async function fetchAgents() {
     const res = await agentApi.getAllAgents()
     agents.value = res.data || []
   } catch (error) {
-    // 静默失败，不影响主流程
+    logger.warn('Secondary operation failed:', error)
   }
 }
 

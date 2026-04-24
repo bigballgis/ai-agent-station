@@ -32,18 +32,18 @@ public class AlertService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AlertRuleVO createRule(AlertRule rule) {
         return AlertRuleVO.fromEntity(ruleRepository.save(rule));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AlertRuleVO updateRule(Long id, AlertRule rule) {
         rule.setId(id);
         return AlertRuleVO.fromEntity(ruleRepository.save(rule));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteRule(Long id) {
         ruleRepository.deleteById(id);
     }
@@ -68,7 +68,7 @@ public class AlertService {
         );
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void resolveAlertRecord(Long id) {
         recordRepository.findById(id).ifPresent(record -> {
             record.setStatus("RESOLVED");

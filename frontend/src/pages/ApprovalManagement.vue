@@ -99,8 +99,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 'passed' ? 'green' : 'red'">
-              {{ record.status === 'passed' ? t('approval.passed') : t('approval.failed') }}
+            <a-tag :color="record.status === 'SUCCESS' ? 'green' : 'red'">
+              {{ record.status === 'SUCCESS' ? t('approval.passed') : t('approval.failed') }}
             </a-tag>
           </template>
         </template>
@@ -253,7 +253,7 @@ function getStatusText(status: string) {
 
 function viewTestResults(agentId: number) {
   showTestResults.value = true
-  testApi.getTestResults({ agentId, status: 'passed' })
+  testApi.getTestResults({ agentId, status: 'SUCCESS' })
     .then(response => {
       testResults.value = response.data
     })

@@ -230,6 +230,7 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { updateTenantQuota } from '@/api/quota'
 import { getTenants } from '@/api/tenant'
+import { logger } from '@/utils/logger'
 
 interface TenantQuota {
   id: number
@@ -267,7 +268,7 @@ async function fetchQuotas() {
     const res = await getTenants()
     tenants.value = res.data || res || []
   } catch (e) {
-    console.error('获取租户配额失败:', e)
+    logger.error('获取租户配额失败:', e)
   } finally {
     loading.value = false
   }
@@ -361,7 +362,7 @@ async function handleEditSubmit() {
       await fetchQuotas()
     }
   } catch (e) {
-    console.error('配额更新失败:', e)
+    logger.error('配额更新失败:', e)
     message.error(t('quota.updateFailed'))
   } finally {
     submitting.value = false

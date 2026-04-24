@@ -308,6 +308,7 @@ import {
   RobotOutlined,
 } from '@ant-design/icons-vue'
 import { agentApi } from '@/api/agent'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -360,7 +361,7 @@ interface AgentTemplate {
         nodes: a.nodes || [],
       }))
   } catch (e) {
-    console.error('获取模板列表失败:', e)
+    logger.error('获取模板列表失败:', e)
     message.error(t('tplMarket.fetchFailed'))
   } finally {
     loading.value = false
@@ -410,7 +411,7 @@ async function useTemplate(tpl: typeof templates.value[0]) {
     message.success(`${t('tplMarket.useSuccess')} "${tpl.name}"`)
     router.push('/agents')
   } catch (e) {
-    console.error('使用模板失败:', e)
+    logger.error('使用模板失败:', e)
     message.error(t('tplMarket.useFailed'))
   }
 }
@@ -441,7 +442,7 @@ async function handleSaveTemplate() {
     newTemplate.value = { name: '', description: '', category: undefined }
     await fetchTemplates()
   } catch (e) {
-    console.error('保存模板失败:', e)
+    logger.error('保存模板失败:', e)
     message.error(t('tplMarket.saveFailed'))
   }
 }

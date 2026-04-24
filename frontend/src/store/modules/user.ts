@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import * as userApi from '@/api/user'
 import type { UserInfo } from '@/types/user'
 import { setRefreshToken as storeRefreshToken, clearAuth as clearAllAuth } from '@/utils/authStorage'
+import { logger } from '@/utils/logger'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || sessionStorage.getItem('token') || '')
@@ -41,7 +42,7 @@ export const useUserStore = defineStore('user', () => {
       }
       return false
     } catch (error) {
-      console.error('Login failed:', error)
+      logger.debug('Login failed:', error)
       return false
     }
   }
@@ -50,7 +51,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       await userApi.logout()
     } catch (error) {
-      console.error('Logout error:', error)
+      logger.debug('Logout error:', error)
     } finally {
       clearAllAuth()
       token.value = ''
@@ -65,7 +66,7 @@ export const useUserStore = defineStore('user', () => {
         setUserInfo(res.data)
       }
     } catch (error) {
-      console.error('Get user info failed:', error)
+      logger.debug('Get user info failed:', error)
     }
   }
 

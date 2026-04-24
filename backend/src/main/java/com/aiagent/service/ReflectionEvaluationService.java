@@ -8,6 +8,7 @@ import com.aiagent.repository.AgentEvolutionSuggestionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class ReflectionEvaluationService {
     /**
      * 评估Agent执行结果并生成反思报告
      */
+    @Transactional(rollbackFor = Exception.class)
     public AgentEvolutionReflection evaluateExecution(Agent agent, Map<String, Object> executionContext, 
                                                    String executionResult, String errorMessage, 
                                                    long executionTime, Long tenantId, Long userId) {
@@ -286,6 +288,7 @@ public class ReflectionEvaluationService {
     /**
      * 更新建议的实现状态
      */
+    @Transactional(rollbackFor = Exception.class)
     public void updateSuggestionStatus(Long suggestionId, String implementationStatus, Long userId) {
         AgentEvolutionSuggestion suggestion = suggestionRepository.findById(suggestionId)
                 .orElseThrow(() -> new RuntimeException("Suggestion not found"));

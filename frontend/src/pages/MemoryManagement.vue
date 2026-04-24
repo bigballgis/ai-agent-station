@@ -307,6 +307,7 @@ import { message, Modal } from 'ant-design-vue'
 import { getAgentMemories, deleteMemory as deleteMemoryApi, cleanupAgentMemories } from '@/api/memory'
 import { getAllAgents } from '@/api/agent'
 import { LoadingSkeleton } from '@/components'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -350,7 +351,7 @@ async function fetchAgents() {
       name: (a.name || '') as string,
     }))
   } catch (e) {
-    console.error('获取 Agent 列表失败:', e)
+    logger.error('获取 Agent 列表失败:', e)
   }
 }
 
@@ -364,7 +365,7 @@ async function fetchMemories() {
     const res = await getAgentMemories(selectedAgent.value || 'all', params)
     memories.value = res.data?.records || res.data || res || []
   } catch (e: unknown) {
-    console.error('获取记忆列表失败:', e)
+    logger.error('获取记忆列表失败:', e)
     message.error(t('memory.fetchMemoriesFailed'))
   } finally {
     loading.value = false
@@ -471,7 +472,7 @@ function deleteMemory(memory: typeof memories.value[0]) {
         message.success(t('memory.deleteSuccess'))
         await fetchMemories()
       } catch (e: unknown) {
-        console.error('删除记忆失败:', e)
+        logger.error('删除记忆失败:', e)
         message.error(t('memory.deleteFailed'))
       }
     },
@@ -491,7 +492,7 @@ function cleanExpiredMemories() {
         message.success(t('memory.cleanSuccess'))
         await fetchMemories()
       } catch (e: unknown) {
-        console.error('清理过期记忆失败:', e)
+        logger.error('清理过期记忆失败:', e)
         message.error(t('memory.cleanFailed'))
       }
     },

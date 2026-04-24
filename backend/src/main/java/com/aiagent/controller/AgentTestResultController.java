@@ -9,6 +9,7 @@ import com.aiagent.dto.TestResultResponseDTO;
 import com.aiagent.dto.UpdateTestResultRequestDTO;
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.service.AgentTestResultService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,7 +116,7 @@ public class AgentTestResultController {
     @Operation(summary = "根据状态获取测试结果列表")
     @RequiresPermission("test:manage")
     @PutMapping("/{id}")
-    public Result<TestResultResponseDTO> updateResult(@PathVariable Long id, @RequestBody UpdateTestResultRequestDTO request) {
+    public Result<TestResultResponseDTO> updateResult(@PathVariable Long id, @Valid @RequestBody UpdateTestResultRequestDTO request) {
         AgentTestResult result = resultService.getResultById(id)
                 .orElseThrow(() -> new RuntimeException("Test result not found"));
         DTOConverter.updateTestResultFromDTO(request, result);

@@ -1,5 +1,6 @@
 package com.aiagent.util;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,13 +25,23 @@ public class CryptoUtils {
     private static final int GCM_TAG_LENGTH = 128;
 
     private final SecretKeySpec secretKey;
+    private final String secretKeyStr;
 
-    public CryptoUtils(@Value("${ai-agent.crypto.secret-key:default-secret-key-change-in-production!!}") String secretKeyStr) {
+    public CryptoUtils(@Value("${ai-agent.crypto.secret-key:}") String secretKeyStr) {
+        this.secretKeyStr = secretKeyStr;
         // 确保密钥长度为 32 字节 (AES-256)
         byte[] keyBytes = secretKeyStr.getBytes(StandardCharsets.UTF_8);
         byte[] key32 = new byte[32];
         System.arraycopy(keyBytes, 0, key32, 0, Math.min(keyBytes.length, 32));
         this.secretKey = new SecretKeySpec(key32, "AES");
+    }
+
+    @PostConstruct
+    public void validateSecretKey() {
+        if (secretKeyStr == null || secretKeyStr.isEmpty() || secretKeyStr.equals("default-secret-key-change-in-production!!")) {
+            throw new IllegalStateException(
+                "加密密钥未配置。请通过环境变量 ai-agent.crypto.secret-key 设置安全的密钥。");
+        }
     }
 
     /**

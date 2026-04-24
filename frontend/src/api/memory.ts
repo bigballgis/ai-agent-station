@@ -1,5 +1,24 @@
 import request from '@/utils/request'
 
+export interface CreateMemoryRequest {
+  agentId: number
+  sessionId?: string
+  memoryType: string
+  content: string
+  summary?: string
+  tags?: string
+  importance?: number
+  tenantId?: number
+  createdBy?: number
+}
+
+/**
+ * 创建记忆
+ */
+export function createMemory(data: CreateMemoryRequest) {
+  return request.post('/v1/memories', data)
+}
+
 /**
  * 获取 Agent 记忆列表
  */

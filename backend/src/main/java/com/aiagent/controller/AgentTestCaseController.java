@@ -10,6 +10,7 @@ import com.aiagent.dto.TestCaseResponseDTO;
 import com.aiagent.dto.UpdateTestCaseRequestDTO;
 import com.aiagent.entity.AgentTestCase;
 import com.aiagent.service.AgentTestCaseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class AgentTestCaseController {
     @RequiresPermission("test:manage")
     @PostMapping
     @Operation(summary = "创建测试用例")
-    public Result<TestCaseResponseDTO> createTestCase(@RequestBody CreateTestCaseRequestDTO request) {
+    public Result<TestCaseResponseDTO> createTestCase(@Valid @RequestBody CreateTestCaseRequestDTO request) {
         AgentTestCase testCase = DTOConverter.toTestCaseEntity(request);
         AgentTestCase createdTestCase = testCaseService.createTestCase(testCase);
         return Result.success(DTOConverter.toTestCaseResponseDTO(createdTestCase));
@@ -72,7 +73,7 @@ public class AgentTestCaseController {
     @RequiresPermission("test:manage")
     @PutMapping("/{id}")
     @Operation(summary = "更新测试用例")
-    public Result<TestCaseResponseDTO> updateTestCase(@PathVariable Long id, @RequestBody UpdateTestCaseRequestDTO request) {
+    public Result<TestCaseResponseDTO> updateTestCase(@PathVariable Long id, @Valid @RequestBody UpdateTestCaseRequestDTO request) {
         AgentTestCase testCase = testCaseService.getTestCaseById(id)
                 .orElseThrow(() -> new RuntimeException("Test case not found"));
         DTOConverter.updateTestCaseFromDTO(request, testCase);

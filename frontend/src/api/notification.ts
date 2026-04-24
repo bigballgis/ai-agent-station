@@ -1,6 +1,9 @@
 import request from '@/utils/request'
 import type { ApiResponse, PageResult } from '@/types/common'
 
+// NOTE: Backend NotificationController not yet implemented (notifications use WebSocket).
+// The REST endpoints below (getNotifications, markAsRead, markAllAsRead) will return 404.
+
 export interface Notification {
   id: number
   title: string

@@ -157,6 +157,7 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import type { UploadFile } from 'ant-design-vue'
 import { uploadFile, downloadFile, getFileList, deleteFile } from '@/api/file'
+import { logger } from '@/utils/logger'
 
 interface FileItem {
   id: number
@@ -183,7 +184,7 @@ async function fetchFiles() {
     const res = await getFileList()
     files.value = res.data || res || []
   } catch (e) {
-    console.error('获取文件列表失败:', e)
+    logger.error('获取文件列表失败:', e)
   } finally {
     loading.value = false
   }
@@ -278,7 +279,7 @@ async function handleBeforeUpload(file: File) {
     message.success(`${file.name} ${t('fileMgmt.uploadSuccess')}`)
     await fetchFiles()
   } catch (e) {
-    console.error('文件上传失败:', e)
+    logger.error('文件上传失败:', e)
     message.error(t('fileMgmt.uploadFailed'))
   }
   return false
@@ -300,7 +301,7 @@ async function handleDownload(record: FileItem) {
     window.URL.revokeObjectURL(url)
     message.success(`${t('fileMgmt.downloadStart')}: ${record.name}${record.ext}`)
   } catch (e) {
-    console.error('文件下载失败:', e)
+    logger.error('文件下载失败:', e)
     message.error(t('fileMgmt.downloadFailed'))
   }
 }
@@ -311,7 +312,7 @@ async function handleDelete(record: FileItem) {
     message.success(`${t('fileMgmt.deleted')}: ${record.name}`)
     await fetchFiles()
   } catch (e) {
-    console.error('文件删除失败:', e)
+    logger.error('文件删除失败:', e)
     message.error(t('fileMgmt.deleteFailed'))
   }
 }

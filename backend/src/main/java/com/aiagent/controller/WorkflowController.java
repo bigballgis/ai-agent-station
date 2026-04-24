@@ -243,7 +243,7 @@ public class WorkflowController {
     public Result<WorkflowNodeLog> approveNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
-            @RequestBody(required = false) WorkflowNodeActionDTO request) {
+            @Valid @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
         WorkflowNodeLog nodeLog = workflowEngine.approveNode(instanceId, true, comment);
@@ -256,7 +256,7 @@ public class WorkflowController {
     public Result<WorkflowNodeLog> rejectNode(
             @PathVariable Long instanceId,
             @PathVariable String nodeId,
-            @RequestBody(required = false) WorkflowNodeActionDTO request) {
+            @Valid @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
         WorkflowNodeLog nodeLog = workflowEngine.approveNode(instanceId, false, comment);

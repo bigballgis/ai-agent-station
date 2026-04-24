@@ -1,3 +1,4 @@
+// NOTE: Backend ReflectionController not yet implemented. These APIs will return 404.
 import request from '@/utils/request'
 
 export function getReflections(params?: Record<string, unknown>) {

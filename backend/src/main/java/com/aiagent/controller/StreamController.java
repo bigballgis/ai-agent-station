@@ -164,7 +164,9 @@ public class StreamController {
                     emitter.send(SseEmitter.event()
                             .name("error")
                             .data(objectMapper.writeValueAsString(eventData)));
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    log.error("Failed to send SSE error event", e);
+                }
                 emitter.complete();
             }
         });
