@@ -768,7 +768,36 @@
 
 ## 版本历史
 
-### v1.0.0 (当前版本)
+### v1.1.0 (Round 267-269)
+
+#### Round 267: API 速率限制仪表盘集成
+- 新增 `GET /v1/rate-limits/dashboard` 端点，提供速率限制仪表盘统计
+- 仪表盘统计包含: 当前窗口总请求数、限流命中数(429)、Top 限流端点、各租户用量
+- Dashboard `/api/dashboard/stats` 响应新增 `rateLimitStats` 字段
+- 新增 `RateLimitDashboardService` 聚合 Redis 速率限制指标
+
+#### Round 268: API 请求/响应日志增强
+- 增强请求日志记录: POST/PUT 请求体（带敏感字段遮蔽）
+- 增强响应日志记录: 响应体截断到 1000 字符（带敏感字段遮蔽）
+- 新增客户端信息记录: User-Agent、Accept-Language
+- 新增可配置日志级别: 特定端点使用 DEBUG 级别
+- 新增 `api_call_audit_logs` 表用于审计日志持久化
+- 新增 `ApiCallAuditLogService` 异步保存审计日志
+- 敏感字段遮蔽: password, token, accessToken, secret, apiKey 等
+
+#### Round 269: API 版本废弃 + 变更日志
+- 新增 `@ApiDeprecation` 注解，支持 `sinceVersion`、`sunsetDate`、`replacement` 字段
+- 新增 `ApiDeprecationAspect` 自动添加废弃响应头:
+  - `X-API-Deprecated: true`
+  - `Sunset: <date>`
+  - `Deprecation: true`
+  - `Warning: 299 - "message"`
+  - `Link: <replacement>; rel="successor-version"`
+- 新增 `GET /v1/api-changelog` 端点，返回 API 变更日志 JSON
+
+---
+
+### v1.0.0
 - 初始 API 发布
 - 认证管理（登录、注册、Token管理、验证码、密码策略）
 - Agent CRUD、版本管理、模板市场、导出/导入

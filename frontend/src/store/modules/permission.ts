@@ -4,6 +4,7 @@ import type { TreeNode } from '@/types'
 import type { ApiResponse } from '@/types/common'
 import request from '@/utils/request'
 import { logger } from '@/utils/logger'
+import { requireStoreReady } from '../utils'
 
 interface Permission {
   id: number
@@ -29,6 +30,8 @@ interface Role {
 }
 
 export const usePermissionStore = defineStore('permission', () => {
+  requireStoreReady('permission')
+
   // State
   const permissions = ref<Permission[]>([])
   const roles = ref<Role[]>([])
@@ -38,7 +41,7 @@ export const usePermissionStore = defineStore('permission', () => {
   // Getters
   const hasPermission = computed(() => {
     const permCodes = new Set<string>()
-    function collect(perms: Permission[]) {
+    function collect(perms: Permission[]): void {
       perms.forEach((p) => {
         permCodes.add(p.code)
         if (p.children) collect(p.children)
@@ -54,10 +57,10 @@ export const usePermissionStore = defineStore('permission', () => {
     }
   })
 
-  const menuItems = computed(() => menuTree.value)
+  const menuItems = computed<TreeNode[]>(() => menuTree.value)
 
   // Actions
-  async function fetchPermissions() {
+  async function fetchPermissions(): Promise<void> {
     try {
       const res = await request.get('/v1/permissions/current') as ApiResponse<Permission[]>
       permissions.value = res.data || []
@@ -67,7 +70,7 @@ export const usePermissionStore = defineStore('permission', () => {
     }
   }
 
-  async function fetchRoles() {
+  async function fetchRoles(): Promise<void> {
     try {
       const res = await request.get('/v1/roles') as ApiResponse<Role[]>
       roles.value = res.data || []
@@ -132,6 +135,13 @@ export const usePermissionStore = defineStore('permission', () => {
       })
   }
 
+  function $reset(): void {
+    permissions.value = []
+    roles.value = []
+    currentRole.value = null
+    menuTree.value = []
+  }
+
   return {
     // State
     permissions,
@@ -145,5 +155,6 @@ export const usePermissionStore = defineStore('permission', () => {
     fetchPermissions,
     fetchRoles,
     checkPermission,
+    $reset,
   }
 })

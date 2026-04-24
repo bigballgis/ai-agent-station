@@ -3,13 +3,19 @@ import { ref, computed } from 'vue'
 import type { DictType, DictItem } from '@/types'
 import request from '@/utils/request'
 import { logger } from '@/utils/logger'
+import { createStoreCache, withLoading, requireStoreReady } from '../utils'
 
 export const useDictStore = defineStore('dict', () => {
+  requireStoreReady('dict')
+
   // State
   const dictTypes = ref<DictType[]>([])
   const dictItems = ref<Map<string, DictItem[]>>(new Map())
   const loaded = ref(false)
   const loading = ref(false)
+
+  // Cache for dict items (stale-while-revalidate)
+  const dictCache = createStoreCache<DictItem[]>({ staleTime: 10 * 60 * 1000 })
 
   // Getters
   const dictItemsByType = computed(() => {
@@ -25,7 +31,7 @@ export const useDictStore = defineStore('dict', () => {
   })
 
   // Actions
-  async function fetchDictTypes() {
+  async function fetchDictTypes(): Promise<DictType[]> {
     try {
       const res = await request.get<DictType[]>('/v1/dict-types')
       dictTypes.value = res.data || []
@@ -36,7 +42,7 @@ export const useDictStore = defineStore('dict', () => {
     }
   }
 
-  async function fetchDictItems(dictType: string) {
+  async function fetchDictItems(dictType: string): Promise<DictItem[]> {
     if (dictItems.value.has(dictType)) {
       return dictItems.value.get(dictType)!
     }
@@ -47,6 +53,7 @@ export const useDictStore = defineStore('dict', () => {
       )
       const items = res.data || []
       dictItems.value.set(dictType, items)
+      dictCache.set(dictType, items)
       return items
     } catch (error) {
       logger.debug('Fetch dict items failed:', error)
@@ -58,25 +65,32 @@ export const useDictStore = defineStore('dict', () => {
     return fetchDictItems(dictType)
   }
 
-  async function loadAllDicts() {
+  async function loadAllDicts(): Promise<void> {
     if (loaded.value) return
-    loading.value = true
-    try {
+    await withLoading(loading, async () => {
       const types = await fetchDictTypes()
       await Promise.all(types.map((t) => fetchDictItems(t.dictType)))
       loaded.value = true
-    } finally {
-      loading.value = false
-    }
+    }, 'Load all dicts')
   }
 
-  function clearCache() {
+  function clearCache(): void {
     dictItems.value.clear()
+    dictCache.clear()
     loaded.value = false
   }
 
-  function removeDictType(dictType: string) {
+  function removeDictType(dictType: string): void {
     dictItems.value.delete(dictType)
+    dictCache.invalidate(dictType)
+  }
+
+  function $reset(): void {
+    dictTypes.value = []
+    dictItems.value.clear()
+    dictCache.clear()
+    loaded.value = false
+    loading.value = false
   }
 
   return {
@@ -95,5 +109,6 @@ export const useDictStore = defineStore('dict', () => {
     loadAllDicts,
     clearCache,
     removeDictType,
+    $reset,
   }
 })

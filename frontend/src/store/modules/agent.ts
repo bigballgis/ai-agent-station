@@ -3,21 +3,26 @@ import { ref, computed } from 'vue'
 import type { PageRequest, PageResult } from '@/types'
 import { agentApi, type Agent } from '@/api/agent'
 import { logger } from '@/utils/logger'
+import { withLoading, requireStoreReady } from '../utils'
+
+interface AgentFilters {
+  keyword?: string
+  status?: string
+  type?: string
+  category?: string
+}
 
 export const useAgentStore = defineStore('agent', () => {
+  requireStoreReady('agent')
+
   // State
   const agents = ref<Agent[]>([])
   const currentAgent = ref<Agent | null>(null)
   const loading = ref(false)
-  const filters = ref<{
-    keyword?: string
-    status?: string
-    type?: string
-    category?: string
-  }>({})
+  const filters = ref<AgentFilters>({})
 
   // Getters
-  const activeAgents = computed(() =>
+  const activeAgents = computed<Agent[]>(() =>
     agents.value.filter((a) => a.isActive !== false)
   )
 
@@ -27,7 +32,7 @@ export const useAgentStore = defineStore('agent', () => {
     return (id: string | number) => map.get(id)
   })
 
-  const filteredAgents = computed(() => {
+  const filteredAgents = computed<Agent[]>(() => {
     let result = agents.value
     const { keyword, status, type, category } = filters.value
 
@@ -53,9 +58,8 @@ export const useAgentStore = defineStore('agent', () => {
   })
 
   // Actions - delegate API calls to api/agent.ts
-  async function fetchAgents(params?: PageRequest & typeof filters.value) {
-    loading.value = true
-    try {
+  async function fetchAgents(params?: PageRequest & AgentFilters): Promise<unknown> {
+    return withLoading(loading, async () => {
       if (params) {
         filters.value = { ...filters.value, ...params }
       }
@@ -70,23 +74,18 @@ export const useAgentStore = defineStore('agent', () => {
         agents.value = []
       }
       return data
-    } finally {
-      loading.value = false
-    }
+    }, 'Fetch agents')
   }
 
-  async function fetchAgentById(id: string | number) {
-    loading.value = true
-    try {
+  async function fetchAgentById(id: string | number): Promise<Agent> {
+    return withLoading(loading, async () => {
       const res = await agentApi.getAgentById(id)
       currentAgent.value = res.data
       return res.data
-    } finally {
-      loading.value = false
-    }
+    }, 'Fetch agent by id')
   }
 
-  async function createAgent(data: Partial<Agent>) {
+  async function createAgent(data: Partial<Agent>): Promise<Agent> {
     try {
       const res = await agentApi.createAgent(data as Record<string, unknown>)
       agents.value.push(res.data as Agent)
@@ -97,7 +96,7 @@ export const useAgentStore = defineStore('agent', () => {
     }
   }
 
-  async function updateAgent(id: string | number, data: Partial<Agent>) {
+  async function updateAgent(id: string | number, data: Partial<Agent>): Promise<Agent> {
     try {
       const res = await agentApi.updateAgent(id, data as Record<string, unknown>)
       const updated = res.data as Agent
@@ -115,7 +114,7 @@ export const useAgentStore = defineStore('agent', () => {
     }
   }
 
-  async function deleteAgent(id: string | number) {
+  async function deleteAgent(id: string | number): Promise<void> {
     await agentApi.deleteAgent(id)
     agents.value = agents.value.filter((a) => a.id !== id)
     if (currentAgent.value?.id === id) {
@@ -123,11 +122,18 @@ export const useAgentStore = defineStore('agent', () => {
     }
   }
 
-  function setFilters(newFilters: typeof filters.value) {
+  function setFilters(newFilters: AgentFilters): void {
     filters.value = { ...filters.value, ...newFilters }
   }
 
-  function resetFilters() {
+  function resetFilters(): void {
+    filters.value = {}
+  }
+
+  function $reset(): void {
+    agents.value = []
+    currentAgent.value = null
+    loading.value = false
     filters.value = {}
   }
 
@@ -149,5 +155,6 @@ export const useAgentStore = defineStore('agent', () => {
     deleteAgent,
     setFilters,
     resetFilters,
+    $reset,
   }
 })

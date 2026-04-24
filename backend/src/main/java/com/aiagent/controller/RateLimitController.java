@@ -1,6 +1,7 @@
 package com.aiagent.controller;
 
 import com.aiagent.common.Result;
+import com.aiagent.service.RateLimitDashboardService;
 import com.aiagent.service.RateLimitService;
 import com.aiagent.service.RateLimitService.RateLimitStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class RateLimitController {
 
     private final RateLimitService rateLimitService;
+    private final RateLimitDashboardService rateLimitDashboardService;
 
     /**
      * 获取所有端点类型的速率限制状态
@@ -57,6 +59,17 @@ public class RateLimitController {
         String clientIp = getClientIp(request);
         RateLimitStatus status = rateLimitService.getRateLimitStatus(endpointType.toUpperCase(), clientIp);
         return Result.success(status);
+    }
+
+    /**
+     * 获取速率限制仪表盘统计数据
+     * 包含: 当前窗口总请求数、限流命中数、Top 限流端点、各租户用量
+     */
+    @GetMapping("/dashboard")
+    @Operation(summary = "获取速率限制仪表盘统计", description = "包含当前窗口总请求数、限流命中数、Top限流端点、各租户用量")
+    public Result<Map<String, Object>> getRateLimitDashboard() {
+        Map<String, Object> stats = rateLimitDashboardService.getRateLimitDashboardStats();
+        return Result.success(stats);
     }
 
     private String getClientIp(HttpServletRequest request) {

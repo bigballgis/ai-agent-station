@@ -24,6 +24,7 @@ public class DashboardService {
     private final AlertRecordRepository alertRecordRepository;
     private final UserRepository userRepository;
     private final LoginLogRepository loginLogRepository;
+    private final RateLimitDashboardService rateLimitDashboardService;
 
     private final Map<String, HealthIndicator> healthIndicators;
 
@@ -71,6 +72,14 @@ public class DashboardService {
 
         // 系统健康状态
         stats.put("systemHealth", getSystemHealth());
+
+        // 速率限制统计
+        try {
+            stats.put("rateLimitStats", rateLimitDashboardService.getRateLimitDashboardStats());
+        } catch (Exception e) {
+            log.warn("获取速率限制统计失败: {}", e.getMessage());
+            stats.put("rateLimitStats", Map.of("error", "unavailable"));
+        }
 
         return stats;
     }

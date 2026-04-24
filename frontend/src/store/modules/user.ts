@@ -4,14 +4,20 @@ import * as userApi from '@/api/user'
 import type { UserInfo } from '@/types/user'
 import { setRefreshToken as storeRefreshToken, clearAuth as clearAllAuth } from '@/utils/authStorage'
 import { logger } from '@/utils/logger'
+import { requireStoreReady } from '../utils'
 
 export const useUserStore = defineStore('user', () => {
+  requireStoreReady('user')
+
+  // State
   const token = ref<string>(localStorage.getItem('token') || sessionStorage.getItem('token') || '')
   const userInfo = ref<UserInfo>(JSON.parse(localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo') || '{}'))
 
-  const isLoggedIn = computed(() => !!token.value)
+  // Getters
+  const isLoggedIn = computed<boolean>(() => !!token.value)
 
-  function setToken(newToken: string, remember: boolean = false) {
+  // Actions
+  function setToken(newToken: string, remember: boolean = false): void {
     token.value = newToken
     const storage = remember ? localStorage : sessionStorage
     storage.setItem('token', newToken)
@@ -20,7 +26,7 @@ export const useUserStore = defineStore('user', () => {
     otherStorage.removeItem('token')
   }
 
-  function setUserInfo(info: UserInfo, remember: boolean = false) {
+  function setUserInfo(info: UserInfo, remember: boolean = false): void {
     userInfo.value = info
     const storage = remember ? localStorage : sessionStorage
     storage.setItem('userInfo', JSON.stringify(info))
@@ -28,7 +34,7 @@ export const useUserStore = defineStore('user', () => {
     otherStorage.removeItem('userInfo')
   }
 
-  async function login(loginData: { username: string; password: string; remember?: boolean; captchaId?: string; captchaAnswer?: string }) {
+  async function login(loginData: { username: string; password: string; remember?: boolean; captchaId?: string; captchaAnswer?: string }): Promise<boolean> {
     try {
       const res = await userApi.login(loginData)
       if (res.code === 200 || res.code === 0) {
@@ -47,7 +53,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function logout() {
+  async function logout(): Promise<void> {
     try {
       await userApi.logout()
     } catch (error) {
@@ -59,7 +65,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function getUserInfo() {
+  async function getUserInfo(): Promise<void> {
     try {
       const res = await userApi.getUserInfo()
       if (res.code === 200 || res.code === 0) {
@@ -70,14 +76,23 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  function $reset(): void {
+    token.value = ''
+    userInfo.value = {} as UserInfo
+  }
+
   return {
+    // State
     token,
     userInfo,
+    // Getters
     isLoggedIn,
+    // Actions
     setToken,
     setUserInfo,
     login,
     logout,
-    getUserInfo
+    getUserInfo,
+    $reset,
   }
 })

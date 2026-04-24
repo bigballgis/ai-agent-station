@@ -2,8 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { notificationApi, type Notification } from '@/api/notification'
 import { logger } from '@/utils/logger'
+import { requireStoreReady } from '../utils'
 
 export const useNotificationStore = defineStore('notification', () => {
+  requireStoreReady('notification')
+
   // State
   const notifications = ref<Notification[]>([])
   const unreadCount = ref(0)
@@ -15,18 +18,18 @@ export const useNotificationStore = defineStore('notification', () => {
   const MAX_RECONNECT_DELAY = 60000
 
   // Getters
-  const unreadNotifications = computed(() =>
+  const unreadNotifications = computed<Notification[]>(() =>
     notifications.value.filter((n) => !n.read)
   )
 
-  const sortedNotifications = computed(() =>
+  const sortedNotifications = computed<Notification[]>(() =>
     [...notifications.value].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
   )
 
   // Actions - delegate REST API calls to api/notification.ts
-  async function fetchNotifications(params?: { page?: number; size?: number }) {
+  async function fetchNotifications(params?: { page?: number; size?: number }): Promise<unknown> {
     try {
       const res = await notificationApi.getNotifications(params)
       // 兼容分页和非分页两种返回格式
@@ -44,7 +47,7 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  async function markAsRead(id: number) {
+  async function markAsRead(id: number): Promise<void> {
     await notificationApi.markAsRead(id)
     const notification = notifications.value.find((n) => n.id === id)
     if (notification && !notification.read) {
@@ -53,7 +56,7 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  async function markAllAsRead() {
+  async function markAllAsRead(): Promise<void> {
     await notificationApi.markAllAsRead()
     notifications.value.forEach((n) => {
       n.read = true
@@ -61,7 +64,7 @@ export const useNotificationStore = defineStore('notification', () => {
     unreadCount.value = 0
   }
 
-  function connectWebSocket(token: string) {
+  function connectWebSocket(token: string): void {
     if (ws && ws.readyState === WebSocket.OPEN) return
 
     const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/notifications`
@@ -74,9 +77,9 @@ export const useNotificationStore = defineStore('notification', () => {
       startHeartbeat()
     }
 
-    ws.onmessage = (event) => {
+    ws.onmessage = (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data)
+        const data = JSON.parse(event.data as string)
         if (data.type === 'notification') {
           notifications.value.unshift(data.payload)
           if (!data.payload.read) {
@@ -102,7 +105,7 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  function disconnectWebSocket() {
+  function disconnectWebSocket(): void {
     stopHeartbeat()
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
@@ -115,7 +118,7 @@ export const useNotificationStore = defineStore('notification', () => {
     wsConnected.value = false
   }
 
-  function startHeartbeat() {
+  function startHeartbeat(): void {
     stopHeartbeat()
     heartbeatTimer = setInterval(() => {
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -124,7 +127,7 @@ export const useNotificationStore = defineStore('notification', () => {
     }, 30000)
   }
 
-  function stopHeartbeat() {
+  function stopHeartbeat(): void {
     if (heartbeatTimer) {
       clearInterval(heartbeatTimer)
       heartbeatTimer = null
@@ -137,13 +140,20 @@ export const useNotificationStore = defineStore('notification', () => {
     return delay
   }
 
-  function scheduleReconnect(token: string) {
+  function scheduleReconnect(token: string): void {
     if (reconnectTimer) return
     const delay = getReconnectDelay()
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null
       connectWebSocket(token)
     }, delay)
+  }
+
+  function $reset(): void {
+    notifications.value = []
+    unreadCount.value = 0
+    wsConnected.value = false
+    disconnectWebSocket()
   }
 
   return {
@@ -160,5 +170,6 @@ export const useNotificationStore = defineStore('notification', () => {
     markAllAsRead,
     connectWebSocket,
     disconnectWebSocket,
+    $reset,
   }
 })

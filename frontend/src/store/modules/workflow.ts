@@ -3,8 +3,11 @@ import { ref, computed } from 'vue'
 import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNodeLog } from '@/api/workflow'
 import type { ApiResponse, PageResult } from '@/types/common'
 import { logger } from '@/utils/logger'
+import { withLoading, requireStoreReady } from '../utils'
 
 export const useWorkflowStore = defineStore('workflow', () => {
+  requireStoreReady('workflow')
+
   // State
   const definitions = ref<WorkflowDefinition[]>([])
   const instances = ref<WorkflowInstance[]>([])
@@ -13,11 +16,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const loading = ref(false)
 
   // Getters
-  const activeDefinitions = computed(() =>
+  const activeDefinitions = computed<WorkflowDefinition[]>(() =>
     definitions.value.filter((d) => d.status === 'PUBLISHED')
   )
 
-  const runningInstances = computed(() =>
+  const runningInstances = computed<WorkflowInstance[]>(() =>
     instances.value.filter(
       (i) => i.status === 'RUNNING' || i.status === 'PENDING'
     )
@@ -26,49 +29,40 @@ export const useWorkflowStore = defineStore('workflow', () => {
   // Actions - delegate API calls to api/workflow.ts
   // Note: The response interceptor returns response.data (ApiResponse<T>) at runtime,
   // but TypeScript still sees AxiosResponse<ApiResponse<T>>. We cast to ApiResponse<T>.
-  async function fetchDefinitions(page = 0, size = 10, status?: string) {
-    loading.value = true
-    try {
+  async function fetchDefinitions(page = 0, size = 10, status?: string): Promise<PageResult<WorkflowDefinition> | undefined> {
+    return withLoading(loading, async () => {
       const res = await workflowApi.getDefinitions(page, size, status) as unknown as ApiResponse<PageResult<WorkflowDefinition>>
       const data = res.data
       if (data && 'records' in data) {
         definitions.value = data.records
       }
       return data
-    } finally {
-      loading.value = false
-    }
+    }, 'Fetch definitions')
   }
 
-  async function fetchInstances(page = 0, size = 10, filters?: { status?: string; definitionId?: number }) {
-    loading.value = true
-    try {
+  async function fetchInstances(page = 0, size = 10, filters?: { status?: string; definitionId?: number }): Promise<PageResult<WorkflowInstance> | undefined> {
+    return withLoading(loading, async () => {
       const res = await workflowApi.getInstances(page, size, filters) as unknown as ApiResponse<PageResult<WorkflowInstance>>
       const data = res.data
       if (data && 'records' in data) {
         instances.value = data.records
       }
       return data
-    } finally {
-      loading.value = false
-    }
+    }, 'Fetch instances')
   }
 
-  async function fetchInstanceById(id: number) {
-    loading.value = true
-    try {
+  async function fetchInstanceById(id: number): Promise<WorkflowInstance> {
+    return withLoading(loading, async () => {
       const res = await workflowApi.getInstance(id) as unknown as ApiResponse<WorkflowInstance>
       currentInstance.value = res.data
       return res.data
-    } finally {
-      loading.value = false
-    }
+    }, 'Fetch instance by id')
   }
 
   async function startWorkflow(
     definitionId: number,
     variables?: Record<string, unknown>
-  ) {
+  ): Promise<WorkflowInstance> {
     try {
       const res = await workflowApi.startWorkflow(definitionId, variables) as unknown as ApiResponse<WorkflowInstance>
       const instance = res.data
@@ -85,7 +79,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     nodeId: string,
     approved: boolean,
     comment?: string
-  ) {
+  ): Promise<WorkflowNodeLog> {
     try {
       if (approved) {
         const res = await workflowApi.approveNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
@@ -100,7 +94,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
-  async function fetchNodeLogs(instanceId: number) {
+  async function fetchNodeLogs(instanceId: number): Promise<WorkflowNodeLog[]> {
     try {
       const res = await workflowApi.getInstanceHistory(instanceId) as unknown as ApiResponse<WorkflowNodeLog[]>
       nodeLogs.value = res.data || []
@@ -111,7 +105,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
-  async function cancelInstance(instanceId: number) {
+  async function cancelInstance(instanceId: number): Promise<void> {
     await workflowApi.cancelWorkflow(instanceId)
     const instance = instances.value.find((i) => i.id === instanceId)
     if (instance) {
@@ -120,6 +114,14 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (currentInstance.value?.id === instanceId) {
       currentInstance.value.status = 'CANCELLED'
     }
+  }
+
+  function $reset(): void {
+    definitions.value = []
+    instances.value = []
+    currentInstance.value = null
+    nodeLogs.value = []
+    loading.value = false
   }
 
   return {
@@ -140,5 +142,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     approveNode,
     fetchNodeLogs,
     cancelInstance,
+    $reset,
   }
 })
