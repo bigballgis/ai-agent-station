@@ -26,7 +26,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class AgentExecutionEngine {
@@ -51,6 +52,9 @@ public class AgentExecutionEngine {
 
     @Value("${ai-agent.llm.qwen.api-key:}")
     private String qwenApiKey;
+
+    @Value("${ai-agent.execution.timeout-seconds:120}")
+    private int executionTimeoutSeconds;
 
     public AgentExecutionEngine(AgentRepository agentRepository, ObjectMapper objectMapper,
                                  ReflectionEvaluationService reflectionEvaluationService,
@@ -114,8 +118,24 @@ public class AgentExecutionEngine {
         Map<String, Object> outputs = null;
 
         try {
-            // 通过图执行引擎执行 Agent
-            outputs = executeAgentLogic(agent, request, tenantId);
+            // 使用 ExecutorService 实现执行超时控制
+            ExecutorService timeoutExecutor = Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "agent-timeout-" + agent.getId());
+                t.setDaemon(true);
+                return t;
+            });
+            Future<Map<String, Object>> future = timeoutExecutor.submit(
+                    () -> executeAgentLogic(agent, request, tenantId));
+
+            try {
+                outputs = future.get(executionTimeoutSeconds, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                log.warn("Agent {} 执行超时 ({}s)，已取消", agent.getName(), executionTimeoutSeconds);
+                throw new RuntimeException("Agent 执行超时 (" + executionTimeoutSeconds + "s)，请优化 Agent 配置或增大超时时间");
+            } finally {
+                timeoutExecutor.shutdownNow();
+            }
 
             response.setStatus("SUCCESS");
             response.setOutputs(outputs);

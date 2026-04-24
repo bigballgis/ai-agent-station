@@ -82,4 +82,13 @@ public class TenantController {
     public Result<TenantVO> regenerateApiKey(@PathVariable Long id) {
         return Result.success(DTOConverter.toTenantVO(tenantService.regenerateApiKey(id)));
     }
+
+    @PostMapping("/{id}/reactivate")
+    @Operation(summary = "重新激活租户")
+    @OperationLog(value = "重新激活租户", module = "租户管理")
+    @RequiresPermission("tenant:manage")
+    @RequiresRole("SUPER_ADMIN")
+    public Result<TenantVO> reactivateTenant(@PathVariable Long id) {
+        return Result.success(DTOConverter.toTenantVO(tenantService.reactivateTenant(id)));
+    }
 }

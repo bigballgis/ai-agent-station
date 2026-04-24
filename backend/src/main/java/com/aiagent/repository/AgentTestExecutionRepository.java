@@ -28,9 +28,11 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
 
     /**
      * 根据Agent ID查询测试执行记录
-     * @param agentId Agent ID
-     * @return 测试执行记录列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
+    List<AgentTestExecution> findByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestExecution> findByAgentId(Long agentId);
 
@@ -38,18 +40,26 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
      * 根据Agent ID分页查询测试执行记录
      */
     @EntityGraph(attributePaths = {"testCase"})
+    Page<AgentTestExecution> findByAgentIdAndTenantId(Long agentId, Long tenantId, Pageable pageable);
+
+    @Deprecated
+    @EntityGraph(attributePaths = {"testCase"})
     Page<AgentTestExecution> findByAgentId(Long agentId, Pageable pageable);
 
     /**
      * 根据测试用例ID查询测试执行记录
-     * @param testCaseId 测试用例ID
-     * @return 测试执行记录列表
      */
+    List<AgentTestExecution> findByTestCaseIdAndTenantId(Long testCaseId, Long tenantId);
+
+    @Deprecated
     List<AgentTestExecution> findByTestCaseId(Long testCaseId);
 
     /**
      * 根据测试用例ID分页查询测试执行记录
      */
+    Page<AgentTestExecution> findByTestCaseIdAndTenantId(Long testCaseId, Long tenantId, Pageable pageable);
+
+    @Deprecated
     Page<AgentTestExecution> findByTestCaseId(Long testCaseId, Pageable pageable);
 
     /**
@@ -91,15 +101,17 @@ public interface AgentTestExecutionRepository extends JpaRepository<AgentTestExe
 
     /**
      * 统计Agent的测试执行记录数量
-     * @param agentId Agent ID
-     * @return 测试执行记录数量
      */
+    long countByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     long countByAgentId(Long agentId);
 
     /**
      * 统计测试用例的测试执行记录数量
-     * @param testCaseId 测试用例ID
-     * @return 测试执行记录数量
      */
+    long countByTestCaseIdAndTenantId(Long testCaseId, Long tenantId);
+
+    @Deprecated
     long countByTestCaseId(Long testCaseId);
 }

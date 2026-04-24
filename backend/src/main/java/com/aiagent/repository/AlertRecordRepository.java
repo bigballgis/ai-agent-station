@@ -12,9 +12,18 @@ import java.util.List;
 public interface AlertRecordRepository extends JpaRepository<AlertRecord, Long> {
     Page<AlertRecord> findByTenantIdOrderByFiredAtDesc(Long tenantId, Pageable pageable);
 
+    List<AlertRecord> findByTenantIdAndStatus(Long tenantId, String status);
+
+    Page<AlertRecord> findByTenantIdAndStatus(Long tenantId, String status, Pageable pageable);
+
+    long countByTenantIdAndStatusAndFiredAtAfter(Long tenantId, String status, LocalDateTime since);
+
+    @Deprecated
     List<AlertRecord> findByStatus(String status);
 
+    @Deprecated
     List<AlertRecord> findByStatus(String status, Pageable pageable);
 
+    @Deprecated
     long countByStatusAndFiredAtAfter(String status, LocalDateTime since);
 }

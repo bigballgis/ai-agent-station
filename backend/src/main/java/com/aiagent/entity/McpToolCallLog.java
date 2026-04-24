@@ -8,6 +8,24 @@ import java.time.LocalDateTime;
 @Table(name = "mcp_tool_call_logs")
 public class McpToolCallLog {
 
+    /**
+     * MCP 调用失败错误分类枚举
+     */
+    public enum ErrorCategory {
+        /** 工具未在超时时间内响应 */
+        TIMEOUT,
+        /** 认证/鉴权失败 */
+        AUTH_FAILURE,
+        /** 工具触发了速率限制 */
+        RATE_LIMITED,
+        /** 请求格式不正确或参数校验失败 */
+        INVALID_REQUEST,
+        /** 工具内部错误 */
+        INTERNAL_ERROR,
+        /** 无错误（成功调用） */
+        NONE
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,6 +51,13 @@ public class McpToolCallLog {
 
     @Column(name = "error_message", columnDefinition = "text")
     private String errorMessage;
+
+    /**
+     * 错误分类: TIMEOUT / AUTH_FAILURE / RATE_LIMITED / INVALID_REQUEST / INTERNAL_ERROR / NONE
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "error_category", length = 20)
+    private ErrorCategory errorCategory = ErrorCategory.NONE;
 
     @Column(name = "execution_time")
     private Integer executionTime;
@@ -182,5 +207,13 @@ public class McpToolCallLog {
 
     public void setApiCallLog(ApiCallLog apiCallLog) {
         this.apiCallLog = apiCallLog;
+    }
+
+    public ErrorCategory getErrorCategory() {
+        return errorCategory;
+    }
+
+    public void setErrorCategory(ErrorCategory errorCategory) {
+        this.errorCategory = errorCategory;
     }
 }

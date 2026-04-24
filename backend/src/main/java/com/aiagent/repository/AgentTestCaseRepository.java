@@ -30,11 +30,17 @@ public interface AgentTestCaseRepository extends JpaRepository<AgentTestCase, Lo
      * @param agentId Agent ID
      * @return 测试用例列表
      */
+    List<AgentTestCase> findByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     List<AgentTestCase> findByAgentId(Long agentId);
 
     /**
      * 根据Agent ID分页查询测试用例
      */
+    Page<AgentTestCase> findByAgentIdAndTenantId(Long agentId, Long tenantId, Pageable pageable);
+
+    @Deprecated
     Page<AgentTestCase> findByAgentId(Long agentId, Pageable pageable);
 
     /**
@@ -83,5 +89,8 @@ public interface AgentTestCaseRepository extends JpaRepository<AgentTestCase, Lo
      * @param agentId Agent ID
      * @return 测试用例数量
      */
+    long countByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     long countByAgentId(Long agentId);
 }

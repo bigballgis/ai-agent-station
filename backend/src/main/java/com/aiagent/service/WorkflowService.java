@@ -23,6 +23,7 @@ public class WorkflowService {
 
     private final WorkflowDefinitionRepository definitionRepository;
     private final WorkflowInstanceRepository instanceRepository;
+    private final QuotaService quotaService;
 
     @Value("${workflow.max-node-count:50}")
     private int maxNodeCount;
@@ -42,7 +43,16 @@ public class WorkflowService {
 
     @Transactional(rollbackFor = Exception.class)
     public WorkflowDefinition createDefinition(WorkflowDefinition definition) {
-        return definitionRepository.save(definition);
+        // 配额检查
+        if (definition.getTenantId() != null) {
+            quotaService.checkWorkflowQuota();
+        }
+        WorkflowDefinition saved = definitionRepository.save(definition);
+        // 递增工作流计数
+        if (definition.getTenantId() != null) {
+            quotaService.incrementWorkflowCount();
+        }
+        return saved;
     }
 
     public WorkflowDefinition getDefinitionByIdAndTenantId(Long id, Long tenantId) {
@@ -58,6 +68,10 @@ public class WorkflowService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDefinition(WorkflowDefinition definition) {
         definitionRepository.delete(definition);
+        // 递减工作流计数
+        if (definition.getTenantId() != null) {
+            quotaService.decrementWorkflowCount();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)

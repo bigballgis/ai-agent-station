@@ -22,5 +22,6 @@ public interface WorkflowInstanceRepository extends JpaRepository<WorkflowInstan
 
     List<WorkflowInstance> findByWorkflowDefinitionIdAndTenantId(Long definitionId, Long tenantId);
 
+    @Deprecated
     List<WorkflowInstance> findByWorkflowDefinitionId(Long definitionId);
 }

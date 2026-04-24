@@ -2,6 +2,7 @@ package com.aiagent.mcp;
 
 import com.aiagent.entity.McpTool;
 import com.aiagent.entity.McpToolCallLog;
+import com.aiagent.entity.McpToolCallLog.ErrorCategory;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.McpToolCallLogRepository;
 import com.aiagent.repository.McpToolRepository;
@@ -19,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -181,6 +185,7 @@ public class McpToolGateway {
         } catch (Exception e) {
             log.error("[MCP Gateway] 工具调用失败: toolId={}", toolId, e);
             callLog.setErrorMessage(e.getMessage());
+            callLog.setErrorCategory(classifyError(e));
             callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.FAILED);
             throw new BusinessException("MCP tool invocation failed: " + e.getMessage(), e);
         } finally {
@@ -476,6 +481,52 @@ public class McpToolGateway {
         }
 
         return result;
+    }
+
+    // ==================== 错误分类 ====================
+
+    /**
+     * 根据异常类型对 MCP 调用失败进行分类
+     */
+    private ErrorCategory classifyError(Exception e) {
+        if (e instanceof ResourceAccessException) {
+            // 连接超时或读取超时
+            return ErrorCategory.TIMEOUT;
+        }
+        if (e instanceof HttpClientErrorException) {
+            HttpClientErrorException httpEx = (HttpClientErrorException) e;
+            if (httpEx.getStatusCode().value() == 401 || httpEx.getStatusCode().value() == 403) {
+                return ErrorCategory.AUTH_FAILURE;
+            }
+            if (httpEx.getStatusCode().value() == 429) {
+                return ErrorCategory.RATE_LIMITED;
+            }
+            if (httpEx.getStatusCode().value() == 400 || httpEx.getStatusCode().value() == 422) {
+                return ErrorCategory.INVALID_REQUEST;
+            }
+            return ErrorCategory.INTERNAL_ERROR;
+        }
+        if (e instanceof HttpServerErrorException) {
+            return ErrorCategory.INTERNAL_ERROR;
+        }
+        // 根据 errorMessage 关键字做二次判断
+        String msg = e.getMessage();
+        if (msg != null) {
+            String lowerMsg = msg.toLowerCase();
+            if (lowerMsg.contains("timeout") || lowerMsg.contains("timed out")) {
+                return ErrorCategory.TIMEOUT;
+            }
+            if (lowerMsg.contains("401") || lowerMsg.contains("403") || lowerMsg.contains("auth") || lowerMsg.contains("unauthorized")) {
+                return ErrorCategory.AUTH_FAILURE;
+            }
+            if (lowerMsg.contains("429") || lowerMsg.contains("rate limit")) {
+                return ErrorCategory.RATE_LIMITED;
+            }
+            if (lowerMsg.contains("400") || lowerMsg.contains("invalid") || lowerMsg.contains("bad request")) {
+                return ErrorCategory.INVALID_REQUEST;
+            }
+        }
+        return ErrorCategory.INTERNAL_ERROR;
     }
 
     // ==================== MCP 会话内部类 ====================

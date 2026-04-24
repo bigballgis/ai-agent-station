@@ -15,30 +15,31 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
 
     /**
      * 根据执行ID查询测试结果
-     * @param executionId 执行ID
-     * @return 测试结果列表
      */
+    List<AgentTestResult> findByExecutionIdAndTenantId(Long executionId, Long tenantId);
+
+    @Deprecated
     List<AgentTestResult> findByExecutionId(Long executionId);
 
     /**
      * 根据租户ID查询测试结果
-     * @param tenantId 租户ID
-     * @return 测试结果列表
      */
     List<AgentTestResult> findByTenantId(Long tenantId);
 
     /**
      * 根据Agent ID查询测试结果
-     * @param agentId Agent ID
-     * @return 测试结果列表
      */
+    List<AgentTestResult> findByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     List<AgentTestResult> findByAgentId(Long agentId);
 
     /**
      * 根据测试用例ID查询测试结果
-     * @param testCaseId 测试用例ID
-     * @return 测试结果列表
      */
+    List<AgentTestResult> findByTestCaseIdAndTenantId(Long testCaseId, Long tenantId);
+
+    @Deprecated
     List<AgentTestResult> findByTestCaseId(Long testCaseId);
 
     /**
@@ -58,30 +59,34 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
 
     /**
      * 统计Agent的测试结果数量
-     * @param agentId Agent ID
-     * @return 测试结果数量
      */
+    long countByAgentIdAndTenantId(Long agentId, Long tenantId);
+
+    @Deprecated
     long countByAgentId(Long agentId);
 
     /**
      * 统计测试用例的测试结果数量
-     * @param testCaseId 测试用例ID
-     * @return 测试结果数量
      */
+    long countByTestCaseIdAndTenantId(Long testCaseId, Long tenantId);
+
+    @Deprecated
     long countByTestCaseId(Long testCaseId);
 
     /**
      * 统计执行的测试结果数量
-     * @param executionId 执行ID
-     * @return 测试结果数量
      */
-    long countByExecutionId(Long executionId);
+    long countByExecutionIdAndTenantId(Long executionId, Long tenantId);
 
-    @Modifying
-    @Query("DELETE FROM AgentTestResult r WHERE r.createdAt < :threshold")
-    int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
+    @Deprecated
+    long countByExecutionId(Long executionId);
 
     @Modifying
     @Query("DELETE FROM AgentTestResult r WHERE r.tenantId = :tenantId AND r.createdAt < :threshold")
     int deleteByTenantIdAndCreatedAtBefore(@Param("tenantId") Long tenantId, @Param("threshold") LocalDateTime threshold);
+
+    @Deprecated
+    @Modifying
+    @Query("DELETE FROM AgentTestResult r WHERE r.createdAt < :threshold")
+    int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
 }

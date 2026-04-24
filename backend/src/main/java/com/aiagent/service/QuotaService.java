@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,10 +19,19 @@ public class QuotaService {
 
     private final TenantRepository tenantRepository;
 
+    // ==================== 配额检查方法 ====================
+
     public void checkAgentQuota() {
         Tenant tenant = getCurrentTenant();
         if (tenant.getMaxAgents() != null && tenant.getUsedAgents() >= tenant.getMaxAgents()) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "Agent 数量已达上限 (" + tenant.getMaxAgents() + ")");
+        }
+    }
+
+    public void checkWorkflowQuota() {
+        Tenant tenant = getCurrentTenant();
+        if (tenant.getMaxWorkflows() != null && tenant.getUsedWorkflows() >= tenant.getMaxWorkflows()) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "工作流数量已达上限 (" + tenant.getMaxWorkflows() + ")");
         }
     }
 
@@ -33,6 +41,40 @@ public class QuotaService {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "今日 API 调用次数已达上限");
         }
     }
+
+    public void checkTokenQuota() {
+        Tenant tenant = getCurrentTenant();
+        if (tenant.getMaxTokensPerDay() != null && tenant.getUsedTokensToday() >= tenant.getMaxTokensPerDay()) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "今日 Token 用量已达上限");
+        }
+    }
+
+    public void checkMcpCallQuota() {
+        Tenant tenant = getCurrentTenant();
+        // MCP 调用配额暂未追踪实际用量，预留检查接口
+        if (tenant.getMaxMcpCallsPerDay() != null && tenant.getMaxMcpCallsPerDay() <= 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "MCP 调用次数已达上限");
+        }
+    }
+
+    /**
+     * 检查存储配额（基于预估文件大小）
+     * @param fileSizeBytes 预估文件大小（字节）
+     */
+    public void checkStorageQuota(long fileSizeBytes) {
+        Tenant tenant = getCurrentTenant();
+        if (tenant.getMaxStorageMb() != null) {
+            long maxBytes = tenant.getMaxStorageMb() * 1024L * 1024L;
+            // 当前未追踪实际存储用量，仅做单文件大小检查（不超过总配额的 10%）
+            long singleFileLimit = maxBytes / 10;
+            if (fileSizeBytes > singleFileLimit) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(),
+                        "单文件大小超过限制（最大 " + (singleFileLimit / 1024 / 1024) + "MB）");
+            }
+        }
+    }
+
+    // ==================== 计数器递增/递减方法 ====================
 
     @Transactional(rollbackFor = Exception.class)
     public void incrementApiCallCount() {
@@ -54,6 +96,29 @@ public class QuotaService {
         tenant.setUsedAgents(Math.max(0, tenant.getUsedAgents() - 1));
         tenantRepository.save(tenant);
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void incrementWorkflowCount() {
+        Tenant tenant = getCurrentTenant();
+        tenant.setUsedWorkflows(tenant.getUsedWorkflows() + 1);
+        tenantRepository.save(tenant);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void decrementWorkflowCount() {
+        Tenant tenant = getCurrentTenant();
+        tenant.setUsedWorkflows(Math.max(0, tenant.getUsedWorkflows() - 1));
+        tenantRepository.save(tenant);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void incrementTokenUsage(long tokens) {
+        Tenant tenant = getCurrentTenant();
+        tenant.setUsedTokensToday(tenant.getUsedTokensToday() + tokens);
+        tenantRepository.save(tenant);
+    }
+
+    // ==================== 私有辅助方法 ====================
 
     private Tenant getCurrentTenant() {
         Long tenantId = SecurityUtils.getCurrentTenantId();
@@ -78,6 +143,8 @@ public class QuotaService {
         summary.put("tenantName", tenant.getName());
         summary.put("agentCount", tenant.getUsedAgents());
         summary.put("agentLimit", tenant.getMaxAgents());
+        summary.put("workflowCount", tenant.getUsedWorkflows());
+        summary.put("workflowLimit", tenant.getMaxWorkflows());
         summary.put("apiCallCount", tenant.getUsedApiCallsToday());
         summary.put("apiCallLimit", tenant.getMaxApiCallsPerDay());
         summary.put("tokenUsage", tenant.getUsedTokensToday());
@@ -107,6 +174,15 @@ public class QuotaService {
         agentQuota.put("usagePercent", tenant.getMaxAgents() > 0
                 ? (double) tenant.getUsedAgents() / tenant.getMaxAgents() * 100 : 0);
         details.put("agents", agentQuota);
+
+        // 工作流配额
+        Map<String, Object> workflowQuota = new LinkedHashMap<>();
+        workflowQuota.put("used", tenant.getUsedWorkflows());
+        workflowQuota.put("limit", tenant.getMaxWorkflows());
+        workflowQuota.put("remaining", Math.max(0, tenant.getMaxWorkflows() - tenant.getUsedWorkflows()));
+        workflowQuota.put("usagePercent", tenant.getMaxWorkflows() > 0
+                ? (double) tenant.getUsedWorkflows() / tenant.getMaxWorkflows() * 100 : 0);
+        details.put("workflows", workflowQuota);
 
         // API 调用配额
         Map<String, Object> apiCallQuota = new LinkedHashMap<>();
@@ -172,15 +248,5 @@ public class QuotaService {
         if (tenantIdParam instanceof Number) return ((Number) tenantIdParam).longValue();
         if (tenantIdParam instanceof String) return Long.parseLong((String) tenantIdParam);
         throw new BusinessException("无效的租户 ID: " + tenantIdParam);
-    }
-
-    private Integer toInteger(Object value) {
-        if (value instanceof Number) return ((Number) value).intValue();
-        return Integer.parseInt(value.toString());
-    }
-
-    private Long toLong(Object value) {
-        if (value instanceof Number) return ((Number) value).longValue();
-        return Long.parseLong(value.toString());
     }
 }

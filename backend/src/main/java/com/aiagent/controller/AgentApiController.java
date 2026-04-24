@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.aiagent.service.AgentExecutionMonitor;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class AgentApiController {
     private final AgentExecutionEngine agentExecutionEngine;
     private final ApiCallLogService apiCallLogService;
     private final AgentService agentService;
+    private final AgentExecutionMonitor executionMonitor;
     private final StringRedisTemplate redisTemplate;
 
     @PostMapping("/agent/{agentId}/invoke")
@@ -53,6 +55,12 @@ public class AgentApiController {
         String clientIp = getClientIp(httpRequest);
         checkRateLimit("agent-invoke:" + principal.getUserId() + ":" + clientIp, 30, 60);
 
+        // 并发执行限制：每个 Agent 最多 N 个并发执行
+        if (!executionMonitor.tryAcquireExecution(agentId)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(createConcurrencyLimitResponse(agentId));
+        }
+
         if (requestId == null || requestId.isEmpty()) {
             requestId = java.util.UUID.randomUUID().toString();
         }
@@ -60,22 +68,30 @@ public class AgentApiController {
         Long tenantId = principal.getTenantId();
         Long userId = principal.getUserId();
 
-        long startTime = System.currentTimeMillis();
-        AgentInvokeResponse response = agentExecutionEngine.invokeAgent(agentId, request, requestId, tenantId);
-        int executionTime = (int) (System.currentTimeMillis() - startTime);
-        response.setExecutionTime(executionTime);
+        AgentInvokeResponse response;
+        try {
+            long startTime = System.currentTimeMillis();
+            response = agentExecutionEngine.invokeAgent(agentId, request, requestId, tenantId);
+            int executionTime = (int) (System.currentTimeMillis() - startTime);
+            response.setExecutionTime(executionTime);
+
+            // 记录执行错误指标
+            if ("FAILED".equals(response.getStatus())) {
+                executionMonitor.recordError(agentId, response.getErrorMessage());
+            }
+        } finally {
+            executionMonitor.releaseExecution(agentId);
+        }
 
         // 记录API调用日志
         HttpStatus status = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())
                 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        String clientIp = getClientIp(httpRequest);
-
         apiCallLogService.logApiCall(
                 requestId, agentId, tenantId, userId, clientIp, "POST",
                 "/api/v1/agent/" + agentId + "/invoke", null,
                 request, response, status.value(), null,
-                mapStatus(response.getStatus()), executionTime, request.getAsync(), response.getTaskId()
+                mapStatus(response.getStatus()), response.getExecutionTime(), request.getAsync(), response.getTaskId()
         );
 
         return ResponseEntity.status(status).body(response);
@@ -150,6 +166,13 @@ public class AgentApiController {
     }
 
     // ==================== 速率限制辅助方法 ====================
+
+    private AgentInvokeResponse createConcurrencyLimitResponse(Long agentId) {
+        AgentInvokeResponse response = new AgentInvokeResponse();
+        response.setStatus("RATE_LIMITED");
+        response.setErrorMessage("Agent " + agentId + " 并发执行数已达上限，请稍后重试");
+        return response;
+    }
 
     private void checkRateLimit(String key, int maxAttempts, int windowSeconds) {
         String redisKey = "rate_limit:" + key;

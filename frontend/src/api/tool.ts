@@ -15,3 +15,11 @@ export function getToolSource(toolName: string) {
 export function refreshTools() {
   return request.post('/v1/tools/refresh')
 }
+
+export function getToolsHealth() {
+  return request.get('/v1/tools/health')
+}
+
+export function testToolConnection(toolId: number | string) {
+  return request.post(`/v1/tools/${toolId}/test-connection`)
+}

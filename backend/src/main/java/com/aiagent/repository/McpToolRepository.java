@@ -14,6 +14,7 @@ public interface McpToolRepository extends JpaRepository<McpTool, Long> {
 
     List<McpTool> findByTenantIdAndIsActiveTrue(Long tenantId);
 
+    @Deprecated
     List<McpTool> findByIsActiveTrue();
 
     Page<McpTool> findByTenantId(Long tenantId, Pageable pageable);

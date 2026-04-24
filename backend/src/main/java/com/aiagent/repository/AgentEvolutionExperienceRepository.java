@@ -32,17 +32,20 @@ public interface AgentEvolutionExperienceRepository extends JpaRepository<AgentE
     Optional<BigDecimal> averageEffectivenessScoreByTenantId(@Param("tenantId") Long tenantId);
 
     @Query("SELECT AVG(e.effectivenessScore) FROM AgentEvolutionExperience e WHERE e.effectivenessScore IS NOT NULL")
+    @Deprecated
     Optional<BigDecimal> averageEffectivenessScoreGlobal();
 
     @Query("SELECT e.experienceType, COUNT(e), AVG(e.effectivenessScore) FROM AgentEvolutionExperience e WHERE e.tenantId = :tenantId GROUP BY e.experienceType")
     List<Object[]> countAndAvgScoreByTypeForTenant(@Param("tenantId") Long tenantId);
 
     @Query("SELECT e.experienceType, COUNT(e), AVG(e.effectivenessScore) FROM AgentEvolutionExperience e GROUP BY e.experienceType")
+    @Deprecated
     List<Object[]> countAndAvgScoreByTypeGlobal();
 
     @Query("SELECT COALESCE(SUM(e.usageCount), 0) FROM AgentEvolutionExperience e WHERE e.tenantId = :tenantId")
     long totalUsageCountByTenantId(@Param("tenantId") Long tenantId);
 
     @Query("SELECT COALESCE(SUM(e.usageCount), 0) FROM AgentEvolutionExperience e")
+    @Deprecated
     long totalUsageCountGlobal();
 }

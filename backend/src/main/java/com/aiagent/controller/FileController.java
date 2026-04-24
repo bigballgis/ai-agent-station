@@ -7,6 +7,7 @@ import com.aiagent.common.Result;
 import com.aiagent.exception.RateLimitException;
 import com.aiagent.service.FileStorageService;
 import com.aiagent.service.FileStorageService.FileInfo;
+import com.aiagent.service.QuotaService;
 import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class FileController {
 
     private final FileStorageService fileStorageService;
     private final StringRedisTemplate redisTemplate;
+    private final QuotaService quotaService;
 
     /**
      * Upload a file.
@@ -58,6 +60,9 @@ public class FileController {
         // 文件上传限流：每IP每分钟最多20次
         String clientIp = SecurityUtils.getClientIp(httpRequest);
         checkRateLimit("upload:" + clientIp, 20, 60);
+
+        // 存储配额检查
+        quotaService.checkStorageQuota(file.getSize());
 
         // 路径遍历防护
         validateSubDir(subDir);

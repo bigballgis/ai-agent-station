@@ -107,6 +107,21 @@
           </span>
         </div>
 
+        <!-- 健康状态指示器 -->
+        <div
+          v-if="getToolHealth(tool.id)"
+          class="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg text-xs"
+          :class="healthBgClass(getToolHealth(tool.id).healthStatus)"
+        >
+          <span :class="['w-2 h-2 rounded-full flex-shrink-0', healthDotClass(getToolHealth(tool.id).healthStatus)]" />
+          <span :class="healthTextClass(getToolHealth(tool.id).healthStatus)">
+            {{ healthStatusLabel(getToolHealth(tool.id).healthStatus) }}
+          </span>
+          <span v-if="getToolHealth(tool.id).avgResponseTime" class="ml-auto text-neutral-400 dark:text-neutral-500">
+            {{ getToolHealth(tool.id).avgResponseTime }}ms
+          </span>
+        </div>
+
         <!-- 描述 -->
         <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 mb-4 leading-relaxed">
           {{ tool.description }}
@@ -165,6 +180,20 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {{ tool.enabled ? t('mcpTool.disable') : t('mcpTool.enable') }}
+          </button>
+          <button
+            class="inline-flex items-center justify-center p-2 rounded-xl text-neutral-400 dark:text-neutral-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors duration-200 cursor-pointer"
+            :title="t('mcpTool.testConnection')"
+            :disabled="testingToolId === tool.id"
+            @click="handleTestConnection(tool)"
+          >
+            <svg v-if="testingToolId !== tool.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <svg v-else class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
           </button>
           <button
             class="inline-flex items-center justify-center p-2 rounded-xl text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors duration-200 cursor-pointer"
@@ -352,7 +381,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { getTools, refreshTools } from '@/api/tool'
+import { getTools, refreshTools, getToolsHealth, testToolConnection } from '@/api/tool'
 import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
@@ -374,8 +403,20 @@ interface McpTool {
   timeout: number
 }
 
+interface ToolHealthInfo {
+  id: number
+  name: string
+  healthStatus: string
+  lastHealthCheck: string | null
+  consecutiveFailures: number
+  avgResponseTime: number
+  active: boolean
+}
+
 const tools = ref<McpTool[]>([])
+const healthMap = ref<Record<string, ToolHealthInfo>>({})
 const loading = ref(false)
+const testingToolId = ref<string | null>(null)
 
 async function fetchTools() {
   loading.value = true
@@ -392,7 +433,87 @@ async function fetchTools() {
 
 onMounted(async () => {
   await fetchTools()
+  await fetchHealth()
 })
+
+// ============ 健康检查 ============
+
+async function fetchHealth() {
+  try {
+    const res = await getToolsHealth()
+    const list = res.data || res || []
+    const map: Record<string, ToolHealthInfo> = {}
+    for (const item of list) {
+      map[String(item.id)] = item
+    }
+    healthMap.value = map
+  } catch (e) {
+    logger.error('Failed to fetch tool health:', e)
+  }
+}
+
+function getToolHealth(toolId: string): ToolHealthInfo | undefined {
+  return healthMap.value[toolId]
+}
+
+function healthStatusLabel(status: string): string {
+  switch (status) {
+    case 'HEALTHY': return 'Online'
+    case 'DEGRADED': return 'Degraded'
+    case 'UNHEALTHY': return 'Offline'
+    default: return 'Unknown'
+  }
+}
+
+function healthDotClass(status: string): string {
+  switch (status) {
+    case 'HEALTHY': return 'bg-green-500'
+    case 'DEGRADED': return 'bg-amber-500'
+    case 'UNHEALTHY': return 'bg-red-500'
+    default: return 'bg-neutral-400'
+  }
+}
+
+function healthTextClass(status: string): string {
+  switch (status) {
+    case 'HEALTHY': return 'text-green-700 dark:text-green-400'
+    case 'DEGRADED': return 'text-amber-700 dark:text-amber-400'
+    case 'UNHEALTHY': return 'text-red-700 dark:text-red-400'
+    default: return 'text-neutral-500 dark:text-neutral-400'
+  }
+}
+
+function healthBgClass(status: string): string {
+  switch (status) {
+    case 'HEALTHY': return 'bg-green-50 dark:bg-green-950/20'
+    case 'DEGRADED': return 'bg-amber-50 dark:bg-amber-950/20'
+    case 'UNHEALTHY': return 'bg-red-50 dark:bg-red-950/20'
+    default: return 'bg-neutral-50 dark:bg-neutral-800'
+  }
+}
+
+async function handleTestConnection(tool: McpTool) {
+  testingToolId.value = tool.id
+  try {
+    const res = await testToolConnection(tool.id)
+    const data = res.data || res
+    // 更新本地健康数据
+    healthMap.value[tool.id] = data
+    const status = data.healthStatus
+    if (status === 'HEALTHY') {
+      message.success(`「${tool.name}」连接正常`)
+    } else if (status === 'DEGRADED') {
+      message.warning(`「${tool.name}」连接不稳定 (响应较慢)`)
+    } else {
+      message.error(`「${tool.name}」连接失败`)
+    }
+  } catch (e: any) {
+    logger.error('Test connection failed:', e)
+    message.error(`「${tool.name}」连接测试失败: ${e?.message || 'Unknown error'}`)
+  } finally {
+    testingToolId.value = null
+  }
+}
 
 // ============ 状态 ============
 

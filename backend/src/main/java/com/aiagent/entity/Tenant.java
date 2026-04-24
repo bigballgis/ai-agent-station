@@ -50,6 +50,9 @@ public class Tenant extends BaseEntity {
     @Column(name = "max_storage_mb")
     private Long maxStorageMb = 1024L;
 
+    @Column(name = "max_workflows")
+    private Integer maxWorkflows = 50;
+
     @Column(name = "used_agents")
     private Integer usedAgents = 0;
 
@@ -58,6 +61,9 @@ public class Tenant extends BaseEntity {
 
     @Column(name = "used_tokens_today")
     private Long usedTokensToday = 0L;
+
+    @Column(name = "used_workflows")
+    private Integer usedWorkflows = 0;
 
     public Tenant() {
     }
@@ -190,5 +196,21 @@ public class Tenant extends BaseEntity {
 
     public void setUsedTokensToday(Long usedTokensToday) {
         this.usedTokensToday = usedTokensToday;
+    }
+
+    public Integer getMaxWorkflows() {
+        return maxWorkflows;
+    }
+
+    public void setMaxWorkflows(Integer maxWorkflows) {
+        this.maxWorkflows = maxWorkflows;
+    }
+
+    public Integer getUsedWorkflows() {
+        return usedWorkflows;
+    }
+
+    public void setUsedWorkflows(Integer usedWorkflows) {
+        this.usedWorkflows = usedWorkflows;
     }
 }

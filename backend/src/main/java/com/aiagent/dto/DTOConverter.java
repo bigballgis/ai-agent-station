@@ -156,6 +156,9 @@ public class DTOConverter {
         vo.setLanguage(agent.getLanguage());
         vo.setTags(agent.getTags());
         vo.setIsActive(agent.getIsActive());
+        vo.setIsTemplate(agent.getIsTemplate());
+        vo.setRating(agent.getRating());
+        vo.setUsageCount(agent.getUsageCount());
         vo.setVersion(agent.getVersion());
         vo.setPublishedVersionId(agent.getPublishedVersionId());
         vo.setPublishedAt(agent.getPublishedAt());

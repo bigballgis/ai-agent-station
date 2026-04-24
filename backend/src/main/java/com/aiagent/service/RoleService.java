@@ -33,6 +33,14 @@ public class RoleService {
     }
 
     public Role getRoleById(Long id) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            Role role = roleRepository.findById(id).orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "角色不存在"));
+            if (!tenantId.equals(role.getTenantId())) {
+                throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "角色不存在");
+            }
+            return role;
+        }
         return roleRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "角色不存在"));
     }

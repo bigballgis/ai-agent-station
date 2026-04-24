@@ -22,7 +22,8 @@ public interface AgentEvolutionSuggestionRepository extends JpaRepository<AgentE
     List<AgentEvolutionSuggestion> findByAgentIdAndTenantId(Long agentId, Long tenantId);
     
     List<AgentEvolutionSuggestion> findByReflectionIdAndTenantId(Long reflectionId, Long tenantId);
-    
+
+    @Deprecated
     List<AgentEvolutionSuggestion> findByReflectionId(Long reflectionId);
     
     List<AgentEvolutionSuggestion> findByStatusAndTenantId(String status, Long tenantId);

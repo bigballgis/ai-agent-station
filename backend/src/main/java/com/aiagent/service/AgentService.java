@@ -10,6 +10,7 @@ import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.util.AgentConfigValidator;
 import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,8 @@ public class AgentService {
 
     private final AgentRepository agentRepository;
     private final AgentVersionRepository agentVersionRepository;
+    private final QuotaService quotaService;
+    private final AgentConfigValidator agentConfigValidator;
 
     @CacheEvict(value = "agents", allEntries = true)
     public List<Agent> getAllAgents() {
@@ -83,6 +86,11 @@ public class AgentService {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = SecurityUtils.getCurrentUserId();
 
+        // 配额检查
+        if (tenantId != null) {
+            quotaService.checkAgentQuota();
+        }
+
         if (tenantId != null) {
             agent.setTenantId(tenantId);
         }
@@ -90,6 +98,9 @@ public class AgentService {
         if (agentRepository.existsByNameAndTenantId(agent.getName(), tenantId)) {
             throw new BusinessException(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), "Agent名称已存在");
         }
+
+        // 验证 Agent 配置
+        agentConfigValidator.validateOrThrow(agent);
 
         agent.setCreatedBy(userId);
         agent.setUpdatedBy(userId);
@@ -101,6 +112,11 @@ public class AgentService {
 
         Agent savedAgent = agentRepository.save(agent);
         createVersion(savedAgent, "初始版本");
+
+        // 递增 Agent 计数
+        if (tenantId != null) {
+            quotaService.incrementAgentCount();
+        }
 
         return savedAgent;
     }
@@ -118,6 +134,9 @@ public class AgentService {
         agent.setIsActive(agentDetails.getIsActive());
         agent.setUpdatedBy(userId);
 
+        // 验证 Agent 配置
+        agentConfigValidator.validateOrThrow(agent);
+
         Agent savedAgent = agentRepository.save(agent);
         createVersion(savedAgent, "更新配置");
 
@@ -130,6 +149,11 @@ public class AgentService {
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
         agentRepository.delete(agent);
+        // 递减 Agent 计数
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            quotaService.decrementAgentCount();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -159,10 +183,19 @@ public class AgentService {
     }
 
     public List<AgentVersion> getAgentVersions(Long agentId) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return agentVersionRepository.findByAgentIdAndTenantIdOrderByVersionNumberDesc(agentId, tenantId);
+        }
         return agentVersionRepository.findByAgentIdOrderByVersionNumberDesc(agentId);
     }
 
     public AgentVersion getAgentVersion(Long agentId, Integer versionNumber) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return agentVersionRepository.findByAgentIdAndVersionNumberAndTenantId(agentId, versionNumber, tenantId)
+                    .orElseThrow(() -> new ResourceNotFoundException());
+        }
         return agentVersionRepository.findByAgentIdAndVersionNumber(agentId, versionNumber)
                 .orElseThrow(() -> new ResourceNotFoundException());
     }
@@ -190,7 +223,7 @@ public class AgentService {
         version.setChangeLog(changeLog);
         version.setCreatedBy(SecurityUtils.getCurrentUserId());
 
-        Integer latestVersion = agentVersionRepository.findFirstByAgentIdOrderByVersionNumberDesc(agent.getId())
+        Integer latestVersion = agentVersionRepository.findFirstByAgentIdAndTenantIdOrderByVersionNumberDesc(agent.getId(), agent.getTenantId())
                 .map(AgentVersion::getVersionNumber)
                 .orElse(0);
 
@@ -198,4 +231,77 @@ public class AgentService {
         agentVersionRepository.save(version);
     }
 
-}
+    // ==================== 模板市场方法 ====================
+
+    /**
+     * 分页查询模板（所有租户共享）
+     */
+    public Page<Agent> getTemplatesPaged(String keyword, String category, Pageable pageable) {
+        return agentRepository.findTemplatesWithFilters(keyword, category, pageable);
+    }
+
+    /**
+     * 基于模板创建新 Agent
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Agent createFromTemplate(Long templateId) {
+        Agent template = agentRepository.findById(templateId)
+                .orElseThrow(() -> new ResourceNotFoundException());
+
+        if (!Boolean.TRUE.equals(template.getIsTemplate())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "该 Agent 不是模板");
+        }
+
+        Long tenantId = TenantContextHolder.getTenantId();
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        String newName = template.getName() + " (副本)";
+        if (agentRepository.existsByNameAndTenantId(newName, tenantId)) {
+            int suffix = 1;
+            while (agentRepository.existsByNameAndTenantId(newName + " " + suffix, tenantId)) {
+                suffix++;
+            }
+            newName = newName + " " + suffix;
+        }
+
+        Agent agent = new Agent();
+        agent.setTenantId(tenantId);
+        agent.setName(newName);
+        agent.setDescription(template.getDescription());
+        agent.setConfig(new HashMap<>(template.getConfig()));
+        agent.setCategory(template.getCategory());
+        agent.setTags(template.getTags());
+        agent.setIsActive(true);
+        agent.setCreatedBy(userId);
+        agent.setUpdatedBy(userId);
+
+        Agent savedAgent = agentRepository.save(agent);
+        createVersion(savedAgent, "从模板创建: " + template.getName());
+
+        // 增加模板使用次数
+        agentRepository.incrementUsageCount(templateId);
+
+        return savedAgent;
+    }
+
+    /**
+     * 为模板评分（1-5 星，使用加权平均）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void rateTemplate(Long templateId, int rating) {
+        if (rating < 1 || rating > 5) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "评分必须在 1-5 之间");
+        }
+
+        Agent template = agentRepository.findById(templateId)
+                .orElseThrow(() -> new ResourceNotFoundException());
+
+        if (!Boolean.TRUE.equals(template.getIsTemplate())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "该 Agent 不是模板");
+        }
+
+        // 加权平均: 新评分占 30%，旧评分占 70%
+        double currentRating = template.getRating() != null ? template.getRating() : 0.0;
+        double newRating = currentRating * 0.7 + rating * 0.3;
+        agentRepository.updateRating(templateId, Math.round(newRating * 100.0) / 100.0);
+    }

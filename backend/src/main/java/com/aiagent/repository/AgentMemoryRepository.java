@@ -15,8 +15,14 @@ public interface AgentMemoryRepository extends JpaRepository<AgentMemory, Long> 
 
     List<AgentMemory> findByAgentIdAndTenantId(Long agentId, Long tenantId);
 
+    List<AgentMemory> findByAgentIdAndSessionIdAndTenantId(Long agentId, String sessionId, Long tenantId);
+
+    @Deprecated
     List<AgentMemory> findByAgentIdAndSessionId(Long agentId, String sessionId);
 
+    List<AgentMemory> findByAgentIdAndMemoryTypeAndTenantId(Long agentId, AgentMemory.MemoryType memoryType, Long tenantId);
+
+    @Deprecated
     List<AgentMemory> findByAgentIdAndMemoryType(Long agentId, AgentMemory.MemoryType memoryType);
 
     Page<AgentMemory> findByAgentIdAndTenantId(Long agentId, Long tenantId, Pageable pageable);
@@ -35,6 +41,10 @@ public interface AgentMemoryRepository extends JpaRepository<AgentMemory, Long> 
 
     long countByAgentIdAndTenantId(Long agentId, Long tenantId);
 
+    @Modifying
+    void deleteByExpiresAtBeforeAndTenantId(LocalDateTime now, Long tenantId);
+
+    @Deprecated
     @Modifying
     void deleteByExpiresAtBefore(LocalDateTime now);
 }

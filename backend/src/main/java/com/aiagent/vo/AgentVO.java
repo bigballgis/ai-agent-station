@@ -19,6 +19,9 @@ public class AgentVO {
     private String language;
     private List<String> tags;
     private Boolean isActive;
+    private Boolean isTemplate;
+    private Double rating;
+    private Integer usageCount;
     private Long version;
     private Long publishedVersionId;
     private LocalDateTime publishedAt;

@@ -187,6 +187,10 @@ ai-agent:
   orchestration:
     engine: langchain4j
     timeout: 30s
+  # Agent执行配置
+  execution:
+    max-concurrent-per-agent: ${AGENT_MAX_CONCURRENT:5}
+    timeout-seconds: ${AGENT_EXECUTION_TIMEOUT:120}
   # 租户配置
   tenant:
     default-schema: public

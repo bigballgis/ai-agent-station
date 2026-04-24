@@ -2,6 +2,9 @@ package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
+import com.aiagent.entity.McpTool;
+import com.aiagent.mcp.McpToolHealthChecker;
+import com.aiagent.repository.McpToolRepository;
 import com.aiagent.service.tool.CompositeToolProvider;
 import com.aiagent.service.tool.FunctionToolRegistry;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,8 @@ public class ToolController {
 
     private final CompositeToolProvider compositeToolProvider;
     private final FunctionToolRegistry functionToolRegistry;
+    private final McpToolHealthChecker mcpToolHealthChecker;
+    private final McpToolRepository mcpToolRepository;
 
     /**
      * 获取所有可用工具列表
@@ -124,6 +129,52 @@ public class ToolController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "工具缓存已刷新");
         result.put("totalTools", compositeToolProvider.getMcpToolCount() + compositeToolProvider.getFunctionToolCount());
+        return Result.success(result);
+    }
+
+    /**
+     * 获取所有 MCP 工具的健康状态
+     * GET /api/v1/tools/health
+     */
+    @Operation(summary = "获取 MCP 工具健康状态")
+    @GetMapping("/health")
+    public Result<List<Map<String, Object>>> getToolsHealth() {
+        List<McpTool> tools = mcpToolRepository.findAll();
+        List<Map<String, Object>> healthList = new ArrayList<>();
+        for (McpTool tool : tools) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", tool.getId());
+            item.put("name", tool.getToolName());
+            item.put("healthStatus", tool.getHealthStatus());
+            item.put("lastHealthCheck", tool.getLastHealthCheck());
+            item.put("consecutiveFailures", tool.getConsecutiveFailures());
+            item.put("avgResponseTime", tool.getAvgResponseTime());
+            item.put("active", tool.getIsActive());
+            healthList.add(item);
+        }
+        return Result.success(healthList);
+    }
+
+    /**
+     * 手动测试单个工具连接
+     * POST /api/v1/tools/{toolId}/test-connection
+     */
+    @Operation(summary = "测试工具连接")
+    @RequiresPermission("tool:manage")
+    @PostMapping("/{toolId}/test-connection")
+    public Result<Map<String, Object>> testToolConnection(@PathVariable Long toolId) {
+        McpTool tool = mcpToolHealthChecker.checkToolHealthNow(toolId);
+        if (tool == null) {
+            return Result.error(404, "工具不存在: " + toolId);
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("toolId", tool.getId());
+        result.put("toolName", tool.getToolName());
+        result.put("healthStatus", tool.getHealthStatus());
+        result.put("lastHealthCheck", tool.getLastHealthCheck());
+        result.put("consecutiveFailures", tool.getConsecutiveFailures());
+        result.put("avgResponseTime", tool.getAvgResponseTime());
+        result.put("active", tool.getIsActive());
         return Result.success(result);
     }
 }

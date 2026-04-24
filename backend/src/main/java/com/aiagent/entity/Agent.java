@@ -47,6 +47,15 @@ public class Agent extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "is_template", nullable = false)
+    private Boolean isTemplate = false;
+
+    @Column(name = "rating")
+    private Double rating = 0.0;
+
+    @Column(name = "usage_count", nullable = false)
+    private Integer usageCount = 0;
+
     @Column(name = "created_by")
     private Long createdBy;
 
@@ -163,6 +172,30 @@ public class Agent extends BaseEntity {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public Boolean getIsTemplate() {
+        return isTemplate;
+    }
+
+    public void setIsTemplate(Boolean isTemplate) {
+        this.isTemplate = isTemplate;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public Integer getUsageCount() {
+        return usageCount;
+    }
+
+    public void setUsageCount(Integer usageCount) {
+        this.usageCount = usageCount;
     }
 
     public Long getCreatedBy() {

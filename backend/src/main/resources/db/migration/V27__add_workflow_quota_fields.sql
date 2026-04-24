@@ -1,0 +1,4 @@
+-- V27: 添加工作流配额字段到租户表
+
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS max_workflows INTEGER DEFAULT 50;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS used_workflows INTEGER DEFAULT 0;

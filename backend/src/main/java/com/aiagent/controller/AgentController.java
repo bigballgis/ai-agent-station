@@ -20,6 +20,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -67,6 +71,7 @@ public class AgentController {
         agent.setConfig(dto.getConfig());
         agent.setCategory(dto.getCategory());
         agent.setIsActive(dto.getIsActive());
+        agent.setIsTemplate(dto.getIsTemplate());
         if (dto.getType() != null) {
             agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
         }
@@ -125,6 +130,36 @@ public class AgentController {
     @Operation(summary = "回滚到指定版本")
     public Result<AgentVO> rollbackToVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
         return Result.success(DTOConverter.toAgentVO(agentService.rollbackToVersion(id, versionNumber)));
+    }
+
+    // ==================== 模板市场接口 ====================
+
+    @GetMapping("/templates")
+    @Operation(summary = "获取模板列表", description = "分页查询模板，支持关键词搜索和分类筛选")
+    public Result<PageResult<AgentVO>> getTemplates(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @Parameter(description = "分类筛选") String category) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "usageCount"));
+        Page<Agent> templatePage = agentService.getTemplatesPaged(keyword, category, pageable);
+        return Result.success(PageResult.from(templatePage.map(DTOConverter::toAgentVO)));
+    }
+
+    @PostMapping("/templates/{id}/use")
+    @RequiresPermission("agent:create")
+    @Operation(summary = "使用模板创建Agent", description = "基于模板创建新的Agent实例")
+    public Result<AgentVO> useTemplate(@Parameter(description = "模板 ID") @PathVariable Long id) {
+        return Result.success(DTOConverter.toAgentVO(agentService.createFromTemplate(id)));
+    }
+
+    @PostMapping("/templates/{id}/rate")
+    @Operation(summary = "为模板评分", description = "对模板进行1-5星评分")
+    public Result<Void> rateTemplate(
+            @Parameter(description = "模板 ID") @PathVariable Long id,
+            @RequestParam @Parameter(description = "评分(1-5)") int rating) {
+        agentService.rateTemplate(id, rating);
+        return Result.success();
     }
 
 }

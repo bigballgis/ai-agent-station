@@ -15,5 +15,8 @@ public interface McpToolCallLogRepository extends JpaRepository<McpToolCallLog, 
 
     Page<McpToolCallLog> findByTenantIdAndMcpToolId(Long tenantId, Long mcpToolId, Pageable pageable);
 
+    List<McpToolCallLog> findByApiCallLogIdAndTenantId(Long apiCallLogId, Long tenantId);
+
+    @Deprecated
     List<McpToolCallLog> findByApiCallLogId(Long apiCallLogId);
 }
