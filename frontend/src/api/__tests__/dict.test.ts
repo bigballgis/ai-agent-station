@@ -14,6 +14,9 @@ vi.mock('@/utils/request', () => ({
   }
 }))
 
+// Helper function to access mock response properties
+const getResult = (r: any) => r as unknown as Record<string, unknown>
+
 describe('Dict API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -29,7 +32,7 @@ describe('Dict API', () => {
     const result = await request.get('/v1/dict-types', { params: { page: 0, size: 10 } })
 
     expect(mockGet).toHaveBeenCalledWith('/v1/dict-types', { params: { page: 0, size: 10 } })
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
     expect(result.data.records).toHaveLength(1)
   })
 
@@ -71,6 +74,6 @@ describe('Dict API', () => {
     const result = await request.delete('/v1/dict-types/1')
 
     expect(mockDelete).toHaveBeenCalledWith('/v1/dict-types/1')
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 })

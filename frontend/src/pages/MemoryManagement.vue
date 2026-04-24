@@ -334,7 +334,7 @@ const searchQuery = ref('')
 const timeRange = ref('')
 
 // 分页 composable
-const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+const { currentPage, pageSize, totalPages, paginatedSlice } = usePagination({
   initialPageSize: 10,
   resetTriggers: [activeType, searchQuery],
 })

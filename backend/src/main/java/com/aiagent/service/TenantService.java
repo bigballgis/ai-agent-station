@@ -49,6 +49,11 @@ public class TenantService {
     @Value("${ai-agent.tenant.default-admin-password:Admin@123456}")
     private String defaultAdminPassword;
 
+    /**
+     * 获取所有租户列表，API Key 和 Secret 已解密
+     *
+     * @return 租户列表
+     */
     public List<Tenant> getAllTenants() {
         List<Tenant> tenants = tenantRepository.findAll();
         // 解密 API Key 和 Secret 返回给前端
@@ -56,6 +61,13 @@ public class TenantService {
         return tenants;
     }
 
+    /**
+     * 根据 ID 获取租户，API Key 和 Secret 已解密
+     *
+     * @param id 租户 ID
+     * @return 租户实体
+     * @throws BusinessException 如果租户不存在
+     */
     @Cacheable(value = "tenantConfig", key = "#id")
     public Tenant getTenantById(Long id) {
         Tenant tenant = tenantRepository.findById(id)
@@ -107,6 +119,14 @@ public class TenantService {
         return savedTenant;
     }
 
+    /**
+     * 更新租户基本信息
+     *
+     * @param id            租户 ID
+     * @param tenantDetails 更新内容（name、description）
+     * @return 更新后的租户
+     * @throws BusinessException 如果租户不存在
+     */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "更新租户")
     @CacheEvict(value = "tenantConfig", key = "#id")
@@ -171,6 +191,11 @@ public class TenantService {
 
     /**
      * 重新激活租户
+     * 重新生成 API Key/Secret 并保存到 Redis
+     *
+     * @param id 租户 ID
+     * @return 重新激活后的租户
+     * @throws BusinessException 如果租户不存在或已处于激活状态
      */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "重新激活租户")
@@ -199,6 +224,14 @@ public class TenantService {
         return savedTenant;
     }
 
+    /**
+     * 重新生成租户的 API Key 和 Secret
+     * 撤销旧 Key 并生成新 Key
+     *
+     * @param id 租户 ID
+     * @return 更新后的租户（包含新的 API Key 和 Secret）
+     * @throws BusinessException 如果租户不存在
+     */
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "tenantConfig", key = "#id")
     public Tenant regenerateApiKey(Long id) {

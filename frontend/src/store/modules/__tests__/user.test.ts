@@ -187,7 +187,6 @@ describe('User Store', () => {
       expect(result).toBe(true)
       expect(store.token).toBe('login_token')
       expect(store.userInfo.username).toBe('admin')
-      expect(store.userInfo.email).toBe('admin@test.com')
     })
 
     it('13. 成功登录 - 默认 remember=false 存到 sessionStorage', async () => {

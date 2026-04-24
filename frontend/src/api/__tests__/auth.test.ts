@@ -19,6 +19,9 @@ vi.mock('@/utils/request', () => ({
   }
 }))
 
+// Helper function to access mock response properties
+const getResult = (r: any) => r as unknown as Record<string, unknown>
+
 describe('Auth API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -96,7 +99,7 @@ describe('Auth API', () => {
     const result = await request.post('/v1/auth/logout')
 
     expect(mockPost).toHaveBeenCalledWith('/v1/auth/logout')
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 
   it('changePassword - 调用 PUT /v1/auth/password', async () => {
@@ -107,7 +110,7 @@ describe('Auth API', () => {
     const result = await request.put('/v1/auth/password', passwordData)
 
     expect(mockPut).toHaveBeenCalledWith('/v1/auth/password', passwordData)
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 
   it('resetPassword - 调用 POST /v1/auth/reset-password', async () => {
@@ -118,7 +121,7 @@ describe('Auth API', () => {
     const result = await request.post('/v1/auth/reset-password', resetData)
 
     expect(mockPost).toHaveBeenCalledWith('/v1/auth/reset-password', resetData)
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 
   it('API 调用失败 - 返回错误', async () => {
@@ -138,7 +141,7 @@ describe('Auth API', () => {
     const request = (await import('@/utils/request')).default
     const result = await request.post('/v1/auth/login', { username: 'admin', password: 'wrong' })
 
-    expect(result.code).toBe(401)
-    expect(result.message).toBe('用户名或密码错误')
+    expect(getResult(result).code).toBe(401)
+    expect(getResult(result).message).toBe('用户名或密码错误')
   })
 })

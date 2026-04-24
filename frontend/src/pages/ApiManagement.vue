@@ -2,8 +2,8 @@
   <div class="api-management">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{{ t('routes.apiManagement') }}</h1>
-        <p class="text-neutral-600 dark:text-neutral-400 mt-1">{{ t('apiMgmt.desc') }}</p>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">{{ t('routes.apiManagement') }}</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ t('apiMgmt.desc') }}</p>
       </div>
     </div>
 
@@ -28,7 +28,7 @@
 
     <!-- API列表 -->
     <div v-if="activeTab === 'apis'" class="space-y-6">
-      <div v-if="loading" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-6">
+      <div v-if="loading" class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 p-6">
         <div class="space-y-4">
           <div v-for="i in 4" :key="i" class="flex items-center gap-4 animate-pulse">
             <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
@@ -39,13 +39,13 @@
           </div>
         </div>
       </div>
-      <div v-else-if="mockApis.length === 0" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center py-16">
+      <div v-else-if="mockApis.length === 0" class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 flex flex-col items-center justify-center py-16">
         <svg class="w-10 h-10 mb-2 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('apiMgmt.noApis') }}</p>
       </div>
-      <div v-else class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
+      <div v-else class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
             <thead class="bg-neutral-50 dark:bg-neutral-800">
@@ -118,24 +118,24 @@
 
     <!-- 调用日志 -->
     <div v-if="activeTab === 'logs'" class="space-y-6">
-      <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
-        <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
+      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800">
+        <div class="p-6 border-b border-neutral-100 dark:border-neutral-800">
           <div class="flex items-center justify-between">
           <div class="flex space-x-4">
             <input
               type="text"
               :placeholder="t('apiMgmt.searchPlaceholder')"
               :aria-label="t('apiMgmt.searchPlaceholder')"
-              class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100"
+              class="form-input"
             />
-            <select :aria-label="t('apiMgmt.allStatus')" class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100">
+            <select :aria-label="t('apiMgmt.allStatus')" class="form-select">
               <option value="">{{ t('apiMgmt.allStatus') }}</option>
               <option value="SUCCESS">{{ t('apiMgmt.success') }}</option>
               <option value="FAILED">{{ t('apiMgmt.failed') }}</option>
               <option value="RATE_LIMITED">{{ t('apiMgmt.rateLimited') }}</option>
             </select>
           </div>
-          <button :aria-label="t('apiMgmt.filter')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          <button :aria-label="t('apiMgmt.filter')" class="btn btn-primary">
             {{ t('apiMgmt.filter') }}
           </button>
         </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="quota-management">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
+    <div class="mb-6 animate-fade-in">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">

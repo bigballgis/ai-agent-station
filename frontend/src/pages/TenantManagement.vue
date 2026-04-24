@@ -1,7 +1,7 @@
 <template>
   <div class="tenant-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
+    <div class="mb-6 animate-fade-in">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
@@ -558,7 +558,7 @@ const searchQuery = ref('')
 const statusFilter = ref('')
 
 // 分页 composable
-const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+const { currentPage, totalPages, paginatedSlice } = usePagination({
   initialPageSize: 5,
   resetTriggers: [searchQuery, statusFilter],
 })
@@ -680,7 +680,7 @@ async function toggleTenantStatus(tenant: Tenant) {
     await updateTenantApi(Number(tenant.id), { status: tenant.status === 'active' ? 'inactive' : 'active' })
     message.success(t('tenant.actionSuccess', { action }))
     fetchTenants()
-  } catch (e: Error) {
+  } catch (e: unknown) {
     logger.error(t('tenant.actionFailed', { action }), e)
     message.error(t('tenant.actionFailed', { action }))
   }

@@ -43,7 +43,7 @@ public class TestDataCleanupService {
             );
             resultQuery.setParameter("cutoffDate", cutoffDate);
             int resultDeleted = resultQuery.executeUpdate();
-            log.info("清理了 " + resultDeleted + " 条过期的测试结果记录");
+            log.info("清理了 {} 条过期的测试结果记录", resultDeleted);
 
             // 清理过期的测试执行记录
             Query executionQuery = entityManager.createNativeQuery(
@@ -51,7 +51,7 @@ public class TestDataCleanupService {
             );
             executionQuery.setParameter("cutoffDate", cutoffDate);
             int executionDeleted = executionQuery.executeUpdate();
-            log.info("清理了 " + executionDeleted + " 条过期的测试执行记录");
+            log.info("清理了 {} 条过期的测试执行记录", executionDeleted);
 
             // 注意：测试用例通常不自动清理，因为它们是配置数据
 
@@ -75,7 +75,7 @@ public class TestDataCleanupService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void cleanupTenantTestData(Long tenantId) {
-        log.info("开始清理租户 " + tenantId + " 的测试数据");
+        log.info("开始清理租户 {} 的测试数据", tenantId);
 
         try {
             // 清理指定租户的测试结果
@@ -84,7 +84,7 @@ public class TestDataCleanupService {
             );
             resultQuery.setParameter("tenantId", tenantId);
             int resultDeleted = resultQuery.executeUpdate();
-            log.info("清理了租户 " + tenantId + " 的 " + resultDeleted + " 条测试结果记录");
+            log.info("清理了租户 {} 的 {} 条测试结果记录", tenantId, resultDeleted);
 
             // 清理指定租户的测试执行记录
             Query executionQuery = entityManager.createNativeQuery(
@@ -92,13 +92,13 @@ public class TestDataCleanupService {
             );
             executionQuery.setParameter("tenantId", tenantId);
             int executionDeleted = executionQuery.executeUpdate();
-            log.info("清理了租户 " + tenantId + " 的 " + executionDeleted + " 条测试执行记录");
+            log.info("清理了租户 {} 的 {} 条测试执行记录", tenantId, executionDeleted);
 
             // 注意：测试用例通常不自动清理，因为它们是配置数据
 
-            log.info("租户 " + tenantId + " 的测试数据清理完成");
+            log.info("租户 {} 的测试数据清理完成", tenantId);
         } catch (Exception e) {
-            log.error("清理租户 " + tenantId + " 的测试数据失败", e);
+            log.error("清理租户 {} 的测试数据失败", tenantId, e);
         }
     }
 
@@ -109,7 +109,7 @@ public class TestDataCleanupService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void cleanupTestData(Long tenantId, Long agentId) {
-        log.info("开始清理租户 " + tenantId + " Agent " + agentId + " 的测试数据");
+        log.info("开始清理租户 {} Agent {} 的测试数据", tenantId, agentId);
 
         try {
             // 清理指定租户和Agent的测试结果
@@ -119,7 +119,7 @@ public class TestDataCleanupService {
             resultQuery.setParameter("tenantId", tenantId);
             resultQuery.setParameter("agentId", agentId);
             int resultDeleted = resultQuery.executeUpdate();
-            log.info("清理了租户 " + tenantId + " Agent " + agentId + " 的 " + resultDeleted + " 条测试结果记录");
+            log.info("清理了租户 {} Agent {} 的 {} 条测试结果记录", tenantId, agentId, resultDeleted);
 
             // 清理指定租户和Agent的测试执行记录
             Query executionQuery = entityManager.createNativeQuery(
@@ -128,13 +128,13 @@ public class TestDataCleanupService {
             executionQuery.setParameter("tenantId", tenantId);
             executionQuery.setParameter("agentId", agentId);
             int executionDeleted = executionQuery.executeUpdate();
-            log.info("清理了租户 " + tenantId + " Agent " + agentId + " 的 " + executionDeleted + " 条测试执行记录");
+            log.info("清理了租户 {} Agent {} 的 {} 条测试执行记录", tenantId, agentId, executionDeleted);
 
             // 注意：测试用例通常不自动清理，因为它们是配置数据
 
-            log.info("租户 " + tenantId + " Agent " + agentId + " 的测试数据清理完成");
+            log.info("租户 {} Agent {} 的测试数据清理完成", tenantId, agentId);
         } catch (Exception e) {
-            log.error("清理租户 " + tenantId + " Agent " + agentId + " 的测试数据失败", e);
+            log.error("清理租户 {} Agent {} 的测试数据失败", tenantId, agentId, e);
         }
     }
 }

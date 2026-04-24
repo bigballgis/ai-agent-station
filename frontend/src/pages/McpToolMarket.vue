@@ -1,7 +1,7 @@
 <template>
   <div class="mcp-tool-page">
     <!-- 页面头部 -->
-    <div class="mb-8 animate-fade-in">
+    <div class="mb-6 animate-fade-in">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
@@ -111,14 +111,14 @@
         <div
           v-if="getToolHealth(tool.id)"
           class="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg text-xs"
-          :class="healthBgClass(getToolHealth(tool.id).healthStatus)"
+          :class="healthBgClass(getToolHealth(tool.id)!.healthStatus)"
         >
-          <span :class="['w-2 h-2 rounded-full flex-shrink-0', healthDotClass(getToolHealth(tool.id).healthStatus)]" />
-          <span :class="healthTextClass(getToolHealth(tool.id).healthStatus)">
-            {{ healthStatusLabel(getToolHealth(tool.id).healthStatus) }}
+          <span :class="['w-2 h-2 rounded-full flex-shrink-0', healthDotClass(getToolHealth(tool.id)!.healthStatus)]" />
+          <span :class="healthTextClass(getToolHealth(tool.id)!.healthStatus)">
+            {{ healthStatusLabel(getToolHealth(tool.id)!.healthStatus) }}
           </span>
-          <span v-if="getToolHealth(tool.id).avgResponseTime" class="ml-auto text-neutral-400 dark:text-neutral-500">
-            {{ getToolHealth(tool.id).avgResponseTime }}ms
+          <span v-if="getToolHealth(tool.id)!.avgResponseTime" class="ml-auto text-neutral-400 dark:text-neutral-500">
+            {{ getToolHealth(tool.id)!.avgResponseTime }}ms
           </span>
         </div>
 

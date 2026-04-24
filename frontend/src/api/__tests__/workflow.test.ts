@@ -26,7 +26,7 @@ describe('Workflow API', () => {
     const result = await request.get('/v1/workflows')
 
     expect(mockGet).toHaveBeenCalledWith('/v1/workflows')
-    expect(result.code).toBe(200)
+    expect((result as unknown as Record<string, unknown>).code).toBe(200)
     expect(result.data).toHaveLength(1)
   })
 

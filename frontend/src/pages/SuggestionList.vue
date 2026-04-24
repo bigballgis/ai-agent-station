@@ -1,6 +1,6 @@
 <template>
   <div class="p-4 sm:p-6">
-    <h1 class="text-2xl font-bold mb-6">{{ t('suggestion.management') }}</h1>
+    <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight mb-6">{{ t('suggestion.management') }}</h1>
     
     <div class="mb-6 flex flex-wrap justify-between items-center gap-3">
       <div class="flex flex-wrap gap-3">
@@ -9,27 +9,27 @@
           type="text" 
           :placeholder="t('suggestion.searchPlaceholder')" 
           :aria-label="t('suggestion.searchPlaceholder')"
-          class="px-4 py-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200"
+          class="form-input"
         />
-        <select v-model="filterType" :aria-label="t('suggestion.allTypes')" class="px-4 py-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200">
+        <select v-model="filterType" :aria-label="t('suggestion.allTypes')" class="form-select">
           <option value="">{{ t('suggestion.allTypes') }}</option>
           <option value="process">{{ t('suggestion.typeProcess') }}</option>
           <option value="performance">{{ t('suggestion.typePerformance') }}</option>
           <option value="quality">{{ t('suggestion.typeQuality') }}</option>
         </select>
-        <select v-model="filterStatus" :aria-label="t('suggestion.allStatus')" class="px-4 py-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200">
+        <select v-model="filterStatus" :aria-label="t('suggestion.allStatus')" class="form-select">
           <option value="">{{ t('suggestion.allStatus') }}</option>
           <option value="pending">{{ t('suggestion.statusPending') }}</option>
           <option value="approved">{{ t('suggestion.statusApproved') }}</option>
           <option value="rejected">{{ t('suggestion.statusRejected') }}</option>
         </select>
       </div>
-      <button @click="handleGenerateSuggestions" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+      <button @click="handleGenerateSuggestions" class="btn btn-primary">
         {{ t('suggestion.generateButton') }}
       </button>
     </div>
     
-    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-md overflow-hidden">
+    <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden">
       <!-- 加载状态 -->
       <div v-if="loading" class="p-6 space-y-4">
         <div v-for="i in 5" :key="i" class="flex items-center gap-4 animate-pulse">

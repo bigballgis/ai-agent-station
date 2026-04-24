@@ -1,4 +1,31 @@
 /* ===========================================
+   公共样式 - 设计系统标准
+   ===========================================
+
+   按钮标准:
+   - Primary:   bg-blue-500 hover:bg-blue-600 text-white
+   - Danger:    bg-red-500 hover:bg-red-600 text-white
+   - Success:   bg-green-500 hover:bg-green-600 text-white
+   - Secondary: bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300
+                hover:bg-neutral-200 dark:hover:bg-neutral-700
+
+   卡片标准:
+   - bg-white dark:bg-neutral-900 rounded-2xl shadow-card
+     border border-neutral-100 dark:border-neutral-800
+
+   表单输入标准:
+   - rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800
+     border border-neutral-200 dark:border-neutral-700
+     focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400
+
+   页面头部标准:
+   - mb-6 (间距)
+   - text-2xl font-bold text-neutral-900 dark:text-neutral-50 (标题)
+   - text-sm text-neutral-500 dark:text-neutral-400 mt-1 (描述)
+
+   =========================================== */
+
+/* ===========================================
    公共样式 - 按钮系统
    =========================================== */
 
@@ -18,8 +45,9 @@
 }
 
 .btn-secondary {
-  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:bg-gray-100
-         dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:active:bg-neutral-600
+  @apply bg-neutral-100 text-neutral-600 border border-neutral-200
+         hover:bg-neutral-200 active:bg-neutral-300
+         dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:active:bg-neutral-600
          focus:ring-blue-500 shadow-sm;
 }
 
@@ -50,11 +78,11 @@
 }
 
 .page-header-title {
-  @apply text-2xl font-bold text-gray-900 dark:text-gray-100;
+  @apply text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight;
 }
 
 .page-header-description {
-  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+  @apply text-sm text-neutral-500 dark:text-neutral-400 mt-1;
 }
 
 /* ===========================================
@@ -62,7 +90,13 @@
    =========================================== */
 
 .card {
-  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-card p-6
+  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6
+         transition-all duration-200 ease-in-out;
+}
+
+.card-bordered {
+  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-card
+         border border-neutral-100 dark:border-neutral-800
          transition-all duration-200 ease-in-out;
 }
 
@@ -71,11 +105,43 @@
 }
 
 /* ===========================================
-   公共样式 - 表格
+   公共样式 - 表格容器
    =========================================== */
 
 .table-container {
-  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-card overflow-hidden;
+  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-card overflow-hidden;
+}
+
+.table-container-bordered {
+  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-card
+         border border-neutral-100 dark:border-neutral-800 overflow-hidden;
+}
+
+/* ===========================================
+   公共样式 - 表单输入
+   =========================================== */
+
+.form-input {
+  @apply w-full px-3.5 py-2 rounded-xl text-sm
+         bg-neutral-50 dark:bg-neutral-800
+         border border-neutral-200 dark:border-neutral-700
+         text-neutral-900 dark:text-neutral-100
+         placeholder-neutral-400 dark:placeholder-neutral-500
+         focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500
+         transition-all duration-200;
+}
+
+.form-select {
+  @apply px-4 py-2.5 rounded-xl text-sm
+         bg-white dark:bg-neutral-800
+         border border-neutral-200 dark:border-neutral-700
+         text-neutral-700 dark:text-neutral-300
+         focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500
+         transition-all duration-200 cursor-pointer;
+}
+
+.form-label {
+  @apply block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5;
 }
 
 /* ===========================================

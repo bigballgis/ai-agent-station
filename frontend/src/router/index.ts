@@ -326,7 +326,7 @@ router.afterEach((to) => {
               if (record.components) {
                 Object.values(record.components).forEach((component) => {
                   if (typeof component === 'function') {
-                    component()
+                    (component as () => unknown)()
                   }
                 })
               }

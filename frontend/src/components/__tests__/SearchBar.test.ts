@@ -140,6 +140,6 @@ describe('SearchBar 组件', () => {
     vm.handleSearch()
 
     const params = wrapper.emitted('search')![0][0]
-    expect(Object.keys(params).length).toBe(0)
+    expect(Object.keys(params as object).length).toBe(0)
   })
 })

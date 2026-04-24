@@ -39,6 +39,12 @@ public class AgentService {
     private final QuotaService quotaService;
     private final AgentConfigValidator agentConfigValidator;
 
+    /**
+     * 获取当前租户下所有 Agent 列表
+     * 如果未设置租户上下文，则返回所有 Agent
+     *
+     * @return Agent 列表
+     */
     @CacheEvict(value = "agents", allEntries = true)
     public List<Agent> getAllAgents() {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -50,12 +56,26 @@ public class AgentService {
 
     /**
      * 数据库层面分页查询 Agent，支持关键词搜索和状态过滤
+     *
+     * @param tenantId 租户ID
+     * @param keyword  搜索关键词（可选）
+     * @param status   Agent 状态过滤（可选）
+     * @param page     页码（从0开始）
+     * @param size     每页大小
+     * @return 分页的 Agent 列表
      */
     public Page<Agent> getAgentsPaged(Long tenantId, String keyword, String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         return agentRepository.findByTenantIdWithFilters(tenantId, keyword, status, pageable);
     }
 
+    /**
+     * 根据 ID 获取 Agent，支持租户隔离
+     *
+     * @param id Agent ID
+     * @return Agent 实体
+     * @throws ResourceNotFoundException 如果 Agent 不存在或不在当前租户下
+     */
     @Cacheable(value = "agents", key = "#id")
     public Agent getAgentById(Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -67,6 +87,12 @@ public class AgentService {
                 .orElseThrow(() -> new ResourceNotFoundException());
     }
 
+    /**
+     * 根据 ID 安全查找 Agent（返回 Optional），支持租户隔离
+     *
+     * @param id Agent ID
+     * @return Optional 包含 Agent 实体，如果不存在则返回 empty
+     */
     public Optional<Agent> findAgentById(Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -75,17 +101,35 @@ public class AgentService {
         return agentRepository.findById(id);
     }
 
+    /**
+     * 根据 ID 查找 Agent 版本
+     *
+     * @param id 版本 ID
+     * @return Optional 包含 AgentVersion 实体，如果不存在则返回 empty
+     */
     public Optional<AgentVersion> findVersionById(Long id) {
         return agentVersionRepository.findById(id);
     }
 
     /**
      * 检查指定租户下是否存在指定名称的Agent
+     *
+     * @param name     Agent 名称
+     * @param tenantId 租户ID
+     * @return 如果存在返回 true
      */
     public boolean existsByNameAndTenantId(String name, Long tenantId) {
         return agentRepository.existsByNameAndTenantId(name, tenantId);
     }
 
+    /**
+     * 创建 Agent
+     * 包含配额检查、名称唯一性验证和配置验证，创建后自动生成初始版本
+     *
+     * @param agent Agent 实体（需设置 name、description、config 等字段）
+     * @return 创建后的 Agent（含 ID）
+     * @throws BusinessException 如果名称已存在或配额已满
+     */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "创建Agent")
     @CacheEvict(value = "agents", allEntries = true)
@@ -128,6 +172,15 @@ public class AgentService {
         return savedAgent;
     }
 
+    /**
+     * 更新 Agent 信息
+     * 更新后自动生成新版本记录
+     *
+     * @param id           Agent ID
+     * @param agentDetails 更新内容
+     * @return 更新后的 Agent
+     * @throws ResourceNotFoundException 如果 Agent 不存在
+     */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "更新Agent")
     @CacheEvict(value = "agents", allEntries = true)
@@ -150,6 +203,13 @@ public class AgentService {
         return savedAgent;
     }
 
+    /**
+     * 删除 Agent
+     * 删除后自动递减租户 Agent 计数
+     *
+     * @param id Agent ID
+     * @throws ResourceNotFoundException 如果 Agent 不存在
+     */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "删除Agent")
     @CacheEvict(value = "agents", allEntries = true)
@@ -163,6 +223,15 @@ public class AgentService {
         }
     }
 
+    /**
+     * 复制 Agent，创建一个新 Agent 并复制原 Agent 的配置
+     *
+     * @param id      源 Agent ID
+     * @param newName 新 Agent 的名称
+     * @return 复制后的新 Agent
+     * @throws ResourceNotFoundException 如果源 Agent 不存在
+     * @throws BusinessException       如果新名称已存在
+     */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "复制Agent")
     public Agent copyAgent(Long id, String newName) {
@@ -189,6 +258,12 @@ public class AgentService {
         return savedCopy;
     }
 
+    /**
+     * 获取指定 Agent 的所有版本记录（按版本号降序排列）
+     *
+     * @param agentId Agent ID
+     * @return 版本列表
+     */
     public List<AgentVersion> getAgentVersions(Long agentId) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -197,6 +272,14 @@ public class AgentService {
         return agentVersionRepository.findByAgentIdOrderByVersionNumberDesc(agentId);
     }
 
+    /**
+     * 获取指定 Agent 的特定版本
+     *
+     * @param agentId       Agent ID
+     * @param versionNumber 版本号
+     * @return AgentVersion 实体
+     * @throws ResourceNotFoundException 如果版本不存在
+     */
     public AgentVersion getAgentVersion(Long agentId, Integer versionNumber) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -207,6 +290,14 @@ public class AgentService {
                 .orElseThrow(() -> new ResourceNotFoundException());
     }
 
+    /**
+     * 回滚 Agent 到指定版本，将目标版本的配置复制到当前 Agent
+     *
+     * @param agentId       Agent ID
+     * @param versionNumber 目标版本号
+     * @return 回滚后的 Agent
+     * @throws ResourceNotFoundException 如果 Agent 或版本不存在
+     */
     @Transactional(rollbackFor = Exception.class)
     public Agent rollbackToVersion(Long agentId, Integer versionNumber) {
         Agent agent = getAgentById(agentId);
@@ -243,6 +334,11 @@ public class AgentService {
     /**
      * 分页查询模板（所有租户共享）
      * 缓存5分钟，模板变更较少
+     *
+     * @param keyword  搜索关键词（可选）
+     * @param category 模板分类（可选）
+     * @param pageable 分页参数
+     * @return 分页的模板 Agent 列表
      */
     @Cacheable(value = "templates",
             key = "T(java.util.Objects).hash(#keyword, #category, #pageable.pageNumber, #pageable.pageSize)")
@@ -252,6 +348,12 @@ public class AgentService {
 
     /**
      * 基于模板创建新 Agent
+     * 自动复制模板的配置、分类和标签，名称自动添加后缀避免冲突
+     *
+     * @param templateId 模板 Agent ID
+     * @return 创建的新 Agent
+     * @throws ResourceNotFoundException 如果模板不存在
+     * @throws BusinessException       如果模板不是模板类型
      */
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "templates", allEntries = true)
@@ -297,6 +399,12 @@ public class AgentService {
 
     /**
      * 为模板评分（1-5 星，使用加权平均）
+     * 新评分占 30%，旧评分占 70%
+     *
+     * @param templateId 模板 Agent ID
+     * @param rating     评分值（1-5）
+     * @throws ResourceNotFoundException 如果模板不存在
+     * @throws BusinessException       如果评分不在 1-5 范围内或不是模板类型
      */
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "templates", allEntries = true)

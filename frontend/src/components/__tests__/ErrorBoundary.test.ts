@@ -77,7 +77,7 @@ describe('ErrorBoundary 组件', () => {
     })
 
     // 通过 vm 直接设置内部 error 状态来模拟错误捕获
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('模拟错误消息')
     await nextTick()
 
@@ -96,7 +96,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('test')
     await nextTick()
 
@@ -112,7 +112,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('test')
     await nextTick()
 
@@ -138,7 +138,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('test')
     await nextTick()
 
@@ -155,7 +155,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('test')
     await nextTick()
 
@@ -172,7 +172,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('test')
     await nextTick()
 
@@ -191,7 +191,7 @@ describe('ErrorBoundary 组件', () => {
       },
     })
 
-    const vm = wrapper.vm as { error: Error | null }
+    const vm = wrapper.vm as unknown as { error: Error | null }
     vm.error = new Error('自定义错误消息 12345')
     await nextTick()
 

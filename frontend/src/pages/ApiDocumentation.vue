@@ -2,15 +2,15 @@
   <div class="api-documentation">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{{ t('routes.apiDocs') }}</h1>
-        <p class="text-neutral-600 dark:text-neutral-400 mt-1">{{ t('apiDocs.desc') }}</p>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">{{ t('routes.apiDocs') }}</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ t('apiDocs.desc') }}</p>
       </div>
       <div class="flex space-x-4">
         <a
           href="/api/swagger-ui/index.html"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          class="btn btn-success"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -32,7 +32,7 @@
       <p class="text-red-500 dark:text-red-500 text-sm">{{ loadError }}</p>
       <button
         @click="fetchOpenApiSpec"
-        class="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+        class="btn btn-danger mt-4"
       >
         {{ t('apiDocs.retry') }}
       </button>
@@ -40,15 +40,15 @@
 
     <!-- 搜索和筛选 -->
     <div v-else>
-      <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
+      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 p-6 mb-6">
         <div class="flex flex-col md:flex-row gap-4">
           <input
             v-model="searchQuery"
             type="text"
             :placeholder="t('apiDocs.searchPlaceholder')"
-            class="flex-1 px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100"
+            class="form-input flex-1"
           />
-          <select v-model="selectedTag" class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100">
+          <select v-model="selectedTag" class="form-select">
             <option value="">{{ t('apiDocs.allTags') }}</option>
             <option v-for="tag in tags" :key="tag" :value="tag">
               {{ tag }}
@@ -59,7 +59,7 @@
 
       <!-- API列表 -->
       <div class="space-y-6">
-        <div v-for="(api, index) in filteredApis" :key="api.operationId || index" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+        <div v-for="(api, index) in filteredApis" :key="api.operationId || index" class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden">
           <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
             <div class="flex items-start justify-between">
               <div class="flex-1">
@@ -368,8 +368,9 @@ async function fetchOpenApiSpec() {
           // Extract response example
           let responseExample = '{}'
           const responses = op.responses as Record<string, OpenApiResponse> | undefined
+          let successResp: OpenApiResponse | undefined
           if (responses) {
-            const successResp = responses['200'] || responses['201'] || Object.values(responses)[0]
+            successResp = responses['200'] || responses['201'] || Object.values(responses)[0]
             if (successResp?.content) {
               const contentEntry = successResp.content['application/json'] || Object.values(successResp.content)[0]
               if (contentEntry?.example) {
@@ -398,8 +399,8 @@ async function fetchOpenApiSpec() {
             responses,
             requestExample,
             responseExample,
-            requestSchema: extractSchemaString(requestBody, componentsSchemas),
-            responseSchema: extractSchemaString(successResp, componentsSchemas),
+            requestSchema: extractSchemaString(requestBody as unknown as Parameters<typeof extractSchemaString>[0], componentsSchemas),
+            responseSchema: extractSchemaString(successResp as unknown as Parameters<typeof extractSchemaString>[0], componentsSchemas),
             security: (op.security as Record<string, string[]>[]) || [],
             rateLimit: extractRateLimit(detail as Record<string, unknown>, spec as Record<string, unknown>),
             deprecated: (op.deprecated as boolean) || false,

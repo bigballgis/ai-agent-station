@@ -107,7 +107,7 @@ export function clearStoredErrors(): void {
  */
 export function categorizeError(error: unknown): ErrorCategory {
   const msg = String(error).toLowerCase()
-  const stack = error instanceof Error ? (error.stack || '').toLowerCase() : ''
+  void (error instanceof Error ? (error.stack || '').toLowerCase() : '')
 
   // 网络错误
   if (

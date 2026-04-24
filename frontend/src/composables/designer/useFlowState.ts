@@ -81,9 +81,10 @@ export function useFlowState() {
 
         // Check node outputs (from execution results)
         if (nodeOutputs[nodeId]) {
+          const outputValue = nodeOutputs[nodeId] as Record<string, unknown> | undefined
           const value = field === 'output'
-            ? nodeOutputs[nodeId]
-            : nodeOutputs[nodeId]?.[field]
+            ? outputValue
+            : outputValue?.[field]
           if (value !== undefined) return String(value)
         }
 
@@ -112,7 +113,7 @@ export function useFlowState() {
           typeof item === 'string' ? resolveReferences(item, nodes, nodeOutputs) : item
         )
       } else if (typeof value === 'object' && value !== null) {
-        resolved[key] = resolveConfigReferences(value, nodes, nodeOutputs)
+        resolved[key] = resolveConfigReferences(value as Record<string, unknown>, nodes, nodeOutputs)
       } else {
         resolved[key] = value
       }

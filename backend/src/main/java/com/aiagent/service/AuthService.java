@@ -62,6 +62,16 @@ public class AuthService {
     private final PasswordHistoryRepository passwordHistoryRepository;
     private final SessionService sessionService;
 
+    /**
+     * 用户登录
+     * 包含速率限制检查、账户锁定检查、密码验证、JWT 生成和会话创建
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @param tenantId 租户ID（可选，为 null 时在全局范围查找用户）
+     * @return 登录结果，包含 token、refreshToken 和 user 信息
+     * @throws BusinessException 如果用户不存在、密码错误、账户被锁定或触发速率限制
+     */
     public Map<String, Object> login(String username, String password, Long tenantId) {
         // 登录速率限制检查
         String clientIp = getClientIp();
@@ -124,6 +134,14 @@ public class AuthService {
         return result;
     }
 
+    /**
+     * 用户注册
+     * 包含密码一致性验证、复杂度验证、用户名唯一性检查，注册成功后自动登录
+     *
+     * @param request 注册请求（包含 username、password、confirmPassword、email、tenantId）
+     * @return 登录结果，包含 token、refreshToken 和 user 信息
+     * @throws BusinessException 如果密码不一致、复杂度不足或用户名已存在
+     */
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> register(RegisterRequestDTO request) {
         // 检查密码和确认密码是否一致
@@ -191,6 +209,14 @@ public class AuthService {
         return login(username, password, tenantId);
     }
 
+    /**
+     * 刷新访问令牌
+     * 验证 refresh token 有效性后生成新的 access token 和 refresh token
+     *
+     * @param refreshToken 刷新令牌
+     * @return 新的登录结果，包含 token、refreshToken 和 user 信息
+     * @throws BusinessException 如果 refresh token 无效、过期或用户已被禁用
+     */
     public Map<String, Object> refreshToken(String refreshToken) {
         // Validate the refresh token format and signature
         if (!jwtUtil.validateToken(refreshToken)) {
@@ -234,7 +260,11 @@ public class AuthService {
     }
 
     /**
-     * 登出：清除 Refresh Token 并将 Access Token 加入黑名单
+     * 用户登出
+     * 清除 Redis 中的 Refresh Token，并将当前 Access Token 加入黑名单
+     *
+     * @param userId      用户 ID
+     * @param accessToken 当前访问令牌（可选，为 null 时仅清除 Refresh Token）
      */
     public void logout(Long userId, String accessToken) {
         // 清除 Refresh Token
@@ -258,6 +288,12 @@ public class AuthService {
 
     /**
      * 用户修改密码 - 验证旧密码后更新
+     * 包含密码复杂度验证和历史密码检查，修改后强制重新登录
+     *
+     * @param userId      用户 ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @throws BusinessException 如果旧密码错误、新密码复杂度不足或与历史密码重复
      */
     @Transactional(rollbackFor = Exception.class)
     public void changePassword(Long userId, String oldPassword, String newPassword) {
@@ -299,6 +335,11 @@ public class AuthService {
 
     /**
      * 管理员重置用户密码 - 直接重置，不需要旧密码
+     * 包含密码复杂度验证和历史密码检查，重置后强制用户重新登录
+     *
+     * @param username    用户名
+     * @param newPassword 新密码
+     * @throws BusinessException 如果用户不存在、已禁用、密码复杂度不足或与历史密码重复
      */
     @Transactional(rollbackFor = Exception.class)
     public void resetPassword(String username, String newPassword) {
@@ -353,6 +394,8 @@ public class AuthService {
 
     /**
      * 记录一次登录失败，达到阈值后锁定账户
+     *
+     * @param user 用户实体
      */
     @Transactional(rollbackFor = Exception.class)
     public void recordFailedLoginAttempt(User user) {
@@ -370,6 +413,8 @@ public class AuthService {
 
     /**
      * 登录成功后重置失败计数
+     *
+     * @param user 用户实体
      */
     @Transactional(rollbackFor = Exception.class)
     public void resetFailedLoginAttempts(User user) {
@@ -414,7 +459,10 @@ public class AuthService {
     }
 
     /**
-     * 检查token是否在黑名单中
+     * 检查 token 是否在黑名单中
+     *
+     * @param token JWT 令牌
+     * @return 如果在黑名单中返回 true
      */
     public boolean isTokenBlacklisted(String token) {
         String key = "token_blacklist:" + token;

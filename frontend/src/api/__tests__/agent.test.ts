@@ -20,6 +20,9 @@ vi.mock('@/utils/request', () => ({
   }
 }))
 
+// Helper function to access mock response properties
+const getResult = (r: any) => r as unknown as Record<string, unknown>
+
 describe('Agent API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,7 +35,7 @@ describe('Agent API', () => {
     const result = await request.get('/v1/agents')
 
     expect(mockGet).toHaveBeenCalledWith('/v1/agents')
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
     expect(result.data).toHaveLength(1)
   })
 
@@ -75,7 +78,7 @@ describe('Agent API', () => {
     const result = await request.delete('/v1/agents/1')
 
     expect(mockDelete).toHaveBeenCalledWith('/v1/agents/1')
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 
   it('copyAgent - 调用 POST /v1/agents/:id/copy', async () => {
@@ -105,7 +108,7 @@ describe('Agent API', () => {
     const result = await request.post('/v1/agents/1/versions/2/rollback')
 
     expect(mockPost).toHaveBeenCalledWith('/v1/agents/1/versions/2/rollback')
-    expect(result.code).toBe(200)
+    expect(getResult(result).code).toBe(200)
   })
 
   it('API 调用失败 - 返回错误', async () => {

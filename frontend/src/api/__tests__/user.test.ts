@@ -171,7 +171,7 @@ describe('User API', () => {
 
     it('login 请求 DTO 支持可选的 tenantId', async () => {
       const { login } = await import('@/api/user')
-      await login({ username: 'admin', password: 'secret123', tenantId: '100' })
+      await login({ username: 'admin', password: 'secret123', tenantId: 100 })
 
       const callData = mockRequestCalls[0].data as Record<string, unknown>
       expect(callData).toHaveProperty('tenantId', '100')

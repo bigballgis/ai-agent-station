@@ -41,13 +41,13 @@
       <div class="flex items-center justify-center gap-3">
         <button
           @click="reset"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          class="btn btn-primary"
         >
           {{ t('password.retry') }}
         </button>
         <button
           @click="reportError"
-          class="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+          class="btn btn-secondary"
         >
           {{ t('password.reportError') }}
         </button>
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onErrorCaptured, onUnmounted, computed, nextTick } from 'vue'
+import { ref, onErrorCaptured, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 export type ErrorCategory = 'network' | 'auth' | 'business' | 'unknown'
@@ -78,7 +78,7 @@ let countdownTimer: ReturnType<typeof setInterval> | null = null
  */
 function categorizeError(err: Error): ErrorCategory {
   const msg = err.message.toLowerCase()
-  const stack = (err.stack || '').toLowerCase()
+  void (err.stack || '')
 
   // 网络错误
   if (

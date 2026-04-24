@@ -46,7 +46,6 @@ describe('路由守卫', () => {
 
     // 模拟守卫逻辑
     const to = { meta: { requiresAuth: true }, fullPath: '/dashboard' }
-    const from = {}
     const next = mockNext
 
     if (to.meta.requiresAuth !== false) {
@@ -124,7 +123,7 @@ describe('路由守卫', () => {
     const { useUserStore } = await import('@/store/modules/user')
     const store = useUserStore()
 
-    const to = { meta: { requiresAuth: false }, path: '/about' }
+    const to = { meta: { requiresAuth: false }, path: '/about', fullPath: '/about' }
     const next = mockNext
 
     if (to.meta.requiresAuth !== false) {
@@ -164,7 +163,7 @@ describe('路由守卫', () => {
     const { useUserStore } = await import('@/store/modules/user')
     const store = useUserStore()
 
-    const to = { meta: {}, fullPath: '/some-page' }
+    const to = { meta: { requiresAuth: true as boolean | undefined }, fullPath: '/some-page' }
     const next = mockNext
 
     // requiresAuth 未设置，默认需要认证
