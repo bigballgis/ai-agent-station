@@ -7,12 +7,19 @@ import com.aiagent.service.llm.LangChain4jService;
 import com.aiagent.service.llm.LlmProviderConfig;
 import com.aiagent.service.tool.CompositeToolProvider;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.data.message.*;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.output.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -402,8 +409,8 @@ public class GraphExecutor {
         }
         if (node.getConfig().containsKey("inputMapping")) {
             // 支持输入映射
+            // 节点配置中的 inputMapping 是 Map<String, Object> 中的 Object，需要强制转换
             @SuppressWarnings("unchecked")
-            Map<String, String> mapping = (Map<String, String>) node.getConfig().get("inputMapping");
             for (Map.Entry<String, String> entry : mapping.entrySet()) {
                 Object value = state.getVariable(entry.getKey());
                 if (value == null) value = state.getOutputs().get(entry.getKey());
@@ -429,8 +436,8 @@ public class GraphExecutor {
 
             Map<String, Object> resultMap = new HashMap<>();
             if (toolResult instanceof Map) {
+                // MCP 工具返回值是 Object 类型，需要强制转换为 Map
                 @SuppressWarnings("unchecked")
-                Map<String, Object> castResult = (Map<String, Object>) toolResult;
                 resultMap.putAll(castResult);
             } else {
                 resultMap.put("result", toolResult);
@@ -564,8 +571,8 @@ public class GraphExecutor {
             return;
         }
 
+        // JSON 反序列化后 cases 是 Object 类型，需要强制转换为 List<Map>
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> cases = (List<Map<String, String>>) casesObj;
 
         // Evaluate each case expression against the current state
         for (Map<String, String> caseDef : cases) {

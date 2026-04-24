@@ -3,7 +3,6 @@ package com.aiagent.service.llm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -13,14 +12,13 @@ import java.util.Map;
 /**
  * 旧版 OpenAI LLM 提供者实现。
  * <p>
- * 修复说明: 此类为遗留实现，chatStream() 方法返回同步结果而非真正的流式输出。
- * 项目已迁移至 LangChain4j 框架，请使用 {@link LangChain4jService} 替代。
+ * 此类已废弃，不再注册为 Spring Bean。
+ * 项目已迁移至 LangChain4j 框架，请使用 {@link OpenAiLangChain4jProvider} 替代。
  * </p>
  *
- * @deprecated 请使用 {@link LangChain4jService} 替代，该类通过 LangChain4j 提供真正的流式支持。
+ * @deprecated 请使用 {@link OpenAiLangChain4jProvider} 替代。
  */
 @Deprecated
-@Component
 @RequiredArgsConstructor
 public class OpenAiLlmProvider implements LlmProvider {
 
@@ -57,9 +55,9 @@ public class OpenAiLlmProvider implements LlmProvider {
         ResponseEntity<Map> response = restTemplate.postForEntity(
             baseUrl + "/chat/completions", request, Map.class);
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") // RestTemplate 返回原始类型 Map，需要强制转换
         Map<String, Object> choices = (Map<String, Object>) ((List<?>) response.getBody().get("choices")).get(0);
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") // 同上
         Map<String, Object> message = (Map<String, Object>) choices.get("message");
         return (String) message.get("content");
     }

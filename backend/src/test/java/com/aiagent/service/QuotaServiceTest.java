@@ -120,6 +120,7 @@ class QuotaServiceTest {
         assertTrue(result.containsKey("storage"));
 
         // 验证 Agent 配额计算
+        // quotaService 返回 Map<String, Object>，从结果中取值需要强制转换
         @SuppressWarnings("unchecked")
         Map<String, Object> agentQuota = (Map<String, Object>) result.get("agents");
         assertEquals(30, agentQuota.get("used"));
@@ -138,6 +139,7 @@ class QuotaServiceTest {
 
         Map<String, Object> result = quotaService.getTenantQuotaDetails(1L);
 
+        // quotaService 返回 Map<String, Object>，从结果中取值需要强制转换
         @SuppressWarnings("unchecked")
         Map<String, Object> agentQuota = (Map<String, Object>) result.get("agents");
         assertEquals(0, agentQuota.get("remaining"));

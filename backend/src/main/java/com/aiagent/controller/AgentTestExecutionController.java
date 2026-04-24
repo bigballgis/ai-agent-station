@@ -52,7 +52,7 @@ public class AgentTestExecutionController {
         return executionService.getExecutionById(id)
                 .map(DTOConverter::toExecutionResponseDTO)
                 .map(Result::success)
-                .orElse(Result.fail("Test execution not found"));
+                .orElse(Result.error("Test execution not found"));
     }
 
     @RequiresPermission("test:view")

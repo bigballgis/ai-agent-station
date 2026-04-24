@@ -7,6 +7,7 @@ import com.aiagent.common.Result;
 import com.aiagent.entity.AlertRecord;
 import com.aiagent.entity.AlertRule;
 import com.aiagent.service.AlertService;
+import com.aiagent.vo.AlertRecordVO;
 import com.aiagent.vo.AlertRuleVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -64,19 +65,21 @@ public class AlertController {
     @RequiresPermission("alert:view")
     @GetMapping("/records")
     @Operation(summary = "分页查询告警记录")
-    public Result<PageResult<AlertRecord>> getRecords(
+    public Result<PageResult<AlertRecordVO>> getRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "firedAt"));
         Page<AlertRecord> result = alertService.getRecords(page, size, pageable);
-        return Result.success(PageResult.from(result));
+        Page<AlertRecordVO> voPage = result.map(AlertRecordVO::fromEntity);
+        return Result.success(PageResult.from(voPage));
     }
 
     @RequiresPermission("alert:view")
     @GetMapping("/records/active")
     @Operation(summary = "获取活跃告警列表")
-    public Result<List<AlertRecord>> getActiveAlerts() {
-        return Result.success(alertService.getActiveAlerts());
+    public Result<List<AlertRecordVO>> getActiveAlerts() {
+        return Result.success(alertService.getActiveAlerts().stream()
+                .map(AlertRecordVO::fromEntity).toList());
     }
 
     @RequiresPermission("alert:view")

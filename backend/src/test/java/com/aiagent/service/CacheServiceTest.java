@@ -85,6 +85,7 @@ class CacheServiceTest {
 
     @Test
     @DisplayName("按前缀批量删除缓存 - 成功")
+    // Mockito 的 when(redisTemplate.keys(...)) 返回原始类型 Set，需要强制转换
     @SuppressWarnings("unchecked")
     void testDeleteByPrefix() {
         Set<String> keys = new HashSet<>(Arrays.asList("dict:user_status", "dict:order_status"));
@@ -99,6 +100,7 @@ class CacheServiceTest {
 
     @Test
     @DisplayName("按前缀批量删除缓存 - 无匹配key")
+    // Mockito mock 的 redisTemplate 返回原始类型，需要强制转换
     @SuppressWarnings("unchecked")
     void testDeleteByPrefix_NoKeys() {
         when(redisTemplate.keys("nonexistent:*")).thenReturn(null);

@@ -8,14 +8,26 @@ import com.aiagent.entity.LoginLog;
 import com.aiagent.entity.SystemLog;
 import com.aiagent.entity.User;
 import com.aiagent.entity.UserSession;
-import com.aiagent.repository.*;
+import com.aiagent.repository.AgentApprovalRepository;
+import com.aiagent.repository.AgentRepository;
+import com.aiagent.repository.AgentTestCaseRepository;
+import com.aiagent.repository.AgentTestExecutionRepository;
+import com.aiagent.repository.AgentTestResultRepository;
+import com.aiagent.repository.DeploymentHistoryRepository;
+import com.aiagent.repository.LoginLogRepository;
+import com.aiagent.repository.SystemLogRepository;
+import com.aiagent.repository.UserRepository;
+import com.aiagent.repository.UserSessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * GDPR/隐私合规服务

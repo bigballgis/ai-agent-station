@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -257,6 +259,7 @@ public class WorkflowEngine {
         log.info("Workflow completed: instanceId={}, name={}", instance.getId(), instance.getWorkflowName());
     }
 
+    // JSON 反序列化后 Map 中的值是 Object 类型，需要强制转换为具体泛型类型，编译器无法验证
     @SuppressWarnings("unchecked")
     private Map<String, Object> getNodeConfig(WorkflowDefinition definition, String nodeId) {
         if (definition.getNodes() == null) {
@@ -273,6 +276,7 @@ public class WorkflowEngine {
         return new HashMap<>();
     }
 
+    // JSON 反序列化后 Map 中的值是 Object 类型，需要强制转换为具体泛型类型，编译器无法验证
     @SuppressWarnings("unchecked")
     private String findStartNode(WorkflowDefinition definition) {
         if (definition.getNodes() == null) {
@@ -290,6 +294,7 @@ public class WorkflowEngine {
         throw new BusinessException("工作流定义节点格式错误");
     }
 
+    // JSON 反序列化后 Map 中的值是 Object 类型，需要强制转换为具体泛型类型，编译器无法验证
     @SuppressWarnings("unchecked")
     private String determineNextNode(WorkflowDefinition definition, String currentNodeId,
                                      String nodeType, Map<String, Object> output, WorkflowInstance instance) {

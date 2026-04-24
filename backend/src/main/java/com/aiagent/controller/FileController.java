@@ -53,10 +53,10 @@ public class FileController {
             return Result.success(fileInfo);
         } catch (IllegalArgumentException e) {
             log.warn("File upload validation failed: {}", e.getMessage());
-            return Result.fail(e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("File upload failed", e);
-            return Result.fail("File upload failed: " + e.getMessage());
+            return Result.error("File upload failed: " + e.getMessage());
         }
     }
 
@@ -105,7 +105,7 @@ public class FileController {
             return Result.success(files);
         } catch (Exception e) {
             log.error("List files failed", e);
-            return Result.fail("Failed to list files: " + e.getMessage());
+            return Result.error("Failed to list files: " + e.getMessage());
         }
     }
 
@@ -126,10 +126,10 @@ public class FileController {
             return Result.success();
         } catch (RuntimeException e) {
             log.warn("File delete failed: {}", e.getMessage());
-            return Result.fail(e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("File delete failed", e);
-            return Result.fail("File delete failed: " + e.getMessage());
+            return Result.error("File delete failed: " + e.getMessage());
         }
     }
 }

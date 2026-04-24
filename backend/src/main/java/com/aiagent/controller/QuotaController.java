@@ -40,7 +40,7 @@ public class QuotaController {
         log.info("Get tenant quota: tenantId={}, headerTenantId={}", tenantId, headerTenantId);
         if (!tenantId.equals(headerTenantId)) {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
-            return Result.fail("Tenant ID mismatch");
+            return Result.error("Tenant ID mismatch");
         }
         return Result.success(quotaService.getTenantQuota(tenantId));
     }
@@ -62,7 +62,7 @@ public class QuotaController {
         log.info("Get tenant quota details: tenantId={}, headerTenantId={}", tenantId, headerTenantId);
         if (!tenantId.equals(headerTenantId)) {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
-            return Result.fail("Tenant ID mismatch");
+            return Result.error("Tenant ID mismatch");
         }
         return Result.success(quotaService.getTenantQuotaDetails(tenantId));
     }
@@ -86,7 +86,7 @@ public class QuotaController {
         log.info("Update tenant quota: tenantId={}, headerTenantId={}", tenantId, headerTenantId);
         if (!tenantId.equals(headerTenantId)) {
             log.warn("Tenant ID mismatch: path={}, header={}", tenantId, headerTenantId);
-            return Result.fail("Tenant ID mismatch");
+            return Result.error("Tenant ID mismatch");
         }
         return Result.success(quotaService.updateTenantQuota(tenantId, quotaUpdate));
     }

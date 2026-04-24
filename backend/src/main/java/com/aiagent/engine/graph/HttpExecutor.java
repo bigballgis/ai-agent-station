@@ -82,8 +82,8 @@ public class HttpExecutor {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (nodeConfig.containsKey("headers")) {
+            // 节点配置中的 headers 是 Map<String, Object> 中的 Object，需要强制转换
             @SuppressWarnings("unchecked")
-            Map<String, String> headerMap = (Map<String, String>) nodeConfig.get("headers");
             for (Map.Entry<String, String> header : headerMap.entrySet()) {
                 // 过滤敏感头，防止SSRF攻击
                 if ("host".equalsIgnoreCase(header.getKey()) ||

@@ -20,7 +20,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * MCP Tool -> LangChain4j ToolProvider 桥接器
@@ -127,6 +130,7 @@ public class McpToolProviderBridge implements ToolProvider {
             // 解析输入参数 schema
             Object inputSchema = mcpTool.get("inputSchema");
             if (inputSchema instanceof Map) {
+                // MCP 工具的 inputSchema 是 Object 类型，需要强制转换为 Map
                 @SuppressWarnings("unchecked")
                 Map<String, Object> schema = (Map<String, Object>) inputSchema;
                 JsonObjectSchema jsonObjectSchema = convertSchemaToJsonObjectSchema(schema);
@@ -145,8 +149,8 @@ public class McpToolProviderBridge implements ToolProvider {
     /**
      * 将 Map 形式的 JSON Schema 转换为 JsonObjectSchema
      */
+    // 整个方法涉及 JSON Schema 的 Map/Object 递归转换，编译器无法验证泛型类型
     @SuppressWarnings("unchecked")
-    private JsonObjectSchema convertSchemaToJsonObjectSchema(Map<String, Object> schema) {
         try {
             JsonObjectSchema.Builder schemaBuilder = JsonObjectSchema.builder();
 
@@ -178,8 +182,8 @@ public class McpToolProviderBridge implements ToolProvider {
     /**
      * 将 JSON Schema 元素转换为 JsonSchemaElement
      */
+    // JSON Schema 元素是 Object 类型，递归转换时需要强制转换为 Map/List 等具体类型
     @SuppressWarnings("unchecked")
-    private JsonSchemaElement convertJsonSchemaElement(Object element) {
         if (element instanceof String) {
             return mapSimpleType((String) element);
         }

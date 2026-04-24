@@ -257,6 +257,7 @@ public class AgentExecutionEngine {
 
         // 从图执行结果中提取输出
         if (graphResult.get("outputs") instanceof Map) {
+            // 图执行结果中的 outputs 是 Object 类型，需要强制转换为 Map
             @SuppressWarnings("unchecked")
             Map<String, Object> outputs = (Map<String, Object>) graphResult.get("outputs");
             result.putAll(outputs);
@@ -277,8 +278,8 @@ public class AgentExecutionEngine {
         return result;
     }
 
+    // Agent 配置从数据库 JSON 字段反序列化，值为 Object 类型，需要强制转换
     @SuppressWarnings("unchecked")
-    private Map<String, Object> parseAgentConfig(Agent agent) {
         Map<String, Object> config = new HashMap<>();
         if (agent.getConfig() != null) {
             config.putAll(agent.getConfig());

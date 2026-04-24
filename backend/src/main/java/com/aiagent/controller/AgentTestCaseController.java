@@ -45,7 +45,7 @@ public class AgentTestCaseController {
         return testCaseService.getTestCaseById(id)
                 .map(DTOConverter::toTestCaseResponseDTO)
                 .map(Result::success)
-                .orElse(Result.fail("Test case not found"));
+                .orElse(Result.error("Test case not found"));
     }
 
     @RequiresPermission("test:view")
@@ -94,7 +94,7 @@ public class AgentTestCaseController {
     @Operation(summary = "根据编码获取测试用例")
     public Result<TestCaseResponseDTO> getTestCaseByCode(@PathVariable Long tenantId, @PathVariable String testCode) {
         AgentTestCase testCase = testCaseService.getTestCaseByCode(tenantId, testCode);
-        return testCase != null ? Result.success(DTOConverter.toTestCaseResponseDTO(testCase)) : Result.fail("Test case not found");
+        return testCase != null ? Result.success(DTOConverter.toTestCaseResponseDTO(testCase)) : Result.error("Test case not found");
     }
 
     @RequiresPermission("test:view")

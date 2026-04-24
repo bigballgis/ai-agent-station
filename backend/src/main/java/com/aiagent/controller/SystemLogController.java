@@ -6,7 +6,9 @@ import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.SystemLog;
 import com.aiagent.service.SystemLogService;
+import com.aiagent.vo.SystemLogVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,38 +29,50 @@ public class SystemLogController {
     @Operation(summary = "分页查询系统日志")
     @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
-    public Result<PageResult<SystemLog>> getLogs(@RequestParam(defaultValue = "0") int page,
-                                                  @RequestParam(defaultValue = "10") int size) {
-        return Result.success(systemLogService.getLogs(page, size));
+    public Result<PageResult<SystemLogVO>> getLogs(@RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        PageResult<SystemLog> logPage = systemLogService.getLogs(page, size);
+        return Result.success(convertToVoPage(logPage));
     }
 
     @GetMapping("/date-range")
     @Operation(summary = "按日期范围查询系统日志")
     @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
-    public Result<PageResult<SystemLog>> getLogsByDateRange(
+    public Result<PageResult<SystemLogVO>> getLogsByDateRange(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return Result.success(systemLogService.getLogsByDateRange(startTime, endTime, page, size));
+        PageResult<SystemLog> logPage = systemLogService.getLogsByDateRange(startTime, endTime, page, size);
+        return Result.success(convertToVoPage(logPage));
     }
 
     @GetMapping("/module/{module}")
     @Operation(summary = "按模块查询系统日志")
     @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
-    public Result<PageResult<SystemLog>> getLogsByModule(@PathVariable String module,
-                                                          @RequestParam(defaultValue = "0") int page,
-                                                          @RequestParam(defaultValue = "10") int size) {
-        return Result.success(systemLogService.getLogsByModule(module, page, size));
+    public Result<PageResult<SystemLogVO>> getLogsByModule(@PathVariable String module,
+                                                            @RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "10") int size) {
+        PageResult<SystemLog> logPage = systemLogService.getLogsByModule(module, page, size);
+        return Result.success(convertToVoPage(logPage));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取日志详情")
     @RequiresPermission("log:read")
     @RequiresRole("ADMIN")
-    public Result<SystemLog> getLogById(@PathVariable Long id) {
-        return Result.success(systemLogService.getLogById(id));
+    public Result<SystemLogVO> getLogById(@PathVariable Long id) {
+        return Result.success(SystemLogVO.fromEntity(systemLogService.getLogById(id)));
+    }
+
+    private PageResult<SystemLogVO> convertToVoPage(PageResult<SystemLog> logPage) {
+        return new PageResult<>(
+                logPage.getTotal(),
+                logPage.getRecords().stream().map(SystemLogVO::fromEntity).toList(),
+                logPage.getPage(),
+                logPage.getSize()
+        );
     }
 }

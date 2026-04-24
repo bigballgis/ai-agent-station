@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         log.warn("参数校验失败: {}", errors);
-        return Result.fail("参数校验失败", errors).withTraceId(getTraceId());
+        return Result.error(400, "参数校验失败", errors).withTraceId(getTraceId());
     }
 
     @ExceptionHandler(BindException.class)

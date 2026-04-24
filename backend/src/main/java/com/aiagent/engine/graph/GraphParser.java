@@ -24,6 +24,7 @@ public class GraphParser {
      *   "entryNodeId": "node1"
      * }
      */
+    // 整个方法涉及大量 JSON 反序列化后的 Map/Object 强制转换，编译器无法验证泛型类型
     @SuppressWarnings("unchecked")
     public GraphDefinition parse(Map<String, Object> agentConfig) {
         GraphDefinition graph = new GraphDefinition();

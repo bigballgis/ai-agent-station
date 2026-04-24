@@ -34,7 +34,7 @@ public class AgentTestResultController {
         return resultService.getResultById(id)
                 .map(DTOConverter::toTestResultResponseDTO)
                 .map(Result::success)
-                .orElse(Result.fail("Test result not found"));
+                .orElse(Result.error("Test result not found"));
     }
 
     @Operation(summary = "根据ID获取测试结果详情")

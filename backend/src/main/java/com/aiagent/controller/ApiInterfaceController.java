@@ -4,8 +4,11 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.ApiInterfaceCreateDTO;
+import com.aiagent.dto.ApiInterfaceUpdateDTO;
 import com.aiagent.entity.ApiInterface;
 import com.aiagent.service.ApiInterfaceService;
+import com.aiagent.vo.ApiInterfaceVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,51 +33,67 @@ public class ApiInterfaceController {
     @RequiresPermission("api:view")
     @GetMapping
     @Operation(summary = "分页查询API接口列表")
-    public Result<PageResult<ApiInterface>> list(
+    public Result<PageResult<ApiInterfaceVO>> list(
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ApiInterface> apiPage = apiInterfaceService.listByTenant(tenantId, pageable);
-        return Result.success(PageResult.from(apiPage));
+        Page<ApiInterfaceVO> voPage = apiPage.map(ApiInterfaceVO::fromEntity);
+        return Result.success(PageResult.from(voPage));
     }
 
     @RequiresPermission("api:read")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取API接口详情")
-    public Result<ApiInterface> getById(
+    public Result<ApiInterfaceVO> getById(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
-        return Result.success(apiInterfaceService.getById(id, tenantId));
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.getById(id, tenantId)));
     }
 
     @RequiresPermission("api:read")
     @Operation(summary = "根据Agent ID获取API接口列表")
     @GetMapping("/agent/{agentId}")
-    public Result<List<ApiInterface>> listByAgent(
+    public Result<List<ApiInterfaceVO>> listByAgent(
             @PathVariable Long agentId,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
-        return Result.success(apiInterfaceService.listByAgent(agentId, tenantId));
+        return Result.success(apiInterfaceService.listByAgent(agentId, tenantId).stream()
+                .map(ApiInterfaceVO::fromEntity).toList());
     }
 
     @RequiresPermission("api:manage")
     @PostMapping
     @Operation(summary = "创建API接口")
-    public Result<ApiInterface> create(
+    public Result<ApiInterfaceVO> create(
             @RequestHeader("X-Tenant-ID") Long tenantId,
-            @Valid @RequestBody ApiInterface apiInterface) {
+            @Valid @RequestBody ApiInterfaceCreateDTO dto) {
+        ApiInterface apiInterface = new ApiInterface();
         apiInterface.setTenantId(tenantId);
-        return Result.success(apiInterfaceService.create(apiInterface));
+        apiInterface.setAgentId(dto.getAgentId());
+        apiInterface.setVersionId(dto.getVersionId());
+        apiInterface.setPath(dto.getPath());
+        apiInterface.setMethod(dto.getMethod());
+        apiInterface.setDescription(dto.getDescription());
+        apiInterface.setIsActive(dto.getIsActive());
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.create(apiInterface)));
     }
 
     @RequiresPermission("api:write")
     @PutMapping("/{id}")
     @Operation(summary = "更新API接口")
-    public Result<ApiInterface> update(
+    public Result<ApiInterfaceVO> update(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,
-            @Valid @RequestBody ApiInterface apiInterface) {
-        return Result.success(apiInterfaceService.update(id, tenantId, apiInterface));
+            @Valid @RequestBody ApiInterfaceUpdateDTO dto) {
+        ApiInterface apiInterface = new ApiInterface();
+        apiInterface.setAgentId(dto.getAgentId());
+        apiInterface.setVersionId(dto.getVersionId());
+        apiInterface.setPath(dto.getPath());
+        apiInterface.setMethod(dto.getMethod());
+        apiInterface.setDescription(dto.getDescription());
+        apiInterface.setIsActive(dto.getIsActive());
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.update(id, tenantId, apiInterface)));
     }
 
     @RequiresPermission("api:delete")
@@ -90,11 +109,11 @@ public class ApiInterfaceController {
     @RequiresPermission("api:write")
     @PatchMapping("/{id}/toggle")
     @Operation(summary = "切换API接口启用状态")
-    public Result<ApiInterface> toggleActive(
+    public Result<ApiInterfaceVO> toggleActive(
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestBody Map<String, Boolean> body) {
         Boolean isActive = body.get("isActive");
-        return Result.success(apiInterfaceService.toggleActive(id, tenantId, isActive));
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.toggleActive(id, tenantId, isActive)));
     }
 }

@@ -14,7 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -41,8 +45,8 @@ public class PermissionMatrixService {
         String cached = cacheService.get(cacheKey);
         if (cached != null) {
             try {
+                // 从 Redis 缓存反序列化的 JSON 字符串，ObjectMapper.readValue 返回 Map.class 无法携带泛型信息
                 @SuppressWarnings("unchecked")
-                Map<String, List<PermissionMatrix>> result = objectMapper.readValue(cached, Map.class);
                 return result;
             } catch (JsonProcessingException e) {
                 log.warn("Failed to deserialize permission cache for role: {}", roleId);
@@ -239,8 +243,8 @@ public class PermissionMatrixService {
         String cached = cacheService.get(PERM_TREE_CACHE_KEY);
         if (cached != null) {
             try {
+                // 从 Redis 缓存反序列化的 JSON 字符串，ObjectMapper.readValue 返回 List.class 无法携带泛型信息
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> result = objectMapper.readValue(cached, List.class);
                 return result;
             } catch (JsonProcessingException e) {
                 log.warn("Failed to deserialize permission tree cache");

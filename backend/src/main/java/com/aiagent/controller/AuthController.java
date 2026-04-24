@@ -89,10 +89,10 @@ public class AuthController {
             // 验证后删除（一次性使用）
             redisTemplate.delete(redisKey);
             if (storedAnswer == null) {
-                return Result.fail(400, "验证码已过期，请重新获取");
+                return Result.error(400, "验证码已过期，请重新获取");
             }
             if (!storedAnswer.equals(request.getCaptchaAnswer())) {
-                return Result.fail(400, "验证码错误");
+                return Result.error(400, "验证码错误");
             }
         }
         return Result.success(authService.login(request.getUsername(), request.getPassword(), request.getTenantId()));
@@ -142,7 +142,7 @@ public class AuthController {
     @Operation(summary = "获取当前用户信息")
     public Result<UserResponseDTO> getUserInfo(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null || principal.getId() == null) {
-            return Result.fail(401, "未认证");
+            return Result.error(401, "未认证");
         }
         User user = userService.getById(principal.getId());
         return Result.success(DTOConverter.toUserResponseDTO(user));
@@ -157,7 +157,7 @@ public class AuthController {
     public Result<?> changePassword(@AuthenticationPrincipal UserPrincipal principal,
                                     @Valid @RequestBody ChangePasswordRequestDTO request) {
         if (principal == null || principal.getId() == null) {
-            return Result.fail(401, "未认证");
+            return Result.error(401, "未认证");
         }
         authService.changePassword(principal.getId(), request.getOldPassword(), request.getNewPassword());
         return Result.success("密码修改成功");
