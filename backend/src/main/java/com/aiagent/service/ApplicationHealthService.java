@@ -1,10 +1,10 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.security.JwtUtil;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -42,27 +42,7 @@ public class ApplicationHealthService {
     private final StringRedisTemplate redisTemplate;
     private final CacheStatisticsService cacheStatisticsService;
     private final JwtUtil jwtUtil;
-
-    @Value("${ai-agent.llm.openai.api-key:}")
-    private String openaiApiKey;
-
-    @Value("${ai-agent.llm.openai.base-url:https://api.openai.com/v1}")
-    private String openaiBaseUrl;
-
-    @Value("${ai-agent.llm.qwen.api-key:}")
-    private String qwenApiKey;
-
-    @Value("${ai-agent.llm.qwen.base-url:https://dashscope.aliyuncs.com/compatible-mode/v1}")
-    private String qwenBaseUrl;
-
-    @Value("${ai-agent.llm.ollama.base-url:http://localhost:11434}")
-    private String ollamaBaseUrl;
-
-    @Value("${ai-agent.llm.default-provider:openai}")
-    private String defaultProvider;
-
-    @Value("${ai-agent.cache.default-ttl-minutes:30}")
-    private int cacheTtlMinutes;
+    private final AiAgentProperties aiAgentProperties;
 
     private static final double CACHE_HIT_RATE_WARNING_THRESHOLD = 50.0;
     private static final long DISK_SPACE_THRESHOLD_MB = 500;
@@ -202,7 +182,7 @@ public class ApplicationHealthService {
      */
     private Map<String, Object> checkLlmProviderHealth() {
         Map<String, Object> result = new HashMap<>();
-        result.put("defaultProvider", defaultProvider);
+        result.put("defaultProvider", aiAgentProperties.getLlm().getDefaultProvider());
 
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -213,9 +193,10 @@ public class ApplicationHealthService {
             Map<String, String> providerStatuses = new LinkedHashMap<>();
 
             // 检查 OpenAI
+            String openaiApiKey = aiAgentProperties.getLlm().getOpenai().getApiKey();
             if (openaiApiKey != null && !openaiApiKey.isBlank()) {
                 providerStatuses.put("openai", checkProviderEndpoint(restTemplate,
-                        openaiBaseUrl + "/models", "OpenAI"));
+                        aiAgentProperties.getLlm().getOpenai().getBaseUrl() + "/models", "OpenAI"));
                 if ("reachable".equals(providerStatuses.get("openai"))) {
                     anyProviderAvailable = true;
                 }
@@ -224,9 +205,10 @@ public class ApplicationHealthService {
             }
 
             // 检查 Qwen
+            String qwenApiKey = aiAgentProperties.getLlm().getQwen().getApiKey();
             if (qwenApiKey != null && !qwenApiKey.isBlank()) {
                 providerStatuses.put("qwen", checkProviderEndpoint(restTemplate,
-                        qwenBaseUrl + "/models", "Qwen"));
+                        aiAgentProperties.getLlm().getQwen().getBaseUrl() + "/models", "Qwen"));
                 if ("reachable".equals(providerStatuses.get("qwen"))) {
                     anyProviderAvailable = true;
                 }
@@ -236,7 +218,7 @@ public class ApplicationHealthService {
 
             // 检查 Ollama
             providerStatuses.put("ollama", checkProviderEndpoint(restTemplate,
-                    ollamaBaseUrl + "/api/tags", "Ollama"));
+                    aiAgentProperties.getLlm().getOllama().getBaseUrl() + "/api/tags", "Ollama"));
             if ("reachable".equals(providerStatuses.get("ollama"))) {
                 anyProviderAvailable = true;
             }

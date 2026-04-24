@@ -1,0 +1,101 @@
+# ============================================================
+# AI Agent Platform - 开发环境配置 (application-dev.yml)
+# ============================================================
+# 使用方式: java -jar app.jar --spring.profiles.active=dev
+# 或设置环境变量: SPRING_PROFILES_ACTIVE=dev
+#
+# 开发环境特点:
+# - 宽松的安全配置（允许所有本地来源的 CORS）
+# - 详细的调试日志
+# - 禁用速率限制
+# - 可选 H2 内存数据库（替代 PostgreSQL）
+# ============================================================
+
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  # 开发环境可选使用 H2 内存数据库（取消注释以启用）
+  # datasource:
+  #   driver-class-name: org.h2.Driver
+  #   url: jdbc:h2:mem:ai_agent_dev;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+  #   username: sa
+  #   password:
+  # h2:
+  #   console:
+  #     enabled: true
+  #     path: /h2-console
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+  # 开发环境禁用 Flyway（如果使用 H2）
+  # flyway:
+  #   enabled: false
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+# 开发环境日志配置 - 详细调试
+logging:
+  level:
+    com.aiagent: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.security: DEBUG
+    com.zaxxer.hikari: DEBUG
+    org.flywaydb: DEBUG
+    dev.langchain4j: DEBUG
+
+# AI Agent 开发环境配置
+ai-agent:
+  security:
+    max-failed-attempts: 10
+    lockout-duration-minutes: 5
+  rate-limit:
+    max-attempts-per-minute: 100
+    max-ip-global-per-minute: 1000
+    api:
+      default-limit-per-minute: 10000
+      default-limit-per-hour: 100000
+  llm:
+    openai:
+      log-requests: true
+      log-responses: true
+    qwen:
+      log-requests: true
+      log-responses: true
+  cache:
+    default-ttl-minutes: 5
+    dict-ttl-hours: 1
+
+# 开发环境 CORS - 允许所有本地来源
+cors:
+  allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:3000
+
+# 开发环境 JWT 配置 - 较长的有效期便于调试
+jwt:
+  expiration: 86400000  # 24 小时
+  refresh-expiration: 604800000  # 7 天
+
+# SpringDoc 在开发环境默认启用
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+# Actuator 在开发环境暴露更多端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops,beans

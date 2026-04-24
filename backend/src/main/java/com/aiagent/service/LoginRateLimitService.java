@@ -1,8 +1,8 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,22 +18,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginRateLimitService {
 
+    private final StringRedisTemplate redisTemplate;
+    private final AiAgentProperties aiAgentProperties;
+
     private static final String LOGIN_ATTEMPT_PREFIX = "login:attempt:";
     private static final String IP_GLOBAL_PREFIX = "login:ip:global:";
-
-    @Value("${ai-agent.rate-limit.max-attempts-per-minute:5}")
-    private int maxAttemptsPerMinute;
-
-    @Value("${ai-agent.rate-limit.max-ip-global-per-minute:10}")
-    private int maxIpGlobalAttemptsPerMinute;
-
-    @Value("${ai-agent.rate-limit.window-seconds:60}")
-    private long windowSeconds;
-
-    @Value("${ai-agent.rate-limit.base-backoff-seconds:2}")
-    private long baseBackoffSeconds;
-
-    private final StringRedisTemplate redisTemplate;
 
     /**
      * 检查是否超过速率限制
@@ -43,6 +32,10 @@ public class LoginRateLimitService {
      * @return null 表示允许尝试, 非null字符串表示限流提示信息
      */
     public String checkRateLimit(String username, String ip) {
+        int maxIpGlobalAttemptsPerMinute = aiAgentProperties.getRateLimit().getMaxIpGlobalPerMinute();
+        int maxAttemptsPerMinute = aiAgentProperties.getRateLimit().getMaxAttemptsPerMinute();
+        long baseBackoffSeconds = aiAgentProperties.getRateLimit().getBaseBackoffSeconds();
+
         // 1. 基于IP的全局限制检查（每IP每分钟最多10次）
         String ipGlobalKey = IP_GLOBAL_PREFIX + ip;
         String ipCountStr = redisTemplate.opsForValue().get(ipGlobalKey);
@@ -90,6 +83,8 @@ public class LoginRateLimitService {
      * @param ip       客户端IP
      */
     public void recordFailedAttempt(String username, String ip) {
+        long windowSeconds = aiAgentProperties.getRateLimit().getWindowSeconds();
+
         String key = buildKey(username, ip);
         Long count = redisTemplate.opsForValue().increment(key);
         if (count != null && count == 1) {

@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.dto.AlertRuleCreateDTO;
 import com.aiagent.dto.AlertRuleUpdateDTO;
 import com.aiagent.entity.AlertRecord;
@@ -10,7 +11,6 @@ import com.aiagent.util.SecurityUtils;
 import com.aiagent.vo.AlertRuleVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,9 +30,7 @@ public class AlertService {
     private final AlertRuleRepository ruleRepository;
     private final AlertRecordRepository recordRepository;
     private final NotificationService notificationService;
-
-    @Value("${ai-agent.alert.webhook-max-retries:3}")
-    private int webhookMaxRetries;
+    private final AiAgentProperties aiAgentProperties;
 
     private static final long[] WEBHOOK_BACKOFF_MS = {1000L, 5000L, 15000L};
 
@@ -192,7 +190,7 @@ public class AlertService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        for (int attempt = 0; attempt < webhookMaxRetries; attempt++) {
+        for (int attempt = 0; attempt < aiAgentProperties.getAlert().getWebhookMaxRetries(); attempt++) {
             try {
                 if (attempt > 0) {
                     long backoff = WEBHOOK_BACKOFF_MS[attempt - 1];
@@ -215,11 +213,11 @@ public class AlertService {
                 return;
             } catch (Exception e) {
                 log.warn("Webhook 通知发送失败 (尝试 {}/{}), 告警规则: {}, 错误: {}",
-                        attempt + 1, webhookMaxRetries, rule.getName(), e.getMessage());
+                        attempt + 1, aiAgentProperties.getAlert().getWebhookMaxRetries(), rule.getName(), e.getMessage());
             }
         }
 
-        log.error("Webhook 通知最终发送失败, 已重试 {} 次, 告警规则: {}", webhookMaxRetries, rule.getName());
+        log.error("Webhook 通知最终发送失败, 已重试 {} 次, 告警规则: {}", aiAgentProperties.getAlert().getWebhookMaxRetries(), rule.getName());
     }
 
     /**

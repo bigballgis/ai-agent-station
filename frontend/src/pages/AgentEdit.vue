@@ -12,9 +12,10 @@
 
     <div class="info-section">
       <div class="info-item">
-        <label :for="'agent-name'">{{ t('agent.agentName') }}:</label>
-        <input id="agent-name" v-model="agent.name" :placeholder="t('agent.inputNamePlaceholder')" />
-      </div>
+          <label :for="'agent-name'">{{ t('agent.agentName') }}:</label>
+          <input id="agent-name" v-model="agent.name" :placeholder="t('agent.inputNamePlaceholder')" />
+          <p v-if="getAgentFieldError('name')" class="text-xs text-red-500 mt-1">{{ getAgentFieldError('name') }}</p>
+        </div>
       <div class="info-item">
         <label :for="'agent-desc'">{{ t('agent.agentDescription') }}:</label>
         <textarea id="agent-desc" v-model="agent.description" :placeholder="t('agent.inputDescPlaceholder')" rows="2"></textarea>
@@ -51,6 +52,7 @@ import { message, Modal } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { approvalApi } from '@/api/approval'
 import { deploymentApi } from '@/api/deployment'
+import { useFormValidation, type FormRules } from '@/composables/useFormValidation'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -63,6 +65,12 @@ const agent = ref<Agent>({
   status: 'DRAFT'
 })
 const loading = ref(false)
+
+// Form validation
+const agentFormRules: FormRules = {
+  name: [{ required: true, type: 'required' }, { type: 'maxLength', max: 100 }],
+}
+const { validateForm: validateAgentForm, getFieldError: getAgentFieldError } = useFormValidation(agentFormRules)
 
 async function loadAgent() {
   loading.value = true
@@ -77,8 +85,8 @@ async function loadAgent() {
 }
 
 async function saveAgent() {
-  if (!agent.value.name) {
-    message.error(t('agent.inputAgentNameWarning'))
+  const isValid = await validateAgentForm(agent.value as unknown as Record<string, unknown>)
+  if (!isValid) {
     return
   }
 

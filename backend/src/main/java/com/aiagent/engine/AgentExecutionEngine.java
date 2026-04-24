@@ -1,5 +1,6 @@
 package com.aiagent.engine;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.dto.AgentInvokeRequest;
 import com.aiagent.dto.AgentInvokeResponse;
 import com.aiagent.engine.graph.AgentState;
@@ -15,7 +16,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -43,25 +43,15 @@ public class AgentExecutionEngine {
     private final LangChain4jService langChain4jService;
     private final GraphParser graphParser;
     private final GraphExecutor graphExecutor;
-
-    @Value("${ai-agent.llm.default-provider:openai}")
-    private String defaultLlmProvider;
-
-    @Value("${ai-agent.llm.openai.api-key:}")
-    private String openaiApiKey;
-
-    @Value("${ai-agent.llm.qwen.api-key:}")
-    private String qwenApiKey;
-
-    @Value("${ai-agent.execution.timeout-seconds:120}")
-    private int executionTimeoutSeconds;
+    private final AiAgentProperties aiAgentProperties;
 
     public AgentExecutionEngine(AgentRepository agentRepository, ObjectMapper objectMapper,
                                  ReflectionEvaluationService reflectionEvaluationService,
                                  StringRedisTemplate stringRedisTemplate,
                                  LangChain4jService langChain4jService,
                                  GraphParser graphParser,
-                                 GraphExecutor graphExecutor) {
+                                 GraphExecutor graphExecutor,
+                                 AiAgentProperties aiAgentProperties) {
         this.agentRepository = agentRepository;
         this.objectMapper = objectMapper;
         this.reflectionEvaluationService = reflectionEvaluationService;
@@ -69,6 +59,7 @@ public class AgentExecutionEngine {
         this.langChain4jService = langChain4jService;
         this.graphParser = graphParser;
         this.graphExecutor = graphExecutor;
+        this.aiAgentProperties = aiAgentProperties;
     }
 
     public AgentInvokeResponse invokeAgent(Long agentId, AgentInvokeRequest request, String requestId, Long tenantId) {
@@ -128,11 +119,11 @@ public class AgentExecutionEngine {
                     () -> executeAgentLogic(agent, request, tenantId));
 
             try {
-                outputs = future.get(executionTimeoutSeconds, TimeUnit.SECONDS);
+                outputs = future.get(aiAgentProperties.getExecution().getTimeoutSeconds(), TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 future.cancel(true);
-                log.warn("Agent {} 执行超时 ({}s)，已取消", agent.getName(), executionTimeoutSeconds);
-                throw new RuntimeException("Agent 执行超时 (" + executionTimeoutSeconds + "s)，请优化 Agent 配置或增大超时时间");
+                log.warn("Agent {} 执行超时 ({}s)，已取消", agent.getName(), aiAgentProperties.getExecution().getTimeoutSeconds());
+                throw new RuntimeException("Agent 执行超时 (" + aiAgentProperties.getExecution().getTimeoutSeconds() + "s)，请优化 Agent 配置或增大超时时间");
             } finally {
                 timeoutExecutor.shutdownNow();
             }
@@ -305,7 +296,7 @@ public class AgentExecutionEngine {
             config.putAll(agent.getConfig());
         }
         // 设置默认值
-        config.putIfAbsent("provider", defaultLlmProvider);
+        config.putIfAbsent("provider", aiAgentProperties.getLlm().getDefaultProvider());
         config.putIfAbsent("model", "gpt-4");
         config.putIfAbsent("temperature", 0.7);
         config.putIfAbsent("maxTokens", 1024);

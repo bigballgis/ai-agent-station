@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.WorkflowProperties;
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.exception.BusinessException;
@@ -7,7 +8,6 @@ import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.WorkflowDefinitionRepository;
 import com.aiagent.repository.WorkflowInstanceRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,12 +23,7 @@ public class WorkflowService {
     private final WorkflowDefinitionRepository definitionRepository;
     private final WorkflowInstanceRepository instanceRepository;
     private final QuotaService quotaService;
-
-    @Value("${workflow.max-node-count:50}")
-    private int maxNodeCount;
-
-    @Value("${workflow.max-edge-count:100}")
-    private int maxEdgeCount;
+    private final WorkflowProperties workflowProperties;
 
     // ==================== Workflow Definition ====================
 
@@ -241,8 +236,8 @@ public class WorkflowService {
         Object nodesObj = nodes.get("nodes");
         if (nodesObj instanceof List) {
             int count = ((List<?>) nodesObj).size();
-            if (count > maxNodeCount) {
-                throw new BusinessException("工作流节点数量（" + count + "）超过最大限制（" + maxNodeCount + "）");
+            if (count > workflowProperties.getMaxNodeCount()) {
+                throw new BusinessException("工作流节点数量（" + count + "）超过最大限制（" + workflowProperties.getMaxNodeCount() + "）");
             }
         }
     }
@@ -259,8 +254,8 @@ public class WorkflowService {
         Object edgesObj = edges.get("edges");
         if (edgesObj instanceof List) {
             int count = ((List<?>) edgesObj).size();
-            if (count > maxEdgeCount) {
-                throw new BusinessException("工作流边数量（" + count + "）超过最大限制（" + maxEdgeCount + "）");
+            if (count > workflowProperties.getMaxEdgeCount()) {
+                throw new BusinessException("工作流边数量（" + count + "）超过最大限制（" + workflowProperties.getMaxEdgeCount() + "）");
             }
         }
     }

@@ -1,14 +1,31 @@
+# ============================================================
+# AI Agent Platform - 测试环境配置 (application-test.yml)
+# ============================================================
+# 使用方式: 自动激活于 src/test/resources 下
+#
+# 测试环境特点:
+# - H2 内存数据库（无需外部依赖）
+# - 禁用安全认证
+# - 禁用 Flyway 迁移
+# - 禁用速率限制
+# - 最小化的外部依赖
+# ============================================================
+
 server:
-  port: 0
-  servlet:
-    context-path: /api
+  port: 0  # 随机端口，避免冲突
 
 spring:
+  # H2 内存数据库 - PostgreSQL 兼容模式
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  h2:
+    console:
+      enabled: false
+
+  # JPA 测试配置 - 使用 create-drop 确保每次测试干净
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -16,16 +33,83 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-  data:
-    redis:
-      host: localhost
-      port: 6379
+
+  # 禁用 Flyway - 测试环境使用 JPA 自动建表
   flyway:
     enabled: false
 
+  # Redis 测试配置 - 使用本地 Redis 或嵌入式 Redis
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  # 测试环境禁用缓存
+  cache:
+    type: none
+
+# 测试环境日志 - 仅显示应用日志
+logging:
+  level:
+    com.aiagent: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
+# AI Agent 测试环境配置
+ai-agent:
+  security:
+    max-failed-attempts: 100
+    lockout-duration-minutes: 1
+  rate-limit:
+    max-attempts-per-minute: 10000
+    max-ip-global-per-minute: 100000
+    api:
+      default-limit-per-minute: 100000
+      default-limit-per-hour: 1000000
+  cache:
+    default-ttl-minutes: 1
+    dict-ttl-hours: 1
+    permission-ttl-minutes: 1
+    llm-response-ttl-minutes: 1
+  execution:
+    max-concurrent-per-agent: 100
+    timeout-seconds: 300
+  llm:
+    default-provider: openai
+    openai:
+      api-key: test-openai-key
+      base-url: http://localhost:9999/v1
+      timeout-seconds: 5
+    qwen:
+      api-key: test-qwen-key
+      base-url: http://localhost:9999/v1
+      timeout-seconds: 5
+  crypto:
+    secret-key: test-secret-key-for-unit-testing-only-must-be-at-least-32-chars
+
+# 测试环境 JWT 配置 - 使用固定的测试密钥
 jwt:
   secret: test-secret-key-for-unit-testing-only-must-be-at-least-32-chars
-  expiration: 3600000
+  expiration: 3600000  # 1 小时
+  refresh-expiration: 86400000  # 24 小时
 
-langchain4j:
-  memory-store: in-memory
+# 测试环境 CORS - 允许所有来源
+cors:
+  allowed-origins: http://localhost:*
+
+# 测试环境 Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# 测试环境禁用 SpringDoc
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

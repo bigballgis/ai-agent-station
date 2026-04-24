@@ -28,10 +28,22 @@
       <h3 class="text-lg font-semibold text-red-500 dark:text-red-400 mb-2">{{ t('password.renderError') }}</h3>
 
       <!-- 错误消息 -->
-      <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4">{{ categoryMessage }}</p>
+      <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-2">{{ categoryMessage }}</p>
 
-      <!-- 自动重试倒计时（仅网络错误） -->
-      <div v-if="errorCategory === 'network' && retryCountdown > 0" class="mb-4">
+      <!-- 恢复建议 -->
+      <p class="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
+        {{ recoverySuggestion }}
+      </p>
+
+      <!-- 最后发生时间 -->
+      <div v-if="lastOccurrenceTime" class="mb-3">
+        <span class="text-xs text-neutral-400 dark:text-neutral-500">
+          {{ t('password.lastOccurrence') }}: {{ lastOccurrenceTime }}
+        </span>
+      </div>
+
+      <!-- 自动重试倒计时（网络错误和 chunk-load 错误） -->
+      <div v-if="shouldAutoRetry && retryCountdown > 0" class="mb-4">
         <span class="text-xs text-neutral-400 dark:text-neutral-500">
           {{ t('password.autoRetryIn', { seconds: retryCountdown }) }}
         </span>
@@ -46,11 +58,40 @@
           {{ t('password.retry') }}
         </button>
         <button
+          v-if="errorCategory === 'chunk-load'"
+          @click="reloadPage"
+          class="btn btn-secondary focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+        >
+          {{ t('password.reloadPage') }}
+        </button>
+        <button
+          @click="copyErrorDetails"
+          class="btn btn-secondary focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+        >
+          {{ copySuccess ? t('common.copiedToClipboard') : t('password.copyErrorDetails') }}
+        </button>
+        <button
           @click="reportError"
           class="btn btn-secondary focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           {{ t('password.reportError') }}
         </button>
+      </div>
+
+      <!-- 可折叠的错误详情 -->
+      <div class="mt-4 text-left">
+        <button
+          @click="showDetails = !showDetails"
+          class="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+        >
+          {{ showDetails ? t('password.hideDetails') : t('password.showDetails') }}
+        </button>
+        <div v-if="showDetails" class="mt-2 p-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-500 dark:text-neutral-400 font-mono break-all max-h-48 overflow-auto">
+          <div>Message: {{ error?.message }}</div>
+          <div v-if="error?.stack">Stack: {{ error.stack }}</div>
+          <div>Category: {{ errorCategory }}</div>
+          <div>URL: {{ currentUrl }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -59,8 +100,9 @@
 <script setup lang="ts">
 import { ref, onErrorCaptured, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import service from '@/utils/request'
 
-export type ErrorCategory = 'network' | 'auth' | 'business' | 'unknown'
+export type ErrorCategory = 'network' | 'auth' | 'validation' | 'runtime' | 'chunk-load' | 'unknown'
 
 const { t } = useI18n()
 const error = ref<Error | null>(null)
@@ -69,16 +111,34 @@ const retryCountdown = ref(0)
 const hasLastContent = ref(false)
 const lastContentText = ref('')
 const contentRef = ref<HTMLElement | null>(null)
+const lastOccurrenceTime = ref('')
+const showDetails = ref(false)
+const copySuccess = ref(false)
+const currentUrl = ref('')
 
 let retryTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
+let copyResetTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
  * 根据错误信息分类
  */
 function categorizeError(err: Error): ErrorCategory {
   const msg = err.message.toLowerCase()
-  void (err.stack || '')
+  const stack = (err.stack || '').toLowerCase()
+  void stack
+
+  // Chunk-load 错误 (lazy loading failures)
+  if (
+    msg.includes('chunk') ||
+    msg.includes('loading chunk') ||
+    msg.includes('failed to fetch dynamically imported module') ||
+    msg.includes('loading css chunk') ||
+    msg.includes('importing a module script failed') ||
+    stack.includes('chunk')
+  ) {
+    return 'chunk-load'
+  }
 
   // 网络错误
   if (
@@ -107,17 +167,41 @@ function categorizeError(err: Error): ErrorCategory {
     return 'auth'
   }
 
-  // 业务错误
+  // 验证错误
   if (
     msg.includes('400') ||
-    msg.includes('409') ||
     msg.includes('422') ||
-    msg.includes('business') ||
     msg.includes('validation') ||
     msg.includes('参数') ||
-    msg.includes('校验')
+    msg.includes('校验') ||
+    msg.includes('invalid') ||
+    msg.includes('required')
   ) {
-    return 'business'
+    return 'validation'
+  }
+
+  // 运行时错误 (TypeError, ReferenceError, etc.)
+  if (
+    msg.includes('typeerror') ||
+    msg.includes('referenceerror') ||
+    msg.includes('rangeerror') ||
+    msg.includes('syntaxerror') ||
+    msg.includes('cannot read') ||
+    msg.includes('is not a function') ||
+    msg.includes('is not defined') ||
+    msg.includes('is null') ||
+    msg.includes('is undefined') ||
+    msg.includes('maximum call stack')
+  ) {
+    return 'runtime'
+  }
+
+  // 业务错误
+  if (
+    msg.includes('409') ||
+    msg.includes('business')
+  ) {
+    return 'validation'
   }
 
   return 'unknown'
@@ -130,7 +214,9 @@ const categoryStyle = computed(() => {
   const styles: Record<ErrorCategory, string> = {
     network: 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400',
     auth: 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400',
-    business: 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400',
+    validation: 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400',
+    runtime: 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400',
+    'chunk-load': 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400',
     unknown: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400',
   }
   return styles[errorCategory.value]
@@ -140,7 +226,9 @@ const categoryDot = computed(() => {
   const styles: Record<ErrorCategory, string> = {
     network: 'bg-orange-500',
     auth: 'bg-red-500',
-    business: 'bg-yellow-500',
+    validation: 'bg-yellow-500',
+    runtime: 'bg-purple-500',
+    'chunk-load': 'bg-amber-500',
     unknown: 'bg-neutral-400',
   }
   return styles[errorCategory.value]
@@ -152,10 +240,32 @@ const categoryDot = computed(() => {
 const categoryMessage = computed(() => {
   const key = `password.errorCategoryMessages.${errorCategory.value}`
   const template = t(key)
-  if (errorCategory.value === 'business') {
+  if (errorCategory.value === 'validation') {
     return template.replace('{message}', error.value?.message || '')
   }
   return template
+})
+
+/**
+ * 根据错误分类生成恢复建议
+ */
+const recoverySuggestion = computed(() => {
+  const suggestions: Record<ErrorCategory, string> = {
+    network: t('password.recoverySuggestions.network'),
+    auth: t('password.recoverySuggestions.auth'),
+    validation: t('password.recoverySuggestions.validation'),
+    runtime: t('password.recoverySuggestions.runtime'),
+    'chunk-load': t('password.recoverySuggestions.chunkLoad'),
+    unknown: t('password.recoverySuggestions.unknown'),
+  }
+  return suggestions[errorCategory.value]
+})
+
+/**
+ * 是否应该自动重试
+ */
+const shouldAutoRetry = computed(() => {
+  return errorCategory.value === 'network' || errorCategory.value === 'chunk-load'
 })
 
 /**
@@ -172,7 +282,7 @@ function saveContentSnapshot() {
 }
 
 /**
- * 网络错误自动重试（3秒倒计时）
+ * 自动重试（3秒倒计时）
  */
 function startAutoRetry() {
   retryCountdown.value = 3
@@ -200,13 +310,61 @@ function clearTimers() {
     clearInterval(countdownTimer)
     countdownTimer = null
   }
+  if (copyResetTimer) {
+    clearTimeout(copyResetTimer)
+    copyResetTimer = null
+  }
   retryCountdown.value = 0
 }
 
 /**
- * 报告错误（输出到控制台供调试）
+ * 复制错误详情到剪贴板
  */
-function reportError() {
+async function copyErrorDetails() {
+  if (!error.value) return
+
+  const details = {
+    category: errorCategory.value,
+    message: error.value.message,
+    stack: error.value.stack,
+    url: window.location.href,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+  }
+
+  const text = JSON.stringify(details, null, 2)
+
+  try {
+    await navigator.clipboard.writeText(text)
+    copySuccess.value = true
+    copyResetTimer = setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      copySuccess.value = true
+      copyResetTimer = setTimeout(() => {
+        copySuccess.value = false
+      }, 2000)
+    } catch {
+      // Silently fail
+    }
+    document.body.removeChild(textarea)
+  }
+}
+
+/**
+ * 报告错误到后端（如果 API 可用）
+ */
+async function reportError() {
   const report = {
     category: errorCategory.value,
     message: error.value?.message,
@@ -215,8 +373,24 @@ function reportError() {
     timestamp: new Date().toISOString(),
     userAgent: navigator.userAgent,
   }
+
   console.error('[ErrorBoundary] Error Report:', JSON.stringify(report, null, 2))
   console.table(report)
+
+  // Try to report to backend if API is available
+  try {
+    await service.post('/v1/error-reports', report, { timeout: 5000 })
+  } catch {
+    // Silently fail - backend may not have this endpoint
+    console.warn('[ErrorBoundary] Failed to report error to backend')
+  }
+}
+
+/**
+ * 重新加载页面（用于 chunk-load 错误）
+ */
+function reloadPage() {
+  window.location.reload()
 }
 
 onErrorCaptured((err, _instance, info) => {
@@ -225,11 +399,13 @@ onErrorCaptured((err, _instance, info) => {
 
   error.value = err
   errorCategory.value = categorizeError(err)
+  lastOccurrenceTime.value = new Date().toLocaleString()
+  currentUrl.value = window.location.href
 
   console.warn(`[ErrorBoundary] Captured ${errorCategory.value} error:`, err.message, '\nInfo:', info)
 
-  // 网络错误自动重试
-  if (errorCategory.value === 'network') {
+  // 网络错误和 chunk-load 错误自动重试
+  if (shouldAutoRetry.value) {
     clearTimers()
     startAutoRetry()
   }
@@ -241,6 +417,8 @@ function reset() {
   clearTimers()
   error.value = null
   errorCategory.value = 'unknown'
+  showDetails.value = false
+  lastOccurrenceTime.value = ''
 }
 
 onUnmounted(() => {

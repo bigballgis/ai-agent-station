@@ -1,7 +1,7 @@
 package com.aiagent.config;
 
+import com.aiagent.config.properties.AppProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -28,26 +28,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 @EnableAsync
 public class ThreadPoolConfig {
 
-    @Value("${app.thread-pool.core-size:#{T(java.lang.Runtime).getRuntime().availableProcessors()}}")
-    private int coreSize;
+    private final AppProperties appProperties;
 
-    @Value("${app.thread-pool.max-size:#{T(java.lang.Runtime).getRuntime().availableProcessors() * 2}}")
-    private int maxSize;
-
-    @Value("${app.thread-pool.queue-capacity:200}")
-    private int queueCapacity;
-
-    @Value("${app.thread-pool.keep-alive-seconds:60}")
-    private int keepAliveSeconds;
-
-    @Value("${app.thread-pool.thread-name-prefix:ai-agent-}")
-    private String threadNamePrefix;
+    public ThreadPoolConfig(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
 
     /**
      * 通用异步任务线程池
      */
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
+        int coreSize = appProperties.getThreadPool().getCoreSize();
+        int maxSize = appProperties.getThreadPool().getMaxSize();
+        int queueCapacity = appProperties.getThreadPool().getQueueCapacity();
+        int keepAliveSeconds = appProperties.getThreadPool().getKeepAliveSeconds();
+        String threadNamePrefix = appProperties.getThreadPool().getThreadNamePrefix();
+
         log.info("[ThreadPool] 初始化通用线程池: core={}, max={}, queue={}",
                 coreSize, maxSize, queueCapacity);
 

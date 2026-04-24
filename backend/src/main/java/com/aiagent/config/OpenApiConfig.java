@@ -1,5 +1,6 @@
 package com.aiagent.config;
 
+import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
@@ -98,24 +99,32 @@ public class OpenApiConfig {
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
+                .externalDocs(new ExternalDocumentation()
+                        .description("AI Agent Station 完整文档")
+                        .url("https://github.com/aiagent-platform/ai-agent-platform#readme"))
                 .tags(List.of(
-                        new Tag().name("认证管理").description("用户登录、注册、Token刷新、验证码、密码管理"),
-                        new Tag().name("Agent管理").description("AI Agent的CRUD、版本管理、模板市场、复制与评分"),
-                        new Tag().name("Agent API").description("Agent调用执行、状态查询、异步任务管理"),
-                        new Tag().name("工作流管理").description("工作流定义CRUD、版本管理、实例执行、审批流转"),
-                        new Tag().name("API接口管理").description("API接口CRUD、版本控制、废弃与启用切换"),
-                        new Tag().name("API调用日志").description("API调用日志查询、统计与分析"),
-                        new Tag().name("工具管理").description("MCP工具与Function Calling工具查询、健康检查、连接测试"),
-                        new Tag().name("文件管理").description("文件上传、下载、列表、删除"),
-                        new Tag().name("用户管理").description("用户CRUD、密码重置"),
-                        new Tag().name("角色管理").description("角色CRUD、用户角色分配"),
-                        new Tag().name("权限管理").description("权限CRUD、角色权限分配"),
-                        new Tag().name("租户管理").description("多租户CRUD、API密钥管理、租户激活"),
-                        new Tag().name("配额管理").description("租户配额查询与限制更新"),
-                        new Tag().name("缓存统计").description("缓存命中率、命中/未命中次数统计"),
-                        new Tag().name("告警管理").description("告警规则CRUD、告警记录查询与处理"),
-                        new Tag().name("部署管理").description("Agent部署与发布管理"),
-                        new Tag().name("监控与测试").description("Agent测试、会话管理、执行历史、数据导出")
+                        new Tag().name("认证管理").description("用户登录、注册、Token刷新、验证码、密码管理。支持 JWT Bearer Token 和 API Key 两种认证方式。"),
+                        new Tag().name("Agent管理").description("AI Agent的CRUD、版本管理、模板市场、复制与评分。支持 DAG 图编排和多 LLM 集成。"),
+                        new Tag().name("Agent API").description("Agent调用执行、状态查询、异步任务管理。支持同步/异步/流式三种调用模式。"),
+                        new Tag().name("工作流管理").description("工作流定义CRUD、版本管理、实例执行、审批流转。支持 DAG 图执行引擎和节点超时控制。"),
+                        new Tag().name("API接口管理").description("API接口CRUD、版本控制、废弃与启用切换。支持 Sunset/Warning/Link 废弃响应头。"),
+                        new Tag().name("API调用日志").description("API调用日志查询、统计与分析。支持按时间范围、Agent、状态等维度聚合。"),
+                        new Tag().name("工具管理").description("MCP工具与Function Calling工具查询、健康检查、连接测试。支持自动注册和健康监控。"),
+                        new Tag().name("文件管理").description("文件上传、下载、列表、删除。支持路径隔离和大小限制（50MB）。"),
+                        new Tag().name("用户管理").description("用户CRUD、密码重置。需要 ADMIN 角色权限。"),
+                        new Tag().name("角色管理").description("角色CRUD、用户角色分配。支持 RBAC 权限模型。"),
+                        new Tag().name("权限管理").description("权限CRUD、角色权限分配。权限粒度到资源操作级别。"),
+                        new Tag().name("租户管理").description("多租户CRUD、API密钥管理、租户激活。需要 SUPER_ADMIN 角色权限。"),
+                        new Tag().name("配额管理").description("租户配额查询与限制更新。支持 Agent、工作流、存储等资源配额。"),
+                        new Tag().name("缓存统计").description("缓存命中率、命中/未命中次数统计。覆盖 9 个缓存区域。"),
+                        new Tag().name("告警管理").description("告警规则CRUD、告警记录查询与处理。支持 Webhook/邮件/站内信多通道告警。"),
+                        new Tag().name("部署管理").description("Agent部署与发布管理。支持环境隔离和版本回滚。"),
+                        new Tag().name("监控与测试").description("Agent测试、会话管理、执行历史、数据导出。包含健康检查和 Prometheus 指标端点。"),
+                        new Tag().name("审批管理").description("审批提交、审批通过、拒绝。支持多级审批链和工作流内嵌审批。"),
+                        new Tag().name("流式对话").description("SSE 流式对话与 Agent 执行。支持 GET/POST 两种方式，事件格式包含 token/done/error/node_start/node_end。"),
+                        new Tag().name("会话管理").description("在线会话查询、踢出、多设备管理。最多 3 个并发会话。"),
+                        new Tag().name("速率限制").description("速率限制查询与仪表盘。支持 Redis 分布式限流和标准 RateLimit 响应头。"),
+                        new Tag().name("数据导出").description("数据导出为 CSV 格式。支持 Agent、工作流等数据导出，带记录数限制。")
                 ));
     }
 

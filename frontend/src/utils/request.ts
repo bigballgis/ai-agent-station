@@ -321,31 +321,57 @@ service.interceptors.response.use(
       }
     }
 
-    // 403 禁止访问: 直接清除认证
+    // 403 禁止访问: 显示权限不足消息（不自动跳转登录页）
     if (status === 403) {
-      clearAuthAndRedirect()
+      message.error(i18n.global.t('common.error.permissionDenied'))
       return Promise.reject(error)
     }
 
-    // 429 限流（已达最大重试次数）: 提示用户稍后重试
+    // 429 限流（已达最大重试次数）: 显示 Retry-After 倒计时
     if (status === 429) {
-      message.warning(i18n.global.t('common.error.rateLimit'))
+      const retryAfterSec = getRetryAfterSeconds(error)
+      if (retryAfterSec > 0) {
+        message.warning(i18n.global.t('common.error.retryAfter', { seconds: retryAfterSec }))
+      } else {
+        message.warning(i18n.global.t('common.error.rateLimit'))
+      }
       return Promise.reject(error)
     }
 
-    // 500/502/503 服务端错误
+    // 502/503 服务不可用: 显示特定消息
+    if (status === 502 || status === 503) {
+      message.error(i18n.global.t('common.error.serviceUnavailable'))
+      return Promise.reject(error)
+    }
+
+    // 500/504 其他服务端错误
     if (status >= 500) {
       message.error(i18n.global.t('common.error.serviceUnavailable'))
       return Promise.reject(error)
     }
 
-    // 其他错误（包括网络异常）
+    // 请求超时处理
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      message.error(i18n.global.t('common.error.requestTimeout'))
+      return Promise.reject(error)
+    }
+
+    // 网络错误区分（离线 vs 服务器不可达）
+    if (!navigator.onLine) {
+      message.error(i18n.global.t('common.error.offlineError'))
+      return Promise.reject(error)
+    }
+
+    if (error.code === 'ERR_NETWORK' || !error.response) {
+      message.error(i18n.global.t('common.error.serverUnreachable'))
+      return Promise.reject(error)
+    }
+
+    // 其他错误（如 400、404 等）
     const errorData = error.response?.data as Record<string, unknown> | undefined
     const errorMsg = getErrorDisplayMessage(
       errorData,
-      (!error.response && i18n.global.t('common.error.networkError'))
-      || error.message
-      || 'Request failed'
+      error.message || 'Request failed'
     )
     message.error(errorMsg)
     return Promise.reject(error)

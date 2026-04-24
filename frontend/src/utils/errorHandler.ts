@@ -8,10 +8,10 @@ import { App } from 'vue'
  * - window.onerror 捕获全局 JS 错误
  * - window.onunhandledrejection 捕获未处理的 Promise 异常
  * - 错误上报到监控系统（生产环境）
- * - 错误分类：network / auth / business / unknown
+ * - 错误分类：network / auth / validation / runtime / chunk-load / unknown
  */
 
-export type ErrorCategory = 'network' | 'auth' | 'business' | 'unknown'
+export type ErrorCategory = 'network' | 'auth' | 'validation' | 'runtime' | 'chunk-load' | 'unknown'
 
 const ERROR_STORAGE_KEY = '__frontend_error_reports__'
 const MAX_STORED_ERRORS = 50
@@ -107,7 +107,20 @@ export function clearStoredErrors(): void {
  */
 export function categorizeError(error: unknown): ErrorCategory {
   const msg = String(error).toLowerCase()
-  void (error instanceof Error ? (error.stack || '').toLowerCase() : '')
+  const stack = error instanceof Error ? (error.stack || '').toLowerCase() : ''
+  void stack
+
+  // Chunk-load 错误 (lazy loading failures)
+  if (
+    msg.includes('chunk') ||
+    msg.includes('loading chunk') ||
+    msg.includes('failed to fetch dynamically imported module') ||
+    msg.includes('loading css chunk') ||
+    msg.includes('importing a module script failed') ||
+    stack.includes('chunk')
+  ) {
+    return 'chunk-load'
+  }
 
   // 网络错误
   if (
@@ -138,17 +151,41 @@ export function categorizeError(error: unknown): ErrorCategory {
     return 'auth'
   }
 
-  // 业务错误
+  // 验证错误
   if (
     msg.includes('400') ||
-    msg.includes('409') ||
     msg.includes('422') ||
-    msg.includes('business') ||
     msg.includes('validation') ||
     msg.includes('参数') ||
-    msg.includes('校验')
+    msg.includes('校验') ||
+    msg.includes('invalid') ||
+    msg.includes('required')
   ) {
-    return 'business'
+    return 'validation'
+  }
+
+  // 运行时错误 (TypeError, ReferenceError, etc.)
+  if (
+    msg.includes('typeerror') ||
+    msg.includes('referenceerror') ||
+    msg.includes('rangeerror') ||
+    msg.includes('syntaxerror') ||
+    msg.includes('cannot read') ||
+    msg.includes('is not a function') ||
+    msg.includes('is not defined') ||
+    msg.includes('is null') ||
+    msg.includes('is undefined') ||
+    msg.includes('maximum call stack')
+  ) {
+    return 'runtime'
+  }
+
+  // 业务错误
+  if (
+    msg.includes('409') ||
+    msg.includes('business')
+  ) {
+    return 'validation'
   }
 
   return 'unknown'

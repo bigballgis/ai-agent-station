@@ -118,12 +118,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,configprops
       base-path: /actuator
   endpoint:
     health:
       show-details: always
       show-components: always
+    # 配置属性端点 - 显示当前激活的配置（排除敏感值）
+    configprops:
+      show-values: WHEN_AUTHORIZED
       probes:
         enabled: true
     # 暴露 HikariCP 连接池健康详情

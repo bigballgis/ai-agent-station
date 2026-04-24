@@ -797,6 +797,35 @@
 
 ---
 
+### v1.2.0 (Round 277-279)
+
+#### Round 277: README.md 全面增强
+- README.md 重构为完整项目文档（含目录导航）
+- 新增: 功能概览（核心能力、安全合规、多租户运维）
+- 新增: 技术栈表格（前端/后端/基础设施）
+- 新增: 系统架构 ASCII 图（整体架构 + 后端分层）
+- 新增: 环境变量表格（必填/可选分类）
+- 新增: API 概览表格（20 个模块、120+ 端点）
+- 新增: 质量指标表格（截至 Round 270）
+- 新增: 贡献指南快速概要
+
+#### Round 278: 后端代码文档（package-info.java）
+- 新增 `com.aiagent.controller/package-info.java` -- 33 个控制器概述
+- 新增 `com.aiagent.service/package-info.java` -- 45+ 个服务概述（含 llm/、tool/ 子包）
+- 新增 `com.aiagent.repository/package-info.java` -- 38 个 Repository 概述
+- 新增 `com.aiagent.config/package-info.java` -- 28 个配置类概述
+- 新增 `com.aiagent.security/package-info.java` -- 安全框架概述（含子包）
+
+#### Round 279: API 文档增强
+- OpenApiConfig: 新增 ExternalDocumentation 外部文档链接
+- OpenApiConfig: 新增 5 个 Tag 描述（审批管理、流式对话、会话管理、速率限制、数据导出）
+- OpenApiConfig: 增强 17 个现有 Tag 描述（补充技术细节）
+- 新增 `docs/architecture.md` -- 系统架构文档（前端/后端/数据库/安全/可观测性/网络/部署）
+- 新增 `docs/security.md` -- 安全措施文档（认证/授权/传输/输入/数据/API/审计/基础设施）
+- 新增 `docs/deployment.md` -- 部署文档快速参考（链接到 DEPLOYMENT.md）
+
+---
+
 ### v1.0.0
 - 初始 API 发布
 - 认证管理（登录、注册、Token管理、验证码、密码策略）

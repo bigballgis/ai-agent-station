@@ -1,5 +1,6 @@
 package com.aiagent.security;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.UserRole;
 import com.aiagent.repository.UserRoleRepository;
 import com.aiagent.repository.RoleRepository;
@@ -11,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,22 +35,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
     private final AuthService authService;
+    private final AiAgentProperties aiAgentProperties;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil, ApiKeyService apiKeyService,
             UserRoleRepository userRoleRepository, RoleRepository roleRepository,
-            @Lazy AuthService authService) {
+            @Lazy AuthService authService, AiAgentProperties aiAgentProperties) {
         this.jwtUtil = jwtUtil;
         this.apiKeyService = apiKeyService;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
         this.authService = authService;
+        this.aiAgentProperties = aiAgentProperties;
     }
-
-    @Value("${ai-agent.tenant.default-schema:public}")
-    private String defaultSchema;
-
-    @Value("${ai-agent.tenant.schema-prefix:t_}")
-    private String schemaPrefix;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -126,9 +122,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void setTenantContext(Long tenantId) {
         if (tenantId != null) {
             TenantContextHolder.setTenantId(tenantId);
-            TenantContextHolder.setSchemaName(schemaPrefix + tenantId);
+            TenantContextHolder.setSchemaName(aiAgentProperties.getTenant().getSchemaPrefix() + tenantId);
         } else {
-            TenantContextHolder.setSchemaName(defaultSchema);
+            TenantContextHolder.setSchemaName(aiAgentProperties.getTenant().getDefaultSchema());
         }
     }
 

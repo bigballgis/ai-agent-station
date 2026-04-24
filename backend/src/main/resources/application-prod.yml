@@ -1,0 +1,135 @@
+# ============================================================
+# AI Agent Platform - 生产环境配置 (application-prod.yml)
+# ============================================================
+# 使用方式: java -jar app.jar --spring.profiles.active=prod
+# 或设置环境变量: SPRING_PROFILES_ACTIVE=prod
+#
+# 生产环境特点:
+# - 严格的安全配置（HSTS preload, CSP 严格模式）
+# - 更长的缓存 TTL 和更大的连接池
+# - 更严格的速率限制
+# - WARN 级别的框架日志
+# ============================================================
+
+server:
+  port: ${SERVER_PORT:8080}
+  # 生产环境 Tomcat 优化
+  tomcat:
+    max-threads: 400
+    min-spare-threads: 50
+    max-connections: 20000
+    accept-count: 200
+
+spring:
+  # 生产环境数据库连接池优化
+  datasource:
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL:50}
+      minimum-idle: ${HIKARI_MIN_IDLE:10}
+      leak-detection-threshold: 30000
+
+  # 生产环境 JPA 配置
+  jpa:
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  # 生产环境 Redis 连接池优化
+  data:
+    redis:
+      lettuce:
+        pool:
+          max-active: 50
+          max-idle: 20
+          min-idle: 10
+
+  # 生产环境缓存配置 - 更长的 TTL
+  cache:
+    redis:
+      time-to-live: 7200000  # 2 小时
+
+  # 生产环境文件上传限制
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+# 生产环境日志配置 - 仅 WARN 及以上
+logging:
+  level:
+    com.aiagent: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN
+    com.zaxxer.hikari: WARN
+    org.flywaydb: WARN
+    dev.langchain4j: WARN
+
+# AI Agent 生产环境配置
+ai-agent:
+  security:
+    max-failed-attempts: 5
+    lockout-duration-minutes: 30
+    password-history-count: 10
+    refresh-token-ttl-days: 7
+  session:
+    timeout-hours: 8
+    max-concurrent-sessions: 3
+  rate-limit:
+    max-attempts-per-minute: 5
+    max-ip-global-per-minute: 10
+    api:
+      default-limit-per-minute: 100
+      default-limit-per-hour: 1000
+      burst-capacity: 20
+  cache:
+    default-ttl-minutes: 60
+    dict-ttl-hours: 6
+    permission-ttl-minutes: 60
+    llm-response-ttl-minutes: 60
+  execution:
+    max-concurrent-per-agent: 5
+    timeout-seconds: 120
+  llm:
+    openai:
+      log-requests: false
+      log-responses: false
+    qwen:
+      log-requests: false
+      log-responses: false
+
+# 生产环境 CORS - 必须显式配置允许的域名
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  # 生产环境专用 CORS 来源（如果设置，优先于 allowed-origins）
+  allowed-origins-production: ${CORS_ALLOWED_ORIGINS_PRODUCTION:}
+
+# 生产环境 Actuator - 仅暴露健康和指标
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+
+# 生产环境安全头配置
+security:
+  csp:
+    # 生产环境 CSP connect-src 额外来源（按需添加 CDN 域名）
+    connect-src-extra: ${SECURITY_CSP_CONNECT_SRC_EXTRA:}
+
+# 生产环境 SpringDoc 默认禁用
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}

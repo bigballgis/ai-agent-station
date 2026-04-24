@@ -1,5 +1,6 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -7,7 +8,6 @@ import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * LangChain4j OpenAI Provider
  * 支持 OpenAI GPT-4/4o/3.5-turbo 以及所有 OpenAI 兼容 API（如 Azure OpenAI、国内代理）
- * 
+ *
  * 核心特性:
  * - 使用 langchain4j OpenAiChatModel 替代手动 RestTemplate 调用
  * - 支持多模型实例缓存（按 modelName + temperature 缓存）
@@ -31,23 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class OpenAiLangChain4jProvider implements LangChain4jProvider {
 
-    @Value("${ai-agent.llm.openai.api-key:}")
-    private String apiKey;
+    private final AiAgentProperties.Llm.ProviderConfig openaiConfig;
 
-    @Value("${ai-agent.llm.openai.base-url:https://api.openai.com/v1}")
-    private String baseUrl;
-
-    @Value("${ai-agent.llm.openai.default-model:gpt-4o}")
-    private String defaultModel;
-
-    @Value("${ai-agent.llm.openai.timeout-seconds:60}")
-    private Integer timeoutSeconds;
-
-    @Value("${ai-agent.llm.openai.log-requests:false}")
-    private Boolean logRequests;
-
-    @Value("${ai-agent.llm.openai.log-responses:false}")
-    private Boolean logResponses;
+    public OpenAiLangChain4jProvider(AiAgentProperties aiAgentProperties) {
+        this.openaiConfig = aiAgentProperties.getLlm().getOpenai();
+    }
 
     /**
      * 模型实例缓存: key = "modelName|temperature|topP|maxTokens"
@@ -57,8 +45,8 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
 
     @PostConstruct
     public void init() {
-        log.info("[LangChain4j] OpenAI Provider 初始化 - baseUrl: {}, defaultModel: {}", baseUrl, defaultModel);
-        if (apiKey == null || apiKey.isBlank()) {
+        log.info("[LangChain4j] OpenAI Provider 初始化 - baseUrl: {}, defaultModel: {}", openaiConfig.getBaseUrl(), openaiConfig.getDefaultModel());
+        if (openaiConfig.getApiKey() == null || openaiConfig.getApiKey().isBlank()) {
             log.warn("[LangChain4j] OpenAI API Key 未配置，OpenAI 模型将不可用");
         }
     }
@@ -77,7 +65,7 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public ChatLanguageModel getChatModel() {
-        return getOrCreateChatModel(defaultModel, 0.7, 0.9, 2048);
+        return getOrCreateChatModel(openaiConfig.getDefaultModel(), 0.7, 0.9, 2048);
     }
 
     /**
@@ -90,15 +78,15 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
                     modelName, temperature, topP, maxTokens);
 
             OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
-                    .apiKey(apiKey)
-                    .baseUrl(baseUrl)
-                    .modelName(modelName != null ? modelName : defaultModel)
+                    .apiKey(openaiConfig.getApiKey())
+                    .baseUrl(openaiConfig.getBaseUrl())
+                    .modelName(modelName != null ? modelName : openaiConfig.getDefaultModel())
                     .temperature(temperature)
                     .topP(topP)
                     .maxTokens(maxTokens)
-                    .timeout(java.time.Duration.ofSeconds(timeoutSeconds))
-                    .logRequests(logRequests)
-                    .logResponses(logResponses);
+                    .timeout(java.time.Duration.ofSeconds(openaiConfig.getTimeoutSeconds()))
+                    .logRequests(openaiConfig.getLogRequests())
+                    .logResponses(openaiConfig.getLogResponses());
 
             return builder.build();
         });
@@ -106,17 +94,17 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public StreamingChatLanguageModel getStreamingChatModel() {
-        String cacheKey = "streaming|" + defaultModel;
+        String cacheKey = "streaming|" + openaiConfig.getDefaultModel();
         return streamingModelCache.computeIfAbsent(cacheKey, key -> {
-            log.info("[LangChain4j] 创建 OpenAI StreamingChatModel: model={}", defaultModel);
+            log.info("[LangChain4j] 创建 OpenAI StreamingChatModel: model={}", openaiConfig.getDefaultModel());
             return OpenAiStreamingChatModel.builder()
-                    .apiKey(apiKey)
-                    .baseUrl(baseUrl)
-                    .modelName(defaultModel)
+                    .apiKey(openaiConfig.getApiKey())
+                    .baseUrl(openaiConfig.getBaseUrl())
+                    .modelName(openaiConfig.getDefaultModel())
                     .temperature(0.7)
-                    .timeout(java.time.Duration.ofSeconds(timeoutSeconds))
-                    .logRequests(logRequests)
-                    .logResponses(logResponses)
+                    .timeout(java.time.Duration.ofSeconds(openaiConfig.getTimeoutSeconds()))
+                    .logRequests(openaiConfig.getLogRequests())
+                    .logResponses(openaiConfig.getLogResponses())
                     .build();
         });
     }
@@ -128,13 +116,13 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
         String cacheKey = "streaming|" + modelName + "|" + temperature;
         return streamingModelCache.computeIfAbsent(cacheKey, key ->
                 OpenAiStreamingChatModel.builder()
-                        .apiKey(apiKey)
-                        .baseUrl(baseUrl)
-                        .modelName(modelName != null ? modelName : defaultModel)
+                        .apiKey(openaiConfig.getApiKey())
+                        .baseUrl(openaiConfig.getBaseUrl())
+                        .modelName(modelName != null ? modelName : openaiConfig.getDefaultModel())
                         .temperature(temperature)
-                        .timeout(java.time.Duration.ofSeconds(timeoutSeconds))
-                        .logRequests(logRequests)
-                        .logResponses(logResponses)
+                        .timeout(java.time.Duration.ofSeconds(openaiConfig.getTimeoutSeconds()))
+                        .logRequests(openaiConfig.getLogRequests())
+                        .logResponses(openaiConfig.getLogResponses())
                         .build()
         );
     }
@@ -146,7 +134,7 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public boolean supportsStreaming() {
-        return apiKey != null && !apiKey.isBlank();
+        return openaiConfig.getApiKey() != null && !openaiConfig.getApiKey().isBlank();
     }
 
     @Override
@@ -175,7 +163,7 @@ public class OpenAiLangChain4jProvider implements LangChain4jProvider {
         return model.generate(UserMessage.from(userMessage)).content().text();
     }
 
-    private String buildCacheKey(String model, double temp, double topP, int maxTokens) {
-        return String.format("%s|%.2f|%.2f|%d", model, temp, topP, maxTokens);
+    private String buildCacheKey(String modelName, double temperature, double topP, int maxTokens) {
+        return String.format("%s|%.2f|%.2f|%d", modelName, temperature, topP, maxTokens);
     }
 }

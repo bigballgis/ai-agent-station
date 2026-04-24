@@ -1,9 +1,9 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.WorkflowProperties;
 import com.aiagent.entity.WorkflowInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -27,9 +27,7 @@ public class WorkflowExecutionRecovery {
 
     private final WorkflowInstanceRepository instanceRepository;
     private final WorkflowAsyncExecutor workflowAsyncExecutor;
-
-    @Value("${workflow.max-execution-duration:300}")
-    private int maxExecutionDurationSeconds;
+    private final WorkflowProperties workflowProperties;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional(rollbackFor = Exception.class)
@@ -64,10 +62,10 @@ public class WorkflowExecutionRecovery {
 
             long elapsedSeconds = Duration.between(instance.getStartedAt(), LocalDateTime.now()).getSeconds();
 
-            if (elapsedSeconds > maxExecutionDurationSeconds) {
+            if (elapsedSeconds > workflowProperties.getMaxExecutionDuration()) {
                 // 超时，标记为失败
                 log.warn("[WorkflowRecovery] 实例 {} 已超时（{}s > {}s），标记为 FAILED",
-                        instance.getId(), elapsedSeconds, maxExecutionDurationSeconds);
+                        instance.getId(), elapsedSeconds, workflowProperties.getMaxExecutionDuration());
                 instance.setStatus(WorkflowInstance.InstanceStatus.FAILED);
                 instance.setError("工作流执行超时（服务器重启前已运行 " + elapsedSeconds + " 秒）");
                 instance.setCompletedAt(LocalDateTime.now());

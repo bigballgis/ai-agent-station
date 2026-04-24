@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.common.ResultCode;
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.RegisterRequestDTO;
 import com.aiagent.entity.PasswordHistory;
@@ -17,7 +18,6 @@ import com.aiagent.security.validator.PasswordPolicyValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,17 +39,7 @@ public class AuthService {
 
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
 
-    @Value("${ai-agent.security.max-failed-attempts:5}")
-    private int maxFailedAttempts;
-
-    @Value("${ai-agent.security.lockout-duration-minutes:30}")
-    private int lockoutDurationMinutes;
-
-    @Value("${ai-agent.security.password-history-count:5}")
-    private int passwordHistoryCount;
-
-    @Value("${ai-agent.security.refresh-token-ttl-days:7}")
-    private long refreshTokenTtlDays;
+    private final AiAgentProperties aiAgentProperties;
 
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
@@ -116,7 +106,7 @@ public class AuthService {
 
         // Store refresh token in Redis with 7-day TTL
         String redisKey = REFRESH_TOKEN_PREFIX + user.getId();
-        redisTemplate.opsForValue().set(redisKey, refreshToken, refreshTokenTtlDays, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(redisKey, refreshToken, aiAgentProperties.getSecurity().getRefreshTokenTtlDays(), TimeUnit.DAYS);
 
         // Create session record and enforce concurrent session limit
         try {
@@ -249,7 +239,7 @@ public class AuthService {
         String newRefreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername(), user.getTenantId());
 
         // Update refresh token in Redis with new TTL
-        redisTemplate.opsForValue().set(redisKey, newRefreshToken, refreshTokenTtlDays, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(redisKey, newRefreshToken, aiAgentProperties.getSecurity().getRefreshTokenTtlDays(), TimeUnit.DAYS);
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", newAccessToken);
@@ -402,8 +392,8 @@ public class AuthService {
         int attempts = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
         user.setFailedLoginAttempts(attempts);
 
-        if (attempts >= maxFailedAttempts) {
-            user.setLockedUntil(LocalDateTime.now().plusMinutes(lockoutDurationMinutes));
+        if (attempts >= aiAgentProperties.getSecurity().getMaxFailedAttempts()) {
+            user.setLockedUntil(LocalDateTime.now().plusMinutes(aiAgentProperties.getSecurity().getLockoutDurationMinutes()));
             log.warn("账户已锁定: username={}, attempts={}, lockedUntil={}",
                     user.getUsername(), attempts, user.getLockedUntil());
         }
@@ -430,11 +420,11 @@ public class AuthService {
      */
     private void checkPasswordHistory(Long userId, String newPassword) {
         List<PasswordHistory> history = passwordHistoryRepository.findTopNByUserIdOrderByCreatedAtDesc(
-                userId, PageRequest.of(0, passwordHistoryCount));
+                userId, PageRequest.of(0, aiAgentProperties.getSecurity().getPasswordHistoryCount()));
         for (PasswordHistory ph : history) {
             if (passwordEncoder.matches(newPassword, ph.getPasswordHash())) {
                 throw new BusinessException(ResultCode.BAD_REQUEST.getCode(),
-                        "不能使用最近" + passwordHistoryCount + "次使用过的密码");
+                        "不能使用最近" + aiAgentProperties.getSecurity().getPasswordHistoryCount() + "次使用过的密码");
             }
         }
     }

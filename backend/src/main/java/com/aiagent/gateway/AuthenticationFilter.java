@@ -1,8 +1,8 @@
 package com.aiagent.gateway;
 
+import com.aiagent.config.properties.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
@@ -21,13 +21,16 @@ public class AuthenticationFilter implements GatewayFilter, Ordered {
     public static final String TENANT_ID_ATTR = "tenantId";
     public static final String USER_ID_ATTR = "userId";
     public static final String API_KEY_HEADER = "X-API-Key";
-    public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final AUTHORIZATION_HEADER = "Authorization";
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final JwtProperties jwtProperties;
+
+    public AuthenticationFilter(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

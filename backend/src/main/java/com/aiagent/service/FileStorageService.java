@@ -1,13 +1,10 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AppProperties;
 import com.aiagent.exception.FileProcessingException;
 import com.aiagent.exception.ValidationException;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.retry.annotation.Backoff;
@@ -39,6 +36,10 @@ public class FileStorageService {
 
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
+    private final AppProperties appProperties;
+
+    private Path rootLocation;
+
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",
@@ -68,14 +69,9 @@ public class FileStorageService {
             "video/quicktime"
     );
 
-    @Value("${app.storage.path:/data/uploads}")
-    private String storagePath;
-
-    private Path rootLocation;
-
     @PostConstruct
     public void init() {
-        rootLocation = Paths.get(storagePath).toAbsolutePath().normalize();
+        rootLocation = Paths.get(appProperties.getStorage().getPath()).toAbsolutePath().normalize();
         try {
             Files.createDirectories(rootLocation);
             log.info("File storage initialized at: {}", rootLocation);

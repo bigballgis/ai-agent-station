@@ -1,5 +1,6 @@
 package com.aiagent.tenant;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,17 +28,16 @@ public class TenantDataSourceConfig {
     @Value("${spring.datasource.driver-class-name}")
     private String driverClassName;
 
-    @Value("${ai-agent.tenant.default-schema:public}")
-    private String defaultSchema;
+    private final AiAgentProperties aiAgentProperties;
 
     @Bean
     @Primary
     public DataSource dynamicDataSource() {
         DynamicSchemaRoutingDataSource routingDataSource = new DynamicSchemaRoutingDataSource();
 
-        DataSource defaultDataSource = createDataSource(defaultSchema);
+        DataSource defaultDataSource = createDataSource(aiAgentProperties.getTenant().getDefaultSchema());
         Map<Object, Object> targetDataSources = new HashMap<>();
-        targetDataSources.put(defaultSchema, defaultDataSource);
+        targetDataSources.put(aiAgentProperties.getTenant().getDefaultSchema(), defaultDataSource);
 
         routingDataSource.setDefaultTargetDataSource(defaultDataSource);
         routingDataSource.setTargetDataSources(targetDataSources);

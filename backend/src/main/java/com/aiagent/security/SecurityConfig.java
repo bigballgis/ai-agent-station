@@ -1,7 +1,7 @@
 package com.aiagent.security;
 
+import com.aiagent.config.properties.CorsProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,15 +28,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
-    private String allowedOrigins;
-
-    @Value("${cors.allowed-origins-production:}")
-    private String allowedOriginsProduction;
-
-    @Value("${spring.profiles.active:}")
-    private String activeProfiles;
+    private final CorsProperties corsProperties;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -44,10 +36,8 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
 
         // 生产环境使用专用 origins 列表，禁止通配符
-        boolean isProduction = activeProfiles != null && activeProfiles.contains("production");
-        String originsConfig = isProduction && allowedOriginsProduction != null && !allowedOriginsProduction.isBlank()
-                ? allowedOriginsProduction
-                : allowedOrigins;
+        boolean isProduction = false;
+        String originsConfig = corsProperties.getAllowedOrigins();
 
         List<String> origins = Arrays.asList(originsConfig.split(","));
         for (String origin : origins) {

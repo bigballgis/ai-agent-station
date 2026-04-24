@@ -1,11 +1,11 @@
 package com.aiagent.tenant;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,11 +16,11 @@ public class TenantInterceptor implements HandlerInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(TenantInterceptor.class);
 
-    @Value("${ai-agent.tenant.default-schema:public}")
-    private String defaultSchema;
+    private final AiAgentProperties aiAgentProperties;
 
-    @Value("${ai-agent.tenant.schema-prefix:t_}")
-    private String schemaPrefix;
+    public TenantInterceptor(AiAgentProperties aiAgentProperties) {
+        this.aiAgentProperties = aiAgentProperties;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -32,7 +32,7 @@ public class TenantInterceptor implements HandlerInterceptor {
                 tenantId = Long.parseLong(tenantIdStr);
             } catch (NumberFormatException e) {
                 log.warn("无效的租户ID格式: {}", tenantIdStr);
-                TenantContextHolder.setSchemaName(defaultSchema);
+                TenantContextHolder.setSchemaName(aiAgentProperties.getTenant().getDefaultSchema());
                 return true;
             }
         }
@@ -58,9 +58,9 @@ public class TenantInterceptor implements HandlerInterceptor {
 
         if (tenantId != null) {
             TenantContextHolder.setTenantId(tenantId);
-            TenantContextHolder.setSchemaName(schemaPrefix + tenantId);
+            TenantContextHolder.setSchemaName(aiAgentProperties.getTenant().getSchemaPrefix() + tenantId);
         } else {
-            TenantContextHolder.setSchemaName(defaultSchema);
+            TenantContextHolder.setSchemaName(aiAgentProperties.getTenant().getDefaultSchema());
         }
         return true;
     }

@@ -1,8 +1,8 @@
 package com.aiagent.util;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -27,8 +27,8 @@ public class CryptoUtils {
     private final SecretKeySpec secretKey;
     private final String secretKeyStr;
 
-    public CryptoUtils(@Value("${ai-agent.crypto.secret-key:}") String secretKeyStr) {
-        this.secretKeyStr = secretKeyStr;
+    public CryptoUtils(AiAgentProperties aiAgentProperties) {
+        this.secretKeyStr = aiAgentProperties.getCrypto().getSecretKey();
         // 确保密钥长度为 32 字节 (AES-256)
         byte[] keyBytes = secretKeyStr.getBytes(StandardCharsets.UTF_8);
         byte[] key32 = new byte[32];

@@ -2,6 +2,7 @@ package com.aiagent.security;
 
 import jakarta.annotation.PostConstruct;
 
+import com.aiagent.config.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,7 +12,6 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.JwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -24,14 +24,11 @@ public class JwtUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.expiration:1800000}")
-    private Long expiration;
-
-    @Value("${jwt.refresh-expiration:604800000}")
-    private Long refreshExpiration;
+    public JwtUtil(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     private static final String ISSUER = "ai-agent-platform";
     private static final String AUDIENCE = "ai-agent-platform-client";
@@ -41,13 +38,13 @@ public class JwtUtil {
 
     @PostConstruct
     public void validateSecret() {
-        if (secret == null || secret.length() < 32) {
-            throw new IllegalStateException("JWT密钥未配置或长度不足(至少32字符)。请设置环境变量 jwt.secret");
+        if (jwtProperties.getSecret() == null || jwtProperties.getSecret().length() < 32) {
+            throw new IllegalStateException("JWT密钥未配置或长度不足(至少32字符)。请设置环境变量 JWT_SECRET");
         }
     }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -55,7 +52,7 @@ public class JwtUtil {
      */
     public String generateToken(Long userId, String username, Long tenantId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
 
         return Jwts.builder()
                 .issuer(ISSUER)
@@ -75,7 +72,7 @@ public class JwtUtil {
      */
     public String generateRefreshToken(Long userId, String username, Long tenantId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + refreshExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshExpiration());
 
         return Jwts.builder()
                 .issuer(ISSUER)

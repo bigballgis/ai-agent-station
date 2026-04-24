@@ -1,9 +1,9 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.exception.FileProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +20,8 @@ public class LlmResponseCacheService {
 
     private static final String KEY_PREFIX = "llm_cache:";
 
-    @Value("${ai-agent.cache.llm-response-ttl-minutes:30}")
-    private long ttlMinutes;
-
     private final StringRedisTemplate stringRedisTemplate;
+    private final AiAgentProperties aiAgentProperties;
 
     /**
      * Get a cached LLM response.
@@ -60,6 +58,7 @@ public class LlmResponseCacheService {
     public void cache(String provider, String systemPrompt, String userMessage, String response) {
         String key = buildCacheKey(provider, systemPrompt, userMessage);
         try {
+            long ttlMinutes = aiAgentProperties.getCache().getLlmResponseTtlMinutes();
             stringRedisTemplate.opsForValue().set(key, response, Duration.ofMinutes(ttlMinutes));
             log.info("LLM response cached for provider={}, key={}, ttl={}s", provider, key, ttlMinutes * 60);
         } catch (Exception e) {

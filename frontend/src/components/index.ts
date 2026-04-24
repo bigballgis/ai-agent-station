@@ -15,6 +15,7 @@ export { default as StatusBadge } from './StatusBadge.vue'
 export { default as ConfirmModal } from './ConfirmModal.vue'
 export { default as EmptyState } from './EmptyState.vue'
 export { default as LoadingSkeleton } from './LoadingSkeleton.vue'
+export { default as ChunkLoadErrorFallback } from './ChunkLoadErrorFallback.vue'
 
 // 数据可视化组件
 export { default as StatCard } from './StatCard.vue'

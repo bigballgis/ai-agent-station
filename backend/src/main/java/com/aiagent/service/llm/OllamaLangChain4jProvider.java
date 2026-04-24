@@ -1,5 +1,6 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -7,7 +8,6 @@ import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * LangChain4j Ollama Provider
  * 支持本地部署的开源大模型: Llama3, Qwen2, Mistral, CodeLlama 等
- * 
+ *
  * 核心特性:
  * - 使用 langchain4j-ollama 原生驱动
  * - 支持本地 GPU 加速推理
@@ -31,27 +31,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class OllamaLangChain4jProvider implements LangChain4jProvider {
 
-    @Value("${ai-agent.llm.ollama.base-url:http://localhost:11434}")
-    private String baseUrl;
+    private final AiAgentProperties.Llm.OllamaConfig ollamaConfig;
 
-    @Value("${ai-agent.llm.ollama.default-model:qwen2:7b}")
-    private String defaultModel;
-
-    @Value("${ai-agent.llm.ollama.timeout-seconds:120}")
-    private Integer timeoutSeconds;
-
-    @Value("${ai-agent.llm.ollama.gpu-layers:0}")
-    private Integer gpuLayers;
-
-    @Value("${ai-agent.llm.ollama.num-ctx:4096}")
-    private Integer numCtx;
+    public OllamaLangChain4jProvider(AiAgentProperties aiAgentProperties) {
+        this.ollamaConfig = aiAgentProperties.getLlm().getOllama();
+    }
 
     private final Map<String, ChatLanguageModel> chatModelCache = new ConcurrentHashMap<>();
     private final Map<String, StreamingChatLanguageModel> streamingModelCache = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
-        log.info("[LangChain4j] Ollama Provider 初始化 - baseUrl: {}, defaultModel: {}", baseUrl, defaultModel);
+        log.info("[LangChain4j] Ollama Provider 初始化 - baseUrl: {}, defaultModel: {}", ollamaConfig.getBaseUrl(), ollamaConfig.getDefaultModel());
     }
 
     @PreDestroy
@@ -68,7 +59,7 @@ public class OllamaLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public ChatLanguageModel getChatModel() {
-        return getOrCreateChatModel(defaultModel, 0.7, 2048);
+        return getOrCreateChatModel(ollamaConfig.getDefaultModel(), 0.7, 2048);
     }
 
     public ChatLanguageModel getOrCreateChatModel(String modelName, double temperature, int maxTokens) {
@@ -76,11 +67,11 @@ public class OllamaLangChain4jProvider implements LangChain4jProvider {
         return chatModelCache.computeIfAbsent(cacheKey, key -> {
             log.info("[LangChain4j] 创建 Ollama ChatModel: model={}, temp={}", modelName, temperature);
             OllamaChatModel.OllamaChatModelBuilder builder = OllamaChatModel.builder()
-                    .baseUrl(baseUrl)
-                    .modelName(modelName != null ? modelName : defaultModel)
+                    .baseUrl(ollamaConfig.getBaseUrl())
+                    .modelName(modelName != null ? modelName : ollamaConfig.getDefaultModel())
                     .temperature(temperature)
-                    .timeout(Duration.ofSeconds(timeoutSeconds))
-                    .numCtx(numCtx);
+                    .timeout(Duration.ofSeconds(ollamaConfig.getTimeoutSeconds()))
+                    .numCtx(ollamaConfig.getNumCtx());
 
             return builder.build();
         });
@@ -88,15 +79,15 @@ public class OllamaLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public StreamingChatLanguageModel getStreamingChatModel() {
-        String cacheKey = "streaming|" + defaultModel;
+        String cacheKey = "streaming|" + ollamaConfig.getDefaultModel();
         return streamingModelCache.computeIfAbsent(cacheKey, key -> {
-            log.info("[LangChain4j] 创建 Ollama StreamingChatModel: model={}", defaultModel);
+            log.info("[LangChain4j] 创建 Ollama StreamingChatModel: model={}", ollamaConfig.getDefaultModel());
             return OllamaStreamingChatModel.builder()
-                    .baseUrl(baseUrl)
-                    .modelName(defaultModel)
+                    .baseUrl(ollamaConfig.getBaseUrl())
+                    .modelName(ollamaConfig.getDefaultModel())
                     .temperature(0.7)
-                    .timeout(Duration.ofSeconds(timeoutSeconds))
-                    .numCtx(numCtx)
+                    .timeout(Duration.ofSeconds(ollamaConfig.getTimeoutSeconds()))
+                    .numCtx(ollamaConfig.getNumCtx())
                     .build();
         });
     }

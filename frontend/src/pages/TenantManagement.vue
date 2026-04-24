@@ -252,6 +252,7 @@
             :placeholder="t('tenant.nameLabel')"
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
           />
+          <p v-if="getTenantFieldError('name')" class="text-xs text-red-500 mt-1">{{ getTenantFieldError('name') }}</p>
         </div>
         <div>
           <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.descriptionLabel') }}</label>
@@ -271,6 +272,7 @@
               :placeholder="t('tenant.contactLabel')"
               class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
             />
+            <p v-if="getTenantFieldError('contact')" class="text-xs text-red-500 mt-1">{{ getTenantFieldError('contact') }}</p>
           </div>
           <div>
             <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.emailLabel') }} <span class="text-red-500">*</span></label>
@@ -280,6 +282,7 @@
               :placeholder="t('tenant.emailLabel')"
               class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200"
             />
+            <p v-if="getTenantFieldError('email')" class="text-xs text-red-500 mt-1">{{ getTenantFieldError('email') }}</p>
           </div>
         </div>
         <!-- 配额设置 -->
@@ -505,12 +508,21 @@ import { logger } from '@/utils/logger'
 import { useLoading } from '@/composables/useLoading'
 import { usePagination } from '@/composables/usePagination'
 import { useConfirm } from '@/composables/useConfirm'
+import { useFormValidation, type FormRules } from '@/composables/useFormValidation'
 
 const { t } = useI18n()
 
 // Composables
 const { loading, withLoading } = useLoading()
 const { confirm } = useConfirm()
+
+// Form validation
+const tenantFormRules: FormRules = {
+  name: [{ required: true, type: 'required' }],
+  contact: [{ required: true, type: 'required' }],
+  email: [{ required: true, type: 'required' }, { type: 'email', email: true }],
+}
+const { validateForm: validateTenantForm, getFieldError: getTenantFieldError, resetValidation: resetTenantValidation } = useFormValidation(tenantFormRules)
 
 // ============ 数据 ============
 
@@ -607,6 +619,7 @@ function formatNumber(num: number): string {
 function openCreateModal() {
   editingTenant.value = null
   form.value = { name: '', description: '', contact: '', email: '', quota: { agentLimit: 10, apiLimit: 1000000, tokenLimit: 5000000 } }
+  resetTenantValidation()
   showModal.value = true
 }
 
@@ -619,25 +632,14 @@ function openEditModal(tenant: Tenant) {
     email: tenant.email,
     quota: { ...tenant.quota },
   }
+  resetTenantValidation()
   showModal.value = true
 }
 
-function saveTenant() {
-  if (!form.value.name) {
-    message.warning(t('tenant.nameRequired'))
-    return
-  }
-  if (!form.value.contact) {
-    message.warning(t('tenant.contactRequired'))
-    return
-  }
-  if (!form.value.email) {
-    message.warning(t('tenant.emailRequired'))
-    return
-  }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(form.value.email)) {
-    message.warning(t('tenant.emailInvalid'))
+async function saveTenant() {
+  // Use composable-based form validation
+  const isValid = await validateTenantForm(form.value as unknown as Record<string, unknown>)
+  if (!isValid) {
     return
   }
   if (editingTenant.value) {

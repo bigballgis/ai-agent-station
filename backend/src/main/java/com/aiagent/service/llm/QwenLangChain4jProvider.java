@@ -1,5 +1,6 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -7,7 +8,6 @@ import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -19,38 +19,26 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * LangChain4j 通义千问 (Qwen) Provider
  * 基于 DashScope OpenAI 兼容模式，使用 langchain4j OpenAiChatModel
- * 
+ *
  * 支持模型: qwen-turbo, qwen-plus, qwen-max, qwen-long
  */
 @Slf4j
 @Component
 public class QwenLangChain4jProvider implements LangChain4jProvider {
 
-    @Value("${ai-agent.llm.qwen.api-key:}")
-    private String apiKey;
+    private final AiAgentProperties.Llm.ProviderConfig qwenConfig;
 
-    @Value("${ai-agent.llm.qwen.base-url:https://dashscope.aliyuncs.com/compatible-mode/v1}")
-    private String baseUrl;
-
-    @Value("${ai-agent.llm.qwen.default-model:qwen-plus}")
-    private String defaultModel;
-
-    @Value("${ai-agent.llm.qwen.timeout-seconds:60}")
-    private Integer timeoutSeconds;
-
-    @Value("${ai-agent.llm.qwen.log-requests:false}")
-    private Boolean logRequests;
-
-    @Value("${ai-agent.llm.qwen.log-responses:false}")
-    private Boolean logResponses;
+    public QwenLangChain4jProvider(AiAgentProperties aiAgentProperties) {
+        this.qwenConfig = aiAgentProperties.getLlm().getQwen();
+    }
 
     private final Map<String, ChatLanguageModel> chatModelCache = new ConcurrentHashMap<>();
     private final Map<String, StreamingChatLanguageModel> streamingModelCache = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
-        log.info("[LangChain4j] Qwen Provider 初始化 - baseUrl: {}, defaultModel: {}", baseUrl, defaultModel);
-        if (apiKey == null || apiKey.isBlank()) {
+        log.info("[LangChain4j] Qwen Provider 初始化 - baseUrl: {}, defaultModel: {}", qwenConfig.getBaseUrl(), qwenConfig.getDefaultModel());
+        if (qwenConfig.getApiKey() == null || qwenConfig.getApiKey().isBlank()) {
             log.warn("[LangChain4j] Qwen API Key 未配置，通义千问模型将不可用");
         }
     }
@@ -69,7 +57,7 @@ public class QwenLangChain4jProvider implements LangChain4jProvider {
 
     @Override
     public ChatLanguageModel getChatModel() {
-        return getOrCreateChatModel(defaultModel, 0.7, 0.9, 2048);
+        return getOrCreateChatModel(qwenConfig.getDefaultModel(), 0.7, 0.9, 2048);
     }
 
     public ChatLanguageModel getOrCreateChatModel(String modelName, double temperature, double topP, int maxTokens) {
@@ -77,32 +65,32 @@ public class QwenLangChain4jProvider implements LangChain4jProvider {
         return chatModelCache.computeIfAbsent(cacheKey, key -> {
             log.info("[LangChain4j] 创建 Qwen ChatModel: model={}, temp={}", modelName, temperature);
             return OpenAiChatModel.builder()
-                    .apiKey(apiKey)
-                    .baseUrl(baseUrl)
-                    .modelName(modelName != null ? modelName : defaultModel)
+                    .apiKey(qwenConfig.getApiKey())
+                    .baseUrl(qwenConfig.getBaseUrl())
+                    .modelName(modelName != null ? modelName : qwenConfig.getDefaultModel())
                     .temperature(temperature)
                     .topP(topP)
                     .maxTokens(maxTokens)
-                    .timeout(java.time.Duration.ofSeconds(timeoutSeconds))
-                    .logRequests(logRequests)
-                    .logResponses(logResponses)
+                    .timeout(java.time.Duration.ofSeconds(qwenConfig.getTimeoutSeconds()))
+                    .logRequests(qwenConfig.getLogRequests())
+                    .logResponses(qwenConfig.getLogResponses())
                     .build();
         });
     }
 
     @Override
     public StreamingChatLanguageModel getStreamingChatModel() {
-        String cacheKey = "streaming|" + defaultModel;
+        String cacheKey = "streaming|" + qwenConfig.getDefaultModel();
         return streamingModelCache.computeIfAbsent(cacheKey, key -> {
-            log.info("[LangChain4j] 创建 Qwen StreamingChatModel: model={}", defaultModel);
+            log.info("[LangChain4j] 创建 Qwen StreamingChatModel: model={}", qwenConfig.getDefaultModel());
             return OpenAiStreamingChatModel.builder()
-                    .apiKey(apiKey)
-                    .baseUrl(baseUrl)
-                    .modelName(defaultModel)
+                    .apiKey(qwenConfig.getApiKey())
+                    .baseUrl(qwenConfig.getBaseUrl())
+                    .modelName(qwenConfig.getDefaultModel())
                     .temperature(0.7)
-                    .timeout(java.time.Duration.ofSeconds(timeoutSeconds))
-                    .logRequests(logRequests)
-                    .logResponses(logResponses)
+                    .timeout(java.time.Duration.ofSeconds(qwenConfig.getTimeoutSeconds()))
+                    .logRequests(qwenConfig.getLogRequests())
+                    .logResponses(qwenConfig.getLogResponses())
                     .build();
         });
     }
@@ -110,12 +98,12 @@ public class QwenLangChain4jProvider implements LangChain4jProvider {
     @Override
     public boolean supportsToolCalling() {
         // qwen-max 和 qwen-plus 支持 Function Calling
-        return "qwen-max".equals(defaultModel) || "qwen-plus".equals(defaultModel);
+        return "qwen-max".equals(qwenConfig.getDefaultModel()) || "qwen-plus".equals(qwenConfig.getDefaultModel());
     }
 
     @Override
     public boolean supportsStreaming() {
-        return apiKey != null && !apiKey.isBlank();
+        return qwenConfig.getApiKey() != null && !qwenConfig.getApiKey().isBlank();
     }
 
     @Override

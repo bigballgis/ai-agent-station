@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.UserSession;
 import com.aiagent.entity.UserSession.SessionStatus;
 import com.aiagent.repository.UserSessionRepository;
@@ -7,7 +8,6 @@ import com.aiagent.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +31,7 @@ import java.util.regex.Pattern;
 public class SessionService {
 
     private final UserSessionRepository sessionRepository;
-
-    @Value("${ai-agent.session.timeout-hours:24}")
-    private long sessionTimeoutHours;
-
-    @Value("${ai-agent.session.max-concurrent-sessions:3}")
-    private int maxConcurrentSessions;
+    private final AiAgentProperties aiAgentProperties;
 
     // User-Agent parsing patterns
     private static final Pattern BROWSER_PATTERN = Pattern.compile(
@@ -69,7 +64,7 @@ public class SessionService {
         session.setOs(parseOs(request.getHeader("User-Agent")));
         session.setLoginTime(LocalDateTime.now());
         session.setLastAccessTime(LocalDateTime.now());
-        session.setExpireTime(LocalDateTime.now().plusHours(sessionTimeoutHours));
+        session.setExpireTime(LocalDateTime.now().plusHours(aiAgentProperties.getSession().getTimeoutHours()));
         session.setStatus(SessionStatus.ACTIVE);
 
         session = sessionRepository.save(session);
@@ -86,6 +81,7 @@ public class SessionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public int enforceConcurrentSessionLimit(Long userId) {
+        int maxConcurrentSessions = aiAgentProperties.getSession().getMaxConcurrentSessions();
         List<UserSession> activeSessions = sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE);
         if (activeSessions.size() >= maxConcurrentSessions) {
             // Sort by login time ascending (oldest first) and invalidate the excess
@@ -115,7 +111,7 @@ public class SessionService {
             UserSession session = optional.get();
             if (session.getStatus() == SessionStatus.ACTIVE) {
                 session.setLastAccessTime(LocalDateTime.now());
-                session.setExpireTime(LocalDateTime.now().plusHours(sessionTimeoutHours));
+                session.setExpireTime(LocalDateTime.now().plusHours(aiAgentProperties.getSession().getTimeoutHours()));
                 sessionRepository.save(session);
             }
         }

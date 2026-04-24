@@ -1,6 +1,6 @@
 package com.aiagent.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.aiagent.config.properties.WebSocketProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -18,18 +18,17 @@ import java.util.Map;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
     private final NotificationWebSocketHandler notificationHandler;
+    private final WebSocketProperties webSocketProperties;
 
-    @Value("${websocket.allowed-origins:http://localhost:5173,http://localhost:3000}")
-    private String[] allowedOrigins;
-
-    public WebSocketConfig(NotificationWebSocketHandler notificationHandler) {
+    public WebSocketConfig(NotificationWebSocketHandler notificationHandler, WebSocketProperties webSocketProperties) {
         this.notificationHandler = notificationHandler;
+        this.webSocketProperties = webSocketProperties;
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(notificationHandler, "/ws/notifications")
-                .setAllowedOrigins(allowedOrigins)
+                .setAllowedOrigins(webSocketProperties.getAllowedOrigins())
                 .addInterceptors(new HandshakeInterceptor() {
                     @Override
                     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,

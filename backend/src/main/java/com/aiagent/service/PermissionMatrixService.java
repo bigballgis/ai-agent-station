@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.PermissionMatrix;
 import com.aiagent.entity.UserRole;
 import com.aiagent.exception.BusinessException;
@@ -10,7 +11,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,12 +32,10 @@ public class PermissionMatrixService {
     private final UserRoleRepository userRoleRepository;
     private final CacheService cacheService;
     private final ObjectMapper objectMapper;
+    private final AiAgentProperties aiAgentProperties;
 
     private static final String PERM_CACHE_PREFIX = "perm:matrix:";
     private static final String PERM_TREE_CACHE_KEY = "perm:tree";
-
-    @Value("${ai-agent.cache.permission-ttl-minutes:30}")
-    private long permCacheTtlMinutes;
 
     /**
      * Get all permissions for a role as a matrix (grouped by resource type)
@@ -64,7 +62,7 @@ public class PermissionMatrixService {
 
         // Cache the result
         try {
-            cacheService.set(cacheKey, objectMapper.writeValueAsString(grouped), permCacheTtlMinutes, TimeUnit.MINUTES);
+            cacheService.set(cacheKey, objectMapper.writeValueAsString(grouped), aiAgentProperties.getCache().getPermissionTtlMinutes(), TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize permission cache for role: {}", roleId);
         }
@@ -286,7 +284,7 @@ public class PermissionMatrixService {
 
         // Cache
         try {
-            cacheService.set(PERM_TREE_CACHE_KEY, objectMapper.writeValueAsString(tree), permCacheTtlMinutes, TimeUnit.MINUTES);
+            cacheService.set(PERM_TREE_CACHE_KEY, objectMapper.writeValueAsString(tree), aiAgentProperties.getCache().getPermissionTtlMinutes(), TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize permission tree cache");
         }

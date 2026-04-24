@@ -1,13 +1,12 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.RateLimitConfig;
 import com.aiagent.exception.RateLimitExceededException;
 import com.aiagent.repository.RateLimitConfigRepository;
 import com.aiagent.tenant.TenantContextHolder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +33,7 @@ public class RateLimitService {
 
     private final StringRedisTemplate redisTemplate;
     private final RateLimitConfigRepository rateLimitConfigRepository;
+    private final AiAgentProperties aiAgentProperties;
 
     private static final String RATE_LIMIT_PREFIX = "rl:";
     private static final String TENANT_PREFIX = "tenant:";
@@ -41,14 +41,17 @@ public class RateLimitService {
 
     // ==================== 默认限流配置（可通过 application.yml 覆盖） ====================
 
-    @Value("${ai-agent.rate-limit.api.default-limit-per-minute:100}")
-    private int defaultLimitPerMinute;
+    private int getDefaultLimitPerMinute() {
+        return aiAgentProperties.getRateLimit().getApi().getDefaultLimitPerMinute();
+    }
 
-    @Value("${ai-agent.rate-limit.api.default-limit-per-hour:1000}")
-    private int defaultLimitPerHour;
+    private int getDefaultLimitPerHour() {
+        return aiAgentProperties.getRateLimit().getApi().getDefaultLimitPerHour();
+    }
 
-    @Value("${ai-agent.rate-limit.api.burst-capacity:20}")
-    private int defaultBurstCapacity;
+    private int getDefaultBurstCapacity() {
+        return aiAgentProperties.getRateLimit().getApi().getBurstCapacity();
+    }
 
     // ==================== 端点类型限流配置 ====================
 
@@ -157,7 +160,7 @@ public class RateLimitService {
         }
 
         // 2. 使用端点类型默认值
-        return ENDPOINT_TYPE_DEFAULTS.getOrDefault(endpointType, defaultLimitPerMinute);
+        return ENDPOINT_TYPE_DEFAULTS.getOrDefault(endpointType, getDefaultLimitPerMinute());
     }
 
     /**

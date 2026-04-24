@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.common.ResultCode;
 import com.aiagent.entity.Permission;
 import com.aiagent.entity.Role;
@@ -18,7 +19,6 @@ import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.util.CryptoUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,12 +42,7 @@ public class TenantService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SessionService sessionService;
-
-    @Value("${ai-agent.tenant.schema-prefix:t_}")
-    private String schemaPrefix;
-
-    @Value("${ai-agent.tenant.default-admin-password:Admin@123456}")
-    private String defaultAdminPassword;
+    private final AiAgentProperties aiAgentProperties;
 
     /**
      * 获取所有租户列表，API Key 和 Secret 已解密
@@ -101,7 +96,7 @@ public class TenantService {
         tenant.setIsActive(true);
 
         Tenant savedTenant = tenantRepository.save(tenant);
-        savedTenant.setSchemaName(schemaPrefix + savedTenant.getId());
+        savedTenant.setSchemaName(aiAgentProperties.getTenant().getSchemaPrefix() + savedTenant.getId());
         tenantRepository.save(savedTenant);
 
         apiKeyService.saveApiKey(apiKey, savedTenant.getId(), 31536000L);
@@ -296,7 +291,7 @@ public class TenantService {
 
         User admin = new User();
         admin.setUsername(adminUsername);
-        admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
+        admin.setPassword(passwordEncoder.encode(aiAgentProperties.getTenant().getDefaultAdminPassword()));
         admin.setTenantId(tenantId);
         admin.setIsActive(true);
         admin.setEmail("admin@tenant" + tenantId + ".local");

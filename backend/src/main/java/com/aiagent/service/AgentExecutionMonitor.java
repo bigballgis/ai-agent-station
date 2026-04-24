@@ -1,9 +1,9 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -24,18 +24,15 @@ public class AgentExecutionMonitor {
 
     private final StringRedisTemplate redisTemplate;
     private final Counter agentErrorCounter;
+    private final AiAgentProperties aiAgentProperties;
 
     /** 每个 Agent 的并发信号量 */
     private final ConcurrentHashMap<Long, Semaphore> agentSemaphores = new ConcurrentHashMap<>();
 
-    @Value("${ai-agent.execution.max-concurrent-per-agent:5}")
-    private int maxConcurrentExecutions;
-
-    @Value("${ai-agent.execution.timeout-seconds:120}")
-    private int executionTimeoutSeconds;
-
-    public AgentExecutionMonitor(StringRedisTemplate redisTemplate, MeterRegistry registry) {
+    public AgentExecutionMonitor(StringRedisTemplate redisTemplate, MeterRegistry registry,
+                                  AiAgentProperties aiAgentProperties) {
         this.redisTemplate = redisTemplate;
+        this.aiAgentProperties = aiAgentProperties;
         this.agentErrorCounter = Counter.builder("agent_execution_errors_total")
                 .description("Total number of agent execution errors")
                 .tag("application", "ai-agent-platform")
@@ -49,6 +46,7 @@ public class AgentExecutionMonitor {
      * @return true 如果获取成功，false 如果并发数已达上限
      */
     public boolean tryAcquireExecution(Long agentId) {
+        int maxConcurrentExecutions = aiAgentProperties.getExecution().getMaxConcurrentPerAgent();
         Semaphore semaphore = agentSemaphores.computeIfAbsent(agentId,
                 id -> new Semaphore(maxConcurrentExecutions));
         boolean acquired = semaphore.tryAcquire();
@@ -88,6 +86,7 @@ public class AgentExecutionMonitor {
      * @return 当前并发执行数
      */
     public int getCurrentConcurrency(Long agentId) {
+        int maxConcurrentExecutions = aiAgentProperties.getExecution().getMaxConcurrentPerAgent();
         Semaphore semaphore = agentSemaphores.get(agentId);
         if (semaphore == null) {
             return 0;
@@ -99,13 +98,13 @@ public class AgentExecutionMonitor {
      * 获取执行超时时间（秒）
      */
     public int getExecutionTimeoutSeconds() {
-        return executionTimeoutSeconds;
+        return aiAgentProperties.getExecution().getTimeoutSeconds();
     }
 
     /**
      * 获取最大并发执行数
      */
     public int getMaxConcurrentExecutions() {
-        return maxConcurrentExecutions;
+        return aiAgentProperties.getExecution().getMaxConcurrentPerAgent();
     }
 }
