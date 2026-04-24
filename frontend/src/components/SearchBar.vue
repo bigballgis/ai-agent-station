@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
 
@@ -78,6 +78,7 @@ import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined } from '@ant-d
  * 可复用的搜索/筛选栏，根据字段配置自动生成表单项
  * 支持输入框、下拉选择、日期范围选择
  * 支持折叠展开（默认显示前 3 个字段）
+ * 输入框支持 300ms 防抖自动搜索
  */
 
 export interface SearchField {
@@ -98,10 +99,13 @@ interface Props {
   fields: SearchField[]
   /** 默认显示字段数量 */
   defaultShowCount?: number
+  /** 输入框防抖延迟（毫秒），默认 300ms */
+  debounceDelay?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   defaultShowCount: 3,
+  debounceDelay: 300,
 })
 
 const { t } = useI18n()
@@ -131,8 +135,16 @@ const visibleFields = computed(() => {
   return props.fields.slice(0, props.defaultShowCount)
 })
 
+// 防抖定时器
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
 /** 执行搜索 */
 function handleSearch() {
+  // 清除防抖定时器
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
   // 过滤掉空值
   const params: Record<string, any> = {}
   Object.entries(searchValues).forEach(([key, value]) => {
@@ -143,13 +155,32 @@ function handleSearch() {
   emit('search', params)
 }
 
+/** 防抖搜索（用于输入框实时搜索） */
+function debouncedSearch() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+  debounceTimer = setTimeout(() => {
+    handleSearch()
+  }, props.debounceDelay)
+}
+
 /** 重置搜索条件 */
 function handleReset() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
   props.fields.forEach(field => {
     searchValues[field.key] = undefined
   })
   emit('reset')
 }
+
+// 监听输入框值变化，自动触发防抖搜索
+watch(searchValues, () => {
+  debouncedSearch()
+}, { deep: true })
 </script>
 
 <style scoped>

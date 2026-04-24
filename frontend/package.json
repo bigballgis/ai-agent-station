@@ -20,6 +20,7 @@
     "axios": "^1.8.4",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.1",
     "flowise-components": "^1.0.0",
     "flowise-sdk": "^1.0.0",
     "lucide-vue-next": "^0.511.0",
@@ -30,15 +31,20 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@testing-library/vue": "^8.1.0",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^22.15.30",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "@vitejs/plugin-vue": "^5.0.3",
     "@vue/runtime-dom": "^3.4.15",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.57.1",
     "eslint-plugin-vue": "^9.20.1",
+    "happy-dom": "^15.0.0",
+    "jsdom": "^25.0.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "~5.7.3",
@@ -46,11 +52,7 @@
     "vite": "^5.0.12",
     "vite-plugin-trae-solo-badge": "^1.0.0",
     "vite-plugin-vue-inspector": "^5.4.0",
-    "vue-tsc": "^2.1.10",
     "vitest": "^2.1.0",
-    "@vue/test-utils": "^2.4.6",
-    "jsdom": "^25.0.0",
-    "@testing-library/vue": "^8.1.0",
-    "happy-dom": "^15.0.0"
+    "vue-tsc": "^2.1.10"
   }
 }

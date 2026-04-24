@@ -13,6 +13,8 @@ import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +36,7 @@ public class AgentService {
     private final AgentRepository agentRepository;
     private final AgentVersionRepository agentVersionRepository;
 
+    @CacheEvict(value = "agents", allEntries = true)
     public List<Agent> getAllAgents() {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -50,6 +53,7 @@ public class AgentService {
         return agentRepository.findByTenantIdWithFilters(tenantId, keyword, status, pageable);
     }
 
+    @Cacheable(value = "agents", key = "#id")
     public Agent getAgentById(Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -74,6 +78,7 @@ public class AgentService {
 
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "创建Agent")
+    @CacheEvict(value = "agents", allEntries = true)
     public Agent createAgent(Agent agent) {
         Long tenantId = TenantContextHolder.getTenantId();
         Long userId = SecurityUtils.getCurrentUserId();
@@ -102,6 +107,7 @@ public class AgentService {
 
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "更新Agent")
+    @CacheEvict(value = "agents", allEntries = true)
     public Agent updateAgent(Long id, Agent agentDetails) {
         Agent agent = getAgentById(id);
         Long userId = SecurityUtils.getCurrentUserId();
@@ -120,6 +126,7 @@ public class AgentService {
 
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "删除Agent")
+    @CacheEvict(value = "agents", allEntries = true)
     public void deleteAgent(Long id) {
         Agent agent = getAgentById(id);
         agentRepository.delete(agent);

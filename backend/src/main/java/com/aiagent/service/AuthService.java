@@ -11,6 +11,7 @@ import com.aiagent.repository.UserRepository;
 import com.aiagent.repository.UserRoleRepository;
 import com.aiagent.repository.RoleRepository;
 import com.aiagent.security.JwtUtil;
+import com.aiagent.security.validator.PasswordPolicyValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +42,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
     private final LoginRateLimitService loginRateLimitService;
+    private final PasswordPolicyValidator passwordPolicyValidator;
 
     public Map<String, Object> login(String username, String password, Long tenantId) {
         // 登录速率限制检查
@@ -88,6 +91,12 @@ public class AuthService {
         // 检查密码和确认密码是否一致
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "两次输入的密码不一致");
+        }
+
+        // 密码复杂度验证
+        List<String> passwordErrors = passwordPolicyValidator.validate(request.getPassword());
+        if (!passwordErrors.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("；", passwordErrors));
         }
 
         // 检查用户名是否已存在
@@ -223,6 +232,12 @@ public class AuthService {
             throw new BusinessException(ResultCode.INVALID_PASSWORD);
         }
 
+        // 密码复杂度验证
+        List<String> passwordErrors = passwordPolicyValidator.validate(newPassword);
+        if (!passwordErrors.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("；", passwordErrors));
+        }
+
         // 更新密码
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -244,6 +259,12 @@ public class AuthService {
 
         if (!user.getIsActive()) {
             throw new BusinessException(ResultCode.USER_DISABLED);
+        }
+
+        // 密码复杂度验证
+        List<String> passwordErrors = passwordPolicyValidator.validate(newPassword);
+        if (!passwordErrors.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("；", passwordErrors));
         }
 
         // 更新密码

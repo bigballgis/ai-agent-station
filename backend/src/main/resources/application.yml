@@ -37,8 +37,8 @@ spring:
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
-      idle-timeout: 30000
-      connection-timeout: 10000
+      idle-timeout: 300000
+      connection-timeout: 30000
       max-lifetime: 1800000
       leak-detection-threshold: 60000
 
@@ -55,6 +55,13 @@ spring:
         jdbc:
           lob:
             non_contextual_creation: true
+        # Hibernate 二级缓存配置（使用 Redis）
+        # 注意：启用需要添加 hibernate-redis 依赖到 pom.xml
+        # 例如: com.github.debop:hibernate-redis:6.2.13.Final
+        # cache:
+        #   use_second_level_cache: true
+        #   use_query_cache: true
+        #   region.factory_class: org.hibernate.cache.redis.RedisRegionFactory
 
   # Flyway数据库迁移
   flyway:

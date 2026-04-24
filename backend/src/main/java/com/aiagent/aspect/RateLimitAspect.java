@@ -7,55 +7,60 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RateLimit 注解 AOP 切面
  * <p>
- * 基于内存的滑动窗口限流实现，适用于单实例部署。
- * 使用 ConcurrentHashMap + AtomicInteger 实现线程安全的计数器。
+ * 基于 Redis 的分布式限流实现，使用 INCR + EXPIRE 模式。
+ * 按 IP + 方法签名作为 key，支持集群部署。
  * </p>
- *
- * TODO: 集群部署时，应替换为基于 Redis 的分布式限流方案（如 Redis + Lua 脚本）
  */
 @Slf4j
 @Aspect
 @Component
 public class RateLimitAspect {
 
-    /**
-     * 限流计数器: key = "method:maxRequests:windowSeconds:clientIP"
-     * value = { windowStartTimestamp, requestCount }
-     */
-    private final Map<String, WindowCounter> counterMap = new ConcurrentHashMap<>();
+    private static final String RATE_LIMIT_PREFIX = "rate_limit:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public RateLimitAspect(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Around("@annotation(rateLimit)")
     public Object around(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
         String clientIp = getClientIp();
         String methodSignature = joinPoint.getSignature().toShortString();
-        String key = methodSignature + ":" + rateLimit.maxRequests() + ":" + rateLimit.windowSeconds() + ":" + clientIp;
-
         int maxRequests = rateLimit.maxRequests();
         int windowSeconds = rateLimit.windowSeconds();
-        long windowStart = System.currentTimeMillis() / 1000 / windowSeconds * windowSeconds;
 
-        WindowCounter counter = counterMap.compute(key, (k, existing) -> {
-            if (existing == null || existing.windowStart != windowStart) {
-                return new WindowCounter(windowStart);
-            }
-            return existing;
-        });
+        // key = rate_limit:{methodSignature}:{clientIp}
+        String key = RATE_LIMIT_PREFIX + methodSignature + ":" + clientIp;
 
-        int currentCount = counter.incrementAndGet();
-        if (currentCount > maxRequests) {
+        // 使用 Redis INCR 原子递增
+        Long count = redisTemplate.opsForValue().increment(key);
+
+        if (count == null) {
+            // Redis 不可用时放行（降级策略）
+            log.warn("[RateLimit] Redis INCR 返回 null，降级放行: method={}, ip={}", methodSignature, clientIp);
+            return joinPoint.proceed();
+        }
+
+        // 第一次请求时设置过期时间
+        if (count == 1) {
+            redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
+        }
+
+        if (count > maxRequests) {
             log.warn("[RateLimit] 请求被限流: method={}, ip={}, count={}/{}, window={}s",
-                    methodSignature, clientIp, currentCount, maxRequests, windowSeconds);
+                    methodSignature, clientIp, count, maxRequests, windowSeconds);
             throw new RateLimitException("请求过于频繁，请在 " + windowSeconds + " 秒后重试");
         }
 
@@ -80,21 +85,5 @@ public class RateLimitAspect {
             ip = ip.split(",")[0].trim();
         }
         return ip;
-    }
-
-    /**
-     * 滑动窗口计数器
-     */
-    private static class WindowCounter {
-        final long windowStart;
-        final AtomicInteger count = new AtomicInteger(0);
-
-        WindowCounter(long windowStart) {
-            this.windowStart = windowStart;
-        }
-
-        int incrementAndGet() {
-            return count.incrementAndGet();
-        }
     }
 }

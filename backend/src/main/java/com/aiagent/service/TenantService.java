@@ -7,6 +7,7 @@ import com.aiagent.repository.TenantRepository;
 import com.aiagent.security.ApiKeyService;
 import com.aiagent.security.annotation.Auditable;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.util.CryptoUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,17 +24,23 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
     private final ApiKeyService apiKeyService;
+    private final CryptoUtils cryptoUtils;
 
     @Value("${ai-agent.tenant.schema-prefix:t_}")
     private String schemaPrefix;
 
     public List<Tenant> getAllTenants() {
-        return tenantRepository.findAll();
+        List<Tenant> tenants = tenantRepository.findAll();
+        // 解密 API Key 和 Secret 返回给前端
+        tenants.forEach(this::decryptTenantKeys);
+        return tenants;
     }
 
     public Tenant getTenantById(Long id) {
-        return tenantRepository.findById(id)
+        Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
+        decryptTenantKeys(tenant);
+        return tenant;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -46,8 +53,9 @@ public class TenantService {
         String apiKey = UUID.randomUUID().toString();
         String apiSecret = UUID.randomUUID().toString();
 
-        tenant.setApiKey(apiKey);
-        tenant.setApiSecret(apiSecret);
+        // 加密存储 API Key 和 Secret
+        tenant.setApiKey(cryptoUtils.encrypt(apiKey));
+        tenant.setApiSecret(cryptoUtils.encrypt(apiSecret));
         tenant.setIsActive(true);
 
         Tenant savedTenant = tenantRepository.save(tenant);
@@ -56,6 +64,8 @@ public class TenantService {
 
         apiKeyService.saveApiKey(apiKey, savedTenant.getId(), 31536000L);
 
+        // 返回解密后的数据
+        decryptTenantKeys(savedTenant);
         return savedTenant;
     }
 
@@ -78,19 +88,38 @@ public class TenantService {
 
     @Transactional(rollbackFor = Exception.class)
     public Tenant regenerateApiKey(Long id) {
-        Tenant tenant = getTenantById(id);
-        
+        Tenant tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
+
         if (tenant.getApiKey() != null) {
-            apiKeyService.revokeApiKey(tenant.getApiKey());
+            // 解密旧的 API Key 用于撤销
+            String oldApiKey = cryptoUtils.decrypt(tenant.getApiKey());
+            apiKeyService.revokeApiKey(oldApiKey);
         }
 
         String newApiKey = UUID.randomUUID().toString();
         String newApiSecret = UUID.randomUUID().toString();
-        tenant.setApiKey(newApiKey);
-        tenant.setApiSecret(newApiSecret);
+
+        // 加密存储新的 API Key 和 Secret
+        tenant.setApiKey(cryptoUtils.encrypt(newApiKey));
+        tenant.setApiSecret(cryptoUtils.encrypt(newApiSecret));
 
         apiKeyService.saveApiKey(newApiKey, tenant.getId(), 31536000L);
 
-        return tenantRepository.save(tenant);
+        Tenant savedTenant = tenantRepository.save(tenant);
+        decryptTenantKeys(savedTenant);
+        return savedTenant;
+    }
+
+    /**
+     * 解密租户的 API Key 和 Secret（用于返回给前端）
+     */
+    private void decryptTenantKeys(Tenant tenant) {
+        if (tenant.getApiKey() != null) {
+            tenant.setApiKey(cryptoUtils.decrypt(tenant.getApiKey()));
+        }
+        if (tenant.getApiSecret() != null) {
+            tenant.setApiSecret(cryptoUtils.decrypt(tenant.getApiSecret()));
+        }
     }
 }

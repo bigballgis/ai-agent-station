@@ -28,13 +28,36 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import DOMPurify from 'dompurify'
 
 /**
  * MarkdownRenderer 组件
  * Markdown 渲染组件
  * 支持基础 Markdown 语法渲染、代码高亮、目录生成
  * 用于 ApiDocumentation 等页面
+ * 使用 DOMPurify 防止 XSS 攻击
  */
+
+// 配置 DOMPurify：仅允许安全的 HTML 标签和属性
+DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+  // 可以在这里添加额外的清理逻辑
+})
+
+const PURIFY_CONFIG: DOMPurify.Config = {
+  ALLOWED_TAGS: [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'p', 'br', 'hr',
+    'strong', 'em', 'b', 'i', 'u', 's',
+    'a', 'img',
+    'ul', 'ol', 'li',
+    'blockquote',
+    'pre', 'code',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'span', 'div',
+  ],
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'id', 'colspan', 'rowspan'],
+  ALLOW_DATA_ATTR: false,
+}
 
 interface TocItem {
   id: string
@@ -118,7 +141,7 @@ const renderedContent = computed(() => {
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text, url) => `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`)
 
   // 图片（![alt](url)）
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, url) => `<img src="${sanitizeUrl(url)}" alt="${alt}" />`)
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, url) => `<img src="${sanitizeUrl(url)}" alt="${alt}" loading="lazy" />`)
 
   // 无序列表
   html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
@@ -153,6 +176,9 @@ const renderedContent = computed(() => {
   html = html.replace(/<p>\s*<\/p>/g, '')
   html = html.replace(/<p>\s*(<(h[1-6]|pre|ul|ol|blockquote|table|hr))/g, '$1')
   html = html.replace(/(<\/h[1-6]>|<\/pre>|<\/ul>|<\/ol>|<\/blockquote>|<\/table>|<hr \/>)\s*<\/p>/g, '$1')
+
+  // 使用 DOMPurify 清理 HTML，防止 XSS 攻击
+  html = DOMPurify.sanitize(html, PURIFY_CONFIG)
 
   return html
 })

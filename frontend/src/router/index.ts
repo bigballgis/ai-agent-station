@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'agents',
         name: 'AgentList',
-        component: () => import('@/pages/AgentList.vue'),
+        component: () => import(/* webpackPrefetch: true */ '@/pages/AgentList.vue'),
         meta: { title: 'agentList' }
       },
       {
@@ -183,7 +183,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'workflow/designer',
         name: 'WorkflowDesigner',
-        component: () => import('@/pages/WorkflowDesigner.vue'),
+        component: () => import(/* webpackPrefetch: true */ '@/pages/WorkflowDesigner.vue'),
         meta: { title: 'workflowDesigner' }
       },
       {
