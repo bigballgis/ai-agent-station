@@ -422,7 +422,32 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **Migrations**: V1-V28 (Flyway)
 - **API**: 120+ endpoints, version header, 16 OpenAPI groups, api-changelog.md
 
-### Round 181-190 (Service Audit, State Management, DevOps)
+### Round 201-210 (Engine Fix, Performance, Tests)
+
+#### Round 201-203: Workflow Engine
+- GraphExecutor: 3 compilation errors fixed (mapping, castResult, cases)
+- Thread.sleep -> ScheduledExecutorService (non-blocking)
+- executeParallelNode: CompletableFuture.runAsync() true parallel
+- fail_fast/wait strategies for parallel branches
+
+#### Round 204-206: Frontend Performance
+- index chunk: 529KB -> 222KB (-58%)
+- Removed redundant antd full import (on-demand already used)
+- Merged 5 antd chunks -> 1 (199KB), eliminated 8 circular deps
+- sideEffects: false, preconnect/preload hints
+
+#### Round 207-209: Backend Tests (57 methods)
+- WorkflowServiceTest: 20 tests
+- QuotaServiceTest: 22 tests
+- TenantServiceTest: 15 tests
+
+## Quality Metrics (Round 210)
+- **Testing**: 291+ test cases (100 frontend + 191 backend)
+- **Build**: Clean 21s, index chunk 222KB, zero warnings, zero circular deps
+- **Engine**: Non-blocking delays, true parallel execution, compilation verified
+- **All Round 200 metrics maintained** + above improvements
+- **Migrations**: V1-V28 (Flyway)
+- **API**: 120+ endpoints, 16 OpenAPI groups
 
 #### Round 181-183: Backend Service Audit
 - LoginLogService/SessionService: HttpServletRequest removed from signatures
