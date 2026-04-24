@@ -495,15 +495,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import {
   getTenants,
   createTenant as createTenantApi,
   updateTenant as updateTenantApi,
 } from '@/api/tenant'
 import { logger } from '@/utils/logger'
+import { useLoading } from '@/composables/useLoading'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t } = useI18n()
+
+// Composables
+const { loading, withLoading } = useLoading()
+const { confirm } = useConfirm()
 
 // ============ 数据 ============
 
@@ -530,19 +537,15 @@ interface Tenant {
 }
 
 const tenants = ref<Tenant[]>([])
-const loading = ref(false)
 
 async function fetchTenants() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const res = await getTenants()
     tenants.value = res.data || res || []
-  } catch (e) {
+  }).catch((e) => {
     logger.error(t('tenant.fetchFailed'), e)
     message.error(t('tenant.fetchFailed'))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(async () => {
@@ -553,8 +556,13 @@ onMounted(async () => {
 
 const searchQuery = ref('')
 const statusFilter = ref('')
-const currentPage = ref(1)
-const pageSize = 5
+
+// 分页 composable
+const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+  initialPageSize: 5,
+  resetTriggers: [searchQuery, statusFilter],
+})
+
 const showModal = ref(false)
 const editingTenant = ref<Tenant | null>(null)
 const showQuotaModal = ref(false)
@@ -586,12 +594,7 @@ const filteredTenants = computed(() => {
   return result
 })
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredTenants.value.length / pageSize)))
-
-const paginatedTenants = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredTenants.value.slice(start, start + pageSize)
-})
+const paginatedTenants = paginatedSlice(filteredTenants)
 
 // ============ 方法 ============
 
@@ -664,26 +667,23 @@ function saveTenant() {
   }
 }
 
-function toggleTenantStatus(tenant: Tenant) {
+async function toggleTenantStatus(tenant: Tenant) {
   const action = tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')
-  Modal.confirm({
+  const ok = await confirm({
     title: t('tenant.confirmAction', { action }),
     content: t('tenant.confirmActionContent', { action, name: tenant.name }),
     okText: action,
     okType: tenant.status === 'active' ? 'danger' : 'primary',
-    cancelText: t('tenant.cancel'),
-    onOk() {
-      updateTenantApi(Number(tenant.id), { status: tenant.status === 'active' ? 'inactive' : 'active' })
-        .then(() => {
-          message.success(t('tenant.actionSuccess', { action }))
-          fetchTenants()
-        })
-        .catch((e: Error) => {
-          logger.error(t('tenant.actionFailed', { action }), e)
-          message.error(t('tenant.actionFailed', { action }))
-        })
-    },
   })
+  if (!ok) return
+  try {
+    await updateTenantApi(Number(tenant.id), { status: tenant.status === 'active' ? 'inactive' : 'active' })
+    message.success(t('tenant.actionSuccess', { action }))
+    fetchTenants()
+  } catch (e: Error) {
+    logger.error(t('tenant.actionFailed', { action }), e)
+    message.error(t('tenant.actionFailed', { action }))
+  }
 }
 
 function showDetail(tenant: Tenant) {

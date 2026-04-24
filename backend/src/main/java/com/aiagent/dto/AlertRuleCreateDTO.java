@@ -2,6 +2,8 @@ package com.aiagent.dto;
 
 import com.aiagent.entity.AlertRule;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,15 +27,19 @@ public class AlertRuleCreateDTO {
     private AlertRule.AlertType alertType;
 
     @NotBlank(message = "指标名称不能为空")
+    @Size(max = 100, message = "指标名称不能超过100个字符")
     @Schema(description = "指标名称", example = "api.error.rate", requiredMode = Schema.RequiredMode.REQUIRED)
     private String metricName;
 
+    @DecimalMin(value = "0.0", message = "阈值不能为负数")
     @Schema(description = "阈值")
     private Double threshold;
 
+    @Size(max = 10, message = "比较运算符不能超过10个字符")
     @Schema(description = "比较运算符", example = "gt")
     private String comparisonOperator = "gt";
 
+    @Min(value = 0, message = "持续时间不能为负数")
     @Schema(description = "持续时间(秒)", example = "300")
     private Integer durationSeconds = 300;
 
@@ -49,6 +55,7 @@ public class AlertRuleCreateDTO {
     @Schema(description = "通知目标")
     private String notifyTargets;
 
+    @Size(max = 500, message = "Webhook地址不能超过500个字符")
     @Schema(description = "Webhook回调地址", example = "https://example.com/webhook/alert")
     private String webhookUrl;
 }

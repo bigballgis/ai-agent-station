@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.exception.FileProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,7 +114,7 @@ public class LlmResponseCacheService {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not available", e);
+            throw new FileProcessingException("MD5 algorithm not available", e);
         }
     }
 }

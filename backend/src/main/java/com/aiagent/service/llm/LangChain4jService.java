@@ -1,5 +1,6 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.exception.ValidationException;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -76,7 +77,7 @@ public class LangChain4jService {
     public LangChain4jProvider getProvider(String providerName) {
         LangChain4jProvider provider = providerMap.get(providerName.toLowerCase());
         if (provider == null) {
-            throw new IllegalArgumentException("不支持的 LLM Provider: " + providerName +
+            throw new ValidationException("不支持的 LLM Provider: " + providerName +
                     ", 可用: " + String.join(", ", providerMap.keySet()));
         }
         return provider;

@@ -84,6 +84,49 @@ public class GlobalExceptionHandler {
                 .withPath(getRequestPath(request));
     }
 
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleValidationException(ValidationException e, HttpServletRequest request) {
+        log.warn("参数校验失败: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage())
+                .withTraceId(getTraceId())
+                .withMessageCode(ResultCode.VALIDATION_FAILED.getMessageCode())
+                .withTimestamp(now())
+                .withPath(getRequestPath(request));
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Result<Void> handleDuplicateResourceException(DuplicateResourceException e, HttpServletRequest request) {
+        log.warn("资源重复: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage())
+                .withTraceId(getTraceId())
+                .withMessageCode(ResultCode.RESOURCE_ALREADY_EXISTS.getMessageCode())
+                .withTimestamp(now())
+                .withPath(getRequestPath(request));
+    }
+
+    @ExceptionHandler(QuotaExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleQuotaExceededException(QuotaExceededException e, HttpServletRequest request) {
+        log.warn("配额超限: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage())
+                .withTraceId(getTraceId())
+                .withMessageCode(ResultCode.TOO_MANY_REQUESTS.getMessageCode())
+                .withTimestamp(now())
+                .withPath(getRequestPath(request));
+    }
+
+    @ExceptionHandler(FileProcessingException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public Result<Void> handleFileProcessingException(FileProcessingException e, HttpServletRequest request) {
+        log.warn("文件处理失败: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage())
+                .withTraceId(getTraceId())
+                .withTimestamp(now())
+                .withPath(getRequestPath(request));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Result<Void> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {

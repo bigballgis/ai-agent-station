@@ -17,13 +17,16 @@ public class ApiInterfaceCreateDTO {
     private Long versionId;
 
     @NotBlank(message = "path不能为空")
+    @Size(max = 500, message = "path不能超过500个字符")
     @Schema(description = "接口路径", requiredMode = Schema.RequiredMode.REQUIRED)
     private String path;
 
     @NotBlank(message = "method不能为空")
+    @Size(max = 10, message = "method不能超过10个字符")
     @Schema(description = "请求方法", requiredMode = Schema.RequiredMode.REQUIRED)
     private String method;
 
+    @Size(max = 1000, message = "接口描述不能超过1000个字符")
     @Schema(description = "接口描述")
     private String description;
 

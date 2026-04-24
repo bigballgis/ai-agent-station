@@ -2,8 +2,10 @@ package com.aiagent.service;
 
 import com.aiagent.entity.AgentMemory;
 import com.aiagent.entity.AgentMemory.MemoryType;
+import com.aiagent.entity.Tenant;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.AgentMemoryRepository;
+import com.aiagent.repository.TenantRepository;
 import com.aiagent.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 public class MemoryService {
 
     private final AgentMemoryRepository memoryRepository;
+    private final TenantRepository tenantRepository;
 
     @Transactional(rollbackFor = Exception.class)
     public AgentMemory createMemory(AgentMemory memory) {
@@ -47,7 +50,10 @@ public class MemoryService {
 
     @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredMemories() {
-        memoryRepository.deleteByExpiresAtBefore(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        for (Tenant tenant : tenantRepository.findAll()) {
+            memoryRepository.deleteByExpiresAtBeforeAndTenantId(now, tenant.getId());
+        }
     }
 
     @Scheduled(cron = "0 0 3 * * ?")

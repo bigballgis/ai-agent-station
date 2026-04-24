@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
-import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.FileProcessingException;
+import com.aiagent.exception.ValidationException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -77,7 +78,7 @@ public class FileStorageService {
             Files.createDirectories(rootLocation);
             log.info("File storage initialized at: {}", rootLocation);
         } catch (IOException e) {
-            throw new BusinessException("Could not initialize file storage location: " + rootLocation, e);
+            throw new FileProcessingException("Could not initialize file storage location: " + rootLocation, e);
         }
     }
 
@@ -93,7 +94,7 @@ public class FileStorageService {
 
         String originalName = file.getOriginalFilename();
         if (originalName == null || originalName.isEmpty()) {
-            throw new IllegalArgumentException("File name must not be empty");
+            throw new ValidationException("File name must not be empty");
         }
 
         String dateDir = LocalDate.now().toString();
@@ -136,7 +137,7 @@ public class FileStorageService {
                     .build();
         } catch (IOException e) {
             log.error("Failed to store file: {}", originalName, e);
-            throw new BusinessException("Failed to store file: " + originalName, e);
+            throw new FileProcessingException("Failed to store file: " + originalName, e);
         }
     }
 
@@ -147,12 +148,12 @@ public class FileStorageService {
      */
     public void delete(String filePath) {
         if (filePath == null || filePath.isEmpty()) {
-            throw new IllegalArgumentException("File path must not be empty");
+            throw new ValidationException("File path must not be empty");
         }
 
         Path fileToDelete = rootLocation.resolve(filePath).normalize();
         if (!fileToDelete.startsWith(rootLocation)) {
-            throw new IllegalArgumentException("Invalid file path: path traversal detected");
+            throw new ValidationException("Invalid file path: path traversal detected");
         }
 
         try {
@@ -161,11 +162,11 @@ public class FileStorageService {
                 log.info("File deleted successfully: {}", filePath);
             } else {
                 log.warn("File not found for deletion: {}", filePath);
-                throw new BusinessException("File not found: " + filePath);
+                throw new FileProcessingException("File not found: " + filePath);
             }
         } catch (IOException e) {
             log.error("Failed to delete file: {}", filePath, e);
-            throw new BusinessException("Failed to delete file: " + filePath, e);
+            throw new FileProcessingException("Failed to delete file: " + filePath, e);
         }
     }
 
@@ -177,12 +178,12 @@ public class FileStorageService {
      */
     public Resource getFile(String filePath) {
         if (filePath == null || filePath.isEmpty()) {
-            throw new IllegalArgumentException("File path must not be empty");
+            throw new ValidationException("File path must not be empty");
         }
 
         Path fileToLoad = rootLocation.resolve(filePath).normalize();
         if (!fileToLoad.startsWith(rootLocation)) {
-            throw new IllegalArgumentException("Invalid file path: path traversal detected");
+            throw new ValidationException("Invalid file path: path traversal detected");
         }
 
         try {
@@ -191,11 +192,11 @@ public class FileStorageService {
                 return resource;
             } else {
                 log.warn("File not found or not readable: {}", filePath);
-                throw new BusinessException("File not found: " + filePath);
+                throw new FileProcessingException("File not found: " + filePath);
             }
         } catch (MalformedURLException e) {
             log.error("Failed to load file: {}", filePath, e);
-            throw new BusinessException("Failed to load file: " + filePath, e);
+            throw new FileProcessingException("Failed to load file: " + filePath, e);
         }
     }
 
@@ -212,7 +213,7 @@ public class FileStorageService {
         }
 
         if (!targetDir.startsWith(rootLocation)) {
-            throw new IllegalArgumentException("Invalid sub-directory: path traversal detected");
+            throw new ValidationException("Invalid sub-directory: path traversal detected");
         }
 
         if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
@@ -249,22 +250,22 @@ public class FileStorageService {
                     .collect(Collectors.toList());
         } catch (IOException e) {
             log.error("Failed to list files in directory: {}", targetDir, e);
-            throw new BusinessException("Failed to list files in directory: " + targetDir, e);
+            throw new FileProcessingException("Failed to list files in directory: " + targetDir, e);
         }
     }
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File must not be empty");
+            throw new ValidationException("File must not be empty");
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds maximum limit of 50MB");
+            throw new FileProcessingException("File size exceeds maximum limit of 50MB");
         }
 
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException(
+            throw new FileProcessingException(
                     "File type not allowed: " + contentType + ". Allowed types: " + ALLOWED_CONTENT_TYPES);
         }
     }

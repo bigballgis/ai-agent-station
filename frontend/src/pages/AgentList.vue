@@ -434,17 +434,24 @@
 import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { agentApi, type Agent } from '@/api/agent'
 import { PageHeader, SearchBar, StatusBadge, EmptyState } from '@/components'
 import type { SearchField } from '@/components'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
+import { useLoading } from '@/composables/useLoading'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
+
+// Composables
+const { loading, withLoading } = useLoading()
+const { confirm } = useConfirm()
+
 const agents = ref<Agent[]>([])
-const loading = ref(false)
 const showCreateModal = ref(false)
 const showCopyModal = ref(false)
 const showImportModal = ref(false)
@@ -573,9 +580,11 @@ const searchFields: SearchField[] = [
   },
 ]
 
-// 分页
-const currentPage = ref(1)
-const pageSize = 9
+// 分页 composable
+const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+  initialPageSize: 9,
+  resetTriggers: [searchQuery, statusFilter, activeFilter],
+})
 
 // 筛选后的列表
 const filteredAgents = computed(() => {
@@ -603,12 +612,7 @@ const filteredAgents = computed(() => {
 })
 
 // 分页数据
-const totalPages = computed(() => Math.ceil(filteredAgents.value.length / pageSize))
-
-const paginatedAgents = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredAgents.value.slice(start, start + pageSize)
-})
+const paginatedAgents = paginatedSlice(filteredAgents)
 
 function shouldShowPage(page: number): boolean {
   if (page === 1 || page === totalPages.value) return true
@@ -617,16 +621,13 @@ function shouldShowPage(page: number): boolean {
 }
 
 async function loadAgents() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const res = await agentApi.getAllAgents()
     agents.value = res.data || []
-  } catch (error: unknown) {
+  }).catch((error: unknown) => {
     const err = error instanceof Error ? error : new Error(String(error))
     message.error(t('agent.loadFailed') + ': ' + (err.message || ''))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 function handleSearch(params?: Record<string, any>) {
@@ -635,14 +636,14 @@ function handleSearch(params?: Record<string, any>) {
     statusFilter.value = params.statusFilter || ''
     activeFilter.value = params.activeFilter || ''
   }
-  currentPage.value = 1
+  // Pagination auto-resets via resetTriggers
 }
 
 function handleReset() {
   searchQuery.value = ''
   statusFilter.value = ''
   activeFilter.value = ''
-  currentPage.value = 1
+  // Pagination auto-resets via resetTriggers
 }
 
 function editAgent(agent: Agent) {
@@ -667,24 +668,22 @@ async function handleCopy() {
   }
 }
 
-function deleteAgent(agent: Agent) {
-  Modal.confirm({
+async function deleteAgent(agent: Agent) {
+  const ok = await confirm({
     title: t('agent.confirmDelete'),
     content: `${t('agent.confirmDeleteContent')} "${agent.name}"?`,
     okText: t('agent.confirmDelete'),
     okType: 'danger',
-    cancelText: t('common.cancel'),
-    onOk: async () => {
-      try {
-        await agentApi.deleteAgent(agent.id!)
-        message.success(t('agent.deleteSuccess'))
-        loadAgents()
-      } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error))
-        message.error(t('agent.deleteFailed') + ': ' + (err.message || ''))
-      }
-    }
   })
+  if (!ok) return
+  try {
+    await agentApi.deleteAgent(agent.id!)
+    message.success(t('agent.deleteSuccess'))
+    loadAgents()
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.deleteFailed') + ': ' + (err.message || ''))
+  }
 }
 
 function downloadBlob(blob: Blob, filename: string) {

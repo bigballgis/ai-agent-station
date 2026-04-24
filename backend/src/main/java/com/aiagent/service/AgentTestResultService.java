@@ -3,6 +3,7 @@ package com.aiagent.service;
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentTestResultRepository;
+import com.aiagent.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,8 @@ public class AgentTestResultService {
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByExecutionId(Long executionId) {
-        return resultRepository.findByExecutionId(executionId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.findByExecutionIdAndTenantId(executionId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
@@ -38,12 +40,14 @@ public class AgentTestResultService {
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByAgentId(Long agentId) {
-        return resultRepository.findByAgentId(agentId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.findByAgentIdAndTenantId(agentId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<AgentTestResult> getResultsByTestCaseId(Long testCaseId) {
-        return resultRepository.findByTestCaseId(testCaseId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.findByTestCaseIdAndTenantId(testCaseId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
@@ -73,22 +77,26 @@ public class AgentTestResultService {
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByAgent(Long agentId) {
-        return resultRepository.countByAgentId(agentId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.countByAgentIdAndTenantId(agentId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByTestCase(Long testCaseId) {
-        return resultRepository.countByTestCaseId(testCaseId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.countByTestCaseIdAndTenantId(testCaseId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public long countResultsByExecution(Long executionId) {
-        return resultRepository.countByExecutionId(executionId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        return resultRepository.countByExecutionIdAndTenantId(executionId, tenantId);
     }
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public double getPassRateByAgent(Long agentId) {
-        long total = resultRepository.countByAgentId(agentId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        long total = resultRepository.countByAgentIdAndTenantId(agentId, tenantId);
         if (total == 0) {
             return 0.0;
         }
@@ -98,7 +106,8 @@ public class AgentTestResultService {
 
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public double getPassRateByTestCase(Long testCaseId) {
-        long total = resultRepository.countByTestCaseId(testCaseId);
+        Long tenantId = SecurityUtils.getCurrentTenantId();
+        long total = resultRepository.countByTestCaseIdAndTenantId(testCaseId, tenantId);
         if (total == 0) {
             return 0.0;
         }

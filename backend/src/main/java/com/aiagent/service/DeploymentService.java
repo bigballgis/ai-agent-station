@@ -5,7 +5,9 @@ import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
 import com.aiagent.entity.DeploymentHistory;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.FileProcessingException;
 import com.aiagent.exception.ResourceNotFoundException;
+import com.aiagent.exception.ValidationException;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.repository.DeploymentHistoryRepository;
@@ -250,7 +252,7 @@ public class DeploymentService {
             // 步骤1: 验证部署配置
             log.info("[步骤1/4] 验证部署配置...");
             if (agent.getConfig() == null || agent.getConfig().isEmpty()) {
-                throw new RuntimeException("部署配置为空，无法继续部署");
+                throw new ValidationException("部署配置为空，无法继续部署");
             }
             log.info("  配置验证通过, 配置项数量: {}", agent.getConfig().size());
 
@@ -275,7 +277,7 @@ public class DeploymentService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("部署过程中被中断: Agent={}, 版本={}", agent.getName(), version.getSemanticVersion());
-            throw new RuntimeException("部署过程中被中断", e);
+            throw new FileProcessingException("部署过程中被中断", e);
         } catch (RuntimeException e) {
             log.error("部署失败: Agent={}, 版本={}, 原因: {}", agent.getName(), version.getSemanticVersion(), e.getMessage());
             throw e;

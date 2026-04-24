@@ -303,13 +303,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { getAgentMemories, deleteMemory as deleteMemoryApi, cleanupAgentMemories } from '@/api/memory'
 import { getAllAgents } from '@/api/agent'
 import { LoadingSkeleton } from '@/components'
 import { logger } from '@/utils/logger'
+import { useLoading } from '@/composables/useLoading'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t } = useI18n()
+
+// Composables
+const { loading, withLoading } = useLoading()
+const { confirm } = useConfirm()
 
 // Agent 列表
 const agentList = ref<{ id: string; name: string }[]>([])
@@ -326,9 +333,11 @@ const activeType = ref('')
 const searchQuery = ref('')
 const timeRange = ref('')
 
-// 分页
-const currentPage = ref(1)
-const pageSize = 10
+// 分页 composable
+const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+  initialPageSize: 10,
+  resetTriggers: [activeType, searchQuery],
+})
 
 interface MemoryItem {
   id: number | string
@@ -342,7 +351,6 @@ interface MemoryItem {
 
 // 记忆数据
 const memories = ref<MemoryItem[]>([])
-const loading = ref(false)
 
 async function fetchAgents() {
   try {
@@ -357,20 +365,17 @@ async function fetchAgents() {
 }
 
 async function fetchMemories() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const params: Record<string, unknown> = { page: 1, size: 100 }
     if (selectedAgent.value) params.agentId = selectedAgent.value
     if (activeType.value) params.memoryType = activeType.value
     if (searchQuery.value) params.keyword = searchQuery.value
     const res = await getAgentMemories(selectedAgent.value || 'all', params)
     memories.value = res.data?.records || res.data || res || []
-  } catch (e: unknown) {
+  }).catch((e: unknown) => {
     logger.error('获取记忆列表失败:', e)
     message.error(t('memory.fetchMemoriesFailed'))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(async () => {
@@ -384,11 +389,11 @@ watch(selectedAgent, () => {
   fetchMemories()
 })
 watch(activeType, () => {
-  currentPage.value = 1
+  // Pagination auto-resets via resetTriggers
   fetchMemories()
 })
 watch(searchQuery, () => {
-  currentPage.value = 1
+  // Pagination auto-resets via resetTriggers
   fetchMemories()
 })
 
@@ -419,12 +424,7 @@ const filteredMemories = computed(() => {
 })
 
 // 分页
-const totalPages = computed(() => Math.ceil(filteredMemories.value.length / pageSize))
-
-const paginatedMemories = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredMemories.value.slice(start, start + pageSize)
-})
+const paginatedMemories = paginatedSlice(filteredMemories)
 
 function shouldShowPage(page: number): boolean {
   if (page === 1 || page === totalPages.value) return true
@@ -460,44 +460,40 @@ function viewMemoryDetail(memory: typeof memories.value[0]) {
   showDetailModal.value = true
 }
 
-function deleteMemory(memory: typeof memories.value[0]) {
-  Modal.confirm({
+async function deleteMemory(memory: typeof memories.value[0]) {
+  const ok = await confirm({
     title: t('memory.deleteConfirmTitle'),
     content: t('memory.deleteConfirmContent'),
     okText: t('memory.deleteConfirmOk'),
     okType: 'danger',
-    cancelText: t('common.cancel'),
-    onOk: async () => {
-      try {
-        await deleteMemoryApi(Number(memory.id))
-        message.success(t('memory.deleteSuccess'))
-        await fetchMemories()
-      } catch (e: unknown) {
-        logger.error('删除记忆失败:', e)
-        message.error(t('memory.deleteFailed'))
-      }
-    },
   })
+  if (!ok) return
+  try {
+    await deleteMemoryApi(Number(memory.id))
+    message.success(t('memory.deleteSuccess'))
+    await fetchMemories()
+  } catch (e: unknown) {
+    logger.error('删除记忆失败:', e)
+    message.error(t('memory.deleteFailed'))
+  }
 }
 
-function cleanExpiredMemories() {
-  Modal.confirm({
+async function cleanExpiredMemories() {
+  const ok = await confirm({
     title: t('memory.cleanConfirmTitle'),
     content: t('memory.cleanConfirmContent'),
     okText: t('memory.cleanConfirmOk'),
     okType: 'danger',
-    cancelText: t('common.cancel'),
-    onOk: async () => {
-      try {
-        await cleanupAgentMemories(selectedAgent.value || 'all')
-        message.success(t('memory.cleanSuccess'))
-        await fetchMemories()
-      } catch (e: unknown) {
-        logger.error('清理过期记忆失败:', e)
-        message.error(t('memory.cleanFailed'))
-      }
-    },
   })
+  if (!ok) return
+  try {
+    await cleanupAgentMemories(selectedAgent.value || 'all')
+    message.success(t('memory.cleanSuccess'))
+    await fetchMemories()
+  } catch (e: unknown) {
+    logger.error('清理过期记忆失败:', e)
+    message.error(t('memory.cleanFailed'))
+  }
 }
 </script>
 

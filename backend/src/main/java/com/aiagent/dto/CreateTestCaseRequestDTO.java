@@ -2,6 +2,7 @@ package com.aiagent.dto;
 
 import lombok.Data;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -39,6 +40,7 @@ public class CreateTestCaseRequestDTO {
     @NotNull(message = "预期输出不能为空")
     private String expectedOutput;
 
+    @Min(value = 0, message = "状态值不能为负数")
     private Integer status;
 
     @NotNull(message = "创建人ID不能为空")

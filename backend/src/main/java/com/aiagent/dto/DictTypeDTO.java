@@ -19,9 +19,11 @@ public class DictTypeDTO {
     @Schema(description = "字典类型", example = "agent_status", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictType;
 
+    @Size(max = 10, message = "状态不能超过10个字符")
     @Schema(description = "状态", example = "0")
     private String status;
 
+    @Size(max = 200, message = "备注不能超过200个字符")
     @Schema(description = "备注")
     private String remark;
 }

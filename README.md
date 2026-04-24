@@ -34,7 +34,33 @@
 - PostgreSQL 16+
 - Redis 7+
 
-### 后端启动
+### Docker Compose 一键部署（推荐）
+
+```bash
+# 1. 复制环境变量模板并配置
+cp .env.example .env
+# 编辑 .env 填入 JWT_SECRET、DB_PASSWORD、REDIS_PASSWORD 等必填项
+
+# 2. 启动所有服务
+docker compose up -d
+
+# 3. 查看服务状态
+docker compose ps
+
+# 4. 查看日志
+docker compose logs -f backend
+```
+
+启动后访问：
+- 前端: http://localhost:5173
+- 后端 API: http://localhost:8080/api
+- Swagger UI: http://localhost:8080/api/swagger-ui.html
+- Grafana: http://localhost:3000 (admin / ${GRAFANA_ADMIN_PASSWORD})
+- Prometheus: http://localhost:9090
+
+### 本地开发
+
+#### 后端启动
 ```bash
 cd backend
 cp src/main/resources/application-example.yml src/main/resources/application.yml
@@ -43,47 +69,115 @@ mvn clean package -DskipTests
 java -jar target/ai-agent-platform-1.0.0.jar
 ```
 
-### 前端启动
+#### 前端启动
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Docker Compose 一键部署
+## 测试
+
+### 后端测试
 ```bash
-docker compose up -d
+cd backend
+
+# 运行所有测试
+mvn test
+
+# 运行单个测试类
+mvn test -Dtest=AgentControllerTest
+
+# 跳过测试打包
+mvn clean package -DskipTests
 ```
+
+### 前端测试
+```bash
+cd frontend
+
+# 运行单元测试（Vitest）
+npm run test:run
+
+# 运行测试并生成覆盖率报告
+npm run test:coverage
+
+# E2E 测试（Playwright）
+npx playwright test
+```
+
+## 部署指南
+
+### 生产环境部署
+
+```bash
+# 1. 使用生产环境配置
+cp .env.production.example .env
+# 编辑 .env 配置生产环境参数
+
+# 2. 构建并启动
+docker compose up -d --build
+
+# 3. Redis Cluster 模式（可选，高可用场景）
+docker compose --profile redis-cluster up -d
+```
+
+### 环境变量参考
+
+| 环境变量 | 必填 | 默认值 | 说明 |
+|----------|------|--------|------|
+| `DB_PASSWORD` | 是 | - | PostgreSQL 密码 |
+| `REDIS_PASSWORD` | 是 | - | Redis 密码 |
+| `JWT_SECRET` | 是 | - | JWT 签名密钥（至少 32 字符） |
+| `JWT_EXPIRATION` | 否 | `3600000` | Access Token 有效期（毫秒） |
+| `JWT_REFRESH_EXPIRATION` | 否 | `604800000` | Refresh Token 有效期（毫秒） |
+| `LLM_DEFAULT_PROVIDER` | 否 | `openai` | 默认 LLM 提供商 |
+| `OPENAI_API_KEY` | 否 | - | OpenAI API Key |
+| `OPENAI_BASE_URL` | 否 | `https://api.openai.com/v1` | OpenAI API 地址 |
+| `OPENAI_DEFAULT_MODEL` | 否 | `gpt-4o` | 默认模型 |
+| `QWEN_API_KEY` | 否 | - | 通义千问 API Key |
+| `QWEN_BASE_URL` | 否 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 千问 API 地址 |
+| `OLLAMA_BASE_URL` | 否 | `http://localhost:11434` | Ollama 地址 |
+| `LANGCHAIN4J_MEMORY_STORE` | 否 | `in-memory` | ChatMemory 存储: `in-memory` / `redis` |
+| `LANGCHAIN4J_TOOL_CALLING` | 否 | `true` | 是否启用 Tool Calling |
+| `GRAFANA_ADMIN_PASSWORD` | 是 | - | Grafana 管理员密码 |
+| `LOG_LEVEL` | 否 | `info` | 日志级别 |
 
 ## 项目结构
 
 ```
 ├── backend/
 │   ├── src/main/java/com/aiagent/
-│   │   ├── controller/     # 27个REST控制器
-│   │   ├── service/        # 30+业务服务
-│   │   ├── entity/         # 35+JPA实体
-│   │   ├── repository/     # 35+数据仓库
-│   │   ├── dto/            # 数据传输对象
+│   │   ├── controller/     # REST控制器（认证、Agent、工作流、工具等）
+│   │   ├── service/        # 业务服务层（含 llm/、tool/ 子包）
+│   │   ├── engine/graph/   # DAG图执行引擎（GraphExecutor、NodeExecutors）
+│   │   ├── entity/         # JPA实体（Agent、Workflow、User、Tenant等）
+│   │   ├── repository/     # Spring Data JPA仓库
+│   │   ├── dto/            # 数据传输对象（请求/响应）
 │   │   ├── vo/             # 视图对象
-│   │   ├── config/         # 配置类
-│   │   ├── security/       # 安全框架
-│   │   ├── aspect/         # AOP切面
-│   │   ├── websocket/      # WebSocket
+│   │   ├── config/         # 配置类（安全、缓存、CORS、WebSocket等）
+│   │   ├── security/       # 安全框架（JWT、过滤器、密码策略）
+│   │   ├── aspect/         # AOP切面（审计日志、操作日志、权限）
+│   │   ├── tenant/         # 多租户（数据源路由、拦截器）
+│   │   ├── mcp/            # MCP工具网关
+│   │   ├── websocket/      # WebSocket通知
+│   │   ├── gateway/        # API网关过滤器
 │   │   └── util/           # 工具类
 │   └── src/main/resources/
-│       ├── db/migration/   # 19个Flyway迁移脚本
+│       ├── db/migration/   # Flyway数据库迁移脚本（V1-V28）
+│       ├── api-changelog.md # API变更日志
 │       └── application.yml
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/          # 32个页面
-│   │   ├── components/     # 30个通用组件
-│   │   ├── api/            # 18个API模块
-│   │   ├── store/          # 7个Pinia模块
-│   │   ├── types/          # 6个类型定义
+│   │   ├── pages/          # 页面组件
+│   │   ├── components/     # 通用组件（ProTable、CodeEditor等）
+│   │   ├── api/            # API模块（agent、workflow、auth等）
+│   │   ├── store/          # Pinia状态管理
 │   │   └── utils/          # 工具函数
-│   └── vite.config.ts
-├── docker-compose.yml
+│   └── e2e/                # Playwright E2E测试
+├── docker/                 # Docker配置（Nginx、Prometheus、Grafana）
+├── docker-compose.yml      # 编排文件
+├── .env.example            # 环境变量模板
 └── .github/workflows/      # CI/CD流水线
 ```
 
@@ -157,7 +251,9 @@ SSE 使用 **POST 方法**，通过 `stream.ts` 调用：
 
 ## API文档
 
-启动后端后访问: http://localhost:8080/api/swagger-ui.html
+- Swagger UI: http://localhost:8080/api/swagger-ui.html
+- API Changelog: `backend/src/main/resources/api-changelog.md`
+- 覆盖 20 个模块、100+ 个端点（认证、Agent、工作流、审批、工具、SSE流式等）
 
 ## License
 

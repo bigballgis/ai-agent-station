@@ -1,11 +1,16 @@
 package com.aiagent.dto;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import java.util.Map;
 
 public class AgentInvokeRequest {
+    @NotEmpty(message = "inputs不能为空")
     private Map<String, Object> inputs;
     private Map<String, Object> context;
     private Boolean async = false;
+
+    @Size(max = 500, message = "callbackUrl不能超过500个字符")
     private String callbackUrl;
 
     public AgentInvokeRequest() {

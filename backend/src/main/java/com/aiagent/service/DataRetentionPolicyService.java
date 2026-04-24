@@ -163,7 +163,11 @@ public class DataRetentionPolicyService {
 
     private long cleanupOldSystemLogs(LocalDateTime threshold) {
         try {
-            return systemLogRepository.deleteByCreatedAtBefore(threshold);
+            long total = 0;
+            for (var tenant : tenantRepository.findAll()) {
+                total += systemLogRepository.deleteByTenantIdAndCreatedAtBefore(tenant.getId(), threshold);
+            }
+            return total;
         } catch (Exception e) {
             log.error("清理系统日志失败", e);
             return 0;
@@ -172,7 +176,11 @@ public class DataRetentionPolicyService {
 
     private long cleanupOldTestResults(LocalDateTime threshold) {
         try {
-            return testResultRepository.deleteByCreatedAtBefore(threshold);
+            long total = 0;
+            for (var tenant : tenantRepository.findAll()) {
+                total += testResultRepository.deleteByTenantIdAndCreatedAtBefore(tenant.getId(), threshold);
+            }
+            return total;
         } catch (Exception e) {
             log.error("清理测试结果失败", e);
             return 0;

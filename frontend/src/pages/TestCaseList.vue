@@ -300,14 +300,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { testApi, type TestCase } from '@/api/test'
 import { agentApi, type Agent } from '@/api/agent'
 import { logger } from '@/utils/logger'
+import { useLoading } from '@/composables/useLoading'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirm } from '@/composables/useConfirm'
 
 const router = useRouter()
 const { t } = useI18n()
-const loading = ref(false)
+
+// Composables
+const { loading, withLoading } = useLoading()
+const { confirm } = useConfirm()
+
 const testCases = ref<TestCase[]>([])
 const agents = ref<Agent[]>([])
 const searchQuery = ref('')
@@ -315,9 +322,11 @@ const statusFilter = ref('')
 const agentFilter = ref<number | string>('')
 const typeFilter = ref('')
 
-// 分页
-const currentPage = ref(1)
-const pageSize = 10
+// 分页 composable
+const { currentPage, pageSize, totalPages, onPageChange, paginatedSlice } = usePagination({
+  initialPageSize: 10,
+  resetTriggers: [searchQuery, statusFilter, agentFilter, typeFilter],
+})
 
 // Agent 选项（用于筛选下拉）
 const agentOptions = computed(() => agents.value)
@@ -352,12 +361,7 @@ const filteredTestCases = computed(() => {
 })
 
 // 分页数据
-const totalPages = computed(() => Math.ceil(filteredTestCases.value.length / pageSize))
-
-const paginatedTestCases = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredTestCases.value.slice(start, start + pageSize)
-})
+const paginatedTestCases = paginatedSlice(filteredTestCases)
 
 function shouldShowPage(page: number): boolean {
   if (page === 1 || page === totalPages.value) return true
@@ -407,15 +411,12 @@ const columns = computed(() => [
 
 // 加载数据
 async function fetchTestCases() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const response = await testApi.getAllTestCases()
     testCases.value = response.data || []
-  } catch (error) {
+  }).catch(() => {
     message.error(t('test.loadFailed'))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 async function fetchAgents() {
@@ -444,24 +445,21 @@ function handleViewVersions(id: number) {
   router.push(`/test-cases/versions/${id}`)
 }
 
-function handleDeleteTestCase(id: number) {
-  Modal.confirm({
+async function handleDeleteTestCase(id: number) {
+  const ok = await confirm({
     title: t('test.confirmDelete'),
     content: t('test.confirmDeleteContent'),
     okText: t('test.confirmDelete'),
     okType: 'danger',
-    cancelText: t('common.cancel'),
-    onOk: () => {
-      testApi.deleteTestCase(id)
-        .then(() => {
-          message.success(t('test.deleteSuccess'))
-          fetchTestCases()
-        })
-        .catch(() => {
-          message.error(t('test.deleteFailed'))
-        })
-    }
   })
+  if (!ok) return
+  try {
+    await testApi.deleteTestCase(id)
+    message.success(t('test.deleteSuccess'))
+    fetchTestCases()
+  } catch {
+    message.error(t('test.deleteFailed'))
+  }
 }
 
 function handleRunTestCase(id: number) {

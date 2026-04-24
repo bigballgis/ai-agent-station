@@ -8,6 +8,7 @@ import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.TestResultResponseDTO;
 import com.aiagent.dto.UpdateTestResultRequestDTO;
 import com.aiagent.entity.AgentTestResult;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.service.AgentTestResultService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -118,7 +119,7 @@ public class AgentTestResultController {
     @PutMapping("/{id}")
     public Result<TestResultResponseDTO> updateResult(@PathVariable Long id, @Valid @RequestBody UpdateTestResultRequestDTO request) {
         AgentTestResult result = resultService.getResultById(id)
-                .orElseThrow(() -> new RuntimeException("Test result not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Test result not found"));
         DTOConverter.updateTestResultFromDTO(request, result);
         AgentTestResult updatedResult = resultService.updateResult(id, result);
         return Result.success(DTOConverter.toTestResultResponseDTO(updatedResult));

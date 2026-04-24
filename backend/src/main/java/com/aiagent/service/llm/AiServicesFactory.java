@@ -1,5 +1,6 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.service.tool.CompositeToolProvider;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.memory.ChatMemory;
@@ -83,7 +84,7 @@ public class AiServicesFactory {
     public AgentAssistant getAgent(String agentId) {
         AgentAssistant agent = agentCache.get(agentId);
         if (agent == null) {
-            throw new IllegalArgumentException("Agent 不存在: " + agentId);
+            throw new ResourceNotFoundException("Agent 不存在: " + agentId);
         }
         return agent;
     }

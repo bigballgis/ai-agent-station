@@ -2,6 +2,9 @@ package com.aiagent.dto;
 
 import lombok.Data;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -32,9 +35,12 @@ public class CreateSuggestionRequestDTO {
 
     private String description;
 
+    @Size(max = 5000, message = "建议内容不能超过5000个字符")
     private String content;
 
     @NotNull(message = "优先级不能为空")
+    @Min(value = 0, message = "优先级不能为负数")
+    @Max(value = 10, message = "优先级不能超过10")
     private Integer priority;
 
     @NotBlank(message = "状态不能为空")
@@ -45,6 +51,7 @@ public class CreateSuggestionRequestDTO {
     @Size(max = 20, message = "实现状态不能超过20个字符")
     private String implementationStatus;
 
+    @DecimalMin(value = "0.0", message = "预期影响不能为负数")
     private BigDecimal expectedImpact;
 
     @NotNull(message = "创建人ID不能为空")

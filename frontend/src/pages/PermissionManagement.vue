@@ -360,7 +360,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import {
   getPermissions,
   getRoles,
@@ -373,8 +373,14 @@ import {
 import { getUsers } from '@/api/user'
 import { PageHeader, ConfirmModal, LoadingSkeleton } from '@/components'
 import { logger } from '@/utils/logger'
+import { useLoading } from '@/composables/useLoading'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t } = useI18n()
+
+// Composables
+const { loading, withLoading } = useLoading()
+const { confirm } = useConfirm()
 
 // ============ 数据 ============
 
@@ -398,7 +404,6 @@ interface RoleUser {
 
 const roles = ref<Role[]>([])
 const roleUsers = ref<RoleUser[]>([])
-const loading = ref(false)
 
 // 权限树数据（从 API 获取）
 interface PermissionTreeNode {
@@ -422,16 +427,13 @@ async function fetchPermissions() {
 }
 
 async function fetchRoles() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const res = await getRoles()
     roles.value = res.data || res || []
-  } catch (e: unknown) {
+  }).catch((e: unknown) => {
     logger.error('获取角色列表失败:', e)
     message.error(t('permission.fetchRolesFailed'))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 async function fetchUsers() {
@@ -603,25 +605,23 @@ async function confirmDeleteRole() {
   }
 }
 
-function removeUser(userId: string) {
+async function removeUser(userId: string) {
   if (!selectedRole.value) return
-  Modal.confirm({
+  const ok = await confirm({
     title: t('permission.confirmRemove'),
     content: t('permission.confirmRemoveContent'),
     okText: t('permission.confirmRemove'),
     okType: 'danger',
-    cancelText: t('common.cancel'),
-    async onOk() {
-      try {
-        await removeRole(Number(userId), Number(selectedRole.value!.id))
-        roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
-        message.success(t('permission.userRemoved'))
-      } catch (e: unknown) {
-        logger.error('移除用户失败:', e)
-        message.error(t('permission.removeUserFailed'))
-      }
-    }
   })
+  if (!ok) return
+  try {
+    await removeRole(Number(userId), Number(selectedRole.value!.id))
+    roleUsers.value = roleUsers.value.filter(u => u.id !== userId)
+    message.success(t('permission.userRemoved'))
+  } catch (e: unknown) {
+    logger.error('移除用户失败:', e)
+    message.error(t('permission.removeUserFailed'))
+  }
 }
 
 function expandAll() {

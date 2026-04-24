@@ -9,6 +9,7 @@ import lombok.Data;
 public class StreamAgentExecutionRequestDTO {
 
     @NotBlank(message = "message不能为空")
+    @Size(max = 10000, message = "消息内容不能超过10000个字符")
     @Schema(description = "用户消息", example = "你好", requiredMode = Schema.RequiredMode.REQUIRED)
     private String message;
 

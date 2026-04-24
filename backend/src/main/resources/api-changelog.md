@@ -125,6 +125,9 @@
 | GET | `/v1/agents/templates` | 获取模板列表 | 是 | - |
 | POST | `/v1/agents/templates/{id}/use` | 使用模板创建Agent | 是 | `agent:create` |
 | POST | `/v1/agents/templates/{id}/rate` | 为模板评分 | 是 | - |
+| GET | `/v1/agents/export?id={id}` | 导出单个Agent为JSON | 是 | `agent:view` |
+| GET | `/v1/agents/export-all` | 导出所有Agent为JSON数组 | 是 | `agent:view` |
+| POST | `/v1/agents/import` | 从JSON导入Agent | 是 | `agent:create` |
 
 ### POST `/v1/agents` - 创建Agent
 
@@ -245,6 +248,8 @@
 | POST | `/v1/workflows/instances/{id}/resume` | 恢复中断的工作流 | 是 | `workflow:manage` |
 | POST | `/v1/workflows/instances/{instanceId}/nodes/{nodeId}/approve` | 审批通过 | 是 | `workflow:manage` |
 | POST | `/v1/workflows/instances/{instanceId}/nodes/{nodeId}/reject` | 驳回节点 | 是 | `workflow:manage` |
+| GET | `/v1/workflows/definitions/{id}/export` | 导出工作流定义为JSON | 是 | `workflow:view` |
+| POST | `/v1/workflows/definitions/import` | 从JSON导入工作流定义 | 是 | `workflow:manage` |
 
 ### POST `/v1/workflows/definitions` - 创建工作流定义
 
@@ -683,17 +688,99 @@
 
 ---
 
+## 17. 审批管理 (Approvals)
+
+| 方法 | 路径 | 描述 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/v1/approvals` | 分页查询审批列表 | 是 | `approval:view` |
+| GET | `/v1/approvals/pending` | 获取待审批列表 | 是 | `approval:view` |
+| GET | `/v1/approvals/{id}` | 获取审批详情 | 是 | `approval:view` |
+| GET | `/v1/approvals/agent/{agentId}` | 根据Agent获取审批列表 | 是 | `approval:view` |
+| POST | `/v1/approvals/submit` | 提交审批申请 | 是 | `approval:manage` |
+| POST | `/v1/approvals/{id}/approve` | 审批通过 | 是 | `approval:manage` |
+| POST | `/v1/approvals/{id}/reject` | 审批拒绝 | 是 | `approval:manage` |
+
+### POST `/v1/approvals/submit` - 提交审批
+
+**请求示例:**
+```json
+{
+  "agentId": 1,
+  "versionId": 1,
+  "remark": "请审批发布"
+}
+```
+
+---
+
+## 18. 流式对话 (SSE Stream)
+
+| 方法 | 路径 | 描述 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/v1/stream/chat` | SSE流式对话(GET) | 是 | `agent:invoke` |
+| POST | `/v1/stream/chat` | SSE流式对话(POST) | 是 | `agent:invoke` |
+| GET | `/v1/stream/agent/{agentId}` | SSE流式Agent执行(GET) | 是 | `agent:invoke` |
+| POST | `/v1/stream/agent/{agentId}` | SSE流式Agent执行(POST) | 是 | `agent:invoke` |
+
+**SSE 事件格式:**
+- `event: token` / `data: {"type":"token","content":"..."}`
+- `event: done` / `data: {"type":"done","content":"最终输出"}`
+- `event: error` / `data: {"type":"error","content":"错误信息"}`
+- `event: node_start` / `data: {"nodeId":"llm-1","nodeType":"llm"}`
+- `event: node_end` / `data: {"nodeId":"llm-1","status":"completed"}`
+
+---
+
+## 19. 会话管理 (Sessions)
+
+| 方法 | 路径 | 描述 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/v1/sessions/online` | 获取在线会话列表 | 是 | `session:manage` |
+| GET | `/v1/sessions/me` | 获取当前用户的会话列表 | 是 | `session:manage` |
+| DELETE | `/v1/sessions/{sessionId}` | 踢出指定会话 | 是 | `session:manage` |
+| DELETE | `/v1/sessions/user/{userId}` | 踢出用户所有设备 | 是 | `session:manage` |
+| GET | `/v1/sessions/stats` | 获取会话统计信息 | 是 | `session:manage` |
+
+---
+
+## 20. 仪表盘 (Dashboard)
+
+| 方法 | 路径 | 描述 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/api/dashboard/stats` | 获取仪表盘统计数据 | 是 | - |
+
+### GET `/api/dashboard/stats` - 仪表盘统计
+
+**响应示例:**
+```json
+{
+  "code": 200,
+  "data": {
+    "agentCount": 25,
+    "totalApiCalls": 15200,
+    "activeUsers": 48,
+    "systemHealth": "HEALTHY"
+  }
+}
+```
+
+---
+
 ## 版本历史
 
 ### v1.0.0 (当前版本)
 - 初始 API 发布
-- 认证管理（登录、注册、Token管理）
-- Agent CRUD、版本管理、模板市场
-- 工作流定义、实例、审批
-- API 接口管理、调用日志
-- 工具管理（MCP + Function Calling）
+- 认证管理（登录、注册、Token管理、验证码、密码策略）
+- Agent CRUD、版本管理、模板市场、导出/导入
+- 工作流定义、实例、审批、导出/导入、版本管理
+- API 接口管理、调用日志、版本控制、废弃机制
+- 工具管理（MCP + Function Calling）、健康检查、连接测试
 - 文件上传下载
 - 用户、角色、权限管理
-- 租户管理、配额管理
+- 租户管理、配额管理、重新激活
 - 缓存统计、告警管理
 - API 版本头支持（X-API-Version）
+- SSE 流式对话、Agent 流式执行
+- 会话管理（在线会话、踢出、多设备）
+- 审批管理（提交、审批、拒绝）
+- 仪表盘统计

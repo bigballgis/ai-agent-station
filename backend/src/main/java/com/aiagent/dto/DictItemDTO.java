@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 public class DictItemDTO {
 
     @NotBlank(message = "字典类型不能为空")
+    @Size(max = 100, message = "字典类型不能超过100个字符")
     @Schema(description = "字典类型", example = "agent_status", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dictType;
 
@@ -27,15 +28,19 @@ public class DictItemDTO {
     @Schema(description = "排序号", example = "1")
     private Integer dictSort;
 
+    @Size(max = 100, message = "样式CSS类名不能超过100个字符")
     @Schema(description = "样式CSS类名")
     private String cssClass;
 
+    @Size(max = 100, message = "表格回显样式不能超过100个字符")
     @Schema(description = "表格回显样式")
     private String listClass;
 
+    @Size(max = 1, message = "是否默认不能超过1个字符")
     @Schema(description = "是否默认", example = "N")
     private String isDefault;
 
+    @Size(max = 10, message = "状态不能超过10个字符")
     @Schema(description = "状态", example = "0")
     private String status;
 }
