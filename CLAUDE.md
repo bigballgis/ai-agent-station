@@ -347,6 +347,39 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **Build**: Clean 12s, named chunks, zero warnings
 - **Migrations**: V1-V27 (Flyway)
 
+### Round 171-180 (Export/Import, WebSocket, Final Polish)
+
+#### Round 171-173: Data Export/Import
+- Agent: export single/all as JSON, import with validation + auto-rename
+- Workflow: export definition as JSON, import with graph validation
+- Frontend: export/import buttons on AgentList + WorkflowDesigner
+
+#### Round 174-176: WebSocket Real-Time
+- WebSocketEventDTO: 5 typed events
+- NotificationService: 6 publisher methods
+- useWebSocket.ts: auto-connect, exponential backoff, event listeners, offline queue
+- MainLayout + Dashboard: real-time badge counts, toast notifications
+
+#### Round 177-179: Final i18n + Accessibility
+- 25+ remaining hardcoded strings fixed
+- 15 DesignerToolbar aria-labels
+- 25+ new i18n keys
+
+## Quality Metrics (Round 180)
+- **Testing**: 234+ test cases (100 frontend + 134 backend)
+- **Real-Time**: WebSocket with 5 event types, exponential backoff reconnect, offline queue
+- **Export/Import**: Agent + Workflow JSON export/import with validation
+- **i18n**: 1000+ keys, near-zero hardcoded strings
+- **Accessibility**: aria-labels on all icon buttons, keyboard navigation, focus management
+- **Observability**: Prometheus, health indicators, ETag, cache stats, dashboard API
+- **Alerting**: Multi-channel (webhook/email/in-app), retry with backoff
+- **Resilience**: Error categorization, auto-retry, offline detection, request dedup
+- **Security**: AES-256-GCM, BCrypt(12), CSP, HSTS, account lockout, password history, rate limiting
+- **Multi-Tenancy**: Tenant-safe queries (15 repos), quota enforcement, onboarding/offboarding
+- **Build**: Clean 21s, named chunks, zero warnings
+- **Migrations**: V1-V27 (Flyway)
+- **API**: 100+ endpoints, version header, 16 OpenAPI groups
+
 ### Round 151-170 (Testing, Caching, Observability, Resilience)
 
 #### Round 151-153: Frontend Tests (66 cases)
