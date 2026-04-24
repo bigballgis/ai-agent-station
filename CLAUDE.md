@@ -508,6 +508,40 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **All Round 220 metrics maintained** + above improvements
 - **Migrations**: V1-V28 (Flyway)
 
+### Round 231-240 (Validation, API Docs, Accessibility, Performance)
+
+#### Round 231-233: Backend Controller Validation + API Documentation
+- 13 controllers: @Parameter (199), @ApiResponse (78), @Min/@Max pagination validation (34)
+- 18 DTOs: @Schema (301), validation constraints (@NotBlank, @Size, @Positive, @DecimalMin/@Max)
+- 57 new i18n message codes (EN + ZH) for validation errors
+
+#### Round 234-236: Frontend Accessibility (WCAG 2.1 AA)
+- ARIA: roles, labels, live regions across 15+ components
+- Keyboard: focus-visible styles, arrow key navigation, Enter/Space handlers
+- Landmarks: skip-to-content link, banner/nav/main/contentinfo roles
+- Heading hierarchy fixes, aria-hidden on decorative elements
+
+#### Round 237-239: Performance Optimization
+- Frontend: 3 components → defineAsyncComponent, Suspense fallback, function-based manualChunks
+- Backend: HikariCP env-var config, N+1 fix (DashboardService batch fetch), 5 repos @EntityGraph
+- Cache: SCAN-based deleteByPrefix (non-blocking), CacheWarmUpService, CacheStatisticsAspect (AOP)
+- V29 migration: ~18 new composite performance indexes
+
+#### Round 240: TypeScript Zero-Error Verification
+- vue-tsc --noEmit: ZERO ERRORS across all 64 changed files
+
+## Quality Metrics (Round 240)
+- **Testing**: 363+ test cases (100 frontend unit + 36 E2E + 227 backend)
+- **TypeScript**: Zero errors (vue-tsc --noEmit clean)
+- **Validation**: 199 @Parameter, 78 @ApiResponse, 301 @Schema, 34 pagination constraints
+- **Accessibility**: WCAG 2.1 AA compliant (ARIA, keyboard nav, landmarks, heading hierarchy)
+- **Performance**: @EntityGraph (5 repos), N+1 fixed, SCAN-based cache, async components
+- **Cache**: 9 regions (added dashboardStats), cache warming, eviction tracking AOP
+- **Database**: V1-V29 (Flyway), ~18 new composite indexes
+- **Build**: Clean, zero TS errors, zero warnings
+- **All Round 230 metrics maintained** + above improvements
+- **Migrations**: V1-V29 (Flyway)
+
 #### Round 181-183: Backend Service Audit
 - LoginLogService/SessionService: HttpServletRequest removed from signatures
 - 6 RuntimeExceptions -> ResourceNotFoundException/BusinessException
