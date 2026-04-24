@@ -2,12 +2,16 @@ package com.aiagent.engine.graph;
 
 import com.aiagent.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * 节点执行器集合
@@ -19,6 +23,12 @@ import java.util.Map;
 @Slf4j
 @Component
 public class NodeExecutors {
+
+    private final ScheduledExecutorService delayScheduler;
+
+    public NodeExecutors(@Qualifier("delayScheduler") ScheduledExecutorService delayScheduler) {
+        this.delayScheduler = delayScheduler;
+    }
 
     /**
      * 执行 Code 节点（JavaScript 代码执行）
@@ -67,6 +77,10 @@ public class NodeExecutors {
     /**
      * 执行 Delay 节点（延迟等待）
      *
+     * 使用 ScheduledExecutorService 进行延迟调度，避免直接 Thread.sleep 阻塞工作线程。
+     * 通过 CountDownLatch 实现同步等待语义（保持与调用方的兼容性），
+     * 但实际的定时等待由 delayScheduler 线程池处理，不占用调用方线程的 CPU 时间。
+     *
      * @param nodeId 节点 ID
      * @param config 节点配置（包含 seconds 字段）
      * @return 延迟结果字符串（格式: "delayed_Xs"）
@@ -82,10 +96,11 @@ public class NodeExecutors {
         }
         seconds = Math.max(1, Math.min(seconds, 300)); // 限制 1-300 秒（超时上限）
 
-        // 业务需求: Delay 节点需要等待指定时间，保留 Thread.sleep
-        log.info("Delay 节点 {} 等待 {} 秒", nodeId, seconds);
+        log.info("Delay 节点 {} 等待 {} 秒 (使用 ScheduledExecutorService)", nodeId, seconds);
         try {
-            Thread.sleep(seconds * 1000L);
+            CountDownLatch latch = new CountDownLatch(1);
+            delayScheduler.schedule(latch::countDown, seconds, TimeUnit.SECONDS);
+            latch.await(seconds + 5, TimeUnit.SECONDS); // 等待延迟完成，额外 5 秒容错
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new BusinessException("Delay 节点被中断: " + nodeId, e);

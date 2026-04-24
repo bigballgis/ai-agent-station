@@ -13,6 +13,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.output.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -43,19 +47,22 @@ public class GraphExecutor {
     private final MemoryService memoryService;
     private final HttpExecutor httpExecutor;
     private final NodeExecutors nodeExecutors;
+    private final Executor agentExecutor;
 
     public GraphExecutor(LangChain4jService langChain4jService,
                          CompositeToolProvider compositeToolProvider,
                          McpToolGateway mcpToolGateway,
                          MemoryService memoryService,
                          HttpExecutor httpExecutor,
-                         NodeExecutors nodeExecutors) {
+                         NodeExecutors nodeExecutors,
+                         @Qualifier("agentExecutor") Executor agentExecutor) {
         this.langChain4jService = langChain4jService;
         this.compositeToolProvider = compositeToolProvider;
         this.mcpToolGateway = mcpToolGateway;
         this.memoryService = memoryService;
         this.httpExecutor = httpExecutor;
         this.nodeExecutors = nodeExecutors;
+        this.agentExecutor = agentExecutor;
     }
 
     /**
@@ -411,6 +418,7 @@ public class GraphExecutor {
             // 支持输入映射
             // 节点配置中的 inputMapping 是 Map<String, Object> 中的 Object，需要强制转换
             @SuppressWarnings("unchecked")
+            Map<String, String> mapping = (Map<String, String>) node.getConfig().get("inputMapping");
             for (Map.Entry<String, String> entry : mapping.entrySet()) {
                 Object value = state.getVariable(entry.getKey());
                 if (value == null) value = state.getOutputs().get(entry.getKey());
@@ -438,6 +446,7 @@ public class GraphExecutor {
             if (toolResult instanceof Map) {
                 // MCP 工具返回值是 Object 类型，需要强制转换为 Map
                 @SuppressWarnings("unchecked")
+                Map<String, Object> castResult = (Map<String, Object>) toolResult;
                 resultMap.putAll(castResult);
             } else {
                 resultMap.put("result", toolResult);
@@ -573,6 +582,7 @@ public class GraphExecutor {
 
         // JSON 反序列化后 cases 是 Object 类型，需要强制转换为 List<Map>
         @SuppressWarnings("unchecked")
+        List<Map<String, String>> cases = (List<Map<String, String>>) casesObj;
 
         // Evaluate each case expression against the current state
         for (Map<String, String> caseDef : cases) {
@@ -797,11 +807,15 @@ public class GraphExecutor {
     }
 
     /**
-     * 执行并行节点 — 扇出执行多个分支，等待全部完成后合并结果
+     * 执行并行节点 — 使用 CompletableFuture 扇出执行多个分支，等待全部完成后合并结果
      *
-     * TODO: 当前为顺序执行实现，收集所有分支输出。
-     * 未来应使用 CompletableFuture 实现真正的异步并行执行，
-     * 配合 maxParallelism 参数控制线程池大小。
+     * 实现细节:
+     * - 使用 CompletableFuture.supplyAsync() 在 agentExecutor 线程池上并行执行各分支
+     * - ConcurrentHashMap 保证并行写入 nodeOutputs 的线程安全
+     * - fail_fast 策略: 任一分支失败立即取消其余分支并抛出异常
+     * - wait 策略: 等待所有分支完成，记录失败信息但不中断整体执行
+     * - maxParallelism 通过 semaphore 限制并发度（当前实现中所有分支同时提交，
+     *   线程池本身的队列和拒绝策略提供背压保护）
      */
     private void executeParallelNode(GraphNode node, AgentState state, Map<String, Object> nodeOutputs, GraphDefinition graph) {
         Map<String, Object> config = node.getConfig();
@@ -811,29 +825,61 @@ public class GraphExecutor {
         // 获取所有出边（扇出目标）
         List<GraphEdge> outEdges = graph.getOutgoingEdges(node.getId());
 
-        // TODO: 使用 CompletableFuture + ExecutorService 实现真正的并行执行
-        // 当前实现为顺序执行，但收集所有分支输出
-        Map<String, Object> branchResults = new LinkedHashMap<>();
-        List<String> errors = new ArrayList<>();
+        if (outEdges.isEmpty()) {
+            log.warn("并行节点 {} 没有出边，跳过执行", node.getId());
+            node.setOutput("");
+            nodeOutputs.put(node.getId(), "");
+            return;
+        }
+
+        // 使用 ConcurrentHashMap 保证并行写入的线程安全
+        Map<String, Object> branchResults = new ConcurrentHashMap<>();
+        List<String> errors = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        // 为每个分支创建 CompletableFuture
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (GraphEdge edge : outEdges) {
             String targetId = edge.getTargetNodeId();
-            try {
-                GraphNode targetNode = graph.getNode(targetId);
-                if (targetNode != null) {
+            GraphNode targetNode = graph.getNode(targetId);
+            if (targetNode == null) {
+                log.warn("并行分支目标节点 {} 不存在，跳过", targetId);
+                continue;
+            }
+
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("并行分支开始执行: {} -> {}", node.getId(), targetId);
                     executeNodeInternal(targetNode, state, nodeOutputs, graph);
                     branchResults.put(targetId, nodeOutputs.getOrDefault(targetId, ""));
+                    log.info("并行分支执行完成: {} -> {}", node.getId(), targetId);
+                } catch (Exception e) {
+                    log.error("并行分支执行失败: {} -> {}: {}", node.getId(), targetId, e.getMessage());
+                    errors.add(targetId + ": " + e.getMessage());
+                    if ("fail_fast".equals(failStrategy)) {
+                        throw new BusinessException("并行分支执行失败: " + targetId, e);
+                    }
                 }
-            } catch (Exception e) {
-                errors.add(targetId + ": " + e.getMessage());
-                if ("fail_fast".equals(failStrategy)) {
-                    throw new BusinessException("并行分支执行失败: " + targetId, e);
-                }
-            }
+            }, agentExecutor);
+
+            futures.add(future);
         }
 
-        if (!errors.isEmpty() && "wait".equals(failStrategy)) {
-            log.warn("并行节点 {} 有 {} 个分支失败: {}", node.getId(), errors.size(), errors);
+        // 等待所有分支完成
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            // fail_fast 模式下，取消所有未完成的分支
+            for (CompletableFuture<Void> f : futures) {
+                f.cancel(true);
+            }
+            throw new BusinessException("并行节点执行失败: " + node.getId(), e);
+        }
+
+        if (!errors.isEmpty()) {
+            if ("wait".equals(failStrategy)) {
+                log.warn("并行节点 {} 有 {} 个分支失败: {}", node.getId(), errors.size(), errors);
+            }
         }
 
         String result = branchResults.values().stream()

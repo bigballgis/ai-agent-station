@@ -8,7 +8,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -103,5 +104,24 @@ public class ThreadPoolConfig {
         executor.setAwaitTerminationSeconds(120);
         executor.initialize();
         return executor;
+    }
+
+    /**
+     * 延迟调度专用线程池（用于 Delay 节点等定时任务）
+     * 核心线程数 2，足够处理延迟调度场景
+     * 使用 Daemon 线程，不阻止 JVM 关闭
+     */
+    @Bean(name = "delayScheduler")
+    public ScheduledExecutorService delayScheduler() {
+        log.info("[ThreadPool] 初始化延迟调度线程池: coreSize=2");
+        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2, r -> {
+            Thread t = new Thread(r, "delay-scheduler-" + THREAD_COUNTER.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.setRemoveOnCancelPolicy(true);
+        scheduler.setKeepAliveTime(60, java.util.concurrent.TimeUnit.SECONDS);
+        scheduler.allowCoreThreadTimeOut(true);
+        return scheduler;
     }
 }

@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 预连接 API 服务器，减少首屏请求延迟 -->
+    <link rel="preconnect" href="/" />
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="/favicon.svg" type="image/svg+xml" as="image" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">

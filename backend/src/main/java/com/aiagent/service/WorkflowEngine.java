@@ -10,8 +10,8 @@ import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.repository.WorkflowNodeLogRepository;
 import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.websocket.WebSocketEventDTO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +20,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class WorkflowEngine {
 
     private final WorkflowDefinitionRepository definitionRepository;
@@ -31,6 +33,21 @@ public class WorkflowEngine {
     private final WorkflowNodeLogRepository nodeLogRepository;
     private final WorkflowAsyncExecutor workflowAsyncExecutor;
     private final NotificationService notificationService;
+    private final ScheduledExecutorService delayScheduler;
+
+    public WorkflowEngine(WorkflowDefinitionRepository definitionRepository,
+                          WorkflowInstanceRepository instanceRepository,
+                          WorkflowNodeLogRepository nodeLogRepository,
+                          WorkflowAsyncExecutor workflowAsyncExecutor,
+                          NotificationService notificationService,
+                          @Qualifier("delayScheduler") ScheduledExecutorService delayScheduler) {
+        this.definitionRepository = definitionRepository;
+        this.instanceRepository = instanceRepository;
+        this.nodeLogRepository = nodeLogRepository;
+        this.workflowAsyncExecutor = workflowAsyncExecutor;
+        this.notificationService = notificationService;
+        this.delayScheduler = delayScheduler;
+    }
 
     @org.springframework.beans.factory.annotation.Value("${workflow.max-execution-duration:300}")
     private int maxExecutionDurationSeconds;
@@ -498,10 +515,12 @@ public class WorkflowEngine {
                 ? ((Number) nodeConfig.get("delaySeconds")).intValue()
                 : 5;
 
-        // 业务需求: Delay 节点需要等待指定时间，保留 Thread.sleep
-        // 注意: delaySeconds 由 GraphExecutor/NodeExecutors 限制在 1-300 秒范围内
+        // 使用 ScheduledExecutorService 进行延迟调度，避免阻塞工作线程
+        log.info("Delay 节点等待 {} 秒 (使用 ScheduledExecutorService)", delaySeconds);
         try {
-            Thread.sleep(delaySeconds * 1000L);
+            CountDownLatch latch = new CountDownLatch(1);
+            delayScheduler.schedule(latch::countDown, delaySeconds, TimeUnit.SECONDS);
+            latch.await(delaySeconds + 5, TimeUnit.SECONDS); // 等待延迟完成，额外 5 秒容错
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new BusinessException("延迟节点被中断");

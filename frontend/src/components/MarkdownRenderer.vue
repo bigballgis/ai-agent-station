@@ -144,7 +144,7 @@ const renderedContent = computed(() => {
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text, url) => `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`)
 
   // 图片（![alt](url)）
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, url) => `<img src="${sanitizeUrl(url)}" alt="${alt}" loading="lazy" />`)
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, url) => `<img src="${sanitizeUrl(url)}" alt="${alt}" loading="lazy" decoding="async" />`)
 
   // 无序列表
   html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
