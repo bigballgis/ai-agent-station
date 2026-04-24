@@ -96,7 +96,6 @@ export default {
     passwordPlaceholder: 'Please enter password',
     loginSuccess: 'Login successful',
     loginFailed: 'Login failed',
-    forgotPassword: 'Forgot password?',
     usernameRequired: 'Username is required',
     passwordRequired: 'Password is required',
     passwordMinLength: 'Password must be at least 6 characters',

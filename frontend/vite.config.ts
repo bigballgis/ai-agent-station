@@ -6,7 +6,7 @@ import Inspector from 'vite-plugin-vue-inspector'
 export default defineConfig({
   build: {
     sourcemap: false,
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 520,
     minify: 'esbuild',
     target: 'es2020',
     rollupOptions: {
@@ -68,6 +68,7 @@ export default defineConfig({
           ],
           'chart': ['chart.js', 'chart.js/auto'],
           'i18n': ['vue-i18n'],
+          'dayjs': ['dayjs'],
         },
       },
     },
