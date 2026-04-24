@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -48,20 +50,34 @@ public class TenantController {
     }
 
     @PostMapping
-    @Operation(summary = "创建租户")
+    @Operation(summary = "创建租户", description = "创建新的租户，仅超级管理员可操作")
     @OperationLog(value = "创建租户", module = "租户管理")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "创建成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "409", description = "租户名称已存在")
+    })
     public Result<TenantVO> createTenant(@Valid @RequestBody CreateTenantRequestDTO requestDTO) {
         Tenant tenant = DTOConverter.toTenantEntity(requestDTO);
         return Result.success(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "更新租户信息")
+    @Operation(summary = "更新租户信息", description = "更新指定租户的信息")
     @OperationLog(value = "更新租户信息", module = "租户管理")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "更新成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "租户不存在")
+    })
     public Result<TenantVO> updateTenant(@PathVariable Long id, @Valid @RequestBody UpdateTenantRequestDTO requestDTO) {
         Tenant existing = tenantService.getTenantById(id);
         DTOConverter.updateTenantFromDTO(requestDTO, existing);
@@ -69,10 +85,16 @@ public class TenantController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除租户")
+    @Operation(summary = "删除租户", description = "删除指定租户，仅超级管理员可操作")
     @OperationLog(value = "删除租户", module = "租户管理")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "删除成功"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "租户不存在")
+    })
     public Result<Void> deleteTenant(@PathVariable Long id) {
         tenantService.deleteTenant(id);
         return Result.success();

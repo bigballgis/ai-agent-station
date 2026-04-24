@@ -1,7 +1,7 @@
 <template>
-  <div class="not-found-container flex flex-col items-center justify-center min-h-[60vh]">
+  <div class="not-found-container flex flex-col items-center justify-center min-h-[60vh]" role="alert">
     <div class="text-center">
-      <h1 class="text-9xl font-bold text-gray-200 dark:text-neutral-700 mb-4">404</h1>
+      <h1 class="text-9xl font-bold text-gray-200 dark:text-neutral-700 mb-4" aria-hidden="true">404</h1>
       <h2 class="text-2xl font-semibold text-gray-600 dark:text-neutral-300 mb-4">{{ t('notFound.title') }}</h2>
       <p class="text-gray-500 dark:text-neutral-400 mb-8">{{ t('notFound.description') }}</p>
       <a-button type="primary" size="large" @click="goHome">

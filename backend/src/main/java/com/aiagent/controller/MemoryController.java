@@ -10,6 +10,7 @@ import com.aiagent.dto.MemoryResponseDTO;
 import com.aiagent.entity.AgentMemory;
 import com.aiagent.service.MemoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,11 @@ public class MemoryController {
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "获取Agent记忆列表")
     public Result<PageResult<MemoryResponseDTO>> getMemories(
-            @PathVariable Long agentId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String memoryType,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @Parameter(description = "Agent ID") @PathVariable Long agentId,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @Parameter(description = "记忆类型") String memoryType,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
         AgentMemory.MemoryType type = memoryType != null ? AgentMemory.MemoryType.valueOf(memoryType) : null;
         Page<AgentMemory> result = memoryService.getMemories(agentId, keyword, type, page, size);
         Page<MemoryResponseDTO> dtoPage = result.map(DTOConverter::toMemoryResponseDTO);
@@ -50,14 +51,14 @@ public class MemoryController {
     @RequiresPermission("memory:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取记忆详情")
-    public Result<MemoryResponseDTO> getMemory(@PathVariable Long id) {
+    public Result<MemoryResponseDTO> getMemory(@Parameter(description = "记忆ID") @PathVariable Long id) {
         return Result.success(DTOConverter.toMemoryResponseDTO(memoryService.getMemory(id)));
     }
 
     @RequiresPermission("memory:manage")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除记忆")
-    public Result<Void> deleteMemory(@PathVariable Long id) {
+    public Result<Void> deleteMemory(@Parameter(description = "记忆ID") @PathVariable Long id) {
         memoryService.deleteMemory(id);
         return Result.success();
     }
@@ -65,7 +66,7 @@ public class MemoryController {
     @RequiresPermission("memory:manage")
     @DeleteMapping("/agent/{agentId}/cleanup")
     @Operation(summary = "清理过期记忆")
-    public Result<Void> cleanupExpired(@PathVariable Long agentId) {
+    public Result<Void> cleanupExpired(@Parameter(description = "Agent ID") @PathVariable Long agentId) {
         memoryService.cleanupExpiredMemories();
         return Result.success();
     }

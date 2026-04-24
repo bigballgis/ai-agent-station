@@ -22,6 +22,8 @@ import com.aiagent.vo.WorkflowInstanceVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -53,9 +57,9 @@ public class WorkflowController {
     @GetMapping("/definitions")
     @Operation(summary = "分页查询工作流定义列表")
     public Result<PageResult<WorkflowDefinitionVO>> listDefinitions(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status) {
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) @Parameter(description = "每页大小") int size,
+            @RequestParam(required = false) @Parameter(description = "状态筛选") String status) {
 
         Long tenantId = TenantContextHolder.getTenantId();
         Sort sort = Sort.by("createdAt").descending();
@@ -75,7 +79,13 @@ public class WorkflowController {
 
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions")
-    @Operation(summary = "创建工作流定义")
+    @Operation(summary = "创建工作流定义", description = "创建新的工作流定义，初始状态为草稿")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "创建成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限")
+    })
     public Result<WorkflowDefinitionVO> createDefinition(
             @Valid @RequestBody WorkflowDefinitionDTO request) {
 
@@ -105,7 +115,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:view")
     @GetMapping("/definitions/{id}")
     @Operation(summary = "根据ID获取工作流定义详情")
-    public Result<WorkflowDefinitionVO> getDefinition(@PathVariable Long id) {
+    public Result<WorkflowDefinitionVO> getDefinition(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
         return Result.success(WorkflowDefinitionVO.fromEntity(definition));
@@ -115,7 +125,7 @@ public class WorkflowController {
     @PutMapping("/definitions/{id}")
     @Operation(summary = "更新工作流定义")
     public Result<WorkflowDefinitionVO> updateDefinition(
-            @PathVariable Long id,
+            @Parameter(description = "工作流定义ID") @PathVariable Long id,
             @Valid @RequestBody WorkflowDefinitionDTO request) {
 
         Long tenantId = TenantContextHolder.getTenantId();
@@ -153,7 +163,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @DeleteMapping("/definitions/{id}")
     @Operation(summary = "删除工作流定义")
-    public Result<Void> deleteDefinition(@PathVariable Long id) {
+    public Result<Void> deleteDefinition(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
         WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
@@ -169,7 +179,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions/{id}/publish")
     @Operation(summary = "发布工作流定义")
-    public Result<WorkflowDefinitionVO> publishDefinition(@PathVariable Long id) {
+    public Result<WorkflowDefinitionVO> publishDefinition(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
         WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
@@ -184,7 +194,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions/{id}/new-version")
     @Operation(summary = "基于当前定义创建新版本（草稿）")
-    public Result<WorkflowDefinitionVO> createNewVersion(@PathVariable Long id) {
+    public Result<WorkflowDefinitionVO> createNewVersion(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition newVersion = workflowService.createNewVersion(id, tenantId);
         return Result.success(WorkflowDefinitionVO.fromEntity(newVersion));
@@ -194,8 +204,8 @@ public class WorkflowController {
     @PostMapping("/definitions/{id}/rollback/{targetVersion}")
     @Operation(summary = "回滚工作流到指定版本（创建新草稿）")
     public Result<WorkflowDefinitionVO> rollbackToVersion(
-            @PathVariable Long id,
-            @PathVariable Integer targetVersion) {
+            @Parameter(description = "工作流定义ID") @PathVariable Long id,
+            @Parameter(description = "目标版本号") @PathVariable Integer targetVersion) {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition rollbackDraft = workflowService.rollbackToVersion(id, targetVersion, tenantId);
         return Result.success(WorkflowDefinitionVO.fromEntity(rollbackDraft));
@@ -207,10 +217,10 @@ public class WorkflowController {
     @GetMapping("/instances")
     @Operation(summary = "分页查询工作流实例列表")
     public Result<PageResult<WorkflowInstanceVO>> listInstances(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long definitionId) {
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) @Parameter(description = "每页大小") int size,
+            @RequestParam(required = false) @Parameter(description = "状态筛选") String status,
+            @RequestParam(required = false) @Parameter(description = "工作流定义ID") Long definitionId) {
 
         Long tenantId = TenantContextHolder.getTenantId();
         Sort sort = Sort.by("startedAt").descending();
@@ -233,7 +243,14 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/start")
     @OperationLog(value = "启动工作流", module = "工作流")
-    @Operation(summary = "启动工作流")
+    @Operation(summary = "启动工作流", description = "根据工作流定义启动一个新的工作流实例")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "启动成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败或工作流未发布"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "工作流定义不存在")
+    })
     public Result<WorkflowInstanceVO> startWorkflow(
             @Valid @RequestBody WorkflowStartDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -249,7 +266,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}")
     @Operation(summary = "获取工作流实例详情")
-    public Result<WorkflowInstanceVO> getInstance(@PathVariable Long id) {
+    public Result<WorkflowInstanceVO> getInstance(@Parameter(description = "工作流实例ID") @PathVariable Long id) {
         WorkflowInstance instance = workflowEngine.getWorkflowStatus(id);
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
@@ -257,7 +274,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:view")
     @GetMapping("/instances/{id}/history")
     @Operation(summary = "获取工作流实例执行历史")
-    public Result<List<WorkflowNodeLog>> getInstanceHistory(@PathVariable Long id) {
+    public Result<List<WorkflowNodeLog>> getInstanceHistory(@Parameter(description = "工作流实例ID") @PathVariable Long id) {
         List<WorkflowNodeLog> history = workflowEngine.getWorkflowHistory(id);
         return Result.success(history);
     }
@@ -267,7 +284,7 @@ public class WorkflowController {
     @OperationLog(value = "取消工作流", module = "工作流")
     @Operation(summary = "取消工作流")
     public Result<WorkflowInstanceVO> cancelWorkflow(
-            @PathVariable Long id,
+            @Parameter(description = "工作流实例ID") @PathVariable Long id,
             @Valid @RequestBody WorkflowCancelDTO request) {
 
         WorkflowInstance instance = workflowEngine.cancelWorkflow(id, request.getReason());
@@ -278,7 +295,7 @@ public class WorkflowController {
     @PostMapping("/instances/{id}/resume")
     @OperationLog(value = "恢复工作流", module = "工作流")
     @Operation(summary = "恢复中断的工作流实例")
-    public Result<WorkflowInstanceVO> resumeWorkflow(@PathVariable Long id) {
+    public Result<WorkflowInstanceVO> resumeWorkflow(@Parameter(description = "工作流实例ID") @PathVariable Long id) {
         WorkflowInstance instance = workflowEngine.resumeWorkflow(id);
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
@@ -288,8 +305,8 @@ public class WorkflowController {
     @OperationLog(value = "审批工作流节点", module = "工作流")
     @Operation(summary = "审批通过工作流节点")
     public Result<WorkflowNodeLog> approveNode(
-            @PathVariable Long instanceId,
-            @PathVariable String nodeId,
+            @Parameter(description = "工作流实例ID") @PathVariable Long instanceId,
+            @Parameter(description = "节点ID") @PathVariable String nodeId,
             @Valid @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
@@ -301,8 +318,8 @@ public class WorkflowController {
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/reject")
     @Operation(summary = "驳回工作流节点")
     public Result<WorkflowNodeLog> rejectNode(
-            @PathVariable Long instanceId,
-            @PathVariable String nodeId,
+            @Parameter(description = "工作流实例ID") @PathVariable Long instanceId,
+            @Parameter(description = "节点ID") @PathVariable String nodeId,
             @Valid @RequestBody(required = false) WorkflowNodeActionDTO request) {
 
         String comment = request != null ? request.getComment() : "";
@@ -316,7 +333,7 @@ public class WorkflowController {
     @GetMapping("/definitions/{id}/export")
     @Operation(summary = "导出工作流定义为JSON")
     public void exportDefinition(
-            @PathVariable Long id,
+            @Parameter(description = "工作流定义ID") @PathVariable Long id,
             HttpServletResponse response) throws Exception {
         Long tenantId = TenantContextHolder.getTenantId();
         WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);

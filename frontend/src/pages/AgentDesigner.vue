@@ -1,5 +1,5 @@
 <template>
-  <div class="agent-designer-page">
+  <div class="agent-designer-page" role="application" :aria-label="t('designer.messages.unnamedAgent')">
     <!-- Top Toolbar -->
     <DesignerToolbar
       :agent-name="agentName"
@@ -143,21 +143,23 @@
           v-if="contextMenu.visible"
           class="context-menu"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+          role="menu"
+          :aria-label="contextMenu.type === 'node' ? t('designer.contextMenu.editConfig') : contextMenu.type === 'connection' ? t('designer.contextMenu.deleteConnection') : t('designer.contextMenu.pasteNode')"
         >
           <template v-if="contextMenu.type === 'node'">
-            <div class="context-menu-item" @click="handleContextEdit">
+            <div class="context-menu-item" role="menuitem" tabindex="-1" @click="handleContextEdit">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               {{ t('designer.contextMenu.editConfig') }}
             </div>
-            <div class="context-menu-item" @click="handleContextDuplicate">
+            <div class="context-menu-item" role="menuitem" tabindex="-1" @click="handleContextDuplicate">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               {{ t('designer.contextMenu.copyNode') }}
             </div>
-            <div v-if="debug.isDebugMode.value" class="context-menu-item" @click="handleContextToggleBreakpoint">
+            <div v-if="debug.isDebugMode.value" class="context-menu-item" role="menuitem" tabindex="-1" @click="handleContextToggleBreakpoint">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -165,7 +167,7 @@
               <span v-if="contextMenu.targetNode && debug.hasBreakpoint(contextMenu.targetNode.id)" class="breakpoint-badge">ON</span>
             </div>
             <div class="context-menu-divider" />
-            <div class="context-menu-item danger" @click="handleContextDeleteNode">
+            <div class="context-menu-item danger" role="menuitem" tabindex="-1" @click="handleContextDeleteNode">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -173,7 +175,7 @@
             </div>
           </template>
           <template v-else-if="contextMenu.type === 'connection'">
-            <div class="context-menu-item danger" @click="handleContextDeleteConnection">
+            <div class="context-menu-item danger" role="menuitem" tabindex="-1" @click="handleContextDeleteConnection">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -181,13 +183,13 @@
             </div>
           </template>
           <template v-else>
-            <div class="context-menu-item" @click="handleContextPaste">
+            <div class="context-menu-item" role="menuitem" tabindex="-1" @click="handleContextPaste">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               {{ t('designer.contextMenu.pasteNode') }}
             </div>
-            <div class="context-menu-item" @click="handleFitView">
+            <div class="context-menu-item" role="menuitem" tabindex="-1" @click="handleFitView">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
@@ -259,14 +261,16 @@ import {
 import type { CanvasNode, Connection, ConsoleLog, NodeTypeDefinition } from '@/composables/designer'
 
 // ============================================================
-// Sub-components
+// Sub-components - 使用 defineAsyncComponent 按需加载设计器子组件
+// 设计器页面本身已通过路由懒加载，子组件异步加载可进一步减少首屏包体积
 // ============================================================
+import { defineAsyncComponent } from 'vue'
 import DesignerToolbar from '@/components/designer/DesignerToolbar.vue'
 import NodePalette from '@/components/designer/NodePalette.vue'
 import DesignerNode from '@/components/designer/DesignerNode.vue'
-import ConfigPanel from '@/components/designer/ConfigPanel.vue'
-import ConsolePanel from '@/components/designer/ConsolePanel.vue'
-import MiniMap from '@/components/designer/MiniMap.vue'
+const ConfigPanel = defineAsyncComponent(() => import('@/components/designer/ConfigPanel.vue'))
+const ConsolePanel = defineAsyncComponent(() => import('@/components/designer/ConsolePanel.vue'))
+const MiniMap = defineAsyncComponent(() => import('@/components/designer/MiniMap.vue'))
 
 // ============================================================
 // API

@@ -2,6 +2,8 @@
   <span
     class="status-badge"
     :class="badgeClass"
+    role="status"
+    :aria-label="`Status: ${displayLabel}`"
   >
     <span v-if="dot" class="status-dot" :class="dotClass" />
     {{ displayLabel }}

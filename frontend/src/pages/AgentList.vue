@@ -44,7 +44,7 @@
     </div>
 
     <!-- 加载状态 - 骨架屏 -->
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" role="status" aria-live="polite" aria-label="Loading agents">
       <div
         v-for="i in 3"
         :key="i"
@@ -79,6 +79,8 @@
       :action-text="t('agent.createFirstBtn')"
       class="py-20 animate-fade-in"
       @action="showCreateModal = true"
+      role="status"
+      aria-live="polite"
     />
 
     <!-- Agent 卡片网格 -->
@@ -86,11 +88,13 @@
       <div
         v-for="(agent, index) in paginatedAgents"
         :key="agent.id"
-        class="agent-card bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-5 hover:-translate-y-1 hover:shadow-float transition-all duration-200 cursor-pointer group animate-slide-up"
+        class="agent-card bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-5 hover:-translate-y-1 hover:shadow-float transition-all duration-200 cursor-pointer group animate-slide-up focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         :style="{ animationDelay: `${index * 60}ms` }"
         role="button"
         tabindex="0"
+        :aria-label="agent.name"
         @keydown.enter="editAgent(agent)"
+        @keydown.space.prevent="editAgent(agent)"
       >
         <!-- 顶部: 类型图标 + 状态标签 -->
         <div class="flex items-center justify-between mb-4">
@@ -138,7 +142,8 @@
           </span>
           <div class="flex items-center gap-1.5">
             <button
-              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
+              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              :aria-label="t('agent.exportAgent')"
               :title="t('agent.exportAgent')"
               @click.stop="exportSingleAgent(agent)"
             >
@@ -148,7 +153,8 @@
               </svg>
             </button>
             <button
-              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
+              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              :aria-label="t('common.edit')"
               :title="t('common.edit')"
               @click.stop="editAgent(agent)"
             >
@@ -158,7 +164,8 @@
               </svg>
             </button>
             <button
-              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all duration-200 cursor-pointer"
+              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              :aria-label="t('common.version')"
               :title="t('common.version')"
               @click.stop="viewVersions(agent)"
             >
@@ -168,7 +175,8 @@
               </svg>
             </button>
             <button
-              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
+              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              :aria-label="t('common.delete')"
               :title="t('common.delete')"
               @click.stop="deleteAgent(agent)"
             >
@@ -193,6 +201,7 @@
           ? 'border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'
           : 'border-neutral-100 dark:border-neutral-800 text-neutral-300 dark:text-neutral-600 cursor-not-allowed'"
         :disabled="currentPage <= 1"
+        :aria-label="t('common.prevPage')"
         @click="currentPage--"
       >
         {{ t('common.prevPage') }}
@@ -204,6 +213,8 @@
           :class="page === currentPage
             ? 'bg-primary-500 text-white shadow-sm'
             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
+          :aria-label="`Page ${page}`"
+          :aria-current="page === currentPage ? 'page' : undefined"
           @click="currentPage = page"
         >
           {{ page }}
@@ -215,6 +226,7 @@
           ? 'border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'
           : 'border-neutral-100 dark:border-neutral-800 text-neutral-300 dark:text-neutral-600 cursor-not-allowed'"
         :disabled="currentPage >= totalPages"
+        :aria-label="t('common.nextPage')"
         @click="currentPage++"
       >
         {{ t('common.nextPage') }}

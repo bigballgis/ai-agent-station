@@ -16,9 +16,15 @@ import com.aiagent.vo.AgentVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -45,10 +51,15 @@ public class AgentController {
 
     @GetMapping
     @RequiresPermission("agent:view")
-    @Operation(summary = "获取所有Agent列表（分页）")
+    @Operation(summary = "获取所有Agent列表（分页）", description = "分页查询当前租户下的所有Agent，支持关键词搜索和状态筛选")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限")
+    })
     public Result<PageResult<AgentVO>> getAllAgents(
-            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
-            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size,
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) @Parameter(description = "每页大小") int size,
             @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
             @RequestParam(required = false) @Parameter(description = "状态筛选") String status) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -61,15 +72,28 @@ public class AgentController {
 
     @GetMapping("/{id}")
     @RequiresPermission("agent:view")
-    @Operation(summary = "根据ID获取Agent详情")
+    @Operation(summary = "根据ID获取Agent详情", description = "根据Agent ID获取详细信息")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "Agent不存在")
+    })
     public Result<AgentVO> getAgentById(@Parameter(description = "Agent ID") @PathVariable Long id) {
         return Result.success(DTOConverter.toAgentVO(agentService.getAgentById(id)));
     }
 
     @PostMapping
     @RequiresPermission("agent:create")
-    @Operation(summary = "创建Agent")
+    @Operation(summary = "创建Agent", description = "创建新的Agent实例")
     @OperationLog(value = "创建Agent", module = "Agent管理")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "创建成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "409", description = "Agent名称已存在")
+    })
     public Result<AgentVO> createAgent(@Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
         agent.setName(dto.getName());
@@ -86,8 +110,15 @@ public class AgentController {
 
     @PutMapping("/{id}")
     @RequiresPermission("agent:update")
-    @Operation(summary = "更新Agent")
+    @Operation(summary = "更新Agent", description = "根据ID更新Agent信息")
     @OperationLog(value = "更新Agent", module = "Agent管理")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "更新成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "Agent不存在")
+    })
     public Result<AgentVO> updateAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentDTO dto) {
         Agent agent = new Agent();
         agent.setName(dto.getName());
@@ -103,8 +134,14 @@ public class AgentController {
 
     @DeleteMapping("/{id}")
     @RequiresPermission("agent:delete")
-    @Operation(summary = "删除Agent")
+    @Operation(summary = "删除Agent", description = "根据ID删除Agent")
     @OperationLog(value = "删除Agent", module = "Agent管理")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "删除成功"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "404", description = "Agent不存在")
+    })
     public Result<Void> deleteAgent(@Parameter(description = "Agent ID") @PathVariable Long id) {
         agentService.deleteAgent(id);
         return Result.success();
@@ -143,8 +180,8 @@ public class AgentController {
     @GetMapping("/templates")
     @Operation(summary = "获取模板列表", description = "分页查询模板，支持关键词搜索和分类筛选")
     public Result<PageResult<AgentVO>> getTemplates(
-            @RequestParam(defaultValue = "0") @Parameter(description = "页码") int page,
-            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size,
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码") int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) @Parameter(description = "每页大小") int size,
             @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
             @RequestParam(required = false) @Parameter(description = "分类筛选") String category) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "usageCount"));
@@ -163,7 +200,7 @@ public class AgentController {
     @Operation(summary = "为模板评分", description = "对模板进行1-5星评分")
     public Result<Void> rateTemplate(
             @Parameter(description = "模板 ID") @PathVariable Long id,
-            @RequestParam @Parameter(description = "评分(1-5)") int rating) {
+            @RequestParam @Min(1) @Max(5) @Parameter(description = "评分(1-5)") int rating) {
         agentService.rateTemplate(id, rating);
         return Result.success();
     }

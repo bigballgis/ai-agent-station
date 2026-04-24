@@ -4,6 +4,8 @@
     <div
       v-if="isOffline"
       class="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-1.5 bg-amber-500 text-white text-xs font-medium z-[60]"
+      role="alert"
+      aria-live="assertive"
     >
       <WarningOutlined class="text-sm" />
       <span>{{ t('common.offline') }}</span>
@@ -15,6 +17,7 @@
     <!-- ========== 顶部导航栏 (h-14, 56px) ========== -->
     <header
       class="h-14 flex-shrink-0 flex items-center justify-between px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 z-50"
+      role="banner"
     >
       <!-- 左侧: Logo -->
       <div class="flex items-center gap-2.5 min-w-0">
@@ -59,6 +62,7 @@
         <!-- 暗色模式切换 -->
         <button
           @click="toggleTheme"
+          :aria-label="isDark ? t('header.lightMode') : t('header.darkMode')"
           class="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
         >
           <BulbOutlined v-if="isDark" class="text-base" />
@@ -68,6 +72,7 @@
         <!-- 语言下拉 -->
         <a-dropdown>
           <button
+            :aria-label="t('i18n.switchLanguage')"
             class="h-9 px-2.5 rounded-xl flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
           >
             <GlobalOutlined class="text-sm" />
@@ -83,7 +88,7 @@
 
         <!-- 用户头像+名称下拉 -->
         <a-dropdown>
-          <button class="h-9 pl-1 pr-3 rounded-xl flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200">
+          <button :aria-label="t('header.userMenu')" class="h-9 pl-1 pr-3 rounded-xl flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200">
             <a-avatar :size="30" class="bg-primary-500 flex items-center justify-center">
               <UserOutlined class="text-white text-sm" />
             </a-avatar>
@@ -127,7 +132,7 @@
         ]"
       >
         <!-- 菜单内容 -->
-        <nav class="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin">
+        <nav class="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin" aria-label="Main navigation">
           <template v-for="group in menuGroups" :key="group.label">
             <!-- 分组标题 -->
             <div
@@ -147,7 +152,7 @@
                 v-if="!item.children"
                 @click="navigateTo(item)"
                 :class="[
-                  'w-full flex items-center gap-3 rounded-xl transition-all duration-200 group relative',
+                  'w-full flex items-center gap-3 rounded-xl transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
                   isActive(item.key)
                     ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400'
@@ -176,7 +181,7 @@
                 <button
                   @click="toggleSubmenu(item.key)"
                   :class="[
-                    'w-full flex items-center gap-3 rounded-xl transition-all duration-200 group relative',
+                    'w-full flex items-center gap-3 rounded-xl transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                     collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
                     isGroupActive(item.key)
                       ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400'
@@ -216,7 +221,7 @@
                     :key="child.key"
                     @click="navigateTo(child)"
                     :class="[
-                      'w-full flex items-center gap-2.5 rounded-lg transition-all duration-200 group relative',
+                      'w-full flex items-center gap-2.5 rounded-lg transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                       'px-3 py-1.5',
                       isActive(child.key)
                         ? 'bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400'
@@ -248,6 +253,7 @@
         <div class="flex-shrink-0 p-2 border-t border-neutral-200/60 dark:border-neutral-800/60">
           <button
             @click="collapsed = !collapsed"
+            :aria-label="collapsed ? t('menu.expandMenu') : t('menu.collapseMenu')"
             class="w-full h-9 rounded-xl flex items-center justify-center gap-2 text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-200"
           >
             <MenuFoldOutlined v-if="!collapsed" class="text-sm" />
@@ -258,7 +264,7 @@
       </aside>
 
       <!-- ========== 主内容区 ========== -->
-      <main class="flex-1 flex flex-col overflow-hidden">
+      <main id="main-content" class="flex-1 flex flex-col overflow-hidden" role="main">
         <!-- 面包屑导航 -->
         <div class="flex-shrink-0 h-10 flex items-center px-6 bg-white/50 dark:bg-neutral-900/30 border-b border-neutral-100 dark:border-neutral-800/40">
           <a-breadcrumb class="text-sm">
@@ -286,9 +292,18 @@
         <!-- 内容区域 -->
         <div class="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <router-view v-slot="{ Component, route: viewRoute }">
-            <transition name="page-fade" mode="out-in">
-              <component :is="Component" :key="viewRoute.path" />
-            </transition>
+            <Suspense>
+              <template #default>
+                <transition name="page-fade" mode="out-in">
+                  <component :is="Component" :key="viewRoute.path" />
+                </transition>
+              </template>
+              <template #fallback>
+                <div class="flex items-center justify-center py-20">
+                  <a-spin size="large" :tip="t('common.loading')" />
+                </div>
+              </template>
+            </Suspense>
           </router-view>
         </div>
       </main>
@@ -297,6 +312,7 @@
     <!-- ========== 底部状态栏 (h-8, 32px) ========== -->
     <footer
       class="h-8 flex-shrink-0 flex items-center justify-between px-4 border-t border-neutral-200/60 dark:border-neutral-800/60 backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 z-50"
+      role="contentinfo"
     >
       <div class="flex items-center gap-2">
         <span class="relative flex h-2 w-2">

@@ -14,6 +14,12 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * 跟踪各缓存区域的命中/未命中次数，定期输出统计日志，
  * 并提供 actuator 端点可用的统计数据。
+ *
+ * 性能优化说明:
+ * - 使用 ConcurrentHashMap 保证线程安全
+ * - 使用 AtomicLong 保证计数器原子性
+ * - 每5分钟输出一次统计日志，便于运维监控
+ * - 支持重置统计计数器
  */
 @Slf4j
 @Service
@@ -36,6 +42,13 @@ public class CacheStatisticsService {
     }
 
     /**
+     * 记录缓存驱逐
+     */
+    public void recordEviction(String cacheName) {
+        statsMap.computeIfAbsent(cacheName, k -> new CacheStats()).evictions.incrementAndGet();
+    }
+
+    /**
      * 获取所有缓存统计信息
      */
     public Map<String, CacheStats> getStats() {
@@ -47,6 +60,22 @@ public class CacheStatisticsService {
      */
     public CacheStats getStats(String cacheName) {
         return statsMap.getOrDefault(cacheName, new CacheStats());
+    }
+
+    /**
+     * 重置所有缓存统计计数器
+     */
+    public void resetStats() {
+        statsMap.clear();
+        log.info("缓存统计计数器已重置");
+    }
+
+    /**
+     * 重置指定缓存区域的统计计数器
+     */
+    public void resetStats(String cacheName) {
+        statsMap.remove(cacheName);
+        log.info("缓存区域 {} 统计计数器已重置", cacheName);
     }
 
     /**
@@ -62,8 +91,8 @@ public class CacheStatisticsService {
             CacheStats stats = entry.getValue();
             long total = stats.hits.get() + stats.misses.get();
             double hitRate = total > 0 ? (double) stats.hits.get() / total * 100 : 0;
-            log.info("缓存区域: {} | 命中: {} | 未命中: {} | 命中率: {:.2f}%",
-                    entry.getKey(), stats.hits.get(), stats.misses.get(), hitRate);
+            log.info("缓存区域: {} | 命中: {} | 未命中: {} | 驱逐: {} | 命中率: {:.2f}%",
+                    entry.getKey(), stats.hits.get(), stats.misses.get(), stats.evictions.get(), hitRate);
         }
         log.info("=======================");
     }
@@ -72,5 +101,6 @@ public class CacheStatisticsService {
     public static class CacheStats {
         private AtomicLong hits = new AtomicLong(0);
         private AtomicLong misses = new AtomicLong(0);
+        private AtomicLong evictions = new AtomicLong(0);
     }
 }

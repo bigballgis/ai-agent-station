@@ -133,6 +133,20 @@ public class DashboardService {
         try {
             List<Object[]> topAgentRows = apiCallLogRepository.findTopAgentsByCallCount(
                     tenantId, startTime, PageRequest.of(0, limit));
+            if (topAgentRows.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 批量获取 Agent 名称，避免 N+1 查询
+            List<Long> agentIds = topAgentRows.stream()
+                    .map(row -> ((Number) row[0]).longValue())
+                    .toList();
+            Map<Long, String> agentNameMap = agentRepository.findAllById(agentIds).stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                            com.aiagent.entity.Agent::getId,
+                            com.aiagent.entity.Agent::getName,
+                            (existing, replacement) -> existing));
+
             List<Map<String, Object>> result = new ArrayList<>();
             for (Object[] row : topAgentRows) {
                 Long agentId = ((Number) row[0]).longValue();
@@ -140,9 +154,7 @@ public class DashboardService {
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("agentId", agentId);
                 item.put("callCount", callCount);
-                agentRepository.findById(agentId).ifPresent(agent -> {
-                    item.put("agentName", agent.getName());
-                });
+                item.put("agentName", agentNameMap.getOrDefault(agentId, "Unknown"));
                 result.add(item);
             }
             return result;

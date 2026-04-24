@@ -35,15 +35,15 @@ public class ApiCallLogController {
     @GetMapping
     @Operation(summary = "分页查询API调用日志")
     public Result<PageResult<ApiCallLog>> list(
-            @RequestHeader("X-Tenant-ID") Long tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long agentId,
-            @RequestParam(required = false) Long apiInterfaceId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String clientIp,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @RequestHeader("X-Tenant-ID") @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) @Parameter(description = "每页大小") int size,
+            @RequestParam(required = false) @Parameter(description = "Agent ID") Long agentId,
+            @RequestParam(required = false) @Parameter(description = "API接口ID") Long apiInterfaceId,
+            @RequestParam(required = false) @Parameter(description = "状态") String status,
+            @RequestParam(required = false) @Parameter(description = "客户端IP") String clientIp,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endTime) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ApiCallLog> logPage;
@@ -122,8 +122,8 @@ public class ApiCallLogController {
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取API调用日志详情")
     public Result<ApiCallLog> getById(
-            @PathVariable Long id,
-            @RequestHeader("X-Tenant-ID") Long tenantId) {
+            @Parameter(description = "日志ID") @PathVariable Long id,
+            @RequestHeader("X-Tenant-ID") @Parameter(description = "租户ID") Long tenantId) {
         ApiCallLog log = apiCallLogRepository.findById(id)
                 .filter(l -> l.getTenantId().equals(tenantId))
                 .orElse(null);
@@ -134,8 +134,8 @@ public class ApiCallLogController {
     @GetMapping("/request/{requestId}")
     @Operation(summary = "根据请求ID获取API调用日志")
     public Result<ApiCallLog> getByRequestId(
-            @PathVariable String requestId,
-            @RequestHeader("X-Tenant-ID") Long tenantId) {
+            @Parameter(description = "请求ID") @PathVariable String requestId,
+            @RequestHeader("X-Tenant-ID") @Parameter(description = "租户ID") Long tenantId) {
         ApiCallLog log = apiCallLogRepository.findByRequestId(requestId)
                 .filter(l -> l.getTenantId().equals(tenantId))
                 .orElse(null);

@@ -1,5 +1,6 @@
 package com.aiagent.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -15,45 +17,62 @@ import java.math.BigDecimal;
  * 创建建议请求 DTO
  */
 @Data
+@Schema(description = "创建建议请求")
 public class CreateSuggestionRequestDTO {
 
-    @NotNull(message = "租户ID不能为空")
+    @NotNull(message = "{error.validation.tenant_id_required}")
+    @Positive(message = "{error.validation.id_positive}")
+    @Schema(description = "租户ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long tenantId;
 
-    @NotNull(message = "Agent ID不能为空")
+    @NotNull(message = "{error.validation.agent_id_required}")
+    @Positive(message = "{error.validation.id_positive}")
+    @Schema(description = "Agent ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long agentId;
 
+    @Positive(message = "{error.validation.id_positive}")
+    @Schema(description = "反思ID")
     private Long reflectionId;
 
-    @NotBlank(message = "建议类型不能为空")
-    @Size(max = 50, message = "建议类型不能超过50个字符")
+    @NotBlank(message = "{error.validation.suggestion_type_required}")
+    @Size(max = 50, message = "{error.validation.suggestion_type_too_long}")
+    @Schema(description = "建议类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "performance")
     private String suggestionType;
 
-    @NotBlank(message = "建议标题不能为空")
-    @Size(max = 100, message = "建议标题不能超过100个字符")
+    @NotBlank(message = "{error.validation.title_required}")
+    @Size(max = 100, message = "{error.validation.title_too_long}")
+    @Schema(description = "建议标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "减少响应延迟")
     private String title;
 
+    @Schema(description = "描述")
     private String description;
 
-    @Size(max = 5000, message = "建议内容不能超过5000个字符")
+    @Size(max = 5000, message = "{error.validation.content_too_long}")
+    @Schema(description = "建议内容")
     private String content;
 
-    @NotNull(message = "优先级不能为空")
-    @Min(value = 0, message = "优先级不能为负数")
-    @Max(value = 10, message = "优先级不能超过10")
+    @NotNull(message = "{error.validation.priority_required}")
+    @Min(value = 0, message = "{error.validation.priority_min}")
+    @Max(value = 10, message = "{error.validation.priority_max}")
+    @Schema(description = "优先级(0-10)", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Integer priority;
 
-    @NotBlank(message = "状态不能为空")
-    @Size(max = 20, message = "状态不能超过20个字符")
+    @NotBlank(message = "{error.validation.status_required}")
+    @Size(max = 20, message = "{error.validation.status_too_long}")
+    @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "pending")
     private String status;
 
-    @NotBlank(message = "实现状态不能为空")
-    @Size(max = 20, message = "实现状态不能超过20个字符")
+    @NotBlank(message = "{error.validation.implementation_status_required}")
+    @Size(max = 20, message = "{error.validation.implementation_status_too_long}")
+    @Schema(description = "实现状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "not_started")
     private String implementationStatus;
 
-    @DecimalMin(value = "0.0", message = "预期影响不能为负数")
+    @DecimalMin(value = "0.0", message = "{error.validation.impact_min}")
+    @Schema(description = "预期影响", example = "0.8")
     private BigDecimal expectedImpact;
 
-    @NotNull(message = "创建人ID不能为空")
+    @NotNull(message = "{error.validation.creator_required}")
+    @Positive(message = "{error.validation.id_positive}")
+    @Schema(description = "创建人ID", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long createdBy;
 }

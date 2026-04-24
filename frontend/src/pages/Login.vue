@@ -21,15 +21,21 @@
         <!-- 表单卡片 -->
         <div class="bg-white dark:bg-neutral-800 rounded-3xl shadow-xl dark:shadow-neutral-900/50 p-8 lg:p-10">
           <!-- Tab 切换 -->
-          <div class="auth-tabs mb-8">
+          <div class="auth-tabs mb-8" role="tablist" aria-label="Authentication options">
             <button
               :class="['auth-tab', activeTab === 'login' ? 'auth-tab-active' : 'auth-tab-inactive']"
+              role="tab"
+              :aria-selected="activeTab === 'login'"
+              aria-controls="login-panel"
               @click="switchTab('login')"
             >
               {{ t('login.login') }}
             </button>
             <button
               :class="['auth-tab', activeTab === 'register' ? 'auth-tab-active' : 'auth-tab-inactive']"
+              role="tab"
+              :aria-selected="activeTab === 'register'"
+              aria-controls="register-panel"
               @click="switchTab('register')"
             >
               {{ t('login.register') }}
@@ -58,6 +64,8 @@
             :model="loginForm"
             :rules="loginRules"
             layout="vertical"
+            role="tabpanel"
+            id="login-panel"
             @finish="handleLogin"
           >
             <!-- 用户名 -->
@@ -102,7 +110,7 @@
                   :placeholder="t('login.captchaPlaceholder')"
                   class="input-custom captcha-input"
                 />
-                <div class="captcha-display" @click="fetchCaptcha" :title="t('login.captchaRefresh')">
+                <div class="captcha-display" @click="fetchCaptcha" :title="t('login.captchaRefresh')" role="button" tabindex="0" :aria-label="t('login.captchaRefresh')" @keydown.enter="fetchCaptcha" @keydown.space.prevent="fetchCaptcha">
                   <span v-if="captchaLoading" class="captcha-loading">...</span>
                   <span v-else-if="captchaQuestion" class="captcha-text">{{ captchaQuestion }}</span>
                   <span v-else class="captcha-text" @click="fetchCaptcha">{{ t('login.captchaRefresh') }}</span>
@@ -115,7 +123,7 @@
               <a-checkbox v-model:checked="rememberMe" class="checkbox-custom">
                 {{ t('login.remember') }}
               </a-checkbox>
-              <a class="forgot-password-link" @click="showResetPassword = true">
+              <a class="forgot-password-link" @click="showResetPassword = true" role="link" tabindex="0" @keydown.enter="showResetPassword = true">
                 {{ t('login.forgotPassword') }}
               </a>
             </div>
@@ -142,6 +150,8 @@
             :model="registerForm"
             :rules="registerRules"
             layout="vertical"
+            role="tabpanel"
+            id="register-panel"
             @finish="handleRegister"
           >
             <!-- 用户名 -->
@@ -322,12 +332,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
+import { defineAsyncComponent } from 'vue'
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
 import { register, getCaptcha } from '@/api/user'
 import type { LocaleType } from '@/locales'
-import BrandPanel from '@/components/login/BrandPanel.vue'
+// BrandPanel 仅在登录页使用，登录页已路由懒加载，此处异步加载进一步优化
+const BrandPanel = defineAsyncComponent(() => import('@/components/login/BrandPanel.vue'))
 import { logger } from '@/utils/logger'
 
 const router = useRouter()
@@ -578,6 +590,11 @@ function changeLocale(newLocale: LocaleType) {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+}
+
+.auth-tab:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
 }
 
 .auth-tab-active {
@@ -882,6 +899,11 @@ function changeLocale(newLocale: LocaleType) {
   border-color: #818cf8;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+}
+
+.captcha-display:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
 }
 
 .captcha-text {

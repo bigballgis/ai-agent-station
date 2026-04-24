@@ -9,7 +9,7 @@
       <!-- Left Panel: Definition List -->
       <div class="left-panel">
         <div class="panel-header">
-          <h3>{{ t('workflow.definitionList') }}</h3>
+          <h2>{{ t('workflow.definitionList') }}</h2>
           <div class="flex items-center gap-2">
             <a-button size="small" @click="showImportModal = true" :aria-label="t('workflow.importWorkflow')">
               {{ t('workflow.importWorkflow') }}
@@ -28,12 +28,18 @@
           </a-select>
         </div>
 
-        <div class="definition-list">
+        <div class="definition-list" role="listbox" :aria-label="t('workflow.definitionList')">
           <div
-            v-for="def in definitions"
+            v-for="(def, idx) in definitions"
             :key="def.id"
             :class="['definition-item', { active: selectedDefinition?.id === def.id }]"
+            role="option"
+            :aria-selected="selectedDefinition?.id === def.id"
+            tabindex="0"
             @click="selectDefinition(def)"
+            @keydown.enter="selectDefinition(def)"
+            @keydown.up.prevent="handleDefinitionKeydown($event, idx)"
+            @keydown.down.prevent="handleDefinitionKeydown($event, idx)"
           >
             <div class="def-name">{{ def.name }}</div>
             <div class="def-meta">
@@ -51,7 +57,7 @@
         <template v-if="selectedDefinition">
           <div class="detail-header">
             <div class="detail-title">
-              <h2>{{ selectedDefinition.name }}</h2>
+              <h3>{{ selectedDefinition.name }}</h3>
               <StatusBadge :status="selectedDefinition.status" :status-map="statusMap" />
             </div>
             <div class="detail-actions">
@@ -286,7 +292,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -403,6 +409,34 @@ async function loadDefinitions() {
 function selectDefinition(def: WorkflowDefinition) {
   selectedDefinition.value = def
   loadDefinitionInstances(def.id)
+}
+
+function handleDefinitionKeydown(event: KeyboardEvent, index: number) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    const nextIndex = Math.min(index + 1, definitions.value.length - 1)
+    const nextDef = definitions.value[nextIndex]
+    if (nextDef) {
+      selectedDefinition.value = nextDef
+      loadDefinitionInstances(nextDef.id)
+      nextTick(() => {
+        const items = document.querySelectorAll<HTMLElement>('.definition-item')
+        items[nextIndex]?.focus()
+      })
+    }
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    const prevIndex = Math.max(index - 1, 0)
+    const prevDef = definitions.value[prevIndex]
+    if (prevDef) {
+      selectedDefinition.value = prevDef
+      loadDefinitionInstances(prevDef.id)
+      nextTick(() => {
+        const items = document.querySelectorAll<HTMLElement>('.definition-item')
+        items[prevIndex]?.focus()
+      })
+    }
+  }
 }
 
 async function loadDefinitionInstances(definitionId: number) {
@@ -654,6 +688,11 @@ onMounted(() => {
   transition: all 0.2s;
   margin-bottom: 4px;
   border: 1px solid transparent;
+}
+
+.definition-item:focus-visible {
+  outline: 2px solid #1890ff;
+  outline-offset: -2px;
 }
 
 .definition-item:hover {

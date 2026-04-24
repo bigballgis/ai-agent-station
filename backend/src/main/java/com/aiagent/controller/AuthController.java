@@ -25,6 +25,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.UUID;
@@ -79,8 +81,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "用户登录")
+    @Operation(summary = "用户登录", description = "使用用户名和密码登录系统，返回JWT令牌")
     @OperationLog(value = "用户登录", module = "认证")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "登录成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败或验证码错误"),
+            @ApiResponse(responseCode = "401", description = "用户名或密码错误"),
+            @ApiResponse(responseCode = "403", description = "用户已被禁用"),
+            @ApiResponse(responseCode = "429", description = "登录尝试过于频繁")
+    })
     public Result<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         // 登录接口限流：防止暴力破解
         String clientIp = SecurityUtils.getClientIp(httpRequest);
@@ -103,8 +112,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "用户注册")
+    @Operation(summary = "用户注册", description = "注册新用户账号")
     @OperationLog(value = "用户注册", module = "认证")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "注册成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "409", description = "用户名已存在")
+    })
     public Result<?> register(@Valid @RequestBody RegisterRequestDTO request, HttpServletRequest httpRequest) {
         String clientIp = SecurityUtils.getClientIp(httpRequest);
         checkRateLimit("register:" + clientIp, 5, 60);
@@ -117,8 +131,13 @@ public class AuthController {
      * 使用 Refresh Token 获取新的 Access Token
      */
     @PostMapping("/refresh")
-    @Operation(summary = "刷新Token")
+    @Operation(summary = "刷新Token", description = "使用Refresh Token获取新的Access Token")
     @OperationLog(value = "刷新Token", module = "认证")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "刷新成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "Refresh Token无效或已过期")
+    })
     public Result<?> refresh(@Valid @RequestBody RefreshRequestDTO request) {
         return Result.success(authService.refreshToken(request.getRefreshToken()));
     }
@@ -156,8 +175,13 @@ public class AuthController {
      * 修改密码 - 用户自行修改，需验证旧密码
      */
     @PutMapping("/password")
-    @Operation(summary = "修改密码")
+    @Operation(summary = "修改密码", description = "用户自行修改密码，需验证旧密码")
     @OperationLog(value = "修改密码", module = "认证")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "密码修改成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败或旧密码错误"),
+            @ApiResponse(responseCode = "401", description = "未认证")
+    })
     public Result<?> changePassword(@AuthenticationPrincipal UserPrincipal principal,
                                     @Valid @RequestBody ChangePasswordRequestDTO request) {
         if (principal == null || principal.getId() == null) {
@@ -171,9 +195,16 @@ public class AuthController {
      * 管理员重置密码 - 直接重置指定用户的密码
      */
     @PostMapping("/reset-password")
-    @Operation(summary = "管理员重置密码")
+    @Operation(summary = "管理员重置密码", description = "管理员直接重置指定用户的密码")
     @RequiresPermission("user:manage")
     @OperationLog(value = "管理员重置密码", module = "认证")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "密码重置成功"),
+            @ApiResponse(responseCode = "400", description = "参数校验失败"),
+            @ApiResponse(responseCode = "401", description = "未认证"),
+            @ApiResponse(responseCode = "403", description = "无权限"),
+            @ApiResponse(responseCode = "429", description = "重置请求过于频繁")
+    })
     public Result<?> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request,
                                    HttpServletRequest httpRequest) {
         // 密码重置接口限流

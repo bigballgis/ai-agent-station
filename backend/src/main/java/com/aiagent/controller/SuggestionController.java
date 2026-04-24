@@ -12,6 +12,7 @@ import com.aiagent.entity.AgentEvolutionSuggestion;
 import com.aiagent.service.SuggestionService;
 import com.aiagent.security.validator.SortFieldValidator;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -174,7 +175,9 @@ public class SuggestionController {
     @RequiresPermission("suggestion:manage")
     @PutMapping("/{id}/status")
     @Operation(summary = "更新建议状态")
-    public Result<SuggestionResponseDTO> updateSuggestionStatus(@PathVariable Long id, @RequestParam String status) {
+    public Result<SuggestionResponseDTO> updateSuggestionStatus(
+            @Parameter(description = "建议ID") @PathVariable Long id,
+            @RequestParam @Size(max = 20) @Parameter(description = "状态") String status) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateSuggestionStatus(id, status);
         return Result.success(DTOConverter.toSuggestionResponseDTO(suggestion));
     }
@@ -183,7 +186,9 @@ public class SuggestionController {
     @RequiresPermission("suggestion:manage")
     @PutMapping("/{id}/implementation-status")
     @Operation(summary = "更新实现状态")
-    public Result<SuggestionResponseDTO> updateImplementationStatus(@PathVariable Long id, @RequestParam String implementationStatus) {
+    public Result<SuggestionResponseDTO> updateImplementationStatus(
+            @Parameter(description = "建议ID") @PathVariable Long id,
+            @RequestParam @Size(max = 20) @Parameter(description = "实现状态") String implementationStatus) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateImplementationStatus(id, implementationStatus);
         return Result.success(DTOConverter.toSuggestionResponseDTO(suggestion));
     }

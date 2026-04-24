@@ -41,11 +41,11 @@ public class DataExportController {
     @Operation(summary = "导出Agent数据为CSV")
     @OperationLog(value = "导出Agent数据", module = "数据导出")
     public void exportAgents(
-            @RequestParam(required = false) Long tenantId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(required = false) @Parameter(description = "状态筛选") String status,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endDate,
             HttpServletResponse response) throws IOException {
         dataExportService.exportAgents(tenantId, status, keyword, startDate, endDate, response);
     }
@@ -63,10 +63,10 @@ public class DataExportController {
     @Operation(summary = "导出用户数据为CSV")
     @OperationLog(value = "导出用户数据", module = "数据导出")
     public void exportUsers(
-            @RequestParam(required = false) Long tenantId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endDate,
             HttpServletResponse response) throws IOException {
         dataExportService.exportUsers(tenantId, keyword, startDate, endDate, response);
     }
@@ -85,11 +85,11 @@ public class DataExportController {
     @Operation(summary = "导出系统日志为CSV")
     @OperationLog(value = "导出系统日志", module = "数据导出")
     public void exportLogs(
-            @RequestParam(required = false) Long tenantId,
-            @RequestParam(required = false) String module,
-            @RequestParam(required = false) Boolean isSuccess,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(required = false) @Parameter(description = "模块名称") String module,
+            @RequestParam(required = false) @Parameter(description = "是否成功") Boolean isSuccess,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endDate,
             HttpServletResponse response) throws IOException {
         dataExportService.exportLogs(tenantId, module, isSuccess, startDate, endDate, response);
     }
@@ -108,11 +108,11 @@ public class DataExportController {
     @Operation(summary = "导出测试结果为CSV")
     @OperationLog(value = "导出测试结果", module = "数据导出")
     public void exportTestResults(
-            @RequestParam(required = false) Long tenantId,
-            @RequestParam(required = false) Long agentId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(required = false) @Parameter(description = "Agent ID") Long agentId,
+            @RequestParam(required = false) @Parameter(description = "状态") String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endDate,
             HttpServletResponse response) throws IOException {
         dataExportService.exportTestResults(tenantId, agentId, status, startDate, endDate, response);
     }
@@ -131,11 +131,11 @@ public class DataExportController {
     @Operation(summary = "导出工作流实例为CSV")
     @OperationLog(value = "导出工作流实例", module = "数据导出")
     public void exportWorkflowInstances(
-            @RequestParam(required = false) Long tenantId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
+            @RequestParam(required = false) @Parameter(description = "状态") String status,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "开始时间") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "结束时间") LocalDateTime endDate,
             HttpServletResponse response) throws IOException {
         dataExportService.exportWorkflowInstances(tenantId, status, keyword, startDate, endDate, response);
     }

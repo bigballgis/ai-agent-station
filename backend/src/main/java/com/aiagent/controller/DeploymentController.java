@@ -42,8 +42,8 @@ public class DeploymentController {
     @GetMapping
     @Operation(summary = "分页查询部署历史")
     public Result<PageResult<DeploymentVO>> getDeploymentHistory(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) @Parameter(description = "每页大小") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<DeploymentHistory> deploymentPage = deploymentService.getDeploymentHistory(pageable);
@@ -70,7 +70,7 @@ public class DeploymentController {
     @RequiresPermission("deployment:view")
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取部署详情")
-    public Result<DeploymentVO> getDeploymentById(@PathVariable Long id) {
+    public Result<DeploymentVO> getDeploymentById(@Parameter(description = "部署ID") @PathVariable Long id) {
         DeploymentHistory deployment = deploymentService.getDeploymentById(id);
         return Result.success(DeploymentVO.fromEntity(deployment));
     }
@@ -95,7 +95,7 @@ public class DeploymentController {
     @Operation(summary = "回滚部署")
     @OperationLog(value = "回滚部署", module = "部署管理")
     public Result<DeploymentVO> rollback(
-            @PathVariable Long id,
+            @Parameter(description = "部署ID") @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         DeploymentHistory deployment = deploymentService.rollback(id, principal.getId());
@@ -106,8 +106,8 @@ public class DeploymentController {
     @GetMapping("/compare")
     @Operation(summary = "比较两个版本差异")
     public Result<Map<String, Object>> compareVersions(
-            @RequestParam Long versionId1,
-            @RequestParam Long versionId2) {
+            @RequestParam @Parameter(description = "版本ID1") Long versionId1,
+            @RequestParam @Parameter(description = "版本ID2") Long versionId2) {
 
         Map<String, Object> comparison = deploymentService.compareVersions(versionId1, versionId2);
         return Result.success(comparison);

@@ -2,11 +2,12 @@
   <div
     class="stat-card"
     :class="[`stat-card-${color}`, { 'stat-card-clickable': clickable }]"
+    :aria-label="`${title}: ${value}${trendValue ? ', ' + trendValue : ''}`"
     @click="$emit('click', $event)"
   >
     <!-- 背景装饰 -->
-    <div class="stat-card-bg-circle stat-card-bg-circle-1" />
-    <div class="stat-card-bg-circle stat-card-bg-circle-2" />
+    <div class="stat-card-bg-circle stat-card-bg-circle-1" aria-hidden="true" />
+    <div class="stat-card-bg-circle stat-card-bg-circle-2" aria-hidden="true" />
 
     <!-- 图标 -->
     <div v-if="icon" class="stat-card-icon">
@@ -118,6 +119,11 @@ const formattedValue = computed(() => {
 .stat-card-clickable:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card-clickable:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
 }
 
 /* 颜色主题 */

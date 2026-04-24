@@ -1,6 +1,7 @@
 package com.aiagent.repository;
 
 import com.aiagent.entity.AgentTestResult;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,21 +17,25 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
     /**
      * 根据执行ID查询测试结果
      */
+    @EntityGraph(attributePaths = {"execution", "testCase"})
     List<AgentTestResult> findByExecutionIdAndTenantId(Long executionId, Long tenantId);
 
     /**
      * 根据租户ID查询测试结果
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestResult> findByTenantId(Long tenantId);
 
     /**
      * 根据Agent ID查询测试结果
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestResult> findByAgentIdAndTenantId(Long agentId, Long tenantId);
 
     /**
      * 根据测试用例ID查询测试结果
      */
+    @EntityGraph(attributePaths = {"execution"})
     List<AgentTestResult> findByTestCaseIdAndTenantId(Long testCaseId, Long tenantId);
 
     /**
@@ -39,6 +44,7 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
      * @param status 状态
      * @return 测试结果列表
      */
+    @EntityGraph(attributePaths = {"testCase"})
     List<AgentTestResult> findByTenantIdAndStatus(Long tenantId, String status);
 
     /**

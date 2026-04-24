@@ -70,7 +70,7 @@ public class SessionController {
     @Operation(summary = "踢出指定会话")
     @RequiresPermission("session:manage")
     @DeleteMapping("/{sessionId}")
-    public Result<Void> kickSession(@PathVariable String sessionId) {
+    public Result<Void> kickSession(@Parameter(description = "会话ID") @PathVariable String sessionId) {
         sessionService.kickSession(sessionId);
         return Result.success("Session kicked successfully", null);
     }
@@ -84,7 +84,7 @@ public class SessionController {
     @Operation(summary = "踢出用户所有设备")
     @RequiresPermission("session:manage")
     @DeleteMapping("/user/{userId}")
-    public Result<Map<String, Object>> kickUserFromAllDevices(@PathVariable Long userId) {
+    public Result<Map<String, Object>> kickUserFromAllDevices(@Parameter(description = "用户ID") @PathVariable Long userId) {
         int count = sessionService.invalidateAllUserSessions(userId);
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);

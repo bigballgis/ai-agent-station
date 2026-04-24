@@ -4,12 +4,12 @@
     <PageHeader :title="t('alert.pageTitle')" :subtitle="t('alert.pageSubtitle')" />
 
     <!-- 加载状态 -->
-    <div v-if="pageLoading" class="flex items-center justify-center py-20">
+    <div v-if="pageLoading" class="flex items-center justify-center py-20" role="status" aria-live="polite">
       <a-spin size="large" />
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="loadError" class="flex flex-col items-center justify-center py-20">
+    <div v-else-if="loadError" class="flex flex-col items-center justify-center py-20" role="alert">
       <svg class="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
       </svg>
@@ -46,15 +46,21 @@
     <!-- Tab 切换 -->
     <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card overflow-hidden animate-slide-up" style="animation-delay: 200ms;">
       <div class="border-b border-neutral-100 dark:border-neutral-800 px-6">
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1" role="tablist" aria-label="Alert notification tabs">
           <button
             v-for="tab in tabs"
             :key="tab.key"
-            class="px-4 py-3.5 text-sm font-medium transition-all duration-200 cursor-pointer relative"
+            class="px-4 py-3.5 text-sm font-medium transition-all duration-200 cursor-pointer relative focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             :class="activeTab === tab.key
               ? 'text-primary-600 dark:text-primary-400'
               : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            :aria-selected="activeTab === tab.key"
+            :aria-controls="`tabpanel-${tab.key}`"
+            :id="`tab-${tab.key}`"
+            role="tab"
             @click="switchTab(tab.key)"
+            @keydown.left="navigateTab(-1)"
+            @keydown.right="navigateTab(1)"
           >
             {{ tab.label }}
             <span
@@ -75,10 +81,10 @@
       </div>
 
       <!-- 告警规则 Tab -->
-      <div v-if="activeTab === 'rules'" class="p-6">
+      <div v-if="activeTab === 'rules'" class="p-6" role="tabpanel" aria-label="Alert rules" id="tabpanel-rules">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <h3 class="text-base font-semibold text-neutral-800 dark:text-neutral-200">{{ t('alert.ruleList') }}</h3>
+            <h2 class="text-base font-semibold text-neutral-800 dark:text-neutral-200">{{ t('alert.ruleList') }}</h2>
             <!-- 搜索框 -->
             <div class="relative">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +160,7 @@
                 </td>
                 <td class="px-4 py-3">
                   <span
-                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                     :class="rule.enabled
                       ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'
                       : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'"
@@ -198,7 +204,7 @@
       </div>
 
       <!-- 告警记录 Tab -->
-      <div v-if="activeTab === 'records'" class="p-6">
+      <div v-if="activeTab === 'records'" class="p-6" role="tabpanel" aria-label="Alert records" id="tabpanel-records">
         <!-- 筛选栏 -->
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <select
@@ -746,6 +752,13 @@ function switchTab(key: string) {
   if (key === 'records') {
     fetchRecords()
   }
+}
+
+function navigateTab(direction: number) {
+  const keys = tabs.value.map(t => t.key)
+  const currentIdx = keys.indexOf(activeTab.value)
+  const nextIdx = (currentIdx + direction + keys.length) % keys.length
+  switchTab(keys[nextIdx])
 }
 
 // ==================== 规则搜索和筛选 ====================

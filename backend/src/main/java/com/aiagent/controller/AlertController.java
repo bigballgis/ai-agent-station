@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -68,8 +70,8 @@ public class AlertController {
     @GetMapping("/records")
     @Operation(summary = "分页查询告警记录")
     public Result<PageResult<AlertRecordVO>> getRecords(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) @Parameter(description = "每页大小") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "firedAt"));
         Page<AlertRecord> result = alertService.getRecords(page, size, pageable);
         Page<AlertRecordVO> voPage = result.map(AlertRecordVO::fromEntity);
@@ -94,7 +96,7 @@ public class AlertController {
     @RequiresPermission("alert:manage")
     @PostMapping("/{id}/resolve")
     @Operation(summary = "解决告警记录")
-    public Result<Void> resolveAlertRecord(@PathVariable Long id) {
+    public Result<Void> resolveAlertRecord(@Parameter(description = "告警记录ID") @PathVariable Long id) {
         alertService.resolveAlertRecord(id);
         return Result.success(null);
     }

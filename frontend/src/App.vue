@@ -1,6 +1,8 @@
 <template>
   <ErrorBoundary>
     <a-config-provider :locale="currentLocale" :theme="antdTheme">
+      <!-- Skip to main content link for keyboard navigation -->
+      <a class="skip-to-content" href="#main-content">Skip to main content</a>
       <router-view />
     </a-config-provider>
   </ErrorBoundary>

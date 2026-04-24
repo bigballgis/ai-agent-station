@@ -6,7 +6,7 @@
     </div>
 
     <!-- 错误显示（保留上次成功内容作为背景） -->
-    <div v-else class="error-boundary p-6 text-center">
+    <div v-else class="error-boundary p-6 text-center" role="alert">
       <!-- 上次成功内容（半透明显示） -->
       <div v-if="hasLastContent" class="mb-4 opacity-30 pointer-events-none select-none overflow-hidden max-h-48">
         <div class="text-xs text-neutral-400 dark:text-neutral-500 mb-2">
@@ -41,13 +41,13 @@
       <div class="flex items-center justify-center gap-3">
         <button
           @click="reset"
-          class="btn btn-primary"
+          class="btn btn-primary focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           {{ t('password.retry') }}
         </button>
         <button
           @click="reportError"
-          class="btn btn-secondary"
+          class="btn btn-secondary focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           {{ t('password.reportError') }}
         </button>

@@ -1,7 +1,7 @@
 <template>
   <div class="empty-state" :class="`empty-state-${type}`">
     <!-- 插画区域 -->
-    <div class="empty-illustration">
+    <div class="empty-illustration" aria-hidden="true">
       <!-- 无数据 -->
       <svg v-if="type === 'noData'" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="40" y="30" width="120" height="100" rx="12" fill="currentColor" opacity="0.06" />

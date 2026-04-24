@@ -4,7 +4,7 @@
     <PageHeader :title="t('dashboard.title') || 'Dashboard'" :subtitle="t('dashboard.subtitle')" />
 
     <!-- 加载状态 -->
-    <div v-if="dashboardLoading" class="flex items-center justify-center py-20">
+    <div v-if="dashboardLoading" class="flex items-center justify-center py-20" role="status" aria-live="polite">
       <a-spin size="large" />
     </div>
 
@@ -19,8 +19,9 @@
         <!-- 关闭按钮 -->
         <button
           class="absolute top-3 right-3 p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer"
-          @click="dismissOnboarding"
+          :aria-label="t('dashboard.onboarding.dismiss')"
           :title="t('dashboard.onboarding.dismiss')"
+          @click="dismissOnboarding"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -146,7 +147,7 @@
           <button
             v-for="action in quickActions"
             :key="action.label"
-            class="flex flex-col items-center gap-2.5 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 hover:bg-primary-50 dark:hover:bg-primary-950/30 border border-transparent hover:border-primary-200 dark:hover:border-primary-800/40 transition-all duration-200 group cursor-pointer"
+            class="flex flex-col items-center gap-2.5 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 hover:bg-primary-50 dark:hover:bg-primary-950/30 border border-transparent hover:border-primary-200 dark:hover:border-primary-800/40 transition-all duration-200 group cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             @click="router.push(action.route)"
           >
             <div
@@ -167,7 +168,7 @@
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50">{{ t('dashboard.recentActivity') }}</h2>
           <button
-            class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"
+            class="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
             @click="router.push('/system/log')"
           >
             {{ t('dashboard.viewAll') }}
@@ -204,7 +205,7 @@
           </div>
 
           <!-- 空状态 -->
-          <div v-if="activities.length === 0" class="text-center py-8">
+          <div v-if="activities.length === 0" class="text-center py-8" aria-live="polite">
             <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('dashboard.noActivity') }}</p>
           </div>
         </div>

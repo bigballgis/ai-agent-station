@@ -17,6 +17,8 @@ import com.aiagent.service.StreamService;
 import com.aiagent.service.llm.LangChain4jService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -96,10 +98,10 @@ public class StreamController {
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE流式对话(GET)")
     public SseEmitter streamChat(
-            @RequestParam(defaultValue = "openai") String provider,
-            @RequestParam(required = false) String systemPrompt,
-            @RequestParam String message,
-            @RequestParam(required = false) String sessionId) {
+            @RequestParam(defaultValue = "openai") @Parameter(description = "LLM提供商") String provider,
+            @RequestParam(required = false) @Parameter(description = "系统提示词") String systemPrompt,
+            @RequestParam @NotBlank @Size(max = 10000) @Parameter(description = "用户消息", required = true) String message,
+            @RequestParam(required = false) @Parameter(description = "会话ID") String sessionId) {
 
         log.info("[SSE] 流式对话请求: provider={}, sessionId={}", provider, sessionId);
 
@@ -233,7 +235,7 @@ public class StreamController {
     @PostMapping(value = "/agent/{agentId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE流式Agent执行(POST)")
     public SseEmitter streamAgentExecutionPost(
-            @PathVariable Long agentId,
+            @Parameter(description = "Agent ID") @PathVariable Long agentId,
             @Valid @RequestBody StreamAgentExecutionRequestDTO request) {
         String message = request.getMessage();
         String sessionId = request.getSessionId();
@@ -277,9 +279,9 @@ public class StreamController {
     @Operation(summary = "SSE流式Agent执行")
     @GetMapping(value = "/agent/{agentId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamAgentExecution(
-            @PathVariable Long agentId,
-            @RequestParam String message,
-            @RequestParam(required = false) String sessionId) {
+            @Parameter(description = "Agent ID") @PathVariable Long agentId,
+            @RequestParam @NotBlank @Size(max = 10000) @Parameter(description = "用户消息", required = true) String message,
+            @RequestParam(required = false) @Parameter(description = "会话ID") String sessionId) {
 
         log.info("[SSE] Agent 流式执行: agentId={}", agentId);
 

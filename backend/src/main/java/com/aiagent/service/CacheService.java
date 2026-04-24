@@ -3,10 +3,13 @@ package com.aiagent.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -51,13 +54,20 @@ public class CacheService {
 
     /**
      * 按前缀批量删除缓存
+     * 使用 SCAN 替代 KEYS，避免在生产环境阻塞 Redis
      */
     public void deleteByPrefix(String prefix) {
-        Set<String> keys = redisTemplate.keys(prefix + "*");
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
+        List<String> keysToDelete = new ArrayList<>();
+        ScanOptions scanOptions = ScanOptions.scanOptions().match(prefix + "*").count(100).build();
+        try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                keysToDelete.add(cursor.next());
+            }
         }
-        log.info("按前缀清除缓存: prefix={}, count={}", prefix, keys != null ? keys.size() : 0);
+        if (!keysToDelete.isEmpty()) {
+            redisTemplate.delete(keysToDelete);
+            log.info("按前缀清除缓存: prefix={}, count={}", prefix, keysToDelete.size());
+        }
     }
 
     /**

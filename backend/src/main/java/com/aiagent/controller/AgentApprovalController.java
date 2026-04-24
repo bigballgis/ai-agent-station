@@ -42,10 +42,10 @@ public class AgentApprovalController {
     @GetMapping
     @Operation(summary = "分页查询审批列表")
     public Result<PageResult<AgentApprovalVO>> getApprovals(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "submittedAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页大小") int size,
+            @RequestParam(defaultValue = "submittedAt") @Parameter(description = "排序字段") String sortBy,
+            @RequestParam(defaultValue = "desc") @Parameter(description = "排序方向") String sortDir) {
 
         String safeSortBy = sortFieldValidator.validate(sortBy, ALLOWED_SORT_FIELDS);
         String safeSortDir = sortFieldValidator.validateDirection(sortDir);
@@ -63,8 +63,8 @@ public class AgentApprovalController {
     @GetMapping("/pending")
     @Operation(summary = "获取待审批列表")
     public Result<PageResult<AgentApprovalVO>> getPendingApprovals(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页大小") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("submittedAt").descending());
         Page<AgentApproval> approvalPage = agentApprovalService.getPendingApprovals(pageable);

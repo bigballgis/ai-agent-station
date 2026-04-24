@@ -1,7 +1,7 @@
 <template>
   <div class="brand-panel hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700">
     <!-- 装饰性几何图形 -->
-    <div class="geometric-shapes">
+    <div class="geometric-shapes" aria-hidden="true">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
       <div class="shape shape-3"></div>
@@ -13,7 +13,7 @@
     </div>
 
     <!-- 浮动粒子 -->
-    <div class="particles">
+    <div class="particles" aria-hidden="true">
       <div class="particle" v-for="n in 20" :key="n" :style="particleStyle(n)"></div>
     </div>
 

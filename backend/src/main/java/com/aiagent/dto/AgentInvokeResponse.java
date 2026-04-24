@@ -1,13 +1,26 @@
 package com.aiagent.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 
+@Schema(description = "Agent调用响应")
 public class AgentInvokeResponse {
+    @Schema(description = "请求ID")
     private String requestId;
+
+    @Schema(description = "异步任务ID")
     private String taskId;
+
+    @Schema(description = "执行状态", example = "SUCCESS")
     private String status;
+
+    @Schema(description = "输出结果")
     private Map<String, Object> outputs;
+
+    @Schema(description = "错误信息")
     private String errorMessage;
+
+    @Schema(description = "执行时间(毫秒)")
     private Integer executionTime;
 
     public AgentInvokeResponse() {
