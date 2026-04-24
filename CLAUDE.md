@@ -306,3 +306,44 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **DevOps**: CI/CD, Prometheus, graceful shutdown, Docker limits, V23+V24 migrations
 - **Workflow**: Timeout, versioning, recovery, node validation, graph integrity checks
 - **API Gateway**: Versioning, deprecation, call logging, analytics, enhanced Swagger docs
+
+### Round 131-140 (Security Hardening + Compliance)
+
+#### Round 131-133: Deep Security Audit
+- Swagger: ADMIN-only, env-controlled disable, try-it-out disabled
+- JWT: refresh token type validation
+- SortFieldValidator: whitelist sortBy params (prevent JPQL injection)
+- Pagination: size max 100, defensive bounds in PageRequest
+- Path traversal: FileController subDir validation
+- Input validation: toolName regex, days @Min/@Max
+- SQL injection: zero vulnerabilities (all parameterized)
+
+#### Round 134-136: Compliance + Audit Trail
+- Audit log: resourceType/resourceId, auto-extraction from params
+- DataChangeLog: operatorId, userAgent
+- V25 migration: audit log column enhancements
+- DataRetentionPolicy: configurable, tenant-isolated, audit-logged
+- Password history: last 5 passwords tracked
+- Account lockout: 5 failures -> 30min lock
+- V26 migration: password_histories table, users lockout columns
+- Session management: max 3 concurrent sessions
+
+#### Round 137-139: Best Practices
+- Rate limiting: login (10/5min), reset (5/5min), upload (20/min), invoke (30/min)
+- RateLimitAspect: Redis fallback on failure
+- Request limits: 50MB file, 100MB request
+- Security headers: all verified (CSP, HSTS, X-Frame-Options, Permissions-Policy)
+
+## Quality Metrics (Round 140)
+- **Security**: AES-256-GCM, BCrypt(12), CSP, HSTS, JWT type validation, account lockout, password history, rate limiting (4 endpoints), SortFieldValidator, path traversal protection
+- **Compliance**: Full audit trail (who/what/when/where/result/before-after), data retention policies, tenant-isolated cleanup, password policy enforcement
+- **i18n**: 960+ keys, 70+ backend messageCodes, 30 frontend error mappings
+- **Architecture**: Zero Entity exposure, 128 @Transactional, 27 @Valid, 10 VO + 12 DTO
+- **Testing**: 134+ test cases (72 backend + 62 frontend)
+- **Performance**: 20+ DB indexes, bulk DELETE, paginated endpoints, async components, route prefetch
+- **Monitoring**: Prometheus (3 metrics), health indicators (3), structured JSON logging, API analytics
+- **Workflow**: Timeout, versioning, recovery, node/edge validation, graph integrity
+- **API Gateway**: Versioning, deprecation, call logging, analytics, 8 Swagger groups
+- **Build**: Clean 12s, named chunks, zero warnings
+- **Migrations**: V1-V26 (Flyway)
+- **DevOps**: CI/CD, Prometheus, graceful shutdown, Docker limits, logback-spring
