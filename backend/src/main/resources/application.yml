@@ -280,6 +280,16 @@ app:
     max-size: ${THREAD_POOL_MAX:16}
     queue-capacity: ${THREAD_POOL_QUEUE:200}
     keep-alive-seconds: 60
+  # 数据库备份配置
+  backup:
+    enabled: ${BACKUP_ENABLED:true}
+    storage-path: ${BACKUP_STORAGE_PATH:/data/backups}
+    retention-count: ${BACKUP_RETENTION_COUNT:30}
+    file-prefix: ${BACKUP_FILE_PREFIX:aiagent_backup}
+    schedule-cron: ${BACKUP_SCHEDULE_CRON:0 0 2 * * ?}
+    compress: ${BACKUP_COMPRESS:true}
+    timeout-seconds: ${BACKUP_TIMEOUT_SECONDS:600}
+    backup-before-migration: ${BACKUP_BEFORE_MIGRATION:true}
 
 # 工作流引擎配置
 workflow:

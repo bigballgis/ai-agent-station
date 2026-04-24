@@ -33,4 +33,8 @@ public interface WorkflowInstanceRepository extends JpaRepository<WorkflowInstan
      * 统计租户下指定状态的工作流实例数量
      */
     long countByTenantIdAndStatus(Long tenantId, WorkflowInstance.InstanceStatus status);
+
+    List<WorkflowInstance> findByTenantId(Long tenantId);
+
+    List<WorkflowInstance> findTop1000ByTenantIdOrderByCreatedAtDesc(Long tenantId);
 }

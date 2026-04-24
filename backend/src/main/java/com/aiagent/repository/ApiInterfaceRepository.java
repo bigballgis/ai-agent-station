@@ -35,4 +35,6 @@ public interface ApiInterfaceRepository extends JpaRepository<ApiInterface, Long
 
     @EntityGraph(attributePaths = {"agent"})
     List<ApiInterface> findByAgentIdAndTenantIdAndDeprecatedFalse(Long agentId, Long tenantId);
+
+    List<ApiInterface> findByTenantId(Long tenantId);
 }

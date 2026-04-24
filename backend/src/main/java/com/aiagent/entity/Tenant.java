@@ -39,34 +39,34 @@ public class Tenant extends BaseEntity {
     @Column(name = "api_secret", length = 100)
     private String apiSecret;
 
-    @Column(name = "max_agents")
+    @Column(name = "max_agents", nullable = false, columnDefinition = "int default 100")
     private Integer maxAgents = 100;
 
-    @Column(name = "max_api_calls_per_day")
+    @Column(name = "max_api_calls_per_day", nullable = false, columnDefinition = "bigint default 10000")
     private Long maxApiCallsPerDay = 10000L;
 
-    @Column(name = "max_tokens_per_day")
+    @Column(name = "max_tokens_per_day", nullable = false, columnDefinition = "bigint default 1000000")
     private Long maxTokensPerDay = 1000000L;
 
-    @Column(name = "max_mcp_calls_per_day")
+    @Column(name = "max_mcp_calls_per_day", nullable = false, columnDefinition = "bigint default 5000")
     private Long maxMcpCallsPerDay = 5000L;
 
-    @Column(name = "max_storage_mb")
+    @Column(name = "max_storage_mb", nullable = false, columnDefinition = "bigint default 1024")
     private Long maxStorageMb = 1024L;
 
-    @Column(name = "max_workflows")
+    @Column(name = "max_workflows", nullable = false, columnDefinition = "int default 50")
     private Integer maxWorkflows = 50;
 
-    @Column(name = "used_agents")
+    @Column(name = "used_agents", nullable = false, columnDefinition = "int default 0")
     private Integer usedAgents = 0;
 
-    @Column(name = "used_api_calls_today")
+    @Column(name = "used_api_calls_today", nullable = false, columnDefinition = "bigint default 0")
     private Long usedApiCallsToday = 0L;
 
-    @Column(name = "used_tokens_today")
+    @Column(name = "used_tokens_today", nullable = false, columnDefinition = "bigint default 0")
     private Long usedTokensToday = 0L;
 
-    @Column(name = "used_workflows")
+    @Column(name = "used_workflows", nullable = false, columnDefinition = "int default 0")
     private Integer usedWorkflows = 0;
 
     public Tenant() {

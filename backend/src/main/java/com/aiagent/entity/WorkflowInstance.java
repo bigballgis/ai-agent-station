@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Entity
 @Table(name = "workflow_instances")
+@org.hibernate.annotations.Check(constraints = "status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED', 'SUSPENDED')")
 public class WorkflowInstance {
 
     @Id

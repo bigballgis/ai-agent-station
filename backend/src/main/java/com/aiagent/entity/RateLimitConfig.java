@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name = "rate_limit_configs")
+@org.hibernate.annotations.Check(constraints = "limit_type IN ('GLOBAL', 'AGENT', 'API')")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

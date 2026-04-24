@@ -39,7 +39,7 @@ public class User extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "failed_login_attempts")
+    @Column(name = "failed_login_attempts", nullable = false, columnDefinition = "int default 0")
     private Integer failedLoginAttempts = 0;
 
     @Column(name = "locked_until")

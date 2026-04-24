@@ -12,6 +12,8 @@ import java.util.List;
 public interface AlertRuleRepository extends JpaRepository<AlertRule, Long> {
     List<AlertRule> findByTenantIdAndIsActiveTrue(Long tenantId);
 
+    List<AlertRule> findByTenantId(Long tenantId);
+
     @Deprecated
     List<AlertRule> findByIsActiveTrue();
 }

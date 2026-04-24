@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "api_interfaces")
+@Table(name = "api_interfaces", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_api_interfaces_agent_path_method", columnNames = {"agent_id", "path", "method"})
+})
+@org.hibernate.annotations.Check(constraints = "method IN ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS')")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

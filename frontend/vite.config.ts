@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import Inspector from 'vite-plugin-vue-inspector'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
   build: {
@@ -56,7 +57,18 @@ export default defineConfig({
   esbuild: {
     drop: ['console', 'debugger'],
   },
-  plugins: [vue(), Inspector()],
+  plugins: [
+    vue(),
+    Inspector(),
+    // Bundle 分析插件：构建后生成 stats.html 可视化报告
+    visualizer({
+      filename: 'stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      projectRoot: path.resolve(__dirname, './src'),
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 import java.util.Map;
 
 @Entity
-@Table(name = "workflow_definitions")
+@Table(name = "workflow_definitions", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_workflow_definitions_tenant_name", columnNames = {"tenant_id", "name"})
+})
+@org.hibernate.annotations.Check(constraints = "status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')")
 public class WorkflowDefinition extends BaseEntity {
 
     @Id

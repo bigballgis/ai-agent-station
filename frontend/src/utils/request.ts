@@ -6,6 +6,7 @@ import i18n from '@/locales'
 import { getErrorDisplayMessage } from '@/utils/errorMessageMapper'
 import { addPendingRequest, removePendingRequest, cancelAllPendingRequests } from '@/utils/requestManager'
 import { circuitBreaker } from '@/utils/circuitBreaker'
+import { globalPerformanceTracker } from '@/composables/usePerformanceMark'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -186,6 +187,12 @@ service.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
+    // 性能追踪：记录 API 请求开始时间
+    const apiMarkName = `api:${config.method?.toUpperCase() || 'GET'}:${config.url || 'unknown'}`
+    globalPerformanceTracker.startMark(apiMarkName)
+    // 将标记名存储在 config 上，以便响应拦截器使用
+    ;(config as InternalAxiosRequestConfig & { _perfMarkName?: string })._perfMarkName = apiMarkName
+
     // 断路器检查：如果断路器已打开，直接拒绝请求
     if (!circuitBreaker.canProceed(config.url)) {
       const controller = new AbortController()
@@ -220,6 +227,12 @@ service.interceptors.response.use(
     // 请求完成，从 pending map 中移除
     removePendingRequest(response.config)
 
+    // 性能追踪：记录 API 请求结束时间
+    const perfMarkName = (response.config as InternalAxiosRequestConfig & { _perfMarkName?: string })._perfMarkName
+    if (perfMarkName) {
+      globalPerformanceTracker.endMark(perfMarkName)
+    }
+
     // 断路器：记录成功
     circuitBreaker.recordSuccess(response.config.url)
 
@@ -239,6 +252,12 @@ service.interceptors.response.use(
     // 请求完成（无论成功失败），从 pending map 中移除
     if (error.config) {
       removePendingRequest(error.config)
+
+      // 性能追踪：记录 API 请求结束时间（即使失败）
+      const perfMarkName = (error.config as InternalAxiosRequestConfig & { _perfMarkName?: string })._perfMarkName
+      if (perfMarkName) {
+        globalPerformanceTracker.endMark(perfMarkName)
+      }
     }
 
     // 被去重中止的请求，静默处理

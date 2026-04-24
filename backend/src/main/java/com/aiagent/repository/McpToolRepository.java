@@ -29,4 +29,6 @@ public interface McpToolRepository extends JpaRepository<McpTool, Long> {
 
     @EntityGraph(attributePaths = {"agent"})
     Optional<McpTool> findByTenantIdAndToolCode(Long tenantId, String toolCode);
+
+    List<McpTool> findByTenantId(Long tenantId);
 }

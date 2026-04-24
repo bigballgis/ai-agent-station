@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { messages } from '@/locales'
 import { setupRouteChangeCancellation } from '@/utils/request'
+import { globalPerformanceTracker } from '@/composables/usePerformanceMark'
 // MainLayout 作为所有认证路由的布局包装器，保持静态导入
 // 避免嵌套懒加载导致的布局闪烁问题
 import MainLayout from '@/layouts/MainLayout.vue'
@@ -235,6 +236,9 @@ setupRouteChangeCancellation(router)
 
 // 路由守卫
 router.beforeEach(async (to, _from, next) => {
+  // 性能追踪：记录路由切换开始时间
+  globalPerformanceTracker.startMark(`route:${to.fullPath}`)
+
   // 设置页面标题（使用 i18n 翻译）
   const titleKey = to.meta.title as string | undefined
   if (titleKey) {
@@ -307,6 +311,9 @@ const prefetchMap: Record<string, string[]> = {
 let prefetchTimer: ReturnType<typeof setTimeout> | null = null
 
 router.afterEach((to) => {
+  // 性能追踪：记录路由切换结束时间
+  globalPerformanceTracker.endMark(`route:${to.fullPath}`)
+
   // 清除之前的预取定时器
   if (prefetchTimer) {
     clearTimeout(prefetchTimer)

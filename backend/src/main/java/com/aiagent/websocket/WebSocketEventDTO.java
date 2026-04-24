@@ -26,7 +26,17 @@ public class WebSocketEventDTO implements Serializable {
         /** Approval request waiting for action */
         APPROVAL_PENDING,
         /** General system notification */
-        SYSTEM_NOTIFICATION
+        SYSTEM_NOTIFICATION,
+        /** Agent status change (running/stopped/error) - granular lifecycle events */
+        AGENT_STATUS_CHANGE,
+        /** Workflow execution progress update (percentage, current step) */
+        WORKFLOW_PROGRESS,
+        /** Tenant-level notification (quota warnings, tenant announcements) */
+        TENANT_NOTIFICATION,
+        /** System-wide announcement (maintenance, upgrades, etc.) */
+        SYSTEM_ANNOUNCEMENT,
+        /** Real-time collaboration events (user cursor, editing, presence) */
+        COLLABORATION
     }
 
     private EventType eventType;
@@ -113,6 +123,101 @@ public class WebSocketEventDTO implements Serializable {
                 title,
                 content,
                 payload
+        );
+    }
+
+    /**
+     * Create an AGENT_STATUS_CHANGE event (granular agent lifecycle).
+     */
+    public static WebSocketEventDTO agentStatusChange(String agentId, String agentName, String status, String detail, Map<String, Object> extra) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("agentId", agentId);
+        payload.put("agentName", agentName);
+        payload.put("status", status);
+        payload.put("detail", detail);
+        if (extra != null) {
+            payload.putAll(extra);
+        }
+        return new WebSocketEventDTO(
+                EventType.AGENT_STATUS_CHANGE,
+                "Agent Status: " + agentName,
+                "Agent '" + agentName + "' is now " + status + (detail != null ? ": " + detail : ""),
+                payload
+        );
+    }
+
+    /**
+     * Create a WORKFLOW_PROGRESS event.
+     */
+    public static WebSocketEventDTO workflowProgress(Long instanceId, String workflowName, int currentStep, int totalSteps, int percentage, Map<String, Object> extra) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("instanceId", instanceId);
+        payload.put("workflowName", workflowName);
+        payload.put("currentStep", currentStep);
+        payload.put("totalSteps", totalSteps);
+        payload.put("percentage", percentage);
+        if (extra != null) {
+            payload.putAll(extra);
+        }
+        return new WebSocketEventDTO(
+                EventType.WORKFLOW_PROGRESS,
+                "Workflow Progress: " + workflowName,
+                "Step " + currentStep + "/" + totalSteps + " (" + percentage + "%)",
+                payload
+        );
+    }
+
+    /**
+     * Create a TENANT_NOTIFICATION event.
+     */
+    public static WebSocketEventDTO tenantNotification(String tenantName, String category, String title, String content, Map<String, Object> payload) {
+        Map<String, Object> mergedPayload = new java.util.LinkedHashMap<>();
+        mergedPayload.put("tenantName", tenantName);
+        mergedPayload.put("category", category);
+        if (payload != null) {
+            mergedPayload.putAll(payload);
+        }
+        return new WebSocketEventDTO(
+                EventType.TENANT_NOTIFICATION,
+                title,
+                content,
+                mergedPayload
+        );
+    }
+
+    /**
+     * Create a SYSTEM_ANNOUNCEMENT event.
+     */
+    public static WebSocketEventDTO systemAnnouncement(String title, String content, String severity, Map<String, Object> payload) {
+        Map<String, Object> mergedPayload = new java.util.LinkedHashMap<>();
+        mergedPayload.put("severity", severity);
+        if (payload != null) {
+            mergedPayload.putAll(payload);
+        }
+        return new WebSocketEventDTO(
+                EventType.SYSTEM_ANNOUNCEMENT,
+                title,
+                content,
+                mergedPayload
+        );
+    }
+
+    /**
+     * Create a COLLABORATION event.
+     */
+    public static WebSocketEventDTO collaboration(String collaborationType, Long userId, String username, Map<String, Object> payload) {
+        Map<String, Object> mergedPayload = new java.util.LinkedHashMap<>();
+        mergedPayload.put("collaborationType", collaborationType);
+        mergedPayload.put("userId", userId);
+        mergedPayload.put("username", username);
+        if (payload != null) {
+            mergedPayload.putAll(payload);
+        }
+        return new WebSocketEventDTO(
+                EventType.COLLABORATION,
+                "Collaboration: " + username,
+                username + " " + collaborationType,
+                mergedPayload
         );
     }
 

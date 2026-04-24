@@ -4,7 +4,7 @@ import { useNotificationStore } from '@/store/modules/notification'
 
 /**
  * Notification Store 单元测试
- * 测试: state, getters, REST actions, 错误处理
+ * 测试: state, getters, REST actions, enhanced real-time notifications, preferences
  */
 
 // ==================== Mocks ====================
@@ -36,6 +36,7 @@ describe('Notification Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -58,6 +59,37 @@ describe('Notification Store', () => {
     it('wsConnected 默认为 false', () => {
       const store = useNotificationStore()
       expect(store.wsConnected).toBe(false)
+    })
+
+    it('realtimeNotifications 默认为空数组', () => {
+      const store = useNotificationStore()
+      expect(store.realtimeNotifications).toEqual([])
+    })
+
+    it('realtimeUnreadCount 默认为 0', () => {
+      const store = useNotificationStore()
+      expect(store.realtimeUnreadCount).toBe(0)
+    })
+
+    it('totalUnreadCount 默认为 0', () => {
+      const store = useNotificationStore()
+      expect(store.totalUnreadCount).toBe(0)
+    })
+
+    it('categoryFilter 默认为 all', () => {
+      const store = useNotificationStore()
+      expect(store.categoryFilter).toBe('all')
+    })
+
+    it('preferences 默认所有类别启用', () => {
+      const store = useNotificationStore()
+      expect(store.preferences.agentStatus).toBe(true)
+      expect(store.preferences.workflow).toBe(true)
+      expect(store.preferences.alerts).toBe(true)
+      expect(store.preferences.approvals).toBe(true)
+      expect(store.preferences.tenant).toBe(true)
+      expect(store.preferences.system).toBe(true)
+      expect(store.preferences.collaboration).toBe(true)
     })
   })
 
@@ -88,9 +120,16 @@ describe('Notification Store', () => {
       expect(sorted[1].id).toBe(3)
       expect(sorted[2].id).toBe(1)
     })
+
+    it('totalUnreadCount 合并 REST 和实时通知未读数', () => {
+      const store = useNotificationStore()
+      store.unreadCount = 3
+      store.realtimeUnreadCount = 2
+      expect(store.totalUnreadCount).toBe(5)
+    })
   })
 
-  // ---------- Actions ----------
+  // ---------- REST Actions ----------
 
   describe('fetchNotifications', () => {
     it('成功获取通知（数组格式）', async () => {
@@ -179,6 +218,234 @@ describe('Notification Store', () => {
 
       expect(store.notifications.every((n) => n.read)).toBe(true)
       expect(store.unreadCount).toBe(0)
+    })
+  })
+
+  // ---------- Enhanced Real-time Notification Actions ----------
+
+  describe('addRealtimeNotification', () => {
+    it('添加实时通知并增加未读数', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-1',
+        title: 'Test',
+        content: 'Test content',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+        eventType: 'SYSTEM_NOTIFICATION',
+      })
+
+      expect(store.realtimeNotifications).toHaveLength(1)
+      expect(store.realtimeUnreadCount).toBe(1)
+    })
+
+    it('已读通知不增加未读数', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-2',
+        title: 'Test',
+        content: 'Test content',
+        category: 'info',
+        priority: 'normal',
+        read: true,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      expect(store.realtimeUnreadCount).toBe(0)
+    })
+
+    it('根据偏好过滤通知', () => {
+      const store = useNotificationStore()
+      store.updatePreferences({ alerts: false })
+
+      store.addRealtimeNotification({
+        id: 'rt-3',
+        title: 'Alert',
+        content: 'Alert content',
+        category: 'warning',
+        priority: 'high',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+        eventType: 'ALERT_FIRED',
+      })
+
+      expect(store.realtimeNotifications).toHaveLength(0)
+    })
+
+    it('超过200条时自动清理旧通知', () => {
+      const store = useNotificationStore()
+      for (let i = 0; i < 210; i++) {
+        store.addRealtimeNotification({
+          id: `rt-${i}`,
+          title: `Notification ${i}`,
+          content: `Content ${i}`,
+          category: 'info',
+          priority: 'normal',
+          read: false,
+          timestamp: new Date(Date.now() - i * 1000).toISOString(),
+        })
+      }
+
+      expect(store.realtimeNotifications.length).toBeLessThanOrEqual(200)
+    })
+  })
+
+  describe('markRealtimeAsRead', () => {
+    it('标记实时通知为已读', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-4',
+        title: 'Test',
+        content: 'Test',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      store.markRealtimeAsRead('rt-4')
+      expect(store.realtimeUnreadCount).toBe(0)
+    })
+  })
+
+  describe('markAllRealtimeAsRead', () => {
+    it('标记所有实时通知为已读', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-5',
+        title: 'Test 1',
+        content: 'Test',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+      store.addRealtimeNotification({
+        id: 'rt-6',
+        title: 'Test 2',
+        content: 'Test',
+        category: 'warning',
+        priority: 'high',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      store.markAllRealtimeAsRead()
+      expect(store.realtimeUnreadCount).toBe(0)
+      expect(store.realtimeNotifications.every((n) => n.read)).toBe(true)
+    })
+  })
+
+  describe('removeRealtimeNotification', () => {
+    it('移除实时通知并更新未读数', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-7',
+        title: 'Test',
+        content: 'Test',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      store.removeRealtimeNotification('rt-7')
+      expect(store.realtimeNotifications).toHaveLength(0)
+      expect(store.realtimeUnreadCount).toBe(0)
+    })
+  })
+
+  describe('categoryFilter', () => {
+    it('按类别过滤实时通知', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-8',
+        title: 'Info',
+        content: 'Info',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+      store.addRealtimeNotification({
+        id: 'rt-9',
+        title: 'Warning',
+        content: 'Warning',
+        category: 'warning',
+        priority: 'high',
+        read: false,
+        timestamp: '2024-01-01T00:00:01Z',
+      })
+
+      store.setCategoryFilter('warning')
+      expect(store.filteredRealtimeNotifications).toHaveLength(1)
+      expect(store.filteredRealtimeNotifications[0].id).toBe('rt-9')
+    })
+  })
+
+  describe('preferences', () => {
+    it('更新偏好设置', () => {
+      const store = useNotificationStore()
+      store.updatePreferences({ alerts: false, collaboration: false })
+
+      expect(store.preferences.alerts).toBe(false)
+      expect(store.preferences.collaboration).toBe(false)
+      expect(store.preferences.agentStatus).toBe(true)
+    })
+
+    it('偏好设置持久化到 localStorage', () => {
+      const store = useNotificationStore()
+      store.updatePreferences({ system: false })
+
+      const stored = JSON.parse(localStorage.getItem('notificationPreferences')!)
+      expect(stored.system).toBe(false)
+    })
+
+    it('从 localStorage 加载偏好设置', () => {
+      localStorage.setItem('notificationPreferences', JSON.stringify({ alerts: false, workflow: false }))
+
+      const store = useNotificationStore()
+      expect(store.preferences.alerts).toBe(false)
+      expect(store.preferences.workflow).toBe(false)
+      expect(store.preferences.agentStatus).toBe(true) // default
+    })
+  })
+
+  describe('shouldShowNotification', () => {
+    it('根据事件类型判断是否显示通知', () => {
+      const store = useNotificationStore()
+      store.updatePreferences({ alerts: false })
+
+      expect(store.shouldShowNotification('ALERT_FIRED')).toBe(false)
+      expect(store.shouldShowNotification('AGENT_STATUS_CHANGED')).toBe(true)
+      expect(store.shouldShowNotification('AGENT_STATUS_CHANGE')).toBe(true)
+      expect(store.shouldShowNotification(undefined)).toBe(true)
+    })
+  })
+
+  describe('$reset', () => {
+    it('重置所有状态', () => {
+      const store = useNotificationStore()
+      store.addRealtimeNotification({
+        id: 'rt-10',
+        title: 'Test',
+        content: 'Test',
+        category: 'info',
+        priority: 'normal',
+        read: false,
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+      store.setCategoryFilter('warning')
+      store.updatePreferences({ alerts: false })
+
+      store.$reset()
+
+      expect(store.realtimeNotifications).toEqual([])
+      expect(store.realtimeUnreadCount).toBe(0)
+      expect(store.categoryFilter).toBe('all')
+      expect(store.preferences.alerts).toBe(true) // reset to default
     })
   })
 })

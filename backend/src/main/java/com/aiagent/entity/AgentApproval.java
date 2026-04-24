@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "agent_approvals")
+@org.hibernate.annotations.Check(constraints = "status IN ('PENDING', 'APPROVED', 'REJECTED')")
 public class AgentApproval extends BaseEntity {
 
     @Id

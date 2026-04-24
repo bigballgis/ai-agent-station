@@ -6,16 +6,23 @@
       <router-view />
     </a-config-provider>
   </ErrorBoundary>
+  <!-- 开发模式性能覆盖层（不影响生产环境） -->
+  <PerformanceOverlay />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { theme as antdThemeConfig } from 'ant-design-vue'
 import { useAppStore } from '@/store/modules/app'
 import { useTheme } from '@/composables/useTheme'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
+
+// 性能覆盖层仅在开发模式加载，生产环境不会包含此组件
+const PerformanceOverlay = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('@/components/PerformanceOverlay.vue'))
+  : () => null
 
 const appStore = useAppStore()
 const { isDark } = useTheme()

@@ -3,7 +3,9 @@ package com.aiagent.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "permissions", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_permissions_tenant_name", columnNames = {"tenant_id", "name"})
+})
 public class Permission extends BaseEntity {
 
     @Id

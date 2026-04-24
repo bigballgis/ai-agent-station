@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Table(name = "agents")
+@Table(name = "agents", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_agents_tenant_name", columnNames = {"tenant_id", "name"})
+})
+@org.hibernate.annotations.Check(constraints = "status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PUBLISHED', 'ARCHIVED')")
 public class Agent extends BaseEntity {
 
     @Id
@@ -50,10 +53,10 @@ public class Agent extends BaseEntity {
     @Column(name = "is_template", nullable = false)
     private Boolean isTemplate = false;
 
-    @Column(name = "rating")
+    @Column(name = "rating", columnDefinition = "double precision default 0.0")
     private Double rating = 0.0;
 
-    @Column(name = "usage_count", nullable = false)
+    @Column(name = "usage_count", nullable = false, columnDefinition = "int default 0")
     private Integer usageCount = 0;
 
     @Column(name = "created_by")

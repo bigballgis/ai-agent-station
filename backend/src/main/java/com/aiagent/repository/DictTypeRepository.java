@@ -17,4 +17,6 @@ public interface DictTypeRepository extends JpaRepository<DictType, Long>, JpaSp
     List<DictType> findByStatusOrderByCreatedAtDesc(String status);
 
     boolean existsByDictType(String dictType);
+
+    List<DictType> findByTenantId(Long tenantId);
 }

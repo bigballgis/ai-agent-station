@@ -36,4 +36,6 @@ public interface DeploymentHistoryRepository extends JpaRepository<DeploymentHis
     @EntityGraph(attributePaths = {"agent"})
     @Query("SELECT d FROM DeploymentHistory d WHERE d.tenantId = :tenantId AND d.agentId = :agentId ORDER BY d.createdAt DESC LIMIT 1")
     Optional<DeploymentHistory> findLatestDeployment(@Param("tenantId") Long tenantId, @Param("agentId") Long agentId);
+
+    List<DeploymentHistory> findByTenantId(Long tenantId);
 }

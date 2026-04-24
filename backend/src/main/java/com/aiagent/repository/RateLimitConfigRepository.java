@@ -19,4 +19,6 @@ public interface RateLimitConfigRepository extends JpaRepository<RateLimitConfig
     Optional<RateLimitConfig> findByTenantIdAndAgentIdAndIsActiveTrue(Long tenantId, Long agentId);
 
     Optional<RateLimitConfig> findByTenantIdAndApiInterfaceIdAndIsActiveTrue(Long tenantId, Long apiInterfaceId);
+
+    List<RateLimitConfig> findByTenantId(Long tenantId);
 }

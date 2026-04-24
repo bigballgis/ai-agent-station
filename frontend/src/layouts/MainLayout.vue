@@ -314,12 +314,19 @@
       class="h-8 flex-shrink-0 flex items-center justify-between px-4 border-t border-neutral-200/60 dark:border-neutral-800/60 backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 z-50"
       role="contentinfo"
     >
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <span class="relative flex h-2 w-2">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75" />
           <span class="relative inline-flex rounded-full h-2 w-2 bg-success-500" />
         </span>
         <span class="text-[11px] text-neutral-400 dark:text-neutral-500">{{ t('common.systemRunning') }}</span>
+        <ConnectionStatus
+          :connection-state="wsConnectionState"
+          :latency="wsLatency"
+          :quality="wsQuality"
+          :reconnecting="wsReconnecting"
+          @reconnect="handleWsReconnect"
+        />
       </div>
       <span class="text-[11px] text-neutral-400 dark:text-neutral-500">v1.0.0</span>
     </footer>
@@ -380,6 +387,7 @@ import { getQueuedRequestCount } from '@/composables/useNetworkStatus'
 import { useWebSocket } from '@/composables/useWebSocket'
 // ChangePasswordModal 仅在用户点击修改密码时显示，使用异步加载减少首屏包体积
 const ChangePasswordModal = defineAsyncComponent(() => import('@/components/ChangePasswordModal.vue'))
+const ConnectionStatus = defineAsyncComponent(() => import('@/components/ConnectionStatus.vue'))
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()
@@ -394,7 +402,15 @@ const queuedRequestCount = ref(0)
 
 // WebSocket real-time notifications
 const wsUnreadEvents = ref(0)
-const { connect: wsConnect, on: wsOn } = useWebSocket(
+const {
+  connect: wsConnect,
+  on: wsOn,
+  reconnect: wsReconnect,
+  connectionState: wsConnectionState,
+  latency: wsLatency,
+  connectionQuality: wsQuality,
+  reconnecting: wsReconnecting,
+} = useWebSocket(
   () => localStorage.getItem('token')
 )
 
@@ -748,6 +764,11 @@ function handlePasswordChanged() {
   router.push('/login')
 }
 
+/** Handle manual WebSocket reconnect from ConnectionStatus component */
+function handleWsReconnect() {
+  wsReconnect()
+}
+
 // 监听路由变化，自动展开对应子菜单
 watch(
   () => route.path,
@@ -806,6 +827,23 @@ onMounted(() => {
   })
   wsOn('WORKFLOW_STATUS_CHANGED', () => {
     wsUnreadEvents.value++
+  })
+
+  // Register listeners for new event types (Round 287)
+  wsOn('AGENT_STATUS_CHANGE', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('WORKFLOW_PROGRESS', () => {
+    // Workflow progress events do not increment unread count (high frequency)
+  })
+  wsOn('TENANT_NOTIFICATION', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('SYSTEM_ANNOUNCEMENT', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('COLLABORATION', () => {
+    // Collaboration events do not increment unread count (high frequency)
   })
 
   // Clear unread events when user navigates to alerts page

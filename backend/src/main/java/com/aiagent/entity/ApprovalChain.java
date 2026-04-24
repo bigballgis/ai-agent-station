@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 import java.util.Map;
 
 @Entity
-@Table(name = "approval_chains")
+@Table(name = "approval_chains", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_approval_chains_tenant_name", columnNames = {"tenant_id", "name"})
+})
+@org.hibernate.annotations.Check(constraints = "status IN ('ACTIVE', 'INACTIVE', 'ARCHIVED')")
 public class ApprovalChain extends BaseEntity {
 
     @Id

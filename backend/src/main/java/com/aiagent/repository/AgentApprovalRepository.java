@@ -41,4 +41,6 @@ public interface AgentApprovalRepository extends JpaRepository<AgentApproval, Lo
      * 统计租户下指定状态的审批数量
      */
     long countByTenantIdAndStatus(Long tenantId, AgentApproval.ApprovalStatus status);
+
+    List<AgentApproval> findByTenantId(Long tenantId);
 }

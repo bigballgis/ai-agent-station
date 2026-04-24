@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "mcp_tools")
+@Table(name = "mcp_tools", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_mcp_tools_tenant_code", columnNames = {"tenant_id", "tool_code"})
+})
+@org.hibernate.annotations.Check(constraints = "health_status IN ('HEALTHY', 'DEGRADED', 'UNHEALTHY', 'UNKNOWN')")
 public class McpTool extends BaseEntity {
 
     @Id

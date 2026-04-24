@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "deployment_history")
+@org.hibernate.annotations.Check(constraints = "status IN ('PENDING', 'DEPLOYING', 'SUCCESS', 'FAILED', 'ROLLED_BACK')")
 public class DeploymentHistory extends BaseEntity {
 
     @Id
