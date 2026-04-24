@@ -19,6 +19,8 @@ import com.aiagent.util.CryptoUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +56,7 @@ public class TenantService {
         return tenants;
     }
 
+    @Cacheable(value = "tenantConfig", key = "#id")
     public Tenant getTenantById(Long id) {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
@@ -106,6 +109,7 @@ public class TenantService {
 
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "更新租户")
+    @CacheEvict(value = "tenantConfig", key = "#id")
     public Tenant updateTenant(Long id, Tenant tenantDetails) {
         Tenant tenant = getTenantById(id);
         tenant.setName(tenantDetails.getName());
@@ -122,6 +126,7 @@ public class TenantService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "停用租户")
+    @CacheEvict(value = "tenantConfig", key = "#id")
     public void deleteTenant(Long id) {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
@@ -169,6 +174,7 @@ public class TenantService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "tenant", description = "重新激活租户")
+    @CacheEvict(value = "tenantConfig", key = "#id")
     public Tenant reactivateTenant(Long id) {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));
@@ -194,6 +200,7 @@ public class TenantService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "tenantConfig", key = "#id")
     public Tenant regenerateApiKey(Long id) {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.TENANT_NOT_FOUND));

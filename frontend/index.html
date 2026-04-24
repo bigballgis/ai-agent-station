@@ -8,6 +8,8 @@
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- CDN 缓存策略：静态资源由 CDN/浏览器长期缓存（通过内容哈希文件名实现缓存失效） -->
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable">
     <title>AI Agent Station</title>
     <!-- 预加载关键 vendor chunks，提升首屏加载速度 -->
     <link rel="modulepreload" href="/src/main.ts" />

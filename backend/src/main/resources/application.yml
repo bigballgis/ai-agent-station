@@ -44,6 +44,8 @@ spring:
       connection-timeout: 30000
       max-lifetime: 1800000
       leak-detection-threshold: 60000
+      # 暴露 JMX MBeans，供 Micrometer 采集连接池指标
+      register-mbeans: true
 
   # JPA配置
   jpa:
@@ -120,6 +122,9 @@ management:
       show-components: when_authorized
       probes:
         enabled: true
+    # 暴露 HikariCP 连接池健康详情
+    hikaricp:
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}

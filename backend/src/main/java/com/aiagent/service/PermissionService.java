@@ -9,6 +9,8 @@ import com.aiagent.repository.RolePermissionRepository;
 import com.aiagent.tenant.TenantContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class PermissionService {
         this.rolePermissionRepository = rolePermissionRepository;
     }
 
+    @Cacheable(value = "permissionList", key = "T(com.aiagent.tenant.TenantContextHolder).getTenantId()")
     public List<Permission> getAllPermissions() {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -41,6 +44,7 @@ public class PermissionService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "permissionList", allEntries = true)
     public Permission createPermission(Permission permission) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
@@ -55,6 +59,7 @@ public class PermissionService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "permissionList", allEntries = true)
     public Permission updatePermission(Long id, Permission permissionDetails) {
         Permission permission = getPermissionById(id);
         permission.setName(permissionDetails.getName());
@@ -65,6 +70,7 @@ public class PermissionService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "permissionList", allEntries = true)
     public void deletePermission(Long id) {
         permissionRepository.deleteById(id);
     }

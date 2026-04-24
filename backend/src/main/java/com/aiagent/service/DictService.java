@@ -202,7 +202,9 @@ public class DictService {
 
     /**
      * 获取所有活跃的字典类型列表（不分页）
+     * 缓存30分钟
      */
+    @Cacheable(value = "dictTypes", key = "'allActive'")
     public List<DictType> getAllActiveDictTypes() {
         return dictTypeRepository.findByStatusOrderByCreatedAtDesc("active");
     }

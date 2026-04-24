@@ -9,8 +9,12 @@ export default defineConfig({
     chunkSizeWarningLimit: 520,
     minify: 'esbuild',
     target: 'es2020',
+    // CDN 部署：确保所有构建产物文件名包含内容哈希，实现长期缓存
     rollupOptions: {
       output: {
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
           'antd-core': [

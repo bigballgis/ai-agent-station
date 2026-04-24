@@ -235,7 +235,10 @@ public class AgentService {
 
     /**
      * 分页查询模板（所有租户共享）
+     * 缓存5分钟，模板变更较少
      */
+    @Cacheable(value = "templates",
+            key = "T(java.util.Objects).hash(#keyword, #category, #pageable.pageNumber, #pageable.pageSize)")
     public Page<Agent> getTemplatesPaged(String keyword, String category, Pageable pageable) {
         return agentRepository.findTemplatesWithFilters(keyword, category, pageable);
     }
@@ -244,6 +247,7 @@ public class AgentService {
      * 基于模板创建新 Agent
      */
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "templates", allEntries = true)
     public Agent createFromTemplate(Long templateId) {
         Agent template = agentRepository.findById(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException());
@@ -288,6 +292,7 @@ public class AgentService {
      * 为模板评分（1-5 星，使用加权平均）
      */
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "templates", allEntries = true)
     public void rateTemplate(Long templateId, int rating) {
         if (rating < 1 || rating > 5) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "评分必须在 1-5 之间");
