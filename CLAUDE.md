@@ -346,6 +346,49 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **API Gateway**: Versioning, deprecation, call logging, analytics, 8 Swagger groups
 - **Build**: Clean 12s, named chunks, zero warnings
 - **Migrations**: V1-V27 (Flyway)
+
+### Round 151-170 (Testing, Caching, Observability, Resilience)
+
+#### Round 151-153: Frontend Tests (66 cases)
+- AgentList: 15 tests, Login: 15 tests, WorkflowDesigner: 13 tests, User store: 23 tests
+
+#### Round 154-156: Backend Integration Tests (34 methods)
+- AuthController: 13 tests, TenantController: 9 tests, FileController: 12 tests
+
+#### Round 157-159: Caching + CDN
+- 5 new cache regions (templates, dictTypes, tenantConfig, permissionList, dashboardStats)
+- @Cacheable/@CacheEvict on AgentService, DictService, PermissionService, TenantService, DashboardService
+- CacheStatisticsService + CacheStatsController
+- ETagFilter: MD5-based ETag, 304 Not Modified
+- CDN-ready: hash-based filenames, _redirects for SPA routing
+
+#### Round 161-163: Observability + Alerting
+- Result: timestamp + path in all error responses
+- 5 new ResultCodes (405, 415, missing param, constraint, validation)
+- AlertRule: webhookUrl, multi-channel dispatch (webhook/email/in-app)
+- DashboardService: cached stats API (agents, workflows, users, API calls, success rate, top agents, health)
+
+#### Round 164-166: API Versioning + Documentation
+- ApiVersionFilter: X-API-Version header (default v1)
+- api-changelog.md: 100+ endpoints documented
+- OpenApiConfig: 3 servers, 16 tag descriptions
+
+#### Round 167-169: Frontend Error Resilience
+- ErrorBoundary: categorization, report button, auto-retry, content snapshot
+- Request deduplication, AbortController on route change, 429 retry with Retry-After
+- useNetworkStatus: offline detection, request queue, auto-retry
+
+## Quality Metrics (Round 170)
+- **Testing**: 234+ test cases (100 frontend + 134 backend)
+- **Security**: All previous + SortFieldValidator, path traversal, account lockout, password history
+- **Observability**: Prometheus (4 metrics), health indicators (3), ETag, cache stats, dashboard API
+- **Alerting**: Multi-channel (webhook/email/in-app), retry with backoff
+- **Resilience**: Error categorization, auto-retry, offline queue, request dedup, AbortController
+- **Caching**: 6 cache regions, ETag 304, cache statistics
+- **API**: Version header, 100+ documented endpoints, 16 OpenAPI groups
+- **CDN**: Hash-based filenames, SPA routing, immutable cache headers
+- **Build**: Clean 21s, named chunks, zero warnings
+- **Migrations**: V1-V27 (Flyway)
 - **DevOps**: CI/CD, Prometheus, graceful shutdown, Docker limits, logback-spring
 
 ### Round 141-150 (Agent Core + MCP + Multi-Tenant)
