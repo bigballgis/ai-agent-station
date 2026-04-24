@@ -9,12 +9,15 @@ import com.aiagent.dto.AgentDTO;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.AgentVersion;
+import com.aiagent.exception.BusinessException;
 import com.aiagent.service.AgentService;
 import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.vo.AgentVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -23,10 +26,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -160,6 +166,109 @@ public class AgentController {
             @RequestParam @Parameter(description = "评分(1-5)") int rating) {
         agentService.rateTemplate(id, rating);
         return Result.success();
+    }
+
+    // ==================== 导出/导入接口 ====================
+
+    @GetMapping("/export")
+    @RequiresPermission("agent:view")
+    @Operation(summary = "导出单个Agent为JSON")
+    public void exportAgent(
+            @RequestParam @Parameter(description = "Agent ID") Long id,
+            HttpServletResponse response) throws Exception {
+        Agent agent = agentService.getAgentById(id);
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> exportData = new HashMap<>();
+        exportData.put("name", agent.getName());
+        exportData.put("description", agent.getDescription());
+        exportData.put("config", agent.getConfig());
+        exportData.put("category", agent.getCategory());
+        exportData.put("language", agent.getLanguage());
+        exportData.put("tags", agent.getTags());
+        exportData.put("isActive", agent.getIsActive());
+        exportData.put("status", agent.getStatus().name());
+
+        String filename = agent.getName().replaceAll("[^a-zA-Z0-9_\\-\\u4e00-\\u9fa5]", "_");
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + filename + "_" + timestamp + ".json\"");
+        response.setCharacterEncoding("UTF-8");
+        mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), exportData);
+    }
+
+    @GetMapping("/export-all")
+    @RequiresPermission("agent:view")
+    @Operation(summary = "导出所有Agent为JSON数组")
+    public void exportAllAgents(HttpServletResponse response) throws Exception {
+        List<Agent> agents = agentService.getAllAgents();
+        ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, Object>> exportList = agents.stream().map(agent -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("name", agent.getName());
+            data.put("description", agent.getDescription());
+            data.put("config", agent.getConfig());
+            data.put("category", agent.getCategory());
+            data.put("language", agent.getLanguage());
+            data.put("tags", agent.getTags());
+            data.put("isActive", agent.getIsActive());
+            data.put("status", agent.getStatus().name());
+            return data;
+        }).collect(Collectors.toList());
+
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"agents_" + timestamp + ".json\"");
+        response.setCharacterEncoding("UTF-8");
+        mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), exportList);
+    }
+
+    @PostMapping("/import")
+    @RequiresPermission("agent:create")
+    @Operation(summary = "从JSON导入Agent", description = "导入Agent配置，自动处理名称冲突")
+    @OperationLog(value = "导入Agent", module = "Agent管理")
+    public Result<AgentVO> importAgent(@RequestBody Map<String, Object> data) {
+        // 验证必填字段
+        if (data.get("name") == null || data.toString().isEmpty()) {
+            throw new BusinessException("导入数据缺少必填字段: name");
+        }
+
+        String name = String.valueOf(data.get("name"));
+        if (name == null || name.isBlank()) {
+            throw new BusinessException("Agent名称不能为空");
+        }
+
+        // 处理名称冲突：自动添加后缀
+        Long tenantId = TenantContextHolder.getTenantId();
+        String originalName = name;
+        int suffix = 1;
+        while (agentService.existsByNameAndTenantId(name, tenantId)) {
+            name = originalName + " (" + suffix + ")";
+            suffix++;
+        }
+
+        Agent agent = new Agent();
+        agent.setName(name);
+        agent.setDescription(data.get("description") != null ? String.valueOf(data.get("description")) : null);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> config = data.get("config") instanceof Map ? (Map<String, Object>) data.get("config") : null;
+        agent.setConfig(config);
+        agent.setCategory(data.get("category") != null ? String.valueOf(data.get("category")) : null);
+        agent.setLanguage(data.get("language") != null ? String.valueOf(data.get("language")) : "zh-CN");
+        agent.setIsActive(data.get("isActive") != null ? Boolean.valueOf(data.get("isActive").toString()) : true);
+        if (data.get("status") != null) {
+            try {
+                agent.setStatus(Agent.AgentStatus.valueOf(String.valueOf(data.get("status"))));
+            } catch (IllegalArgumentException e) {
+                agent.setStatus(Agent.AgentStatus.DRAFT);
+            }
+        }
+
+        Agent created = agentService.createAgent(agent);
+        return Result.success(DTOConverter.toAgentVO(created));
     }
 
 }

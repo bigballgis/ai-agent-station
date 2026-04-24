@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -208,6 +209,63 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
         return sessionUserMap.size();
     }
 
+    // ==================== Typed Event API ====================
+
+    /**
+     * Send a typed WebSocketEventDTO to a specific user.
+     *
+     * @param userId target user ID
+     * @param event  typed event to send
+     * @return true if at least one session received the event
+     */
+    public boolean sendEventToUser(Long userId, WebSocketEventDTO event) {
+        Set<WebSocketSession> sessions = userSessions.get(userId);
+        if (sessions == null || sessions.isEmpty()) {
+            return false;
+        }
+        boolean sent = false;
+        for (WebSocketSession session : sessions) {
+            if (session.isOpen()) {
+                sent |= sendEvent(session, event);
+            }
+        }
+        return sent;
+    }
+
+    /**
+     * Broadcast a typed WebSocketEventDTO to all connected users.
+     *
+     * @param event typed event to broadcast
+     */
+    public void sendEventToAll(WebSocketEventDTO event) {
+        for (Set<WebSocketSession> sessions : userSessions.values()) {
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    sendEvent(session, event);
+                }
+            }
+        }
+        log.info("Broadcast event sent to {} users, eventType={}", userSessions.size(), event.getEventType());
+    }
+
+    /**
+     * Send a typed WebSocketEventDTO to all users in a specific tenant.
+     *
+     * @param tenantId target tenant ID
+     * @param event    typed event to send
+     */
+    public void sendEventToTenant(Long tenantId, WebSocketEventDTO event) {
+        Set<Long> onlineUserIds = tenantOnlineUsers.get(tenantId);
+        if (onlineUserIds == null || onlineUserIds.isEmpty()) {
+            return;
+        }
+        for (Long userId : onlineUserIds) {
+            sendEventToUser(userId, event);
+        }
+        log.info("Tenant event sent to tenantId={}, onlineUsers={}, eventType={}",
+                tenantId, onlineUserIds.size(), event.getEventType());
+    }
+
     // ==================== Private Helpers ====================
 
     private boolean sendMessage(WebSocketSession session, WebSocketMessage message) {
@@ -221,6 +279,22 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
             }
         } catch (IOException e) {
             log.error("Failed to send WebSocket message to session {}: {}",
+                    session.getId(), e.getMessage());
+        }
+        return false;
+    }
+
+    private boolean sendEvent(WebSocketSession session, WebSocketEventDTO event) {
+        try {
+            String json = objectMapper.writeValueAsString(event);
+            synchronized (session) {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(json));
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            log.error("Failed to send WebSocket event to session {}: {}",
                     session.getId(), e.getMessage());
         }
         return false;

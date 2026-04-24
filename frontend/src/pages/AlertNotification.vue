@@ -1,5 +1,5 @@
 <template>
-  <div class="alert-notification-page" aria-label="告警通知">
+  <div class="alert-notification-page" :aria-label="t('alert.center')">
     <!-- 页面头部 -->
     <PageHeader :title="t('alert.pageTitle')" :subtitle="t('alert.pageSubtitle')" />
 

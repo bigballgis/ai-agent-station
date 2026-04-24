@@ -48,7 +48,7 @@
 
     <!-- 触发按钮 -->
     <a-badge :count="count" :offset="[-2, 4]" size="small">
-      <button class="notification-trigger">
+      <button class="notification-trigger" :aria-label="t('header.notifications')">
         <BellOutlined v-if="!icon" class="notification-bell" />
         <component v-else :is="icon" class="notification-bell" />
       </button>

@@ -51,22 +51,22 @@
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Agent名称
+                  {{ t('apiMgmt.agentNameCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  API路径
+                  {{ t('apiMgmt.apiPathCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  方法
+                  {{ t('apiMgmt.methodCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  状态
+                  {{ t('apiMgmt.status') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  调用次数
+                  {{ t('apiMgmt.callCountCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  操作
+                  {{ t('apiMgmt.operation') }}
                 </th>
               </tr>
             </thead>
@@ -102,11 +102,11 @@
                   {{ api.callCount }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button @click="testApi(api)" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                    测试
+                  <button @click="testApi(api)" :aria-label="t('apiMgmt.test')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                    {{ t('apiMgmt.test') }}
                   </button>
-                  <button class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
-                    查看日志
+                  <button :aria-label="t('apiMgmt.viewLog')" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
+                    {{ t('apiMgmt.viewLog') }}
                   </button>
                 </td>
               </tr>
@@ -125,17 +125,18 @@
             <input
               type="text"
               :placeholder="t('apiMgmt.searchPlaceholder')"
+              :aria-label="t('apiMgmt.searchPlaceholder')"
               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             />
-            <select class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+            <select :aria-label="t('apiMgmt.allStatus')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
               <option value="">{{ t('apiMgmt.allStatus') }}</option>
               <option value="SUCCESS">{{ t('apiMgmt.success') }}</option>
               <option value="FAILED">{{ t('apiMgmt.failed') }}</option>
               <option value="RATE_LIMITED">{{ t('apiMgmt.rateLimited') }}</option>
             </select>
           </div>
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            筛选
+          <button :aria-label="t('apiMgmt.filter')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            {{ t('apiMgmt.filter') }}
           </button>
         </div>
         </div>
@@ -144,22 +145,22 @@
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  请求ID
+                  {{ t('apiMgmt.requestIdCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Agent
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  时间
+                  {{ t('apiMgmt.timeCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  状态
+                  {{ t('apiMgmt.status') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  耗时(ms)
+                  {{ t('apiMgmt.durationCol') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  操作
+                  {{ t('apiMgmt.operation') }}
                 </th>
               </tr>
             </thead>
@@ -186,8 +187,8 @@
                   {{ log.executionTime }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="viewLogDetail(log)" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                    详情
+                  <button @click="viewLogDetail(log)" :aria-label="t('apiMgmt.detail')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                    {{ t('apiMgmt.detail') }}
                   </button>
                 </td>
               </tr>

@@ -34,7 +34,7 @@
           type="text"
           :placeholder="t('designer.palette.search')"
         />
-        <button v-if="searchText" class="search-clear" @click="searchText = ''">
+        <button v-if="searchText" class="search-clear" :aria-label="t('common.clear')" @click="searchText = ''">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

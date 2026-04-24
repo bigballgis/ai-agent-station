@@ -98,6 +98,27 @@ export function rollbackToVersion(id: string | number, versionNumber: number) {
 }
 
 /**
+ * 导出单个Agent为JSON
+ */
+export function exportAgent(id: string | number) {
+  return request.get(`/v1/agents/export`, { params: { id }, responseType: 'blob' })
+}
+
+/**
+ * 导出所有Agent为JSON
+ */
+export function exportAllAgents() {
+  return request.get('/v1/agents/export-all', { responseType: 'blob' })
+}
+
+/**
+ * 导入Agent从JSON
+ */
+export function importAgent(data: Record<string, unknown>) {
+  return request.post('/v1/agents/import', data)
+}
+
+/**
  * 默认导出 agentApi 对象，兼容对象式调用
  */
 const agentApi = {
@@ -110,6 +131,9 @@ const agentApi = {
   getAgentVersions,
   getAgentVersion,
   rollbackToVersion,
+  exportAgent,
+  exportAllAgents,
+  importAgent,
 }
 
 export { agentApi }

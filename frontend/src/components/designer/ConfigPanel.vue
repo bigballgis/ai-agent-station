@@ -9,7 +9,7 @@
           <span class="config-header-type">{{ typeName }}</span>
         </div>
       </div>
-      <button class="config-close-btn" @click="$emit('close')" :title="t('designer.config.close')">
+      <button class="config-close-btn" @click="$emit('close')" :aria-label="t('designer.config.close')" :title="t('designer.config.close')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -149,7 +149,7 @@
               @input="updateKV(field.key, idx, 'value', ($event.target as HTMLInputElement).value)"
               placeholder="value"
             />
-            <button class="kv-remove-btn" @click="removeKV(field.key, idx)" :title="t('designer.config.delete')">
+            <button class="kv-remove-btn" @click="removeKV(field.key, idx)" :aria-label="t('designer.config.delete')" :title="t('designer.config.delete')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -194,7 +194,7 @@
               @input="updateCase(i, 'label', ($event.target as HTMLInputElement).value)"
               :placeholder="t('designer.config.branchNamePlaceholder')"
             />
-            <button class="kv-remove-btn" @click="removeCase(i)" :title="t('designer.config.deleteBranch')">
+            <button class="kv-remove-btn" @click="removeCase(i)" :aria-label="t('designer.config.deleteBranch')" :title="t('designer.config.deleteBranch')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>

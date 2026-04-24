@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.websocket.NotificationWebSocketHandler;
+import com.aiagent.websocket.WebSocketEventDTO;
 import com.aiagent.websocket.WebSocketMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -174,5 +175,102 @@ public class NotificationService {
      */
     public int getActiveConnectionCount() {
         return webSocketHandler.getActiveConnectionCount();
+    }
+
+    // ==================== Typed Event Publishing ====================
+
+    /**
+     * Publish an AGENT_STATUS_CHANGED event to a specific user.
+     *
+     * @param userId    target user ID
+     * @param agentName agent name
+     * @param status    new status (e.g. "RUNNING", "COMPLETED", "FAILED")
+     * @param extra     optional extra payload data
+     */
+    @Async
+    public void publishAgentStatusChanged(Long userId, String agentName, String status, Map<String, Object> extra) {
+        WebSocketEventDTO event = WebSocketEventDTO.agentStatusChanged(agentName, status, extra);
+        boolean sent = webSocketHandler.sendEventToUser(userId, event);
+        if (!sent) {
+            log.info("User {} offline. Agent status event queued: agent={}, status={}", userId, agentName, status);
+        }
+    }
+
+    /**
+     * Publish a WORKFLOW_STATUS_CHANGED event to a specific user.
+     *
+     * @param userId       target user ID
+     * @param workflowName workflow name
+     * @param instanceId   workflow instance ID
+     * @param status       new status
+     */
+    @Async
+    public void publishWorkflowStatusChanged(Long userId, String workflowName, Long instanceId, String status) {
+        WebSocketEventDTO event = WebSocketEventDTO.workflowStatusChanged(workflowName, instanceId, status);
+        boolean sent = webSocketHandler.sendEventToUser(userId, event);
+        if (!sent) {
+            log.info("User {} offline. Workflow status event queued: instance={}, status={}", userId, instanceId, status);
+        }
+    }
+
+    /**
+     * Publish an ALERT_FIRED event to a specific user.
+     *
+     * @param userId    target user ID
+     * @param ruleName  alert rule name
+     * @param severity  alert severity
+     * @param message   alert message
+     */
+    @Async
+    public void publishAlertFired(Long userId, String ruleName, String severity, String message) {
+        WebSocketEventDTO event = WebSocketEventDTO.alertFired(ruleName, severity, message);
+        boolean sent = webSocketHandler.sendEventToUser(userId, event);
+        if (!sent) {
+            log.info("User {} offline. Alert fired event queued: rule={}", userId, ruleName);
+        }
+    }
+
+    /**
+     * Publish an APPROVAL_PENDING event to a specific user (typically an approver).
+     *
+     * @param userId      target user ID (approver)
+     * @param agentName   agent name
+     * @param approvalId  approval record ID
+     * @param submitter   submitter name
+     */
+    @Async
+    public void publishApprovalPending(Long userId, String agentName, Long approvalId, String submitter) {
+        WebSocketEventDTO event = WebSocketEventDTO.approvalPending(agentName, approvalId, submitter);
+        boolean sent = webSocketHandler.sendEventToUser(userId, event);
+        if (!sent) {
+            log.info("User {} offline. Approval pending event queued: approvalId={}", userId, approvalId);
+        }
+    }
+
+    /**
+     * Publish a SYSTEM_NOTIFICATION event to a specific user.
+     *
+     * @param userId   target user ID
+     * @param title    notification title
+     * @param content  notification content
+     * @param payload  optional extra payload
+     */
+    @Async
+    public void publishSystemNotification(Long userId, String title, String content, Map<String, Object> payload) {
+        WebSocketEventDTO event = WebSocketEventDTO.systemNotification(title, content, payload);
+        boolean sent = webSocketHandler.sendEventToUser(userId, event);
+        if (!sent) {
+            log.info("User {} offline. System notification event queued: title={}", userId, title);
+        }
+    }
+
+    /**
+     * Broadcast a typed event to all connected users.
+     *
+     * @param event typed event to broadcast
+     */
+    @Async
+    public void broadcastEvent(WebSocketEventDTO event) {
+        webSocketHandler.sendEventToAll(event);
     }
 }

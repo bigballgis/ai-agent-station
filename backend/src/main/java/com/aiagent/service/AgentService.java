@@ -79,6 +79,13 @@ public class AgentService {
         return agentVersionRepository.findById(id);
     }
 
+    /**
+     * 检查指定租户下是否存在指定名称的Agent
+     */
+    public boolean existsByNameAndTenantId(String name, Long tenantId) {
+        return agentRepository.existsByNameAndTenantId(name, tenantId);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Auditable(tableName = "agent", description = "创建Agent")
     @CacheEvict(value = "agents", allEntries = true)

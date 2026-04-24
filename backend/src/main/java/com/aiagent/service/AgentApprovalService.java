@@ -9,6 +9,7 @@ import com.aiagent.repository.AgentApprovalRepository;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.repository.AgentVersionRepository;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.websocket.WebSocketEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ public class AgentApprovalService {
     private final AgentRepository agentRepository;
     private final AgentVersionRepository agentVersionRepository;
     private final AgentTestResultService testResultService;
+    private final NotificationService notificationService;
 
     public Page<AgentApproval> getApprovals(Pageable pageable) {
         Long tenantId = TenantContextHolder.getTenantId();
@@ -82,7 +84,22 @@ public class AgentApprovalService {
         agent.setStatus(Agent.AgentStatus.PENDING_APPROVAL);
         agentRepository.save(agent);
 
-        return agentApprovalRepository.save(approval);
+        AgentApproval saved = agentApprovalRepository.save(approval);
+
+        // Publish real-time APPROVAL_PENDING event via WebSocket
+        try {
+            notificationService.broadcastEvent(
+                    WebSocketEventDTO.approvalPending(
+                            agent.getName(),
+                            saved.getId(),
+                            String.valueOf(submitterId)
+                    )
+            );
+        } catch (Exception e) {
+            log.warn("Failed to publish approval pending event: {}", e.getMessage());
+        }
+
+        return saved;
     }
 
     @Transactional(rollbackFor = Exception.class)

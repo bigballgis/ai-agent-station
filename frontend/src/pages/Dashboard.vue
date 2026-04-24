@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-page" aria-label="仪表盘">
+  <div class="dashboard-page" :aria-label="t('dashboard.title')">
     <!-- 页面标题 -->
     <PageHeader :title="t('dashboard.title') || 'Dashboard'" :subtitle="t('dashboard.subtitle')" />
 
@@ -230,6 +230,7 @@ import {
   ExperimentOutlined
 } from '@ant-design/icons-vue'
 import { useTheme } from '@/composables/useTheme'
+import { useWebSocket, type WsEvent } from '@/composables/useWebSocket'
 import { getAllAgents } from '@/api/agent'
 import { getToolStats } from '@/api/tool'
 import { getAlertRecords } from '@/api/alert'
@@ -274,6 +275,7 @@ interface ToolStatsResult {
 
 const { t, locale } = useI18n()
 const { isDark } = useTheme()
+const { on: wsOn } = useWebSocket(() => localStorage.getItem('token'))
 const router = useRouter()
 const route = useRoute()
 
@@ -665,6 +667,46 @@ onMounted(() => {
     message.warning(t('common.noPermission'))
     router.replace({ query: {} })
   }
+
+  // Register WebSocket event listeners for real-time updates
+  wsOn('AGENT_STATUS_CHANGED', (event: WsEvent) => {
+    // Update agent execution count when agent status changes
+    const status = event.payload.status as string
+    if (status === 'RUNNING') {
+      // Increment running agents count
+      agentDistribution.value.running++
+    } else if (status === 'COMPLETED' || status === 'FAILED') {
+      // Decrement running agents count
+      agentDistribution.value.running = Math.max(0, agentDistribution.value.running - 1)
+    }
+  })
+
+  wsOn('ALERT_FIRED', (event: WsEvent) => {
+    // Update alert count when new alert is fired
+    activeAlerts.value++
+    // Show toast notification for critical alerts
+    const severity = event.payload.severity as string
+    if (severity === 'CRITICAL' || severity === 'HIGH') {
+      message.warning(event.content)
+    }
+  })
+
+  wsOn('APPROVAL_PENDING', (event: WsEvent) => {
+    // Show toast notification for approval requests
+    message.info(event.content)
+    // Update pending approvals count in agent distribution
+    agentDistribution.value.pending++
+  })
+
+  wsOn('WORKFLOW_STATUS_CHANGED', (event: WsEvent) => {
+    // Show toast notification for workflow completion/failure
+    const status = event.payload.status as string
+    if (status === 'COMPLETED') {
+      message.success(event.content)
+    } else if (status === 'FAILED') {
+      message.error(event.content)
+    }
+  })
 })
 </script>
 

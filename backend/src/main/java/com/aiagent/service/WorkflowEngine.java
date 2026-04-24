@@ -9,6 +9,7 @@ import com.aiagent.repository.WorkflowDefinitionRepository;
 import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.repository.WorkflowNodeLogRepository;
 import com.aiagent.tenant.TenantContextHolder;
+import com.aiagent.websocket.WebSocketEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class WorkflowEngine {
     private final WorkflowInstanceRepository instanceRepository;
     private final WorkflowNodeLogRepository nodeLogRepository;
     private final WorkflowAsyncExecutor workflowAsyncExecutor;
+    private final NotificationService notificationService;
 
     @org.springframework.beans.factory.annotation.Value("${workflow.max-execution-duration:300}")
     private int maxExecutionDurationSeconds;
@@ -165,6 +167,18 @@ public class WorkflowEngine {
             instance.setCompletedAt(LocalDateTime.now());
             instanceRepository.save(instance);
 
+            // Publish real-time workflow status changed event
+            try {
+                notificationService.publishWorkflowStatusChanged(
+                        instance.getStartedBy(),
+                        instance.getWorkflowName(),
+                        instance.getId(),
+                        "FAILED"
+                );
+            } catch (Exception notifyEx) {
+                log.warn("Failed to publish workflow failed event: {}", notifyEx.getMessage());
+            }
+
             throw new BusinessException("节点执行失败: " + e.getMessage());
         }
     }
@@ -300,6 +314,18 @@ public class WorkflowEngine {
         instance.setCompletedAt(LocalDateTime.now());
         instanceRepository.save(instance);
         log.info("Workflow completed: instanceId={}, name={}", instance.getId(), instance.getWorkflowName());
+
+        // Publish real-time workflow status changed event
+        try {
+            notificationService.publishWorkflowStatusChanged(
+                    instance.getStartedBy(),
+                    instance.getWorkflowName(),
+                    instance.getId(),
+                    "COMPLETED"
+            );
+        } catch (Exception e) {
+            log.warn("Failed to publish workflow completed event: {}", e.getMessage());
+        }
     }
 
     // JSON 反序列化后 Map 中的值是 Object 类型，需要强制转换为具体泛型类型，编译器无法验证

@@ -127,16 +127,16 @@
 
             <!-- 请求参数列表 -->
             <div v-if="api.parameters && api.parameters.length" class="mb-4">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.pathParams') || '路径参数' }}</h4>
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.pathParams') }}</h4>
               <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                   <thead>
                     <tr class="border-b border-gray-200 dark:border-gray-600">
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">名称</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">位置</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">类型</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">必填</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">描述</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramCol') }}</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramLocation') }}</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramType') }}</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramRequired') }}</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramDescription') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -145,8 +145,8 @@
                       <td class="py-1.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">{{ param.in }}</span></td>
                       <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.type || (param.schema && param.schema.type) || '-' }}</td>
                       <td class="py-1.5 px-3">
-                        <span v-if="param.required" class="text-red-500 font-medium">Yes</span>
-                        <span v-else class="text-gray-400">No</span>
+                        <span v-if="param.required" class="text-red-500 font-medium">{{ t('apiMgmt.yes') }}</span>
+                        <span v-else class="text-gray-400">{{ t('apiMgmt.no') }}</span>
                       </td>
                       <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.description || '-' }}</td>
                     </tr>
@@ -197,7 +197,7 @@
 
             <!-- 错误响应 -->
             <div v-if="api.errorResponses && api.errorResponses.length" class="mt-4">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.errorResponses') || '错误响应' }}</h4>
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.errorResponses') }}</h4>
               <div class="space-y-2">
                 <div v-for="err in api.errorResponses" :key="err.code" class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
                   <span :class="[

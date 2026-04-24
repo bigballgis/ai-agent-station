@@ -177,4 +177,11 @@ public class WorkflowService {
             }
         }
     }
+
+    /**
+     * 检查指定租户下是否存在指定名称的工作流定义
+     */
+    public boolean existsByNameAndTenantId(String name, Long tenantId) {
+        return definitionRepository.existsByNameAndTenantId(name, tenantId);
+    }
 }

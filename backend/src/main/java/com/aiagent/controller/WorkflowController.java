@@ -12,21 +12,26 @@ import com.aiagent.dto.WorkflowStartDTO;
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.entity.WorkflowNodeLog;
+import com.aiagent.exception.BusinessException;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.WorkflowEngine;
 import com.aiagent.service.WorkflowService;
 import com.aiagent.tenant.TenantContextHolder;
 import com.aiagent.vo.WorkflowDefinitionVO;
 import com.aiagent.vo.WorkflowInstanceVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
@@ -303,5 +308,84 @@ public class WorkflowController {
         String comment = request != null ? request.getComment() : "";
         WorkflowNodeLog nodeLog = workflowEngine.approveNode(instanceId, false, comment);
         return Result.success(nodeLog);
+    }
+
+    // ==================== 导出/导入接口 ====================
+
+    @RequiresPermission("workflow:view")
+    @GetMapping("/definitions/{id}/export")
+    @Operation(summary = "导出工作流定义为JSON")
+    public void exportDefinition(
+            @PathVariable Long id,
+            HttpServletResponse response) throws Exception {
+        Long tenantId = TenantContextHolder.getTenantId();
+        WorkflowDefinition definition = workflowService.getDefinitionByIdAndTenantId(id, tenantId);
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> exportData = new HashMap<>();
+        exportData.put("name", definition.getName());
+        exportData.put("description", definition.getDescription());
+        exportData.put("version", definition.getVersion());
+        exportData.put("nodes", definition.getNodes());
+        exportData.put("edges", definition.getEdges());
+        exportData.put("triggers", definition.getTriggers());
+
+        String filename = definition.getName().replaceAll("[^a-zA-Z0-9_\\-\\u4e00-\\u9fa5]", "_");
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + filename + "_" + timestamp + ".json\"");
+        response.setCharacterEncoding("UTF-8");
+        mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), exportData);
+    }
+
+    @RequiresPermission("workflow:manage")
+    @PostMapping("/definitions/import")
+    @Operation(summary = "从JSON导入工作流定义", description = "导入工作流定义，自动处理名称冲突")
+    @OperationLog(value = "导入工作流", module = "工作流")
+    public Result<WorkflowDefinitionVO> importDefinition(@RequestBody Map<String, Object> data) {
+        // 验证必填字段
+        if (data.get("name") == null || String.valueOf(data.get("name")).isBlank()) {
+            throw new BusinessException("导入数据缺少必填字段: name");
+        }
+
+        String name = String.valueOf(data.get("name"));
+
+        // 验证图结构
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nodes = data.get("nodes") instanceof Map ? (Map<String, Object>) data.get("nodes") : null;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> edges = data.get("edges") instanceof Map ? (Map<String, Object>) data.get("edges") : null;
+        workflowService.validateNodeCount(nodes);
+        workflowService.validateEdgeCount(edges);
+
+        Long tenantId = TenantContextHolder.getTenantId();
+
+        // 处理名称冲突：自动添加后缀
+        String originalName = name;
+        int suffix = 1;
+        while (workflowService.existsByNameAndTenantId(name, tenantId)) {
+            name = originalName + " (" + suffix + ")";
+            suffix++;
+        }
+
+        WorkflowDefinition definition = new WorkflowDefinition();
+        definition.setName(name);
+        definition.setDescription(data.get("description") != null ? String.valueOf(data.get("description")) : null);
+        definition.setVersion(1);
+        definition.setStatus(WorkflowDefinition.WorkflowStatus.DRAFT);
+        definition.setNodes(nodes);
+        definition.setEdges(edges);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> triggers = data.get("triggers") instanceof Map ? (Map<String, Object>) data.get("triggers") : null;
+        definition.setTriggers(triggers);
+        definition.setTenantId(tenantId);
+
+        WorkflowDefinition saved = workflowService.createDefinition(definition);
+        saved.setBaseDefinitionId(saved.getId());
+        saved = workflowService.updateDefinition(saved);
+
+        return Result.success(WorkflowDefinitionVO.fromEntity(saved));
     }
 }

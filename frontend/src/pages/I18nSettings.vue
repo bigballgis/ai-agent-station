@@ -1,5 +1,5 @@
 <template>
-  <div class="i18n-settings-page" aria-label="国际化设置">
+  <div class="i18n-settings-page" :aria-label="t('i18n.settings')">
     <!-- 页面头部 -->
     <PageHeader
       :title="t('i18n.settings')"

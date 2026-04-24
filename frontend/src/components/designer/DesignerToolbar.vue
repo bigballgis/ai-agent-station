@@ -2,7 +2,7 @@
   <div class="designer-toolbar">
     <!-- Left Section -->
     <div class="toolbar-left">
-      <button class="toolbar-btn" :title="t('designer.toolbar.back')" @click="$emit('back')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.back')" :title="t('designer.toolbar.back')" @click="$emit('back')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -10,12 +10,12 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" :title="t('designer.toolbar.undo') + ' (Ctrl+Z)'" :disabled="!canUndo" @click="$emit('undo')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.undo')" :title="t('designer.toolbar.undo') + ' (Ctrl+Z)'" :disabled="!canUndo" @click="$emit('undo')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2M3 10l4-4M3 10l4 4" />
         </svg>
       </button>
-      <button class="toolbar-btn" :title="t('designer.toolbar.redo') + ' (Ctrl+Y)'" :disabled="!canRedo" @click="$emit('redo')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.redo')" :title="t('designer.toolbar.redo') + ' (Ctrl+Y)'" :disabled="!canRedo" @click="$emit('redo')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a5 5 0 00-5 5v2M21 10l-4-4M21 10l-4 4" />
         </svg>
@@ -23,18 +23,18 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" :title="t('designer.toolbar.zoomOut')" @click="$emit('zoom-out')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.zoomOut')" :title="t('designer.toolbar.zoomOut')" @click="$emit('zoom-out')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
         </svg>
       </button>
       <span class="zoom-label">{{ Math.round(zoom * 100) }}%</span>
-      <button class="toolbar-btn" :title="t('designer.toolbar.zoomIn')" @click="$emit('zoom-in')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.zoomIn')" :title="t('designer.toolbar.zoomIn')" @click="$emit('zoom-in')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
         </svg>
       </button>
-      <button class="toolbar-btn" :title="t('designer.toolbar.resetZoom')" @click="$emit('zoom-reset')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.resetZoom')" :title="t('designer.toolbar.resetZoom')" @click="$emit('zoom-reset')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
         </svg>
@@ -54,12 +54,12 @@
 
     <!-- Right Section -->
     <div class="toolbar-right">
-      <button class="toolbar-btn" :title="t('designer.toolbar.import')" @click="$emit('import')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.import')" :title="t('designer.toolbar.import')" @click="$emit('import')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
       </button>
-      <button class="toolbar-btn" :title="t('designer.toolbar.export')" @click="$emit('export')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.export')" :title="t('designer.toolbar.export')" @click="$emit('export')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
@@ -67,12 +67,12 @@
 
       <div class="toolbar-divider" />
 
-      <button class="toolbar-btn" :title="t('designer.toolbar.validate')" @click="$emit('validate')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.validate')" :title="t('designer.toolbar.validate')" @click="$emit('validate')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </button>
-      <button class="toolbar-btn" :title="t('designer.toolbar.autoLayout')" @click="$emit('auto-layout')">
+      <button class="toolbar-btn" :aria-label="t('designer.toolbar.autoLayout')" :title="t('designer.toolbar.autoLayout')" @click="$emit('auto-layout')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
         </svg>
@@ -82,7 +82,8 @@
       <button
         class="toolbar-btn"
         :class="{ active: debugMode }"
-        :title="debugMode ? t('designer.debug.toggle') : t('designer.debug.toggle')"
+        :aria-label="t('designer.debug.toggle')"
+        :title="t('designer.debug.toggle')"
         @click="$emit('debug-toggle')"
       >
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -93,6 +94,7 @@
         <button
           class="toolbar-btn"
           :disabled="!canStepNext"
+          :aria-label="t('designer.debug.step')"
           :title="t('designer.debug.step') + ' (F10)'"
           @click="$emit('debug-step')"
         >
@@ -103,6 +105,7 @@
         <button
           class="toolbar-btn"
           :disabled="!canContinue"
+          :aria-label="t('designer.debug.continue')"
           :title="t('designer.debug.continue') + ' (F5)'"
           @click="$emit('debug-continue')"
         >
@@ -112,6 +115,7 @@
         </button>
         <button
           class="toolbar-btn"
+          :aria-label="t('designer.debug.stop')"
           :title="t('designer.debug.stop') + ' (Shift+F5)'"
           @click="$emit('debug-stop')"
         >

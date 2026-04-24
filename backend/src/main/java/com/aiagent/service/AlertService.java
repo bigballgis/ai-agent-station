@@ -28,6 +28,7 @@ public class AlertService {
 
     private final AlertRuleRepository ruleRepository;
     private final AlertRecordRepository recordRepository;
+    private final NotificationService notificationService;
 
     private static final int WEBHOOK_MAX_RETRIES = 3;
     private static final long[] WEBHOOK_BACKOFF_MS = {1000L, 5000L, 15000L};
@@ -141,6 +142,19 @@ public class AlertService {
      * 触发告警通知，根据规则配置的通知渠道进行分发
      */
     public void fireAlert(AlertRule rule, AlertRecord record) {
+        // Publish real-time ALERT_FIRED event via WebSocket
+        try {
+            notificationService.broadcastEvent(
+                    com.aiagent.websocket.WebSocketEventDTO.alertFired(
+                            rule.getName(),
+                            record.getSeverity(),
+                            record.getMessage()
+                    )
+            );
+        } catch (Exception e) {
+            log.warn("Failed to publish alert fired event: {}", e.getMessage());
+        }
+
         String channels = rule.getNotifyChannels();
         if (channels == null || channels.isBlank()) {
             channels = "email";

@@ -3,16 +3,38 @@
     <!-- 页面头部 -->
     <PageHeader :title="t('agent.list')" :subtitle="t('agent.listDesc')">
       <template #actions>
-        <button
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-          :aria-label="t('agent.createAgent')"
-          @click="showCreateModal = true"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          {{ t('agent.createAgent') }}
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition-all duration-200 cursor-pointer"
+            :aria-label="t('agent.importAgent')"
+            @click="showImportModal = true"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            {{ t('agent.importAgent') }}
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition-all duration-200 cursor-pointer"
+            :aria-label="t('agent.exportAllAgents')"
+            @click="handleExportAll"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {{ t('agent.exportAllAgents') }}
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+            :aria-label="t('agent.createAgent')"
+            @click="showCreateModal = true"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {{ t('agent.createAgent') }}
+          </button>
+        </div>
       </template>
     </PageHeader>
 
@@ -115,6 +137,16 @@
             {{ formatDate(agent.createdAt) }}
           </span>
           <div class="flex items-center gap-1.5">
+            <button
+              class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
+              :title="t('agent.exportAgent')"
+              @click.stop="exportSingleAgent(agent)"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
             <button
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
               :title="t('common.edit')"
@@ -365,6 +397,36 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- 导入 Agent 弹窗 -->
+    <a-modal
+      v-model:open="showImportModal"
+      :title="t('agent.importAgentTitle')"
+      :ok-button-props="{ class: '!rounded-xl' }"
+      :cancel-button-props="{ class: '!rounded-xl' }"
+      :ok-text="t('agent.importAgent')"
+      @ok="handleImport"
+      @cancel="showImportModal = false"
+    >
+      <div class="mt-4">
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4">{{ t('agent.importAgentDesc') }}</p>
+        <a-upload
+          :before-upload="handleFileSelect"
+          :show-upload-list="false"
+          accept=".json"
+        >
+          <a-button>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {{ t('agent.selectFile') }}
+          </a-button>
+        </a-upload>
+        <div v-if="importFileName" class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          {{ importFileName }}
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -385,6 +447,9 @@ const agents = ref<Agent[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
 const showCopyModal = ref(false)
+const showImportModal = ref(false)
+const importFileName = ref('')
+const importFileData = ref<Record<string, unknown> | null>(null)
 
 // 多步骤向导状态
 const currentStep = ref(0)
@@ -620,6 +685,76 @@ function deleteAgent(agent: Agent) {
       }
     }
   })
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function exportSingleAgent(agent: Agent) {
+  try {
+    const res = await agentApi.exportAgent(agent.id!)
+    const blob = res instanceof Blob ? res : new Blob([res as unknown as BlobPart], { type: 'application/json' })
+    const filename = `${agent.name || 'agent'}.json`
+    downloadBlob(blob, filename)
+    message.success(t('agent.exportSuccess'))
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.exportFailed') + ': ' + (err.message || ''))
+  }
+}
+
+async function handleExportAll() {
+  try {
+    const res = await agentApi.exportAllAgents()
+    const blob = res instanceof Blob ? res : new Blob([res as unknown as BlobPart], { type: 'application/json' })
+    const timestamp = new Date().toISOString().slice(0, 10)
+    downloadBlob(blob, `agents_${timestamp}.json`)
+    message.success(t('agent.exportSuccess'))
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.exportFailed') + ': ' + (err.message || ''))
+  }
+}
+
+function handleFileSelect(file: File) {
+  importFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      importFileData.value = JSON.parse(e.target?.result as string)
+    } catch {
+      message.error(t('common.jsonParseError'))
+      importFileData.value = null
+    }
+  }
+  reader.readAsText(file)
+  return false // prevent auto upload
+}
+
+async function handleImport() {
+  if (!importFileData.value) {
+    message.warning(t('agent.selectFile'))
+    return
+  }
+  try {
+    await agentApi.importAgent(importFileData.value)
+    message.success(t('agent.importAgentSuccess'))
+    showImportModal.value = false
+    importFileName.value = ''
+    importFileData.value = null
+    loadAgents()
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    message.error(t('agent.importAgentFailed') + ': ' + (err.message || ''))
+  }
 }
 
 function formatDate(date: string | undefined) {

@@ -146,5 +146,14 @@ export const workflowApi = {
       `/v1/workflows/instances/${instanceId}/nodes/${nodeId}/reject`,
       { comment }
     )
-  }
+  },
+
+  // Export/Import APIs
+  exportDefinition: (id: number) => {
+    return request.get(`/v1/workflows/definitions/${id}/export`, { responseType: 'blob' })
+  },
+
+  importDefinition: (data: Record<string, unknown>) => {
+    return request.post<ApiResponse<WorkflowDefinition>>('/v1/workflows/definitions/import', data)
+  },
 }

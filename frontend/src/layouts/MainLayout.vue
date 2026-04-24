@@ -46,7 +46,7 @@
       <!-- 右侧: 操作区 -->
       <div class="flex items-center gap-1">
         <!-- 通知铃铛 -->
-        <a-badge :count="notificationStore.unreadCount" :offset="[-4, 4]" size="small">
+        <a-badge :count="notificationStore.unreadCount + wsUnreadEvents" :offset="[-4, 4]" size="small">
           <button
             @click="router.push('/system/alerts')"
             :aria-label="t('header.notifications')"
@@ -361,6 +361,7 @@ import { useNotificationStore } from '@/store/modules/notification'
 import { useTheme } from '@/composables/useTheme'
 import { useOfflineState } from '@/composables/useNetworkStatus'
 import { getQueuedRequestCount } from '@/composables/useNetworkStatus'
+import { useWebSocket } from '@/composables/useWebSocket'
 // ChangePasswordModal 仅在用户点击修改密码时显示，使用异步加载减少首屏包体积
 const ChangePasswordModal = defineAsyncComponent(() => import('@/components/ChangePasswordModal.vue'))
 import type { LocaleType } from '@/locales'
@@ -374,6 +375,12 @@ const notificationStore = useNotificationStore()
 const { toggleTheme, isDark } = useTheme()
 const { isOffline } = useOfflineState()
 const queuedRequestCount = ref(0)
+
+// WebSocket real-time notifications
+const wsUnreadEvents = ref(0)
+const { connect: wsConnect, on: wsOn } = useWebSocket(
+  () => localStorage.getItem('token')
+)
 
 // 定期更新队列请求数
 let queueCountTimer: ReturnType<typeof setInterval> | null = null
@@ -767,6 +774,33 @@ onMounted(() => {
   queueCountTimer = setInterval(() => {
     queuedRequestCount.value = getQueuedRequestCount()
   }, 1000)
+
+  // Connect WebSocket for real-time notifications
+  wsConnect()
+
+  // Register WebSocket event listeners for notification badge
+  wsOn('ALERT_FIRED', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('APPROVAL_PENDING', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('AGENT_STATUS_CHANGED', () => {
+    wsUnreadEvents.value++
+  })
+  wsOn('WORKFLOW_STATUS_CHANGED', () => {
+    wsUnreadEvents.value++
+  })
+
+  // Clear unread events when user navigates to alerts page
+  const originalPush = router.push.bind(router)
+  router.push = (to: any) => {
+    const path = typeof to === 'string' ? to : to.path
+    if (path === '/system/alerts') {
+      wsUnreadEvents.value = 0
+    }
+    return originalPush(to)
+  }
 })
 
 onUnmounted(() => {

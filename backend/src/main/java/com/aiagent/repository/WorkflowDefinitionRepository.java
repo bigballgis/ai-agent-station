@@ -21,4 +21,6 @@ public interface WorkflowDefinitionRepository extends JpaRepository<WorkflowDefi
     List<WorkflowDefinition> findByTenantIdAndStatus(Long tenantId, WorkflowDefinition.WorkflowStatus status);
 
     Page<WorkflowDefinition> findByTenantIdAndStatus(Long tenantId, WorkflowDefinition.WorkflowStatus status, Pageable pageable);
+
+    boolean existsByNameAndTenantId(String name, Long tenantId);
 }

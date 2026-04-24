@@ -10,9 +10,14 @@
       <div class="left-panel">
         <div class="panel-header">
           <h3>{{ t('workflow.definitionList') }}</h3>
-          <a-button type="primary" size="small" @click="showCreateModal = true" :aria-label="t('workflow.newCreate')">
-            {{ t('workflow.newCreate') }}
-          </a-button>
+          <div class="flex items-center gap-2">
+            <a-button size="small" @click="showImportModal = true" :aria-label="t('workflow.importWorkflow')">
+              {{ t('workflow.importWorkflow') }}
+            </a-button>
+            <a-button type="primary" size="small" @click="showCreateModal = true" :aria-label="t('workflow.newCreate')">
+              {{ t('workflow.newCreate') }}
+            </a-button>
+          </div>
         </div>
 
         <div class="filter-bar">
@@ -50,6 +55,9 @@
               <StatusBadge :status="selectedDefinition.status" :status-map="statusMap" />
             </div>
             <div class="detail-actions">
+              <a-button @click="handleExportDefinition" :aria-label="t('workflow.exportWorkflow')">
+                {{ t('workflow.exportWorkflow') }}
+              </a-button>
               <a-button v-if="selectedDefinition.status === 'DRAFT'" type="primary" @click="showEditModal = true" :aria-label="t('workflow.edit')">
                 {{ t('workflow.edit') }}
               </a-button>
@@ -246,6 +254,34 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- Import Workflow Modal -->
+    <a-modal
+      v-model:open="showImportModal"
+      :title="t('workflow.importWorkflowTitle')"
+      :ok-text="t('workflow.importWorkflow')"
+      @ok="handleImportDefinition"
+      width="500px"
+    >
+      <div class="mt-4">
+        <p class="text-sm text-neutral-500 mb-4">{{ t('workflow.importWorkflowDesc') }}</p>
+        <a-upload
+          :before-upload="handleImportFileSelect"
+          :show-upload-list="false"
+          accept=".json"
+        >
+          <a-button>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {{ t('agent.selectFile') }}
+          </a-button>
+        </a-upload>
+        <div v-if="importFileName" class="mt-2 text-sm text-neutral-600">
+          {{ importFileName }}
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -274,6 +310,9 @@ const statusFilter = ref<string | undefined>(undefined)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showStartModal = ref(false)
+const showImportModal = ref(false)
+const importFileName = ref('')
+const importFileData = ref<Record<string, unknown> | null>(null)
 
 // Forms
 const createForm = ref({
@@ -494,6 +533,62 @@ async function handleStart() {
 
 function viewInstance(instance: WorkflowInstance) {
   router.push({ path: '/workflow/instances', query: { id: String(instance.id) } })
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function handleExportDefinition() {
+  if (!selectedDefinition.value) return
+  try {
+    const res = await workflowApi.exportDefinition(selectedDefinition.value.id)
+    const blob = res instanceof Blob ? res : new Blob([res as unknown as BlobPart], { type: 'application/json' })
+    const filename = `${selectedDefinition.value.name || 'workflow'}.json`
+    downloadBlob(blob, filename)
+    message.success(t('agent.exportSuccess'))
+  } catch (error) {
+    message.error(t('agent.exportFailed'))
+  }
+}
+
+function handleImportFileSelect(file: File) {
+  importFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      importFileData.value = JSON.parse(e.target?.result as string)
+    } catch {
+      message.error(t('common.jsonParseError'))
+      importFileData.value = null
+    }
+  }
+  reader.readAsText(file)
+  return false
+}
+
+async function handleImportDefinition() {
+  if (!importFileData.value) {
+    message.warning(t('agent.selectFile'))
+    return
+  }
+  try {
+    await workflowApi.importDefinition(importFileData.value)
+    message.success(t('workflow.importWorkflowSuccess'))
+    showImportModal.value = false
+    importFileName.value = ''
+    importFileData.value = null
+    loadDefinitions()
+  } catch (error) {
+    message.error(t('workflow.importWorkflowFailed'))
+  }
 }
 
 onMounted(() => {
