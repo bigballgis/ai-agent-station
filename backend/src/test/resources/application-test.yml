@@ -24,7 +24,7 @@ spring:
     enabled: false
 
 jwt:
-  secret: test-secret-key-for-unit-testing-only
+  secret: test-secret-key-for-unit-testing-only-must-be-at-least-32-chars
   expiration: 3600000
 
 langchain4j:
