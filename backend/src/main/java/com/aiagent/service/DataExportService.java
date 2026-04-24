@@ -15,6 +15,7 @@ import com.aiagent.util.CsvExportUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -54,7 +55,8 @@ public class DataExportService {
         if (tenantId != null) {
             agents = agentRepository.findByTenantId(tenantId);
         } else {
-            agents = agentRepository.findAll();
+            // Export without tenant filter: use paged query to avoid OOM
+            agents = agentRepository.findAll(PageRequest.of(0, 10000)).getContent();
         }
 
         // Apply filters
@@ -114,7 +116,7 @@ public class DataExportService {
         if (tenantId != null) {
             users = userRepository.findByTenantId(tenantId);
         } else {
-            users = userRepository.findAll();
+            users = userRepository.findAll(PageRequest.of(0, 10000)).getContent();
         }
 
         if (keyword != null && !keyword.isBlank()) {
@@ -164,7 +166,7 @@ public class DataExportService {
         if (tenantId != null) {
             logs = systemLogRepository.findByTenantId(tenantId);
         } else {
-            logs = systemLogRepository.findAll();
+            logs = systemLogRepository.findAll(PageRequest.of(0, 50000)).getContent();
         }
 
         if (module != null && !module.isBlank()) {
@@ -222,7 +224,7 @@ public class DataExportService {
         if (tenantId != null) {
             results = testResultRepository.findByTenantId(tenantId);
         } else {
-            results = testResultRepository.findAll();
+            results = testResultRepository.findAll(PageRequest.of(0, 50000)).getContent();
         }
 
         if (agentId != null) {
@@ -276,9 +278,9 @@ public class DataExportService {
         List<WorkflowInstance> instances;
         if (tenantId != null) {
             instances = workflowInstanceRepository.findByTenantId(tenantId,
-                    org.springframework.data.domain.PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+                    PageRequest.of(0, 50000)).getContent();
         } else {
-            instances = workflowInstanceRepository.findAll();
+            instances = workflowInstanceRepository.findAll(PageRequest.of(0, 50000)).getContent();
         }
 
         if (status != null && !status.isBlank()) {

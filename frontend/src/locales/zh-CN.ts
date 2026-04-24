@@ -593,7 +593,57 @@ export default {
   error: {
     '403': '抱歉，您无权访问该页面',
     '404': '抱歉，您访问的页面不存在',
-    backHome: '返回首页'
+    backHome: '返回首页',
+    // Agent 相关
+    agentNotFound: '未找到该 Agent',
+    agentAlreadyPublished: '该 Agent 已发布，无法重复操作',
+    agentCreateFailed: '创建 Agent 失败',
+    agentUpdateFailed: '更新 Agent 失败',
+    agentDeleteFailed: '删除 Agent 失败',
+    agentCopyFailed: '复制 Agent 失败',
+    agentNameExists: 'Agent 名称已存在',
+    agentStatusInvalid: 'Agent 当前状态不允许此操作',
+    // 工作流相关
+    workflowNotFound: '未找到该工作流',
+    workflowStartFailed: '启动工作流失败',
+    workflowCancelFailed: '取消工作流失败',
+    // 认证相关
+    auth: {
+      badCredentials: '用户名或密码错误',
+      tokenExpired: '登录已过期，请重新登录',
+      tokenInvalid: '无效的登录凭证',
+      userExists: '该用户名已被注册',
+      userNotFound: '用户不存在',
+      accountLocked: '账号已被锁定，请联系管理员',
+      passwordMismatch: '两次输入的密码不一致',
+    },
+    // 权限相关
+    permission: {
+      denied: '您没有权限执行此操作',
+      insufficient: '权限不足，无法完成操作',
+    },
+    // 资源相关
+    resource: {
+      notFound: '请求的资源不存在',
+      alreadyExists: '资源已存在',
+      conflict: '资源冲突，请刷新后重试',
+    },
+    // 参数校验
+    validation: {
+      failed: '请求参数校验失败，请检查输入',
+      required: '必填字段不能为空',
+      format: '输入格式不正确',
+    },
+    // 限流
+    rateLimit: {
+      exceeded: '请求过于频繁，请稍后重试',
+    },
+    // 通用
+    common: {
+      operationFailed: '操作失败，请稍后重试',
+      internalError: '服务器内部错误，请稍后重试',
+      serviceUnavailable: '服务暂时不可用，请稍后重试',
+    },
   },
   notFound: {
     title: '页面未找到',

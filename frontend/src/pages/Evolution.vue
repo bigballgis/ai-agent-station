@@ -22,9 +22,11 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import ReflectionEvaluation from '@/components/evolution/ReflectionEvaluation.vue'
-import ExperienceData from '@/components/evolution/ExperienceData.vue'
-import OptimizationSuggestion from '@/components/evolution/OptimizationSuggestion.vue'
+import { defineAsyncComponent } from 'vue'
+// 三个进化子组件通过 Tab 切换显示，仅激活时才需要加载，使用异步组件按需加载
+const ReflectionEvaluation = defineAsyncComponent(() => import('@/components/evolution/ReflectionEvaluation.vue'))
+const ExperienceData = defineAsyncComponent(() => import('@/components/evolution/ExperienceData.vue'))
+const OptimizationSuggestion = defineAsyncComponent(() => import('@/components/evolution/OptimizationSuggestion.vue'))
 
 const { t } = useI18n()
 </script>

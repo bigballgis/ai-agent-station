@@ -1,6 +1,8 @@
 package com.aiagent.repository;
 
 import com.aiagent.entity.AgentEvolutionSuggestion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,8 @@ import java.util.Optional;
 public interface AgentEvolutionSuggestionRepository extends JpaRepository<AgentEvolutionSuggestion, Long>, JpaSpecificationExecutor<AgentEvolutionSuggestion> {
     
     List<AgentEvolutionSuggestion> findByTenantId(Long tenantId);
+
+    Page<AgentEvolutionSuggestion> findByTenantId(Long tenantId, Pageable pageable);
     
     Optional<AgentEvolutionSuggestion> findByIdAndTenantId(Long id, Long tenantId);
     

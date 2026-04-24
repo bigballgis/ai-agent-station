@@ -101,6 +101,16 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     @Override
+    public Page<AgentEvolutionExperience> getAllExperiencesPaged(Pageable pageable) {
+        return experienceRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<AgentEvolutionExperience> getExperiencesByTenantIdPaged(Long tenantId, Pageable pageable) {
+        return experienceRepository.findByTenantId(tenantId, pageable);
+    }
+
+    @Override
     public Page<AgentEvolutionExperience> searchExperiences(String keyword, String experienceType, List<String> tags, Pageable pageable) {
         Long tenantId = TenantContextHolder.getTenantId();
 

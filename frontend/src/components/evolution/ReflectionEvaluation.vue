@@ -23,7 +23,7 @@
       </a-card>
 
       <a-card :title="t('evolution.reflection.detailResult')">
-        <a-table :columns="evaluationColumns" :data-source="evaluationData" :pagination="false">
+        <a-table :columns="evaluationColumns" :data-source="evaluationData" :pagination="{ pageSize: 10 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'score'">
               <a-progress 

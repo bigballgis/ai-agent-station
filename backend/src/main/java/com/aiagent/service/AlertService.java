@@ -10,6 +10,7 @@ import com.aiagent.util.SecurityUtils;
 import com.aiagent.vo.AlertRuleVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +105,7 @@ public class AlertService {
     }
 
     public List<AlertRecord> getActiveAlerts() {
-        return recordRepository.findByStatus("firing");
+        return recordRepository.findByStatus("firing", PageRequest.of(0, 100));
     }
 
     public Map<String, Object> getAlertStats() {

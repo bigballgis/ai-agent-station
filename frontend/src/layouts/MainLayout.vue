@@ -305,7 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, type Component } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type Component, defineAsyncComponent } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
@@ -346,7 +346,8 @@ import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
 import { useNotificationStore } from '@/store/modules/notification'
 import { useTheme } from '@/composables/useTheme'
-import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
+// ChangePasswordModal 仅在用户点击修改密码时显示，使用异步加载减少首屏包体积
+const ChangePasswordModal = defineAsyncComponent(() => import('@/components/ChangePasswordModal.vue'))
 import type { LocaleType } from '@/locales'
 
 const router = useRouter()

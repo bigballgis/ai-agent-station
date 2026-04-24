@@ -59,8 +59,8 @@ public class SecurityHeadersConfig {
         static {
             // 防止 MIME 类型嗅探
             HEADERS.put("X-Content-Type-Options", "nosniff");
-            // 防止 Clickjacking
-            HEADERS.put("X-Frame-Options", "DENY");
+            // 防止 Clickjacking（与 CSP frame-ancestors 'self' 保持一致）
+            HEADERS.put("X-Frame-Options", "SAMEORIGIN");
             // 禁用旧的 XSS 过滤器（现代浏览器使用 CSP 替代）
             HEADERS.put("X-XSS-Protection", "0");
             // 强制 HTTPS（1年，包含子域名）
@@ -108,7 +108,7 @@ public class SecurityHeadersConfig {
                     "font-src 'self' https://fonts.gstatic.com; " +
                     "img-src 'self' data: blob: https:; " +
                     "connect-src " + connectSrc + " https:; " +
-                    "frame-ancestors 'none'; " +
+                    "frame-ancestors 'self'; " +
                     "base-uri 'self'; " +
                     "form-action 'self'";
             httpResponse.setHeader("Content-Security-Policy", csp);

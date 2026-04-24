@@ -75,11 +75,21 @@ public class ExperienceController {
 
     // 获取所有经验
     @RequiresPermission("experience:view")
-    @Operation(summary = "获取所有经验列表")
+    @Operation(summary = "获取所有经验列表（分页）")
     @GetMapping
-    public Result<List<ExperienceResponseDTO>> getAllExperiences() {
-        List<AgentEvolutionExperience> experiences = experienceService.getAllExperiences();
-        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
+    public Result<PageResult<ExperienceResponseDTO>> getAllExperiences(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Long tenantId = com.aiagent.tenant.TenantContextHolder.getTenantId();
+
+        Page<AgentEvolutionExperience> experiencePage;
+        if (tenantId != null) {
+            experiencePage = experienceService.getExperiencesByTenantIdPaged(tenantId, pageable);
+        } else {
+            experiencePage = experienceService.getAllExperiencesPaged(pageable);
+        }
+        return Result.success(PageResult.from(experiencePage.map(DTOConverter::toExperienceResponseDTO)));
     }
 
     // 搜索经验

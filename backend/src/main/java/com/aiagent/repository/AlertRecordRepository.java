@@ -14,5 +14,7 @@ public interface AlertRecordRepository extends JpaRepository<AlertRecord, Long> 
 
     List<AlertRecord> findByStatus(String status);
 
+    List<AlertRecord> findByStatus(String status, Pageable pageable);
+
     long countByStatusAndFiredAtAfter(String status, LocalDateTime since);
 }

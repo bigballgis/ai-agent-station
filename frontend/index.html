@@ -5,9 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>AI Agent Station</title>
+    <!-- 预加载关键 vendor chunks，提升首屏加载速度 -->
+    <link rel="modulepreload" href="/src/main.ts" />
+    <link rel="modulepreload" href="/src/App.vue" />
+    <link rel="modulepreload" href="/src/layouts/MainLayout.vue" />
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {

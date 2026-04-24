@@ -22,6 +22,10 @@ public interface SuggestionService {
     AgentEvolutionSuggestion getSuggestionById(Long id);
     
     List<AgentEvolutionSuggestion> getAllSuggestions();
+
+    Page<AgentEvolutionSuggestion> getAllSuggestionsPaged(Pageable pageable);
+
+    Page<AgentEvolutionSuggestion> getSuggestionsByTenantIdPaged(Long tenantId, Pageable pageable);
     
     // 检索和分析建议
     Page<AgentEvolutionSuggestion> searchSuggestions(String keyword, String suggestionType, String status, Pageable pageable);

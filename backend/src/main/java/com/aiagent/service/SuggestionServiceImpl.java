@@ -262,6 +262,16 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
+    public Page<AgentEvolutionSuggestion> getAllSuggestionsPaged(Pageable pageable) {
+        return suggestionRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<AgentEvolutionSuggestion> getSuggestionsByTenantIdPaged(Long tenantId, Pageable pageable) {
+        return suggestionRepository.findByTenantId(tenantId, pageable);
+    }
+
+    @Override
     public Page<AgentEvolutionSuggestion> searchSuggestions(String keyword, String suggestionType, String status, Pageable pageable) {
         Long tenantId = TenantContextHolder.getTenantId();
 

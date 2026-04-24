@@ -593,7 +593,57 @@ export default {
   error: {
     '403': 'Sorry, you don\'t have permission to access this page',
     '404': 'Sorry, the page you visited does not exist',
-    backHome: 'Back to Home'
+    backHome: 'Back to Home',
+    // Agent related
+    agentNotFound: 'Agent not found',
+    agentAlreadyPublished: 'This Agent has already been published',
+    agentCreateFailed: 'Failed to create Agent',
+    agentUpdateFailed: 'Failed to update Agent',
+    agentDeleteFailed: 'Failed to delete Agent',
+    agentCopyFailed: 'Failed to copy Agent',
+    agentNameExists: 'Agent name already exists',
+    agentStatusInvalid: 'Agent status does not allow this operation',
+    // Workflow related
+    workflowNotFound: 'Workflow not found',
+    workflowStartFailed: 'Failed to start workflow',
+    workflowCancelFailed: 'Failed to cancel workflow',
+    // Auth related
+    auth: {
+      badCredentials: 'Invalid username or password',
+      tokenExpired: 'Session expired, please log in again',
+      tokenInvalid: 'Invalid authentication credentials',
+      userExists: 'Username is already taken',
+      userNotFound: 'User not found',
+      accountLocked: 'Account is locked, please contact administrator',
+      passwordMismatch: 'Passwords do not match',
+    },
+    // Permission related
+    permission: {
+      denied: 'You do not have permission to perform this action',
+      insufficient: 'Insufficient permissions to complete this operation',
+    },
+    // Resource related
+    resource: {
+      notFound: 'Requested resource not found',
+      alreadyExists: 'Resource already exists',
+      conflict: 'Resource conflict, please refresh and try again',
+    },
+    // Validation
+    validation: {
+      failed: 'Request validation failed, please check your input',
+      required: 'Required field cannot be empty',
+      format: 'Invalid input format',
+    },
+    // Rate limiting
+    rateLimit: {
+      exceeded: 'Too many requests, please try again later',
+    },
+    // Common
+    common: {
+      operationFailed: 'Operation failed, please try again later',
+      internalError: 'Internal server error, please try again later',
+      serviceUnavailable: 'Service temporarily unavailable, please try again later',
+    },
   },
   notFound: {
     title: 'Page Not Found',

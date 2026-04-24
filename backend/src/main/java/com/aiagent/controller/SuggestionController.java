@@ -84,11 +84,21 @@ public class SuggestionController {
 
     // 获取所有建议
     @RequiresPermission("suggestion:view")
-    @Operation(summary = "获取所有建议列表")
+    @Operation(summary = "获取所有建议列表（分页）")
     @GetMapping
-    public Result<List<SuggestionResponseDTO>> getAllSuggestions() {
-        List<AgentEvolutionSuggestion> suggestions = suggestionService.getAllSuggestions();
-        return Result.success(suggestions.stream().map(DTOConverter::toSuggestionResponseDTO).toList());
+    public Result<PageResult<SuggestionResponseDTO>> getAllSuggestions(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Long tenantId = com.aiagent.tenant.TenantContextHolder.getTenantId();
+
+        Page<AgentEvolutionSuggestion> suggestionPage;
+        if (tenantId != null) {
+            suggestionPage = suggestionService.getSuggestionsByTenantIdPaged(tenantId, pageable);
+        } else {
+            suggestionPage = suggestionService.getAllSuggestionsPaged(pageable);
+        }
+        return Result.success(PageResult.from(suggestionPage.map(DTOConverter::toSuggestionResponseDTO)));
     }
 
     // 搜索建议

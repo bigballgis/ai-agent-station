@@ -19,6 +19,10 @@ public interface ExperienceService {
     AgentEvolutionExperience getExperienceById(Long id);
     
     List<AgentEvolutionExperience> getAllExperiences();
+
+    Page<AgentEvolutionExperience> getAllExperiencesPaged(Pageable pageable);
+
+    Page<AgentEvolutionExperience> getExperiencesByTenantIdPaged(Long tenantId, Pageable pageable);
     
     // 检索和分析经验数据
     Page<AgentEvolutionExperience> searchExperiences(String keyword, String experienceType, List<String> tags, Pageable pageable);

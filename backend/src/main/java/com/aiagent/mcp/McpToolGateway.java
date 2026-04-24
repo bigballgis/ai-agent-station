@@ -99,9 +99,7 @@ public class McpToolGateway {
             return toolsCache;
         }
 
-        List<McpTool> tools = mcpToolRepository.findAll().stream()
-                .filter(McpTool::getIsActive)
-                .toList();
+        List<McpTool> tools = mcpToolRepository.findByIsActiveTrue();
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (McpTool tool : tools) {

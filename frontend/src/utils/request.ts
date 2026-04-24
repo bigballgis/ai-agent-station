@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'a
 import { message } from 'ant-design-vue'
 import type { ApiResponse } from '@/types/common'
 import i18n from '@/locales'
+import { getErrorDisplayMessage } from '@/utils/errorMessageMapper'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -121,8 +122,12 @@ service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data as ApiResponse
     if (res.code !== 200 && res.code !== 0) {
-      message.error(res.message || 'Error')
-      return Promise.reject(new Error(res.message || 'Error'))
+      const errorMsg = getErrorDisplayMessage(
+        res as unknown as Record<string, unknown>,
+        res.message || 'Error'
+      )
+      message.error(errorMsg)
+      return Promise.reject(new Error(errorMsg))
     }
     // 返回 response.data，保留 ApiResponse<T> 结构供调用方使用
     // 注意：axios 拦截器中无法自动推断泛型 T，调用方需通过 ApiResponse<T> 断言具体 data 类型
@@ -200,10 +205,13 @@ service.interceptors.response.use(
     }
 
     // 其他错误（包括网络异常）
-    const errorMsg = error.response?.data?.message
-      || (!error.response && i18n.global.t('common.error.networkError'))
+    const errorData = error.response?.data as Record<string, unknown> | undefined
+    const errorMsg = getErrorDisplayMessage(
+      errorData,
+      (!error.response && i18n.global.t('common.error.networkError'))
       || error.message
       || 'Request failed'
+    )
     message.error(errorMsg)
     return Promise.reject(error)
   }

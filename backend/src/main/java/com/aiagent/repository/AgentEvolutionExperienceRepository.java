@@ -1,6 +1,8 @@
 package com.aiagent.repository;
 
 import com.aiagent.entity.AgentEvolutionExperience;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +17,8 @@ import java.util.Optional;
 public interface AgentEvolutionExperienceRepository extends JpaRepository<AgentEvolutionExperience, Long>, JpaSpecificationExecutor<AgentEvolutionExperience> {
     
     List<AgentEvolutionExperience> findByTenantId(Long tenantId);
+
+    Page<AgentEvolutionExperience> findByTenantId(Long tenantId, Pageable pageable);
     
     Optional<AgentEvolutionExperience> findByIdAndTenantId(Long id, Long tenantId);
     

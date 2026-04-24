@@ -2,8 +2,12 @@ package com.aiagent.repository;
 
 import com.aiagent.entity.AgentTestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -72,4 +76,8 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
      * @return 测试结果数量
      */
     long countByExecutionId(Long executionId);
+
+    @Modifying
+    @Query("DELETE FROM AgentTestResult r WHERE r.createdAt < :threshold")
+    int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
 }

@@ -215,7 +215,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -235,7 +235,9 @@ import { getToolStats } from '@/api/tool'
 import { getAlertRecords } from '@/api/alert'
 import { testApi } from '@/api/test'
 import { getLogs } from '@/api/log'
-import { PageHeader, StatCard, ChartContainer } from '@/components'
+import { PageHeader, StatCard } from '@/components'
+// ChartContainer 包含 chart.js 依赖，使用异步加载按需加载图表功能
+const ChartContainer = defineAsyncComponent(() => import('@/components/ChartContainer.vue'))
 import type { ChartOptions } from 'chart.js'
 
 // ============ 局部类型定义 ============

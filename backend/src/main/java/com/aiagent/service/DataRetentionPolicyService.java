@@ -116,11 +116,7 @@ public class DataRetentionPolicyService {
 
     private long cleanupOldSystemLogs(LocalDateTime threshold) {
         try {
-            var allLogs = systemLogRepository.findAll();
-            return allLogs.stream()
-                    .filter(log -> log.getCreatedAt() != null && log.getCreatedAt().isBefore(threshold))
-                    .peek(log -> systemLogRepository.delete(log))
-                    .count();
+            return systemLogRepository.deleteByCreatedAtBefore(threshold);
         } catch (Exception e) {
             log.error("清理系统日志失败", e);
             return 0;
@@ -129,11 +125,7 @@ public class DataRetentionPolicyService {
 
     private long cleanupOldTestResults(LocalDateTime threshold) {
         try {
-            var allResults = testResultRepository.findAll();
-            return allResults.stream()
-                    .filter(result -> result.getCreatedAt() != null && result.getCreatedAt().isBefore(threshold))
-                    .peek(result -> testResultRepository.delete(result))
-                    .count();
+            return testResultRepository.deleteByCreatedAtBefore(threshold);
         } catch (Exception e) {
             log.error("清理测试结果失败", e);
             return 0;
