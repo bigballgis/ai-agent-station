@@ -345,5 +345,41 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **Workflow**: Timeout, versioning, recovery, node/edge validation, graph integrity
 - **API Gateway**: Versioning, deprecation, call logging, analytics, 8 Swagger groups
 - **Build**: Clean 12s, named chunks, zero warnings
-- **Migrations**: V1-V26 (Flyway)
+- **Migrations**: V1-V27 (Flyway)
 - **DevOps**: CI/CD, Prometheus, graceful shutdown, Docker limits, logback-spring
+
+### Round 141-150 (Agent Core + MCP + Multi-Tenant)
+
+#### Round 141-143: Agent Core
+- AgentExecutionMonitor: Semaphore concurrency limit (5/agent), error rate Prometheus counter
+- Execution timeout: 120s default, Future.get() with cancel
+- AgentConfigValidator: model, temperature, maxTokens, systemPrompt, tool references
+- Template system: isTemplate, rating (weighted avg), usageCount, V27 migration
+- Template APIs: list (keyword+category), use, rate
+
+#### Round 144-146: MCP Tool Integration
+- McpToolHealthChecker: 5-min scheduled ping, auto-disable after 3 failures
+- Error categories: TIMEOUT, AUTH_FAILURE, RATE_LIMITED, INVALID_REQUEST, INTERNAL_ERROR
+- ToolController: /tools/health, /tools/{id}/test-connection
+- McpToolMarket.vue: health indicator, test connection button
+
+#### Round 147-149: Multi-Tenant Hardening
+- 15 Repositories: tenant-safe methods added, unsafe global methods deprecated
+- Quota enforcement: agents, workflows, storage on create/delete/upload
+- Tenant onboarding: default roles, permissions, admin user
+- Tenant offboarding: API key revoke, session invalidation, user deactivation
+- Tenant reactivation: new endpoint
+
+## Quality Metrics (Round 150)
+- **Security**: AES-256-GCM, BCrypt(12), CSP, HSTS, JWT validation, account lockout, password history, rate limiting (4+ endpoints), SortFieldValidator, path traversal, concurrent execution limit
+- **Compliance**: Full audit trail, data retention, tenant isolation (15 repos), password policy, session management (max 3)
+- **Multi-Tenancy**: Tenant-safe queries, quota enforcement, onboarding/offboarding/reactivation flows
+- **Agent**: Config validation, execution monitoring, concurrency limit, timeout, template system with rating
+- **MCP**: Health checking, error categorization, auto-disable, test connection
+- **i18n**: 960+ keys, 70+ backend messageCodes, 30 frontend error mappings
+- **Architecture**: Zero Entity exposure, 128 @Transactional, 27 @Valid, 10 VO + 12 DTO
+- **Testing**: 134+ test cases
+- **Performance**: 20+ DB indexes, bulk DELETE, paginated endpoints, async components
+- **Monitoring**: Prometheus (4 metrics), health indicators (3), structured JSON logging, API analytics
+- **Build**: Clean 11.75s, named chunks, zero warnings
+- **Migrations**: V1-V27 (Flyway)
