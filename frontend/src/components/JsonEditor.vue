@@ -5,7 +5,7 @@
       <div class="toolbar-left">
         <span class="toolbar-title">JSON</span>
         <a-tag v-if="isValid !== null" :color="isValid ? 'success' : 'error'" class="validation-tag">
-          {{ isValid ? '格式正确' : '格式错误' }}
+          {{ isValid ? t('common.jsonValid') : t('common.jsonInvalid') }}
         </a-tag>
       </div>
       <div class="toolbar-right">
@@ -13,19 +13,19 @@
           <template #icon>
             <AlignLeftOutlined />
           </template>
-          格式化
+          {{ t('common.format') }}
         </a-button>
         <a-button type="text" size="small" @click="handleCopy">
           <template #icon>
             <CopyOutlined />
           </template>
-          复制
+          {{ t('common.copy') }}
         </a-button>
         <a-button type="text" size="small" @click="handleClear">
           <template #icon>
             <DeleteOutlined />
           </template>
-          清空
+          {{ t('common.clear') }}
         </a-button>
       </div>
     </div>
@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   AlignLeftOutlined,
@@ -72,6 +73,8 @@ import {
   DeleteOutlined,
   WarningOutlined,
 } from '@ant-design/icons-vue'
+
+const { t } = useI18n()
 
 /**
  * JsonEditor 组件
@@ -135,7 +138,7 @@ function validateJson() {
     errorMessage.value = ''
   } catch (e: any) {
     isValid.value = false
-    errorMessage.value = e.message || 'JSON 格式错误'
+    errorMessage.value = e.message || t('common.jsonParseError')
     emit('error', errorMessage.value)
   }
 }
@@ -148,9 +151,9 @@ function handleFormat() {
     emit('update:modelValue', internalValue.value)
     isValid.value = true
     errorMessage.value = ''
-    message.success('格式化成功')
+    message.success(t('common.formatSuccess'))
   } catch {
-    message.error('JSON 格式错误，无法格式化')
+    message.error(t('common.jsonFormatError'))
   }
 }
 
@@ -158,9 +161,9 @@ function handleFormat() {
 async function handleCopy() {
   try {
     await navigator.clipboard.writeText(internalValue.value)
-    message.success('已复制到剪贴板')
+    message.success(t('common.copiedToClipboard'))
   } catch {
-    message.error('复制失败')
+    message.error(t('common.copyFailed'))
   }
 }
 

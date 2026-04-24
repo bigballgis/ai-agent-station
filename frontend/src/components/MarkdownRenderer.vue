@@ -2,7 +2,7 @@
   <div class="markdown-renderer">
     <!-- 目录（可选） -->
     <div v-if="showToc && tocItems.length > 0" class="markdown-toc">
-      <div class="toc-title">目录</div>
+      <div class="toc-title">{{ t('component.tableOfContents') }}</div>
       <nav class="toc-list">
         <a
           v-for="item in tocItems"
@@ -28,7 +28,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import DOMPurify from 'dompurify'
+
+const { t } = useI18n()
 
 /**
  * MarkdownRenderer 组件

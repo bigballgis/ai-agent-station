@@ -5,14 +5,14 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            配额管理
+            {{ t('quota.title') }}
           </h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            管理各租户的资源配额，监控 Agent 数量、API 调用、Token 消耗和存储空间的使用情况
+            {{ t('quota.subtitle') }}
           </p>
         </div>
         <a-button type="primary" @click="refreshData" :loading="loading">
-          刷新数据
+          {{ t('quota.refreshData') }}
         </a-button>
       </div>
     </div>
@@ -134,7 +134,7 @@
         :columns="columns"
         :data-source="filteredTenants"
         :loading="loading"
-        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 条` }"
+        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => t('quota.totalRecords', { total }) }"
         row-key="id"
         class="quota-table"
       >
@@ -183,7 +183,7 @@
 
           <template v-if="column.key === 'action'">
             <a-button type="link" size="small" @click="openEditModal(record)">
-              编辑配额
+              {{ t('quota.editQuotaBtn') }}
             </a-button>
           </template>
         </template>

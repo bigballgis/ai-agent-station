@@ -141,10 +141,10 @@
             class="px-4 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 cursor-pointer min-w-[140px]"
           >
             <option value="">{{ t('log.allAgents') }}</option>
-            <option value="智能客服">智能客服</option>
-            <option value="文档助手">文档助手</option>
-            <option value="数据分析">数据分析</option>
-            <option value="代码生成">代码生成</option>
+            <option value="smart-customer-service">{{ t('logCenter.smartCustomerService') }}</option>
+            <option value="doc-assistant">{{ t('logCenter.docAssistant') }}</option>
+            <option value="data-analysis">{{ t('logCenter.dataAnalysisAgent') }}</option>
+            <option value="code-generation">{{ t('logCenter.codeGenAgent') }}</option>
           </select>
           <select
             v-model="apiFilters.status"
@@ -258,10 +258,10 @@
           >
             <option value="">{{ t('log.allModules') }}</option>
             <option value="Agent">Agent</option>
-            <option value="认证">认证</option>
-            <option value="工作流">工作流</option>
-            <option value="部署">部署</option>
-            <option value="系统">系统</option>
+            <option value="auth">{{ t('logCenter.moduleAuth') }}</option>
+            <option value="workflow">{{ t('logCenter.moduleWorkflow') }}</option>
+            <option value="deploy">{{ t('logCenter.moduleDeploy') }}</option>
+            <option value="system">{{ t('logCenter.moduleSystem') }}</option>
           </select>
           <select
             v-model="errorFilters.level"

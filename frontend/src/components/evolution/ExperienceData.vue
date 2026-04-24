@@ -1,19 +1,19 @@
 <template>
   <div class="experience-data">
-    <a-card title="经验数据分析" class="mb-6">
+    <a-card :title="t('evolution.experience.title')" class="mb-6">
       <div class="flex flex-wrap gap-4 mb-6">
-        <a-select v-model:value="selectedAgent" placeholder="选择Agent" class="w-64">
+        <a-select v-model:value="selectedAgent" :placeholder="t('evolution.experience.selectAgent')" class="w-64">
           <a-option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </a-option>
         </a-select>
-        <a-date-picker v-model:value="dateRange" range-picker placeholder="选择时间范围" class="w-64" />
+        <a-date-picker v-model:value="dateRange" range-picker :placeholder="t('evolution.experience.selectTimeRange')" class="w-64" />
         <a-button type="primary" @click="fetchExperienceData">
-          <SearchOutlined /> 查询
+          <SearchOutlined /> {{ t('evolution.experience.query') }}
         </a-button>
       </div>
 
-      <a-card title="经验数据统计" class="mb-6">
+      <a-card :title="t('evolution.experience.statistics')" class="mb-6">
         <div class="grid grid-cols-2 gap-6">
           <div class="h-64">
             <canvas ref="experienceChart"></canvas>
@@ -24,7 +24,7 @@
         </div>
       </a-card>
 
-      <a-card title="经验数据列表">
+      <a-card :title="t('evolution.experience.list')">
         <a-table :columns="experienceColumns" :data-source="experienceData" :pagination="{ pageSize: 10 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'experienceType'">
@@ -41,10 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import Chart from 'chart.js/auto'
 import { getExperiences } from '@/api/experience'
+
+const { t } = useI18n()
 
 const selectedAgent = ref<string>('1')
 const dateRange = ref<any>(null)
@@ -56,44 +59,44 @@ const agents = ref<Array<{ id: string; name: string }>>([])
 
 const experienceData = ref<any[]>([])
 
-const experienceColumns = [
+const experienceColumns = computed(() => [
   {
-    title: 'Agent名称',
+    title: t('evolution.experience.agentName'),
     dataIndex: 'agentName',
     key: 'agentName'
   },
   {
-    title: '经验类型',
+    title: t('evolution.experience.experienceType'),
     dataIndex: 'experienceType',
     key: 'experienceType'
   },
   {
-    title: '经验内容',
+    title: t('evolution.experience.content'),
     dataIndex: 'content',
     key: 'content'
   },
   {
-    title: '评分',
+    title: t('evolution.experience.rating'),
     dataIndex: 'rating',
     key: 'rating'
   },
   {
-    title: '标签',
+    title: t('evolution.experience.tags'),
     dataIndex: 'tags',
     key: 'tags'
   },
   {
-    title: '创建时间',
+    title: t('evolution.experience.createdAt'),
     dataIndex: 'createdAt',
     key: 'createdAt'
   }
-]
+])
 
 function getTypeColor(type: string) {
   switch (type) {
-    case '成功经验': return 'green'
-    case '失败经验': return 'red'
-    case '学习经验': return 'blue'
+    case t('evolution.experience.typeSuccess'): return 'green'
+    case t('evolution.experience.typeFail'): return 'red'
+    case t('evolution.experience.typeLearn'): return 'blue'
     default: return 'default'
   }
 }
@@ -111,7 +114,7 @@ async function fetchExperienceData() {
     const res = await getExperiences(params)
     experienceData.value = res.data?.data || res.data || []
   } catch (e) {
-    console.error('获取经验数据失败:', e)
+    console.error(t('evolution.experience.fetchFailed'), e)
   }
 }
 
@@ -122,20 +125,20 @@ onMounted(async () => {
     new Chart(experienceChart.value, {
       type: 'bar',
       data: {
-        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+        labels: (t('evolution.experience.months') as string[]),
         datasets: [
           {
-            label: '成功经验',
+            label: t('evolution.experience.typeSuccess'),
             data: [12, 19, 15, 20, 25, 30],
             backgroundColor: 'rgba(82, 196, 26, 0.6)'
           },
           {
-            label: '失败经验',
+            label: t('evolution.experience.typeFail'),
             data: [5, 8, 6, 4, 3, 2],
             backgroundColor: 'rgba(245, 34, 45, 0.6)'
           },
           {
-            label: '学习经验',
+            label: t('evolution.experience.typeLearn'),
             data: [8, 12, 10, 15, 18, 22],
             backgroundColor: 'rgba(24, 144, 255, 0.6)'
           }
@@ -158,7 +161,7 @@ onMounted(async () => {
     new Chart(categoryChart.value, {
       type: 'doughnut',
       data: {
-        labels: ['用户服务', '问题解决', '响应速度', '客户挽留', '沟通技巧', '知识学习'],
+        labels: (t('evolution.experience.categories') as string[]),
         datasets: [
           {
             data: [35, 25, 15, 10, 10, 5],

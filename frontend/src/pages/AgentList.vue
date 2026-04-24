@@ -236,24 +236,24 @@
       <!-- Step 2: 模型配置 -->
       <div v-show="currentStep === 1" class="space-y-4">
         <a-form layout="vertical">
-          <a-form-item label="LLM 模型">
+          <a-form-item :label="t('agent.wizard.llmModel')">
             <a-select v-model:value="agentConfig.model">
               <a-select-option value="gpt-4">GPT-4</a-select-option>
               <a-select-option value="gpt-4-turbo">GPT-4 Turbo</a-select-option>
               <a-select-option value="gpt-3.5-turbo">GPT-3.5 Turbo</a-select-option>
               <a-select-option value="claude-3-opus">Claude 3 Opus</a-select-option>
               <a-select-option value="claude-3-sonnet">Claude 3 Sonnet</a-select-option>
-              <a-select-option value="qwen-max">通义千问 Max</a-select-option>
-              <a-select-option value="qwen-plus">通义千问 Plus</a-select-option>
+              <a-select-option value="qwen-max">{{ t('agent.qwenMax') }}</a-select-option>
+              <a-select-option value="qwen-plus">{{ t('agent.qwenPlus') }}</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="温度 (Temperature)">
+          <a-form-item :label="t('agent.wizard.temperature') + ' (Temperature)'">
             <div class="flex items-center gap-3">
               <a-slider v-model:value="agentConfig.temperature" :min="0" :max="2" :step="0.1" class="flex-1" />
               <span class="text-sm text-neutral-500 w-10 text-right">{{ agentConfig.temperature }}</span>
             </div>
           </a-form-item>
-          <a-form-item label="最大 Token 数">
+          <a-form-item :label="t('agent.wizard.maxTokens')">
             <a-input-number v-model:value="agentConfig.maxTokens" :min="256" :max="128000" :step="256" class="w-full" />
           </a-form-item>
         </a-form>

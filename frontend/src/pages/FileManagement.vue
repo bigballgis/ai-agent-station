@@ -94,7 +94,7 @@
         :columns="columns"
         :data-source="filteredFiles"
         :loading="loading"
-        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 个文件` }"
+        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => t('fileMgmt.totalFiles', { total }) }"
         row-key="id"
         class="file-table"
       >

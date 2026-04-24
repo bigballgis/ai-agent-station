@@ -15,7 +15,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          打开Swagger UI
+          {{ t('apiDocs.openSwagger') }}
         </a>
       </div>
     </div>
@@ -23,18 +23,18 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="flex items-center justify-center py-20">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span class="ml-3 text-gray-600 dark:text-gray-400">加载 OpenAPI 文档中...</span>
+      <span class="ml-3 text-gray-600 dark:text-gray-400">{{ t('apiDocs.loading') }}</span>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="loadError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-      <p class="text-red-600 dark:text-red-400 mb-2">加载 OpenAPI 文档失败</p>
+      <p class="text-red-600 dark:text-red-400 mb-2">{{ t('apiDocs.loadFailed') }}</p>
       <p class="text-red-500 dark:text-red-500 text-sm">{{ loadError }}</p>
       <button
         @click="fetchOpenApiSpec"
         class="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
       >
-        重试
+        {{ t('apiDocs.retry') }}
       </button>
     </div>
 
@@ -49,7 +49,7 @@
             class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
           />
           <select v-model="selectedTag" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
-            <option value="">{{ t('apiDocs.allAgents') || '所有标签' }}</option>
+            <option value="">{{ t('apiDocs.allTags') }}</option>
             <option v-for="tag in tags" :key="tag" :value="tag">
               {{ tag }}
             </option>
@@ -239,7 +239,7 @@ async function fetchOpenApiSpec() {
     const spec = res?.data || res
 
     if (!spec || !spec.paths) {
-      loadError.value = '返回的 OpenAPI 文档格式无效'
+      loadError.value = t('apiDocs.invalidFormat')
       return
     }
 
@@ -314,7 +314,7 @@ async function fetchOpenApiSpec() {
     tags.value = Array.from(tagSet).sort()
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    loadError.value = err.message || '未知错误'
+    loadError.value = err.message || t('apiDocs.unknownError')
     message.error(t('apiDocs.fetchFailed'))
   } finally {
     loading.value = false

@@ -1,6 +1,6 @@
 <template>
   <div class="reflection-evaluation">
-    <a-card title="反思评估结果" class="mb-6">
+    <a-card :title="t('evolution.reflection.title')" class="mb-6">
       <div class="flex flex-wrap gap-4 mb-6">
         <a-statistic
           v-for="metric in evaluationMetrics"
@@ -16,13 +16,13 @@
         </a-statistic>
       </div>
 
-      <a-card title="性能趋势" class="mb-6">
+      <a-card :title="t('evolution.reflection.performanceTrend')" class="mb-6">
         <div class="h-80">
           <canvas ref="trendChart"></canvas>
         </div>
       </a-card>
 
-      <a-card title="详细评估结果">
+      <a-card :title="t('evolution.reflection.detailResult')">
         <a-table :columns="evaluationColumns" :data-source="evaluationData" :pagination="false">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'score'">
@@ -44,10 +44,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CheckCircleOutlined, WarningOutlined } from '@ant-design/icons-vue'
 import Chart from 'chart.js/auto'
 import { getReflections, triggerEvaluation } from '@/api/reflection'
+
+const { t } = useI18n()
 
 const trendChart = ref<HTMLCanvasElement | null>(null)
 
@@ -55,29 +58,29 @@ const evaluationMetrics = ref<any[]>([])
 
 const evaluationData = ref<any[]>([])
 
-const evaluationColumns = [
+const evaluationColumns = computed(() => [
   {
-    title: '评估类别',
+    title: t('evolution.reflection.category'),
     dataIndex: 'category',
     key: 'category'
   },
   {
-    title: '评分',
+    title: t('evolution.reflection.score'),
     dataIndex: 'score',
     key: 'score',
     render: (score: number) => score * 100 + '%'
   },
   {
-    title: '趋势',
+    title: t('evolution.reflection.trend'),
     dataIndex: 'trend',
     key: 'trend'
   },
   {
-    title: '描述',
+    title: t('evolution.reflection.description'),
     dataIndex: 'description',
     key: 'description'
   }
-]
+])
 
 function getScoreStatus(score: number) {
   if (score >= 0.8) return 'success'
@@ -97,7 +100,7 @@ async function fetchReflectionData() {
       evaluationData.value = data.evaluations
     }
   } catch (e) {
-    console.error('获取反思评估数据失败:', e)
+    console.error(t('evolution.reflection.fetchFailed'), e)
   }
 }
 
@@ -107,24 +110,24 @@ onMounted(async () => {
     new Chart(trendChart.value, {
       type: 'line',
       data: {
-        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+        labels: (t('evolution.reflection.months') as string[]),
         datasets: [
           {
-            label: '总体评分',
+            label: t('evolution.reflection.overallScore'),
             data: [72, 78, 82, 80, 83, 85.5],
             borderColor: '#1890ff',
             backgroundColor: 'rgba(24, 144, 255, 0.1)',
             tension: 0.4
           },
           {
-            label: '准确率',
+            label: t('evolution.reflection.accuracy'),
             data: [85, 88, 90, 91, 91.5, 92.3],
             borderColor: '#52c41a',
             backgroundColor: 'rgba(82, 196, 26, 0.1)',
             tension: 0.4
           },
           {
-            label: '效率',
+            label: t('evolution.reflection.efficiency'),
             data: [85, 82, 80, 79, 79.5, 78.9],
             borderColor: '#faad14',
             backgroundColor: 'rgba(250, 173, 20, 0.1)',

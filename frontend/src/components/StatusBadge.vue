@@ -10,70 +10,73 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * StatusBadge 组件
- * 统一的状态标签组件，将状态字符串映射到颜色和中文标签
+ * 统一的状态标签组件，将状态字符串映射到颜色和本地化标签
  * 替代各页面重复的状态渲染逻辑（AgentList, AlertNotification, ApiManagement 等）
  */
 
 // Agent 状态映射
 const agentStatusMap: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: '草稿', color: 'neutral' },
-  PENDING_APPROVAL: { label: '待审批', color: 'warning' },
-  APPROVED: { label: '已审批', color: 'success' },
-  PUBLISHED: { label: '已发布', color: 'primary' },
-  ARCHIVED: { label: '已归档', color: 'neutral' },
-  RUNNING: { label: '运行中', color: 'success' },
-  STOPPED: { label: '已停止', color: 'neutral' },
-  ERROR: { label: '异常', color: 'danger' },
+  DRAFT: { label: t('status.draft'), color: 'neutral' },
+  PENDING_APPROVAL: { label: t('status.pendingApproval'), color: 'warning' },
+  APPROVED: { label: t('status.approved'), color: 'success' },
+  PUBLISHED: { label: t('status.published'), color: 'primary' },
+  ARCHIVED: { label: t('status.archived'), color: 'neutral' },
+  RUNNING: { label: t('status.running'), color: 'success' },
+  STOPPED: { label: t('status.stopped'), color: 'neutral' },
+  ERROR: { label: t('status.error'), color: 'danger' },
 }
 
 // 测试状态映射
 const testStatusMap: Record<string, { label: string; color: string }> = {
-  PASSED: { label: '通过', color: 'success' },
-  FAILED: { label: '失败', color: 'danger' },
-  RUNNING: { label: '运行中', color: 'primary' },
-  PENDING: { label: '待执行', color: 'warning' },
-  SKIPPED: { label: '已跳过', color: 'neutral' },
-  passed: { label: '通过', color: 'success' },
-  failed: { label: '失败', color: 'danger' },
-  running: { label: '运行中', color: 'primary' },
-  pending: { label: '待执行', color: 'warning' },
+  PASSED: { label: t('status.passed'), color: 'success' },
+  FAILED: { label: t('status.failed'), color: 'danger' },
+  RUNNING: { label: t('status.running'), color: 'primary' },
+  PENDING: { label: t('status.pending'), color: 'warning' },
+  SKIPPED: { label: t('status.skipped'), color: 'neutral' },
+  passed: { label: t('status.passed'), color: 'success' },
+  failed: { label: t('status.failed'), color: 'danger' },
+  running: { label: t('status.running'), color: 'primary' },
+  pending: { label: t('status.pending'), color: 'warning' },
 }
 
 // 审批状态映射
 const approvalStatusMap: Record<string, { label: string; color: string }> = {
-  PENDING: { label: '待审批', color: 'warning' },
-  APPROVED: { label: '已通过', color: 'success' },
-  REJECTED: { label: '已拒绝', color: 'danger' },
-  CANCELLED: { label: '已取消', color: 'neutral' },
+  PENDING: { label: t('status.pendingApproval'), color: 'warning' },
+  APPROVED: { label: t('status.approved'), color: 'success' },
+  REJECTED: { label: t('status.rejected'), color: 'danger' },
+  CANCELLED: { label: t('status.cancelled'), color: 'neutral' },
 }
 
 // 发布状态映射
 const deploymentStatusMap: Record<string, { label: string; color: string }> = {
-  DEPLOYING: { label: '发布中', color: 'primary' },
-  DEPLOYED: { label: '已发布', color: 'success' },
-  FAILED: { label: '发布失败', color: 'danger' },
-  ROLLBACK: { label: '已回滚', color: 'warning' },
+  DEPLOYING: { label: t('status.deploying'), color: 'primary' },
+  DEPLOYED: { label: t('status.deployed'), color: 'success' },
+  FAILED: { label: t('status.deployFailed'), color: 'danger' },
+  ROLLBACK: { label: t('status.rollback'), color: 'warning' },
 }
 
 // 告警状态映射
 const alertStatusMap: Record<string, { label: string; color: string }> = {
-  firing: { label: '触发中', color: 'danger' },
-  resolved: { label: '已解决', color: 'success' },
-  critical: { label: '严重', color: 'danger' },
-  warning: { label: '警告', color: 'warning' },
-  info: { label: '信息', color: 'primary' },
+  firing: { label: t('status.firing'), color: 'danger' },
+  resolved: { label: t('status.resolved'), color: 'success' },
+  critical: { label: t('status.critical'), color: 'danger' },
+  warning: { label: t('status.warning'), color: 'warning' },
+  info: { label: t('status.info'), color: 'primary' },
 }
 
 // 通用状态映射
 const userStatusMap: Record<string, { label: string; color: string }> = {
-  ACTIVE: { label: '活跃', color: 'success' },
-  INACTIVE: { label: '未激活', color: 'neutral' },
-  DISABLED: { label: '已禁用', color: 'danger' },
-  ENABLED: { label: '已启用', color: 'success' },
-  LOCKED: { label: '已锁定', color: 'warning' },
+  ACTIVE: { label: t('status.active'), color: 'success' },
+  INACTIVE: { label: t('status.inactive'), color: 'neutral' },
+  DISABLED: { label: t('status.disabled'), color: 'danger' },
+  ENABLED: { label: t('status.enabled'), color: 'success' },
+  LOCKED: { label: t('status.locked'), color: 'warning' },
 }
 
 // 颜色到样式类映射

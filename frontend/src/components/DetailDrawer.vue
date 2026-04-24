@@ -26,6 +26,9 @@
 
 <script setup lang="ts">
 import { useTheme } from '@/composables/useTheme'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * DetailDrawer 组件
@@ -51,7 +54,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  title: '详情',
+  title: t('component.detail'),
   width: 640,
   placement: 'right',
   closable: true,

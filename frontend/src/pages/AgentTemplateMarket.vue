@@ -5,10 +5,10 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            Agent 模板市场
+            {{ t('tplMarket.title') }}
           </h1>
           <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            浏览和使用预置的 Agent 模板，快速构建智能应用
+            {{ t('tplMarket.subtitle') }}
           </p>
         </div>
         <button
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
           </svg>
-          保存为模板
+          {{ t('tplMarket.saveAsTemplateBtn') }}
         </button>
       </div>
     </div>
@@ -142,11 +142,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              使用模板
+              {{ t('tplMarket.useTemplateBtn') }}
             </button>
             <button
               class="p-2 rounded-xl text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer"
-              title="预览"
+              :title="t('tplMarket.previewTitle')"
               @click.stop="previewTemplate(tpl)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +159,7 @@
               :class="tpl.favorited
                 ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                 : 'text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'"
-              title="收藏"
+              :title="t('tplMarket.favoriteTitle')"
               @click.stop="toggleFavorite(tpl)"
             >
               <svg
@@ -259,7 +259,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            使用此模板
+            {{ t('tplMarket.useThisTemplate') }}
           </button>
         </div>
       </div>
@@ -361,7 +361,7 @@ interface AgentTemplate {
         nodes: a.nodes || [],
       }))
   } catch (e) {
-    logger.error('获取模板列表失败:', e)
+    logger.error(t('tplMarket.fetchTemplatesFailed'), e)
     message.error(t('tplMarket.fetchFailed'))
   } finally {
     loading.value = false
@@ -411,7 +411,7 @@ async function useTemplate(tpl: typeof templates.value[0]) {
     message.success(`${t('tplMarket.useSuccess')} "${tpl.name}"`)
     router.push('/agents')
   } catch (e) {
-    logger.error('使用模板失败:', e)
+    logger.error(t('tplMarket.useTemplateFailed'), e)
     message.error(t('tplMarket.useFailed'))
   }
 }
@@ -442,7 +442,7 @@ async function handleSaveTemplate() {
     newTemplate.value = { name: '', description: '', category: undefined }
     await fetchTemplates()
   } catch (e) {
-    logger.error('保存模板失败:', e)
+    logger.error(t('tplMarket.saveTemplateFailed'), e)
     message.error(t('tplMarket.saveFailed'))
   }
 }

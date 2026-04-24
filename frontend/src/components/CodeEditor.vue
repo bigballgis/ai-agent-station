@@ -5,7 +5,7 @@
       <div class="toolbar-left">
         <span class="language-tag">{{ language.toUpperCase() }}</span>
         <a-tag v-if="lineCount > 0" color="default" class="line-count-tag">
-          {{ lineCount }} 行
+          {{ lineCount }} {{ t('common.lines') }}
         </a-tag>
       </div>
       <div class="toolbar-right">
@@ -13,13 +13,13 @@
           <template #icon>
             <CopyOutlined />
           </template>
-          复制
+          {{ t('common.copy') }}
         </a-button>
         <a-button v-if="!readonly" type="text" size="small" @click="handleFormat">
           <template #icon>
             <AlignLeftOutlined />
           </template>
-          格式化
+          {{ t('common.format') }}
         </a-button>
       </div>
     </div>
@@ -54,8 +54,11 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, AlignLeftOutlined } from '@ant-design/icons-vue'
+
+const { t } = useI18n()
 
 /**
  * CodeEditor 组件
@@ -128,9 +131,9 @@ function handleKeydown(e: KeyboardEvent) {
 async function handleCopy() {
   try {
     await navigator.clipboard.writeText(internalValue.value)
-    message.success('已复制到剪贴板')
+    message.success(t('common.copiedToClipboard'))
   } catch {
-    message.error('复制失败')
+    message.error(t('common.copyFailed'))
   }
 }
 
@@ -141,12 +144,12 @@ function handleFormat() {
       const parsed = JSON.parse(internalValue.value)
       internalValue.value = JSON.stringify(parsed, null, 2)
       emit('update:modelValue', internalValue.value)
-      message.success('格式化成功')
+      message.success(t('common.formatSuccess'))
     } catch {
-      message.error('JSON 格式错误，无法格式化')
+      message.error(t('common.jsonFormatError'))
     }
   } else {
-    message.info('当前语言暂不支持格式化')
+    message.info(t('common.formatNotSupported'))
   }
 }
 

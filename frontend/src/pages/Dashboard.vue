@@ -140,7 +140,7 @@
     <!-- 快捷操作 + 最近活动 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <!-- 快捷操作 -->
-      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6 animate-slide-up" style="animation-delay: 150ms;" aria-label="快捷操作">
+      <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card p-6 animate-slide-up" style="animation-delay: 150ms;" :aria-label="t('dashboard.quickActionsLabel')">
         <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-50 mb-5">{{ t('dashboard.quickActions') }}</h2>
         <div class="grid grid-cols-2 gap-3">
           <button
@@ -528,9 +528,9 @@ function formatRelativeTime(dateStr: string): string {
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
   if (minutes < 1) return t('dashboard.activityTimes.0').replace(/\d+/, '1')
-  if (minutes < 60) return `${minutes} ${locale.value === 'zh-CN' ? '分钟前' : 'min ago'}`
-  if (hours < 24) return `${hours} ${locale.value === 'zh-CN' ? '小时前' : 'hours ago'}`
-  return `${days} ${locale.value === 'zh-CN' ? '天前' : 'days ago'}`
+  if (minutes < 60) return `${minutes} ${t('dashboard.minutesAgo')}`
+  if (hours < 24) return `${hours} ${t('dashboard.hoursAgo')}`
+  return `${days} ${t('dashboard.daysAgo')}`
 }
 
 async function loadRecentActivities() {
@@ -542,7 +542,7 @@ async function loadRecentActivities() {
       activities.value = logsList.map((log: LogItem) => ({
         title: log.action || log.description || log.module || t('common.noData'),
         time: formatRelativeTime(log.createdAt || log.createTime),
-        operator: log.operator || log.username || log.createdBy || (locale.value === 'zh-CN' ? '系统' : 'System'),
+        operator: log.operator || log.username || log.createdBy || t('dashboard.system'),
         dotClass: moduleDotColors[log.module?.toLowerCase()] || moduleDotColors.default,
       }))
     } else {

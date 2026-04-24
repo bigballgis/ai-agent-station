@@ -3,12 +3,12 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="chart-loading">
       <a-spin size="large" />
-      <span class="chart-loading-text">加载中...</span>
+      <span class="chart-loading-text">{{ t('component.loading') }}</span>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="isEmpty" class="chart-empty">
-      <EmptyState type="noData" description="暂无图表数据" />
+      <EmptyState type="noData" :description="t('component.noChartData')" />
     </div>
 
     <!-- 图表画布 -->
@@ -21,8 +21,11 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTheme } from '@/composables/useTheme'
 import EmptyState from './EmptyState.vue'
+
+const { t } = useI18n()
 import {
   Chart as ChartJS,
   CategoryScale,

@@ -4,7 +4,7 @@
     <div v-if="searchable" class="tree-search">
       <a-input
         v-model:value="searchKeyword"
-        placeholder="搜索权限..."
+        :placeholder="t('component.searchPermission')"
         allow-clear
         size="small"
       >
@@ -49,14 +49,17 @@
 
     <!-- 空状态 -->
     <div v-if="filteredTreeData.length === 0 && searchKeyword" class="tree-empty">
-      <span>未找到匹配的权限</span>
+      <span>{{ t('component.noMatchPermission') }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined } from '@ant-design/icons-vue'
+
+const { t } = useI18n()
 
 /**
  * TreeSelect 组件
@@ -96,7 +99,7 @@ const props = withDefaults(defineProps<Props>(), {
   searchable: true,
   checkStrictly: false,
   defaultExpandAll: false,
-  placeholder: '请选择',
+  placeholder: t('component.pleaseSelect'),
 })
 
 const emit = defineEmits<{

@@ -9,9 +9,9 @@
       <div class="notification-dropdown">
         <!-- 头部 -->
         <div class="notification-header">
-          <span class="notification-title">通知</span>
+          <span class="notification-title">{{ t('component.notification') }}</span>
           <a-button type="link" size="small" @click="handleMarkAllRead">
-            全部已读
+            {{ t('component.markAllRead') }}
           </a-button>
         </div>
 
@@ -33,14 +33,14 @@
 
           <!-- 空状态 -->
           <div v-if="notifications.length === 0" class="notification-empty">
-            暂无通知
+            {{ t('component.noNotifications') }}
           </div>
         </div>
 
         <!-- 底部 -->
         <div v-if="notifications.length > 0" class="notification-footer">
           <a-button type="link" size="small" block @click="handleViewAll">
-            查看全部通知
+            {{ t('component.viewAllNotifications') }}
           </a-button>
         </div>
       </div>
@@ -58,8 +58,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { BellOutlined } from '@ant-design/icons-vue'
 import type { Component } from 'vue'
+
+const { t } = useI18n()
 
 /**
  * NotificationBadge 组件

@@ -9,7 +9,7 @@
           <span class="config-header-type">{{ typeName }}</span>
         </div>
       </div>
-      <button class="config-close-btn" @click="$emit('close')" title="关闭">
+      <button class="config-close-btn" @click="$emit('close')" :title="t('designer.config.close')">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -149,13 +149,13 @@
               @input="updateKV(field.key, idx, 'value', ($event.target as HTMLInputElement).value)"
               placeholder="value"
             />
-            <button class="kv-remove-btn" @click="removeKV(field.key, idx)" title="删除">
+            <button class="kv-remove-btn" @click="removeKV(field.key, idx)" :title="t('designer.config.delete')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <button class="kv-add-btn" @click="addKV(field.key)">+ 添加映射</button>
+          <button class="kv-add-btn" @click="addKV(field.key)">{{ t('designer.config.addMapping') }}</button>
         </div>
 
         <!-- Code editor -->
@@ -185,28 +185,28 @@
               type="text"
               :value="c.expression"
               @input="updateCase(i, 'expression', ($event.target as HTMLInputElement).value)"
-              placeholder="条件表达式"
+              :placeholder="t('designer.config.expressionPlaceholder')"
             />
             <input
               class="kv-input"
               type="text"
               :value="c.label"
               @input="updateCase(i, 'label', ($event.target as HTMLInputElement).value)"
-              placeholder="分支名称"
+              :placeholder="t('designer.config.branchNamePlaceholder')"
             />
-            <button class="kv-remove-btn" @click="removeCase(i)" title="删除分支">
+            <button class="kv-remove-btn" @click="removeCase(i)" :title="t('designer.config.deleteBranch')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <button class="kv-add-btn" @click="addCase">+ 添加分支</button>
+          <button class="kv-add-btn" @click="addCase">{{ t('designer.config.addBranch') }}</button>
         </div>
       </template>
 
       <!-- Variable hint for LLM prompt -->
       <div v-if="node.type === 'llm' && availableNodes.length > 0" class="variable-hint">
-        <span class="hint-label">可用变量:</span>
+        <span class="hint-label">{{ t('designer.config.availableVars') }}</span>
         <span
           class="hint-text"
           v-for="avNode in availableNodes"
@@ -339,7 +339,7 @@ function addCase() {
   if (!props.node) return
   const cases = [...(props.node.config.cases as Array<{expression: string, label: string, outputPort: string}> || [])]
   const portIndex = cases.length + 1
-  cases.push({ expression: '', label: `分支 ${portIndex}`, outputPort: `case_${portIndex}` })
+  cases.push({ expression: '', label: t('designer.config.branchDefault', { index: portIndex }), outputPort: `case_${portIndex}` })
   emit('update-config', props.node.id, 'cases', cases)
 }
 

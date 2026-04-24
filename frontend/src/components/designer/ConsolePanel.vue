@@ -42,14 +42,14 @@
         :class="{ active: activeTab === 'console' }"
         @click.stop="activeTab = 'console'"
       >
-        控制台
+        {{ t('designer.console.tabConsole') }}
       </button>
       <button
         class="console-tab"
         :class="{ active: activeTab === 'state' }"
         @click.stop="activeTab = 'state'"
       >
-        状态
+        {{ t('designer.console.tabState') }}
         <span v-if="flowStateKeys.length > 0" class="console-badge">{{ flowStateKeys.length }}</span>
       </button>
       <button
@@ -58,7 +58,7 @@
         :class="{ active: activeTab === 'debug' }"
         @click.stop="activeTab = 'debug'"
       >
-        调试
+        {{ t('designer.console.tabDebug') }}
         <span v-if="breakpointCount > 0" class="console-badge debug-badge">{{ breakpointCount }}</span>
       </button>
     </div>
@@ -83,7 +83,7 @@
     <!-- Flow State Tab Content -->
     <div v-show="!collapsed && activeTab === 'state'" class="console-body state-body">
       <div v-if="flowStateKeys.length === 0" class="console-empty">
-        运行 Agent 后将在此显示共享状态变量
+        {{ t('designer.console.stateEmpty') }}
       </div>
       <div
         v-for="key in flowStateKeys"
@@ -234,12 +234,12 @@ function formatJson(data: any): string {
 // Status label
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    pending: '待执行',
-    running: '运行中',
-    paused: '已暂停',
-    completed: '已完成',
-    failed: '失败',
-    skipped: '已跳过',
+    pending: t('designer.console.statusPending'),
+    running: t('designer.console.statusRunning'),
+    paused: t('designer.console.statusPaused'),
+    completed: t('designer.console.statusCompleted'),
+    failed: t('designer.console.statusFailed'),
+    skipped: t('designer.console.statusSkipped'),
   }
   return map[status] ?? status
 }
