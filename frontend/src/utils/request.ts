@@ -5,6 +5,7 @@ import type { ApiResponse } from '@/types/common'
 import i18n from '@/locales'
 import { getErrorDisplayMessage } from '@/utils/errorMessageMapper'
 import { addPendingRequest, removePendingRequest, cancelAllPendingRequests } from '@/utils/requestManager'
+import { circuitBreaker } from '@/utils/circuitBreaker'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -18,10 +19,20 @@ const service: AxiosInstance = axios.create({
   }
 })
 
-// ==================== GET 请求自动重试机制 ====================
+// ==================== 增强重试机制（指数退避 + 断路器） ====================
 
-const MAX_RETRY_COUNT = 2
-const RETRY_DELAY_MS = 1000
+/** 5xx 错误最大重试次数 */
+const MAX_RETRY_5XX = 3
+/** 网络错误最大重试次数 */
+const MAX_RETRY_NETWORK = 2
+/** 5xx 重试初始延迟(ms) */
+const RETRY_DELAY_5XX_MS = 1000
+/** 网络错误重试初始延迟(ms) */
+const RETRY_DELAY_NETWORK_MS = 1500
+/** 退避乘数 */
+const RETRY_MULTIPLIER = 2
+/** 最大退避延迟(ms) */
+const MAX_RETRY_DELAY_MS = 10000
 
 /**
  * 延迟指定毫秒
@@ -31,34 +42,80 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * 计算指数退避延迟
+ * @param attempt 当前重试次数（从1开始）
+ * @param baseDelay 基础延迟(ms)
+ * @returns 延迟毫秒数
+ */
+function calculateBackoff(attempt: number, baseDelay: number): number {
+  const delayMs = baseDelay * Math.pow(RETRY_MULTIPLIER, attempt - 1)
+  return Math.min(delayMs, MAX_RETRY_DELAY_MS)
+}
+
+/**
+ * 判断错误是否为网络错误（无响应）
+ */
+function isNetworkError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const err = error as { response?: unknown; code?: string }
+  return !err.response && (
+    err.code === 'ERR_NETWORK' ||
+    err.code === 'ECONNABORTED' ||
+    err.code === 'ECONNRESET' ||
+    err.code === 'ETIMEDOUT' ||
+    err.code === 'ERR_CANCELED'
+  )
+}
+
+/**
  * 判断错误是否可重试
- * - 网络异常（无响应）可重试
- * - 5xx 服务端错误可重试
- * - 429 限流错误可重试（按 Retry-After 头等待）
- * - 503 服务不可用可重试
+ * - 网络异常（无响应）可重试（最多2次）
+ * - 5xx 服务端错误可重试（最多3次）
+ * - 429 限流错误可重试（按 Retry-After 头等待，最多3次）
+ * - 4xx 错误（除429外）不重试
  */
 function isRetryableError(error: unknown): boolean {
+  // 网络错误可重试
+  if (isNetworkError(error)) return true
+
   if (!error || typeof error !== 'object' || !('response' in error)) {
-    return true
+    return false
   }
   const response = (error as { response?: { status?: number } }).response
-  if (!response) return true
+  if (!response) return false
   const status = response.status ?? 0
+  // 5xx 和 429 可重试，4xx（除429）不重试
   return status >= 500 || status === 429
+}
+
+/**
+ * 获取当前错误类型的最大重试次数
+ */
+function getMaxRetryCount(error: unknown): number {
+  if (isNetworkError(error)) return MAX_RETRY_NETWORK
+  return MAX_RETRY_5XX
+}
+
+/**
+ * 获取当前错误类型的基础延迟
+ */
+function getBaseDelay(error: unknown): number {
+  if (isNetworkError(error)) return RETRY_DELAY_NETWORK_MS
+  return RETRY_DELAY_5XX_MS
 }
 
 /**
  * 从 429 响应中获取 Retry-After 值（秒）
  */
 function getRetryAfterSeconds(error: unknown): number {
-  if (!error || typeof error !== 'object' || !('response' in error)) return RETRY_DELAY_MS / 1000
+  if (!error || typeof error !== 'object' || !('response' in error)) return RETRY_DELAY_5XX_MS / 1000
   const response = (error as { response?: { headers?: Record<string, string | undefined> } }).response
   const retryAfter = response?.headers?.['retry-after']
-  if (!retryAfter) return RETRY_DELAY_MS / 1000
+  if (!retryAfter) return RETRY_DELAY_5XX_MS / 1000
   const seconds = parseInt(retryAfter, 10)
   if (!isNaN(seconds) && seconds > 0 && seconds <= 60) return seconds
   // Retry-After 也可能是 HTTP 日期格式，简单处理
-  return RETRY_DELAY_MS / 1000
+  return RETRY_DELAY_5XX_MS / 1000
 }
 
 // ==================== Token 自动刷新机制 ====================
@@ -120,13 +177,23 @@ function clearAuthAndRedirect() {
   }
 }
 
-// ==================== 请求拦截器（去重 + AbortController） ====================
+// ==================== 请求拦截器（去重 + AbortController + 断路器） ====================
 
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+
+    // 断路器检查：如果断路器已打开，直接拒绝请求
+    if (!circuitBreaker.canProceed(config.url)) {
+      const controller = new AbortController()
+      config.signal = controller.signal
+      controller.abort()
+      console.warn(
+        `[CircuitBreaker] 请求被断路器拒绝: ${config.method?.toUpperCase()} ${config.url}`
+      )
     }
 
     // 请求去重检查
@@ -146,12 +213,15 @@ service.interceptors.request.use(
   }
 )
 
-// ==================== 响应拦截器（含 Token 自动刷新 + 增强重试） ====================
+// ==================== 响应拦截器（含 Token 自动刷新 + 增强重试 + 断路器） ====================
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     // 请求完成，从 pending map 中移除
     removePendingRequest(response.config)
+
+    // 断路器：记录成功
+    circuitBreaker.recordSuccess(response.config.url)
 
     const res = response.data as ApiResponse
     if (res.code !== 200 && res.code !== 0) {
@@ -176,28 +246,42 @@ service.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // 被断路器中止的请求，静默处理
+    if (error.config?.signal?.aborted && !error.response) {
+      return Promise.reject(error)
+    }
+
     const originalRequest = error.config
     const status = error.response?.status
+    const retryCount = originalRequest._retryCount ?? 0
+    const maxRetries = getMaxRetryCount(error)
 
-    // 自动重试逻辑（GET 请求 + 429/503/网络错误）
-    if (
-      isRetryableError(error) &&
-      (originalRequest._retryCount ?? 0) < MAX_RETRY_COUNT
-    ) {
-      // 429 限流：按 Retry-After 头等待
-      let waitMs = RETRY_DELAY_MS
+    // 自动重试逻辑（5xx + 429 + 网络错误，指数退避）
+    if (isRetryableError(error) && retryCount < maxRetries) {
+      let waitMs: number
+
       if (status === 429) {
+        // 429 限流：按 Retry-After 头等待
         const retryAfterSec = getRetryAfterSeconds(error)
         waitMs = retryAfterSec * 1000
         message.warning(i18n.global.t('common.error.rateLimit'))
+      } else {
+        // 5xx 或网络错误：指数退避
+        const baseDelay = getBaseDelay(error)
+        waitMs = calculateBackoff(retryCount + 1, baseDelay)
       }
 
-      originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1
+      originalRequest._retryCount = retryCount + 1
       console.warn(
-        `[Retry] ${originalRequest.method?.toUpperCase()} ${originalRequest.url} retry #${originalRequest._retryCount}, waiting ${waitMs}ms`
+        `[Retry] ${originalRequest.method?.toUpperCase()} ${originalRequest.url} retry #${originalRequest._retryCount}/${maxRetries}, waiting ${waitMs}ms (backoff)`
       )
       await delay(waitMs)
       return service(originalRequest)
+    }
+
+    // 重试耗尽后，记录断路器失败（仅 5xx 和网络错误）
+    if (isRetryableError(error) && retryCount >= maxRetries) {
+      circuitBreaker.recordFailure(originalRequest.url)
     }
 
     // Token 过期: 尝试自动刷新

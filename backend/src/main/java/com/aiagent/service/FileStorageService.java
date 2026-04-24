@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -172,10 +174,16 @@ public class FileStorageService {
 
     /**
      * Get a file as a Resource by its relative path.
+     * 含 Spring Retry: 最多重试2次，指数退避 (500ms, 1s)，仅重试 IO 异常
      *
      * @param filePath the relative file path
      * @return Resource for the file
      */
+    @Retryable(
+        value = {java.io.IOException.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 500, multiplier = 2)
+    )
     public Resource getFile(String filePath) {
         if (filePath == null || filePath.isEmpty()) {
             throw new ValidationException("File path must not be empty");

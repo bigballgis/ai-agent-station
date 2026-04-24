@@ -3,6 +3,7 @@ package com.aiagent.exception;
 import com.aiagent.common.Result;
 import com.aiagent.common.ResultCode;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -66,6 +67,26 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public Result<Void> handleRateLimitException(RateLimitException e, HttpServletRequest request) {
         log.warn("请求频率限制: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage())
+                .withTraceId(getTraceId())
+                .withMessageCode(ResultCode.TOO_MANY_REQUESTS.getMessageCode())
+                .withTimestamp(now())
+                .withPath(getRequestPath(request));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleRateLimitExceededException(RateLimitExceededException e, HttpServletRequest request,
+                                                          HttpServletResponse response) {
+        log.warn("API速率限制超出: {}, limit={}, remaining={}, resetTime={}",
+                e.getMessage(), e.getLimit(), e.getRemaining(), e.getResetTime());
+
+        // 写入标准速率限制响应头
+        response.setHeader("X-RateLimit-Limit", String.valueOf(e.getLimit()));
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(e.getRemaining()));
+        response.setHeader("X-RateLimit-Reset", String.valueOf(e.getResetTime()));
+        response.setHeader("Retry-After", String.valueOf(e.getWindowSeconds()));
+
         return Result.error(e.getCode(), e.getMessage())
                 .withTraceId(getTraceId())
                 .withMessageCode(ResultCode.TOO_MANY_REQUESTS.getMessageCode())

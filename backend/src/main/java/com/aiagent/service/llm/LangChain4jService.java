@@ -14,6 +14,9 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -98,15 +101,37 @@ public class LangChain4jService {
 
     /**
      * 简单同步对话（无记忆、无工具）
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
      */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatRecover"
+    )
     public String chat(String providerName, String systemPrompt, String userMessage) {
         LangChain4jProvider provider = getProvider(providerName);
         return provider.chat(systemPrompt, userMessage);
     }
 
     /**
-     * 带配置的同步对话
+     * chat() 方法的恢复方法 - 重试耗尽后返回降级响应
      */
+    private String chatRecover(RuntimeException e, String providerName, String systemPrompt, String userMessage) {
+        log.error("[LangChain4j] chat() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
+        throw e;
+    }
+
+    /**
+     * 带配置的同步对话
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
+     */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatWithConfigRecover"
+    )
     public String chatWithConfig(String providerName, String systemPrompt, String userMessage, LlmProviderConfig config) {
         LangChain4jProvider provider = getProvider(providerName);
         if (provider instanceof OpenAiLangChain4jProvider openAi) {
@@ -120,11 +145,36 @@ public class LangChain4jService {
     }
 
     /**
-     * 带消息历史的同步对话
+     * chatWithConfig() 方法的恢复方法 - 重试耗尽后抛出异常
      */
+    private String chatWithConfigRecover(RuntimeException e, String providerName, String systemPrompt,
+                                          String userMessage, LlmProviderConfig config) {
+        log.error("[LangChain4j] chatWithConfig() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
+        throw e;
+    }
+
+    /**
+     * 带消息历史的同步对话
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
+     */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatWithHistoryRecover"
+    )
     public Response<AiMessage> chatWithHistory(String providerName, List<ChatMessage> messages) {
         LangChain4jProvider provider = getProvider(providerName);
         return provider.chat(messages);
+    }
+
+    /**
+     * chatWithHistory() 方法的恢复方法
+     */
+    private Response<AiMessage> chatWithHistoryRecover(RuntimeException e, String providerName,
+                                                        List<ChatMessage> messages) {
+        log.error("[LangChain4j] chatWithHistory() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
+        throw e;
     }
 
     // ==================== ChatMemory 管理 ====================
@@ -147,7 +197,14 @@ public class LangChain4jService {
 
     /**
      * 带记忆的对话
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
      */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatWithMemoryRecover"
+    )
     public String chatWithMemory(String providerName, String memoryId, String userMessage, int maxMessages) {
         LangChain4jProvider provider = getProvider(providerName);
         ChatMemory memory = getOrCreateMemory(memoryId, maxMessages);
@@ -161,7 +218,14 @@ public class LangChain4jService {
 
     /**
      * 带记忆和系统提示的对话
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
      */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatWithMemorySystemRecover"
+    )
     public String chatWithMemory(String providerName, String memoryId, String systemPrompt,
                                   String userMessage, int maxMessages) {
         LangChain4jProvider provider = getProvider(providerName);
@@ -178,6 +242,26 @@ public class LangChain4jService {
         memory.add(response.content());
 
         return response.content().text();
+    }
+
+    /**
+     * chatWithMemory(4参数) 方法的恢复方法
+     */
+    private String chatWithMemoryRecover(RuntimeException e, String providerName, String memoryId,
+                                          String userMessage, int maxMessages) {
+        log.error("[LangChain4j] chatWithMemory() 重试耗尽, provider={}, memoryId={}, error={}",
+                providerName, memoryId, e.getMessage());
+        throw e;
+    }
+
+    /**
+     * chatWithMemory(5参数,含systemPrompt) 方法的恢复方法
+     */
+    private String chatWithMemorySystemRecover(RuntimeException e, String providerName, String memoryId,
+                                                String systemPrompt, String userMessage, int maxMessages) {
+        log.error("[LangChain4j] chatWithMemory(systemPrompt) 重试耗尽, provider={}, memoryId={}, error={}",
+                providerName, memoryId, e.getMessage());
+        throw e;
     }
 
     /**
@@ -209,12 +293,20 @@ public class LangChain4jService {
      * 2. 如果 LLM 返回工具调用请求 → 执行工具 → 将结果反馈给 LLM
      * 3. 重复步骤 2 直到 LLM 返回文本响应（或达到最大工具调用次数）
      * 
+     * 含 Spring Retry: 最多重试3次，指数退避 (1s, 2s, 4s)
+     * 
      * @param providerName Provider 名称
      * @param messages 对话历史
      * @param toolSpecs 工具定义列表
      * @param toolExecutor 工具执行器（接收工具名和参数，返回执行结果）
      * @param maxToolIterations 最大工具调用迭代次数（防止无限循环）
      */
+    @Retryable(
+        value = {RuntimeException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "chatWithToolsRecover"
+    )
     public Response<AiMessage> chatWithTools(String providerName, List<ChatMessage> messages,
                                               List<ToolSpecification> toolSpecs,
                                               ToolExecutor toolExecutor,
@@ -252,6 +344,18 @@ public class LangChain4jService {
         log.warn("[LangChain4j] 达到最大工具调用迭代次数: {}", maxToolIterations);
         // 最后一次调用，不传工具定义，强制 LLM 返回文本
         return provider.chat(currentMessages);
+    }
+
+    /**
+     * chatWithTools() 方法的恢复方法
+     */
+    private Response<AiMessage> chatWithToolsRecover(RuntimeException e, String providerName,
+                                                      List<ChatMessage> messages,
+                                                      List<ToolSpecification> toolSpecs,
+                                                      ToolExecutor toolExecutor,
+                                                      int maxToolIterations) {
+        log.error("[LangChain4j] chatWithTools() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
+        throw e;
     }
 
     /**

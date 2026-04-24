@@ -178,6 +178,11 @@ ai-agent:
     max-ip-global-per-minute: ${RATE_LIMIT_MAX_IP_GLOBAL:10}
     window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
     base-backoff-seconds: ${RATE_LIMIT_BASE_BACKOFF:2}
+    # API 速率限制配置
+    api:
+      default-limit-per-minute: ${RATE_LIMIT_API_DEFAULT:100}
+      default-limit-per-hour: ${RATE_LIMIT_API_HOURLY:1000}
+      burst-capacity: ${RATE_LIMIT_API_BURST:20}
   # 告警配置
   alert:
     webhook-max-retries: ${ALERT_WEBHOOK_MAX_RETRIES:3}

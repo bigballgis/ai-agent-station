@@ -18,6 +18,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.ResourceAccessException;
@@ -148,7 +151,14 @@ public class McpToolGateway {
 
     /**
      * 调用工具（向后兼容接口）
+     * 含 Spring Retry: 最多重试2次，指数退避 (1s, 2s)，仅重试网络和临时错误
      */
+    @Retryable(
+        value = {ResourceAccessException.class, HttpServerErrorException.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 1000, multiplier = 2),
+        recover = "invokeToolRecover"
+    )
     public Object invokeTool(Long toolId, Map<String, Object> parameters, Long tenantId, Long apiCallLogId) {
         long startTime = System.currentTimeMillis();
         McpToolCallLog callLog = new McpToolCallLog();
@@ -192,6 +202,15 @@ public class McpToolGateway {
             callLog.setExecutionTime((int) (System.currentTimeMillis() - startTime));
             mcpToolCallLogRepository.save(callLog);
         }
+    }
+
+    /**
+     * invokeTool() 方法的恢复方法 - 重试耗尽后抛出业务异常
+     */
+    private Object invokeToolRecover(Exception e, Long toolId, Map<String, Object> parameters,
+                                      Long tenantId, Long apiCallLogId) {
+        log.error("[MCP Gateway] invokeTool() 重试耗尽, toolId={}, error={}", toolId, e.getMessage());
+        throw new BusinessException("MCP tool invocation failed after retries: " + e.getMessage(), e);
     }
 
     // ==================== JSON-RPC 2.0 MCP 协议调用 ====================
