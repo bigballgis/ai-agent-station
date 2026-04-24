@@ -9,6 +9,7 @@ import com.aiagent.dto.ApprovalSubmitDTO;
 import com.aiagent.entity.AgentApproval;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.AgentApprovalService;
+import com.aiagent.security.validator.SortFieldValidator;
 import com.aiagent.vo.AgentApprovalVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/v1/approvals")
@@ -31,6 +33,10 @@ import java.util.List;
 public class AgentApprovalController {
 
     private final AgentApprovalService agentApprovalService;
+    private final SortFieldValidator sortFieldValidator;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "submittedAt", "reviewedAt", "status", "agentName", "versionNumber");
 
     @RequiresPermission("approval:view")
     @GetMapping
@@ -41,8 +47,12 @@ public class AgentApprovalController {
             @RequestParam(defaultValue = "submittedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        String safeSortBy = sortFieldValidator.validate(sortBy, ALLOWED_SORT_FIELDS);
+        String safeSortDir = sortFieldValidator.validateDirection(sortDir);
+        int[] safePagination = sortFieldValidator.validatePagination(page, size, 100);
+
+        Sort sort = safeSortDir.equalsIgnoreCase("desc") ? Sort.by(safeSortBy).descending() : Sort.by(safeSortBy).ascending();
+        Pageable pageable = PageRequest.of(safePagination[0], safePagination[1], sort);
         Page<AgentApproval> approvalPage = agentApprovalService.getApprovals(pageable);
         Page<AgentApprovalVO> voPage = approvalPage.map(AgentApprovalVO::fromEntity);
 

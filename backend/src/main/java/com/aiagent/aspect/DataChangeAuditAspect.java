@@ -38,7 +38,10 @@ public class DataChangeAuditAspect {
         String tableName = auditable.tableName();
         String description = auditable.description();
         String operator = getCurrentOperator();
+        Long operatorId = getCurrentOperatorId();
         String operatorIp = getClientIp();
+        String userAgent = getUserAgent();
+        Long tenantId = getTenantId();
 
         // 获取方法参数中的实体对象
         Object[] args = joinPoint.getArgs();
@@ -64,7 +67,7 @@ public class DataChangeAuditAspect {
 
         // 记录变更日志
         try {
-            recordChangeLogs(tableName, operationType, entity, oldEntity, operator, operatorIp);
+            recordChangeLogs(tableName, operationType, entity, oldEntity, operator, operatorId, operatorIp, userAgent, tenantId);
         } catch (Exception e) {
             log.error("记录审计日志失败: {}", description, e);
             // 审计日志记录失败不影响主业务
@@ -164,7 +167,8 @@ public class DataChangeAuditAspect {
      * 记录变更日志
      */
     private void recordChangeLogs(String tableName, String operationType, Object entity,
-                                  Object oldEntity, String operator, String operatorIp) {
+                                  Object oldEntity, String operator, Long operatorId,
+                                  String operatorIp, String userAgent, Long tenantId) {
         if (entity == null) {
             return;
         }
@@ -174,13 +178,12 @@ public class DataChangeAuditAspect {
 
         switch (operationType) {
             case "CREATE":
-                logs.addAll(buildCreateLogs(tableName, recordId, entity, operator, operatorIp));
+                logs.addAll(buildCreateLogs(tableName, recordId, entity, operator, operatorId, operatorIp, userAgent, tenantId));
                 break;
             case "UPDATE":
                 if (oldEntity != null) {
-                    logs.addAll(buildUpdateLogs(tableName, recordId, entity, oldEntity, operator, operatorIp));
+                    logs.addAll(buildUpdateLogs(tableName, recordId, entity, oldEntity, operator, operatorId, operatorIp, userAgent, tenantId));
                 } else {
-                    // 无法获取旧值时，记录整体更新
                     DataChangeLog logEntry = new DataChangeLog();
                     logEntry.setTableName(tableName);
                     logEntry.setRecordId(recordId);
@@ -189,13 +192,16 @@ public class DataChangeAuditAspect {
                     logEntry.setOldValue(null);
                     logEntry.setNewValue("整体更新");
                     logEntry.setOperator(operator);
+                    logEntry.setOperatorId(operatorId);
                     logEntry.setOperatorIp(operatorIp);
+                    logEntry.setUserAgent(userAgent);
+                    logEntry.setTenantId(tenantId);
                     logEntry.setOperatedAt(LocalDateTime.now());
                     logs.add(logEntry);
                 }
                 break;
             case "DELETE":
-                logs.addAll(buildDeleteLogs(tableName, recordId, entity, operator, operatorIp));
+                logs.addAll(buildDeleteLogs(tableName, recordId, entity, operator, operatorId, operatorIp, userAgent, tenantId));
                 break;
             default:
                 break;
@@ -212,7 +218,8 @@ public class DataChangeAuditAspect {
      * 构建CREATE操作的日志
      */
     private List<DataChangeLog> buildCreateLogs(String tableName, String recordId,
-                                                Object entity, String operator, String operatorIp) {
+                                                Object entity, String operator, Long operatorId,
+                                                String operatorIp, String userAgent, Long tenantId) {
         List<DataChangeLog> logs = new ArrayList<>();
         for (Field field : entity.getClass().getDeclaredFields()) {
             if (shouldSkipField(field)) {
@@ -230,7 +237,10 @@ public class DataChangeAuditAspect {
                     logEntry.setOldValue(null);
                     logEntry.setNewValue(value.toString());
                     logEntry.setOperator(operator);
+                    logEntry.setOperatorId(operatorId);
                     logEntry.setOperatorIp(operatorIp);
+                    logEntry.setUserAgent(userAgent);
+                    logEntry.setTenantId(tenantId);
                     logEntry.setOperatedAt(LocalDateTime.now());
                     logs.add(logEntry);
                 }
@@ -246,7 +256,8 @@ public class DataChangeAuditAspect {
      */
     private List<DataChangeLog> buildUpdateLogs(String tableName, String recordId,
                                                 Object newEntity, Object oldEntity,
-                                                String operator, String operatorIp) {
+                                                String operator, Long operatorId,
+                                                String operatorIp, String userAgent, Long tenantId) {
         List<DataChangeLog> logs = new ArrayList<>();
         for (Field field : newEntity.getClass().getDeclaredFields()) {
             if (shouldSkipField(field)) {
@@ -266,7 +277,10 @@ public class DataChangeAuditAspect {
                     logEntry.setOldValue(oldValue != null ? oldValue.toString() : null);
                     logEntry.setNewValue(newValue.toString());
                     logEntry.setOperator(operator);
+                    logEntry.setOperatorId(operatorId);
                     logEntry.setOperatorIp(operatorIp);
+                    logEntry.setUserAgent(userAgent);
+                    logEntry.setTenantId(tenantId);
                     logEntry.setOperatedAt(LocalDateTime.now());
                     logs.add(logEntry);
                 }
@@ -281,7 +295,8 @@ public class DataChangeAuditAspect {
      * 构建DELETE操作的日志
      */
     private List<DataChangeLog> buildDeleteLogs(String tableName, String recordId,
-                                                Object entity, String operator, String operatorIp) {
+                                                Object entity, String operator, Long operatorId,
+                                                String operatorIp, String userAgent, Long tenantId) {
         List<DataChangeLog> logs = new ArrayList<>();
         for (Field field : entity.getClass().getDeclaredFields()) {
             if (shouldSkipField(field)) {
@@ -299,7 +314,10 @@ public class DataChangeAuditAspect {
                     logEntry.setOldValue(value.toString());
                     logEntry.setNewValue(null);
                     logEntry.setOperator(operator);
+                    logEntry.setOperatorId(operatorId);
                     logEntry.setOperatorIp(operatorIp);
+                    logEntry.setUserAgent(userAgent);
+                    logEntry.setTenantId(tenantId);
                     logEntry.setOperatedAt(LocalDateTime.now());
                     logs.add(logEntry);
                 }
@@ -348,6 +366,50 @@ public class DataChangeAuditAspect {
             log.debug("获取当前用户失败: {}", e.getMessage());
         }
         return "SYSTEM";
+    }
+
+    /**
+     * 获取当前操作用户ID
+     */
+    private Long getCurrentOperatorId() {
+        try {
+            UserPrincipal user = SecurityUtils.getCurrentUser();
+            if (user != null) {
+                return user.getUserId();
+            }
+        } catch (Exception e) {
+            log.debug("获取当前用户ID失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 获取当前租户ID
+     */
+    private Long getTenantId() {
+        try {
+            return com.aiagent.tenant.TenantContextHolder.getTenantId();
+        } catch (Exception e) {
+            log.debug("获取租户ID失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 获取User-Agent
+     */
+    private String getUserAgent() {
+        try {
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                String ua = attributes.getRequest().getHeader("User-Agent");
+                return ua != null && ua.length() > 500 ? ua.substring(0, 500) : ua;
+            }
+        } catch (Exception e) {
+            log.debug("获取User-Agent失败: {}", e.getMessage());
+        }
+        return null;
     }
 
     /**

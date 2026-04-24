@@ -68,6 +68,7 @@ public class OperationLogAspect {
         systemLog.setExecutionTime(endTime - startTime);
         systemLog.setIsSuccess(isSuccess);
         systemLog.setErrorMsg(errorMsg);
+        systemLog.setResourceType(operationLog.resourceType());
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal) {
@@ -80,8 +81,12 @@ public class OperationLogAspect {
         Method method = signature.getMethod();
         systemLog.setMethod(method.getDeclaringClass().getName() + "." + method.getName());
 
+        // Extract resource ID from method parameters (Long id, String id, or entity with getId())
         Object[] args = joinPoint.getArgs();
         String[] paramNames = signature.getParameterNames();
+        String extractedResourceId = extractResourceId(args, paramNames);
+        systemLog.setResourceId(extractedResourceId);
+
         StringBuilder paramsBuilder = new StringBuilder();
         for (int i = 0; i < args.length; i++) {
             if (i > 0) paramsBuilder.append(", ");
@@ -99,6 +104,34 @@ public class OperationLogAspect {
         }
 
         systemLogService.saveLog(systemLog);
+    }
+
+    /**
+     * Extract resource ID from method arguments.
+     * Looks for parameters named "id" or entities with a getId() method.
+     */
+    private String extractResourceId(Object[] args, String[] paramNames) {
+        if (args == null) return null;
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == null) continue;
+            String name = paramNames != null && i < paramNames.length ? paramNames[i] : "";
+            // Direct ID parameter
+            if ("id".equalsIgnoreCase(name) || "userId".equalsIgnoreCase(name)
+                    || "agentId".equalsIgnoreCase(name) || "tenantId".equalsIgnoreCase(name)) {
+                return String.valueOf(args[i]);
+            }
+            // Entity with getId() method
+            try {
+                java.lang.reflect.Method getIdMethod = args[i].getClass().getMethod("getId");
+                Object idValue = getIdMethod.invoke(args[i]);
+                if (idValue != null) {
+                    return String.valueOf(idValue);
+                }
+            } catch (Exception ignored) {
+                // Not an entity, skip
+            }
+        }
+        return null;
     }
 
     private String getClientIp(HttpServletRequest request) {

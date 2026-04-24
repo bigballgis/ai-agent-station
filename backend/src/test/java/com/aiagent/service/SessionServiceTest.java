@@ -54,6 +54,8 @@ class SessionServiceTest {
     @Test
     @DisplayName("创建会话 - 成功")
     void testCreateSession_Success() {
+        // Mock concurrent session limit check: user has no active sessions
+        when(sessionRepository.findByUserIdAndStatus(1L, SessionStatus.ACTIVE)).thenReturn(List.of());
         when(sessionRepository.save(any(UserSession.class))).thenAnswer(invocation -> {
             UserSession session = invocation.getArgument(0);
             session.setId(1L);
@@ -210,5 +212,54 @@ class SessionServiceTest {
 
         assertEquals(3, count);
         verify(sessionRepository).invalidateAllUserSessions(1L);
+    }
+
+    @Test
+    @DisplayName("并发会话限制 - 超过3个活跃会话时踢出最早的")
+    void testEnforceConcurrentSessionLimit_EvictsOldest() {
+        // Create 3 existing active sessions
+        UserSession session1 = new UserSession();
+        session1.setId(1L);
+        session1.setUserId(1L);
+        session1.setSessionId("session-1");
+        session1.setStatus(SessionStatus.ACTIVE);
+        session1.setLoginTime(LocalDateTime.now().minusHours(3));
+
+        UserSession session2 = new UserSession();
+        session2.setId(2L);
+        session2.setUserId(1L);
+        session2.setSessionId("session-2");
+        session2.setStatus(SessionStatus.ACTIVE);
+        session2.setLoginTime(LocalDateTime.now().minusHours(2));
+
+        UserSession session3 = new UserSession();
+        session3.setId(3L);
+        session3.setUserId(1L);
+        session3.setSessionId("session-3");
+        session3.setStatus(SessionStatus.ACTIVE);
+        session3.setLoginTime(LocalDateTime.now().minusHours(1));
+
+        when(sessionRepository.findByUserIdAndStatus(1L, SessionStatus.ACTIVE))
+                .thenReturn(List.of(session1, session2, session3));
+        when(sessionRepository.save(any(UserSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Enforce limit - should evict the oldest session
+        int evicted = sessionService.enforceConcurrentSessionLimit(1L);
+
+        assertEquals(1, evicted);
+        assertEquals(SessionStatus.KICKED, session1.getStatus());
+        verify(sessionRepository).save(session1);
+    }
+
+    @Test
+    @DisplayName("并发会话限制 - 未超过限制时不踢出")
+    void testEnforceConcurrentSessionLimit_UnderLimit() {
+        when(sessionRepository.findByUserIdAndStatus(1L, SessionStatus.ACTIVE))
+                .thenReturn(List.of(testSession));
+
+        int evicted = sessionService.enforceConcurrentSessionLimit(1L);
+
+        assertEquals(0, evicted);
+        verify(sessionRepository, never()).save(any(UserSession.class));
     }
 }

@@ -100,6 +100,10 @@ public class ToolController {
     @Operation(summary = "查询工具来源")
     @GetMapping("/{toolName}/source")
     public Result<Map<String, Object>> getToolSource(@PathVariable String toolName) {
+        // 工具名安全验证：只允许字母、数字、下划线、连字符
+        if (toolName == null || !toolName.matches("^[a-zA-Z0-9_-]+$")) {
+            return Result.error(400, "非法的工具名称");
+        }
         String source = compositeToolProvider.getToolSource(toolName);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("toolName", toolName);

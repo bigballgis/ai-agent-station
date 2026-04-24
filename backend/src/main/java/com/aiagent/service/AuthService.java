@@ -3,6 +3,7 @@ package com.aiagent.service;
 import com.aiagent.common.ResultCode;
 import com.aiagent.dto.DTOConverter;
 import com.aiagent.dto.RegisterRequestDTO;
+import com.aiagent.entity.PasswordHistory;
 import com.aiagent.entity.User;
 import com.aiagent.entity.UserRole;
 import com.aiagent.entity.Role;
@@ -10,11 +11,13 @@ import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
 import com.aiagent.repository.UserRoleRepository;
 import com.aiagent.repository.RoleRepository;
+import com.aiagent.repository.PasswordHistoryRepository;
 import com.aiagent.security.JwtUtil;
 import com.aiagent.security.validator.PasswordPolicyValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,13 @@ public class AuthService {
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final long REFRESH_TOKEN_TTL_DAYS = 7;
 
+    /** Maximum failed login attempts before account lockout */
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    /** Account lockout duration in minutes */
+    private static final int LOCKOUT_DURATION_MINUTES = 30;
+    /** Number of historical passwords to check for reuse */
+    private static final int PASSWORD_HISTORY_COUNT = 5;
+
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
@@ -43,6 +54,8 @@ public class AuthService {
     private final StringRedisTemplate redisTemplate;
     private final LoginRateLimitService loginRateLimitService;
     private final PasswordPolicyValidator passwordPolicyValidator;
+    private final PasswordHistoryRepository passwordHistoryRepository;
+    private final SessionService sessionService;
 
     public Map<String, Object> login(String username, String password, Long tenantId) {
         // 登录速率限制检查
@@ -59,17 +72,29 @@ public class AuthService {
             user = userRepository.findByUsername(username).orElse(null);
         }
 
-        // 统一错误消息，防止用户名枚举
-        if (user == null || !user.getIsActive() || !passwordEncoder.matches(password, user.getPassword())) {
-            if (user != null && passwordEncoder.matches(password, user.getPassword()) && !user.getIsActive()) {
+        // 用户不存在或已禁用
+        if (user == null || !user.getIsActive()) {
+            if (user != null && !user.getIsActive()) {
                 throw new BusinessException(ResultCode.USER_DISABLED);
             }
             loginRateLimitService.recordFailedAttempt(username, clientIp);
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "用户名或密码错误");
         }
 
+        // 检查账户是否被锁定
+        checkAccountLockout(user);
+
+        // 验证密码
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            // 记录失败尝试并检查是否需要锁定
+            recordFailedLoginAttempt(user);
+            loginRateLimitService.recordFailedAttempt(username, clientIp);
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "用户名或密码错误");
+        }
+
         // 登录成功，重置失败计数
         loginRateLimitService.resetAttempts(username);
+        resetFailedLoginAttempts(user);
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getTenantId());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername(), user.getTenantId());
@@ -77,6 +102,15 @@ public class AuthService {
         // Store refresh token in Redis with 7-day TTL
         String redisKey = REFRESH_TOKEN_PREFIX + user.getId();
         redisTemplate.opsForValue().set(redisKey, refreshToken, REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
+
+        // Create session record and enforce concurrent session limit
+        try {
+            String sessionId = java.util.UUID.nameUUIDFromBytes(token.getBytes()).toString();
+            sessionService.createSession(user.getId(), user.getUsername(), sessionId,
+                    getCurrentHttpServletRequest());
+        } catch (Exception e) {
+            log.warn("创建会话记录失败（不影响登录）: {}", e.getMessage());
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
@@ -119,6 +153,9 @@ public class AuthService {
         user.setIsActive(true);
         userRepository.save(user);
         userRepository.flush();
+
+        // 保存密码历史
+        savePasswordHistory(user.getId(), user.getPassword());
 
         // 分配默认角色 ROLE_USER
         Role defaultRole;
@@ -238,9 +275,16 @@ public class AuthService {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("；", passwordErrors));
         }
 
+        // 检查密码历史，防止重用最近5个密码
+        checkPasswordHistory(userId, newPassword);
+
         // 更新密码
-        user.setPassword(passwordEncoder.encode(newPassword));
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
         userRepository.save(user);
+
+        // 保存密码历史
+        savePasswordHistory(userId, encodedNewPassword);
 
         // 清除该用户的 Refresh Token，强制重新登录
         String redisKey = REFRESH_TOKEN_PREFIX + userId;
@@ -267,15 +311,93 @@ public class AuthService {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), String.join("；", passwordErrors));
         }
 
+        // 检查密码历史，防止重用最近5个密码
+        checkPasswordHistory(user.getId(), newPassword);
+
         // 更新密码
-        user.setPassword(passwordEncoder.encode(newPassword));
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
         userRepository.save(user);
+
+        // 保存密码历史
+        savePasswordHistory(user.getId(), encodedNewPassword);
 
         // 清除该用户的 Refresh Token，强制重新登录
         String redisKey = REFRESH_TOKEN_PREFIX + user.getId();
         redisTemplate.delete(redisKey);
 
         log.info("管理员重置用户密码成功: username={}, operator={}", username, "admin");
+    }
+
+    /**
+     * 检查账户是否被锁定，如果锁定中则抛出异常
+     */
+    private void checkAccountLockout(User user) {
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+            long remainingMinutes = java.time.Duration.between(LocalDateTime.now(), user.getLockedUntil()).toMinutes() + 1;
+            log.warn("账户已锁定: username={}, lockedUntil={}", user.getUsername(), user.getLockedUntil());
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(),
+                    String.format("账户已被锁定，请%d分钟后再试", remainingMinutes));
+        }
+        // 锁定已过期，自动解锁
+        if (user.getLockedUntil() != null && user.getLockedUntil().isBefore(LocalDateTime.now())) {
+            user.setFailedLoginAttempts(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * 记录一次登录失败，达到阈值后锁定账户
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void recordFailedLoginAttempt(User user) {
+        int attempts = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
+        user.setFailedLoginAttempts(attempts);
+
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+            user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCKOUT_DURATION_MINUTES));
+            log.warn("账户已锁定: username={}, attempts={}, lockedUntil={}",
+                    user.getUsername(), attempts, user.getLockedUntil());
+        }
+
+        userRepository.save(user);
+    }
+
+    /**
+     * 登录成功后重置失败计数
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void resetFailedLoginAttempts(User user) {
+        if (user.getFailedLoginAttempts() != null && user.getFailedLoginAttempts() > 0) {
+            user.setFailedLoginAttempts(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * 检查密码是否在历史记录中（防止重用最近N个密码）
+     */
+    private void checkPasswordHistory(Long userId, String newPassword) {
+        List<PasswordHistory> history = passwordHistoryRepository.findTopNByUserIdOrderByCreatedAtDesc(
+                userId, PageRequest.of(0, PASSWORD_HISTORY_COUNT));
+        for (PasswordHistory ph : history) {
+            if (passwordEncoder.matches(newPassword, ph.getPasswordHash())) {
+                throw new BusinessException(ResultCode.BAD_REQUEST.getCode(),
+                        "不能使用最近" + PASSWORD_HISTORY_COUNT + "次使用过的密码");
+            }
+        }
+    }
+
+    /**
+     * 保存密码到历史记录
+     */
+    private void savePasswordHistory(Long userId, String encodedPassword) {
+        PasswordHistory history = new PasswordHistory();
+        history.setUserId(userId);
+        history.setPasswordHash(encodedPassword);
+        passwordHistoryRepository.save(history);
     }
 
     private long getTokenRemainingSeconds(String token) {
@@ -300,11 +422,10 @@ public class AuthService {
     }
 
     private String getClientIp() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
+        HttpServletRequest request = getCurrentHttpServletRequest();
+        if (request == null) {
             return "unknown";
         }
-        HttpServletRequest request = attributes.getRequest();
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("X-Real-IP");
@@ -317,5 +438,10 @@ public class AuthService {
             ip = ip.split(",")[0].trim();
         }
         return ip;
+    }
+
+    private HttpServletRequest getCurrentHttpServletRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
     }
 }

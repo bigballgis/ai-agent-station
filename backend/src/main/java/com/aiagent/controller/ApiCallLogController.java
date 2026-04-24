@@ -8,6 +8,8 @@ import com.aiagent.repository.ApiCallLogRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -63,7 +65,7 @@ public class ApiCallLogController {
     public Result<Map<String, Object>> getStats(
             @RequestHeader("X-Tenant-ID") Long tenantId,
             @RequestParam(required = false) Long agentId,
-            @RequestParam(defaultValue = "7") int days) {
+            @RequestParam(defaultValue = "7") @Min(1) @Max(365) int days) {
 
         LocalDateTime startTime = LocalDateTime.now().minusDays(days);
         Map<String, Object> stats = new HashMap<>();

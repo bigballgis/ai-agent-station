@@ -80,4 +80,8 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
     @Modifying
     @Query("DELETE FROM AgentTestResult r WHERE r.createdAt < :threshold")
     int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
+
+    @Modifying
+    @Query("DELETE FROM AgentTestResult r WHERE r.tenantId = :tenantId AND r.createdAt < :threshold")
+    int deleteByTenantIdAndCreatedAtBefore(@Param("tenantId") Long tenantId, @Param("threshold") LocalDateTime threshold);
 }

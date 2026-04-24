@@ -64,6 +64,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // Actuator 其他端点需要 ADMIN 角色
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        // Swagger/OpenAPI 端点需要 ADMIN 角色（生产环境通过 SPRINGDOC_ENABLED=false 完全禁用）
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMIN")
                         // 用户管理接口需要 ADMIN 或 TENANT_ADMIN 角色
                         .requestMatchers("/v1/users/**").hasAnyRole("ADMIN", "TENANT_ADMIN")
                         // 角色管理接口需要 ADMIN 或 TENANT_ADMIN 角色

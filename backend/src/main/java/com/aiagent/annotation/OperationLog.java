@@ -8,4 +8,6 @@ import java.lang.annotation.*;
 public @interface OperationLog {
     String value() default "";
     String module() default "";
+    /** Resource type being operated on (e.g., "Agent", "User", "Workflow") */
+    String resourceType() default "";
 }

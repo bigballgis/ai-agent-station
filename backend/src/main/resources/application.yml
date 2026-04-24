@@ -217,7 +217,7 @@ ai-agent:
 spring.servlet:
   multipart:
     max-file-size: 50MB
-    max-request-size: 50MB
+    max-request-size: 100MB
 
 # JWT配置
 jwt:
@@ -251,14 +251,14 @@ cors:
 # SpringDoc OpenAPI / Swagger 配置
 springdoc:
   api-docs:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /v3/api-docs
   swagger-ui:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: method
-    try-it-out-enabled: true
+    try-it-out-enabled: false
     filter: true
   group-configs:
     - group: 认证管理

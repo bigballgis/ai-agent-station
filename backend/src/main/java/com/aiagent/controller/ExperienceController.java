@@ -10,6 +10,7 @@ import com.aiagent.dto.ExperienceResponseDTO;
 import com.aiagent.dto.UpdateExperienceRequestDTO;
 import com.aiagent.entity.AgentEvolutionExperience;
 import com.aiagent.service.ExperienceService;
+import com.aiagent.security.validator.SortFieldValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +35,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ExperienceController {
 
     private final ExperienceService experienceService;
+    private final SortFieldValidator sortFieldValidator;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt", "updatedAt", "title", "experienceType", "effectivenessScore", "usageCount");
 
     // 创建经验
     @RequiresPermission("experience:manage")
@@ -105,8 +111,11 @@ public class ExperienceController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
+        String safeSortBy = sortFieldValidator.validate(sortBy, ALLOWED_SORT_FIELDS);
+        String safeSortDir = sortFieldValidator.validateDirection(sortDirection);
+        int[] safePagination = sortFieldValidator.validatePagination(page, size, 100);
+        Sort sort = Sort.by(Sort.Direction.fromString(safeSortDir), safeSortBy);
+        Pageable pageable = PageRequest.of(safePagination[0], safePagination[1], sort);
 
         Page<AgentEvolutionExperience> result = experienceService.searchExperiences(keyword, experienceType, tags, pageable);
         Page<ExperienceResponseDTO> dtoPage = result.map(DTOConverter::toExperienceResponseDTO);

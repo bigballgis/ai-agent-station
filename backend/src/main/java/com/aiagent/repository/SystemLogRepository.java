@@ -26,4 +26,8 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Long> {
     @Modifying
     @Query("DELETE FROM SystemLog s WHERE s.createdAt < :threshold")
     int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
+
+    @Modifying
+    @Query("DELETE FROM SystemLog s WHERE s.tenantId = :tenantId AND s.createdAt < :threshold")
+    int deleteByTenantIdAndCreatedAtBefore(@Param("tenantId") Long tenantId, @Param("threshold") LocalDateTime threshold);
 }

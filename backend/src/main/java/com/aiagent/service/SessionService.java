@@ -32,6 +32,9 @@ public class SessionService {
     /** Default session timeout: 24 hours */
     private static final long DEFAULT_SESSION_TIMEOUT_HOURS = 24;
 
+    /** Maximum concurrent active sessions per user */
+    private static final int MAX_CONCURRENT_SESSIONS = 3;
+
     // User-Agent parsing patterns
     private static final Pattern BROWSER_PATTERN = Pattern.compile(
             "(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)[/\\s](\\d+[.\\d]*)");
@@ -49,6 +52,9 @@ public class SessionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public UserSession createSession(Long userId, String username, String sessionId, HttpServletRequest request) {
+        // Enforce concurrent session limit: invalidate oldest sessions if limit exceeded
+        enforceConcurrentSessionLimit(userId);
+
         UserSession session = new UserSession();
         session.setUserId(userId);
         session.setUsername(username);
@@ -65,6 +71,32 @@ public class SessionService {
         session = sessionRepository.save(session);
         log.info("Session created: userId={}, sessionId={}, ip={}", userId, sessionId, session.getIpAddress());
         return session;
+    }
+
+    /**
+     * Enforce the maximum concurrent session limit for a user.
+     * If the user has more active sessions than allowed, invalidate the oldest ones.
+     *
+     * @param userId user ID
+     * @return number of sessions that were invalidated
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int enforceConcurrentSessionLimit(Long userId) {
+        List<UserSession> activeSessions = sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE);
+        if (activeSessions.size() >= MAX_CONCURRENT_SESSIONS) {
+            // Sort by login time ascending (oldest first) and invalidate the excess
+            activeSessions.sort(java.util.Comparator.comparing(UserSession::getLoginTime));
+            int excessCount = activeSessions.size() - MAX_CONCURRENT_SESSIONS + 1;
+            for (int i = 0; i < excessCount && i < activeSessions.size(); i++) {
+                UserSession oldSession = activeSessions.get(i);
+                oldSession.setStatus(SessionStatus.KICKED);
+                sessionRepository.save(oldSession);
+                log.info("Session evicted due to concurrent limit: userId={}, sessionId={}",
+                        userId, oldSession.getSessionId());
+            }
+            return excessCount;
+        }
+        return 0;
     }
 
     /**

@@ -48,13 +48,19 @@ public class SystemLog {
     @Column(name = "error_msg", columnDefinition = "text")
     private String errorMsg;
 
+    @Column(name = "resource_type", length = 100)
+    private String resourceType;
+
+    @Column(name = "resource_id", length = 100)
+    private String resourceId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public SystemLog() {
     }
 
-    public SystemLog(Long id, Long tenantId, Long userId, String username, String module, String operation, String method, String params, String ip, String userAgent, Long executionTime, Boolean isSuccess, String errorMsg, LocalDateTime createdAt) {
+    public SystemLog(Long id, Long tenantId, Long userId, String username, String module, String operation, String method, String params, String ip, String userAgent, Long executionTime, Boolean isSuccess, String errorMsg, String resourceType, String resourceId, LocalDateTime createdAt) {
         this.id = id;
         this.tenantId = tenantId;
         this.userId = userId;
@@ -68,6 +74,8 @@ public class SystemLog {
         this.executionTime = executionTime;
         this.isSuccess = isSuccess;
         this.errorMsg = errorMsg;
+        this.resourceType = resourceType;
+        this.resourceId = resourceId;
         this.createdAt = createdAt;
     }
 
@@ -173,6 +181,22 @@ public class SystemLog {
 
     public void setErrorMsg(String errorMsg) {
         this.errorMsg = errorMsg;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
     public LocalDateTime getCreatedAt() {

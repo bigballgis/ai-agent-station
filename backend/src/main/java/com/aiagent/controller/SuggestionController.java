@@ -10,6 +10,7 @@ import com.aiagent.dto.SuggestionResponseDTO;
 import com.aiagent.dto.UpdateSuggestionRequestDTO;
 import com.aiagent.entity.AgentEvolutionSuggestion;
 import com.aiagent.service.SuggestionService;
+import com.aiagent.security.validator.SortFieldValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +35,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class SuggestionController {
 
     private final SuggestionService suggestionService;
+    private final SortFieldValidator sortFieldValidator;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt", "updatedAt", "title", "suggestionType", "priority", "status");
 
     // 生成建议
     @RequiresPermission("suggestion:manage")
@@ -114,8 +120,11 @@ public class SuggestionController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
+        String safeSortBy = sortFieldValidator.validate(sortBy, ALLOWED_SORT_FIELDS);
+        String safeSortDir = sortFieldValidator.validateDirection(sortDirection);
+        int[] safePagination = sortFieldValidator.validatePagination(page, size, 100);
+        Sort sort = Sort.by(Sort.Direction.fromString(safeSortDir), safeSortBy);
+        Pageable pageable = PageRequest.of(safePagination[0], safePagination[1], sort);
 
         Page<AgentEvolutionSuggestion> result = suggestionService.searchSuggestions(keyword, suggestionType, status, pageable);
         Page<SuggestionResponseDTO> dtoPage = result.map(DTOConverter::toSuggestionResponseDTO);

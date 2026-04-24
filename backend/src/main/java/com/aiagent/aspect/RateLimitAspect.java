@@ -44,24 +44,33 @@ public class RateLimitAspect {
         // key = rate_limit:{methodSignature}:{clientIp}
         String key = RATE_LIMIT_PREFIX + methodSignature + ":" + clientIp;
 
-        // 使用 Redis INCR 原子递增
-        Long count = redisTemplate.opsForValue().increment(key);
+        try {
+            // 使用 Redis INCR 原子递增
+            Long count = redisTemplate.opsForValue().increment(key);
 
-        if (count == null) {
-            // Redis 不可用时放行（降级策略）
-            log.warn("[RateLimit] Redis INCR 返回 null，降级放行: method={}, ip={}", methodSignature, clientIp);
-            return joinPoint.proceed();
-        }
+            if (count == null) {
+                // Redis 不可用时放行（降级策略）
+                log.warn("[RateLimit] Redis INCR 返回 null，降级放行: method={}, ip={}", methodSignature, clientIp);
+                return joinPoint.proceed();
+            }
 
-        // 第一次请求时设置过期时间
-        if (count == 1) {
-            redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
-        }
+            // 第一次请求时设置过期时间
+            if (count == 1) {
+                redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
+            }
 
-        if (count > maxRequests) {
-            log.warn("[RateLimit] 请求被限流: method={}, ip={}, count={}/{}, window={}s",
-                    methodSignature, clientIp, count, maxRequests, windowSeconds);
-            throw new RateLimitException("请求过于频繁，请在 " + windowSeconds + " 秒后重试");
+            if (count > maxRequests) {
+                log.warn("[RateLimit] 请求被限流: method={}, ip={}, count={}/{}, window={}s",
+                        methodSignature, clientIp, count, maxRequests, windowSeconds);
+                throw new RateLimitException("请求过于频繁，请在 " + windowSeconds + " 秒后重试");
+            }
+        } catch (RateLimitException e) {
+            // 限流异常直接抛出
+            throw e;
+        } catch (Exception e) {
+            // Redis 连接异常等不可恢复错误时降级放行
+            log.warn("[RateLimit] Redis 异常，降级放行: method={}, ip={}, error={}",
+                    methodSignature, clientIp, e.getMessage());
         }
 
         return joinPoint.proceed();

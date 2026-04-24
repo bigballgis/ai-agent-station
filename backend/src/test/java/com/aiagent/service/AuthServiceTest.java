@@ -6,6 +6,7 @@ import com.aiagent.entity.Role;
 import com.aiagent.entity.User;
 import com.aiagent.entity.UserRole;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.repository.PasswordHistoryRepository;
 import com.aiagent.repository.RoleRepository;
 import com.aiagent.repository.UserRepository;
 import com.aiagent.repository.UserRoleRepository;
@@ -64,6 +65,12 @@ class AuthServiceTest {
 
     @Mock
     private PasswordPolicyValidator passwordPolicyValidator;
+
+    @Mock
+    private PasswordHistoryRepository passwordHistoryRepository;
+
+    @Mock
+    private SessionService sessionService;
 
     @InjectMocks
     private AuthService authService;

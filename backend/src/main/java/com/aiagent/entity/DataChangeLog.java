@@ -34,8 +34,14 @@ public class DataChangeLog {
     @Column(name = "operator", length = 100)
     private String operator;
 
+    @Column(name = "operator_id")
+    private Long operatorId;
+
     @Column(name = "operator_ip", length = 50)
     private String operatorIp;
+
+    @Column(name = "user_agent", length = 500)
+    private String userAgent;
 
     @Column(name = "operated_at")
     private LocalDateTime operatedAt;

@@ -81,7 +81,11 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "用户登录")
     @OperationLog(value = "用户登录", module = "认证")
-    public Result<?> login(@Valid @RequestBody LoginRequest request) {
+    public Result<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        // 登录接口限流：防止暴力破解
+        String clientIp = SecurityUtils.getClientIp(httpRequest);
+        checkRateLimit("login:" + clientIp, 10, 300);
+
         // 如果提供了验证码，先验证
         if (request.getCaptchaId() != null && !request.getCaptchaId().isBlank()) {
             String redisKey = CAPTCHA_PREFIX + request.getCaptchaId();
@@ -170,7 +174,12 @@ public class AuthController {
     @Operation(summary = "管理员重置密码")
     @RequiresPermission("user:manage")
     @OperationLog(value = "管理员重置密码", module = "认证")
-    public Result<?> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+    public Result<?> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request,
+                                   HttpServletRequest httpRequest) {
+        // 密码重置接口限流
+        String clientIp = SecurityUtils.getClientIp(httpRequest);
+        checkRateLimit("reset-password:" + clientIp, 5, 300);
+
         authService.resetPassword(request.getUsername(), request.getNewPassword());
         return Result.success("密码重置成功");
     }

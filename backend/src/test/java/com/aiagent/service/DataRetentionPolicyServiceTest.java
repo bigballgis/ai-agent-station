@@ -1,12 +1,15 @@
 package com.aiagent.service;
 
+import com.aiagent.config.DataRetentionConfig;
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.entity.LoginLog;
 import com.aiagent.entity.SystemLog;
 import com.aiagent.repository.AgentTestResultRepository;
 import com.aiagent.repository.LoginLogRepository;
 import com.aiagent.repository.SystemLogRepository;
+import com.aiagent.repository.TenantRepository;
 import com.aiagent.repository.UserSessionRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +23,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 /**
@@ -42,8 +46,26 @@ class DataRetentionPolicyServiceTest {
     @Mock
     private UserSessionRepository userSessionRepository;
 
+    @Mock
+    private TenantRepository tenantRepository;
+
+    @Mock
+    private SystemLogService systemLogService;
+
+    @Mock
+    private DataRetentionConfig retentionConfig;
+
     @InjectMocks
     private DataRetentionPolicyService policyService;
+
+    @BeforeEach
+    void setUp() {
+        // Configure retentionConfig defaults
+        when(retentionConfig.getLogsDays()).thenReturn(90);
+        when(retentionConfig.getTestResultsDays()).thenReturn(180);
+        when(retentionConfig.getAuditLogsDays()).thenReturn(365);
+        when(retentionConfig.getLoginLogsDays()).thenReturn(180);
+    }
 
     // ==================== getRetentionPolicy 测试 ====================
 
@@ -93,17 +115,11 @@ class DataRetentionPolicyServiceTest {
         // 验证结果
         assertNotNull(result);
 
-        Map<String, Object> logsPolicy = (Map<String, Object>) result.get("logs");
-        assertEquals(30, logsPolicy.get("retentionDays"));
-
-        Map<String, Object> testResultsPolicy = (Map<String, Object>) result.get("testResults");
-        assertEquals(60, testResultsPolicy.get("retentionDays"));
-
-        Map<String, Object> auditLogsPolicy = (Map<String, Object>) result.get("auditLogs");
-        assertEquals(90, auditLogsPolicy.get("retentionDays"));
-
-        Map<String, Object> loginLogsPolicy = (Map<String, Object>) result.get("loginLogs");
-        assertEquals(120, loginLogsPolicy.get("retentionDays"));
+        // 验证 config setter 被调用
+        verify(retentionConfig).setLogsDays(30);
+        verify(retentionConfig).setTestResultsDays(60);
+        verify(retentionConfig).setAuditLogsDays(90);
+        verify(retentionConfig).setLoginLogsDays(120);
     }
 
     @Test
@@ -117,12 +133,9 @@ class DataRetentionPolicyServiceTest {
         // 执行测试
         Map<String, Object> result = policyService.updateRetentionPolicy(partialPolicy);
 
-        // 验证结果 - 只更新了logs，其他保持默认值
-        Map<String, Object> logsPolicy = (Map<String, Object>) result.get("logs");
-        assertEquals(15, logsPolicy.get("retentionDays"));
-
-        Map<String, Object> testResultsPolicy = (Map<String, Object>) result.get("testResults");
-        assertEquals(180, testResultsPolicy.get("retentionDays")); // 保持默认值
+        // 验证结果 - 只更新了logs
+        verify(retentionConfig).setLogsDays(15);
+        verify(retentionConfig, never()).setTestResultsDays(anyInt());
     }
 
     @Test
@@ -134,9 +147,11 @@ class DataRetentionPolicyServiceTest {
         // 执行测试
         Map<String, Object> result = policyService.updateRetentionPolicy(emptyPolicy);
 
-        // 验证结果 - 所有值保持默认
-        Map<String, Object> logsPolicy = (Map<String, Object>) result.get("logs");
-        assertEquals(90, logsPolicy.get("retentionDays"));
+        // 验证结果 - 所有setter不应被调用
+        verify(retentionConfig, never()).setLogsDays(anyInt());
+        verify(retentionConfig, never()).setTestResultsDays(anyInt());
+        verify(retentionConfig, never()).setAuditLogsDays(anyInt());
+        verify(retentionConfig, never()).setLoginLogsDays(anyInt());
     }
 
     // ==================== executeRetentionCleanup 测试 ====================
@@ -144,38 +159,31 @@ class DataRetentionPolicyServiceTest {
     @Test
     @DisplayName("执行保留策略清理 - 成功清理所有过期数据")
     void executeRetentionCleanup_shouldCleanupAllExpiredData() {
-        // 准备测试数据 - 模拟空数据
-        SystemLog expiredLog = new SystemLog();
-        expiredLog.setId(1L);
-        expiredLog.setCreatedAt(LocalDateTime.now().minusDays(100)); // 超过90天
-
-        when(systemLogRepository.findAll()).thenReturn(List.of(expiredLog));
-        when(testResultRepository.findAll()).thenReturn(List.of());
+        // 准备测试数据
+        when(systemLogRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(5);
+        when(testResultRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(3);
         when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
-        when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(2);
 
         // 执行测试
         policyService.executeRetentionCleanup();
 
         // 验证结果
-        verify(systemLogRepository).findAll();
-        verify(systemLogRepository).delete(expiredLog);
-        verify(testResultRepository).findAll();
+        verify(systemLogRepository).deleteByCreatedAtBefore(any(LocalDateTime.class));
+        verify(testResultRepository).deleteByCreatedAtBefore(any(LocalDateTime.class));
         verify(loginLogRepository).findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class));
         verify(userSessionRepository).deleteInactiveSessionsBefore(any(LocalDateTime.class));
+        // 验证审计日志被记录
+        verify(systemLogService).saveLog(any(SystemLog.class));
     }
 
     @Test
     @DisplayName("执行保留策略清理 - 清理过期测试结果")
     void executeRetentionCleanup_shouldCleanupExpiredTestResults() {
         // 准备测试数据
-        AgentTestResult expiredResult = new AgentTestResult();
-        expiredResult.setId(1L);
-        expiredResult.setCreatedAt(LocalDateTime.now().minusDays(200)); // 超过180天
-
-        when(systemLogRepository.findAll()).thenReturn(List.of());
-        when(testResultRepository.findAll()).thenReturn(List.of(expiredResult));
+        when(systemLogRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(testResultRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(10);
         when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
         when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(0);
@@ -184,8 +192,7 @@ class DataRetentionPolicyServiceTest {
         policyService.executeRetentionCleanup();
 
         // 验证结果
-        verify(testResultRepository).findAll();
-        verify(testResultRepository).delete(expiredResult);
+        verify(testResultRepository).deleteByCreatedAtBefore(any(LocalDateTime.class));
     }
 
     @Test
@@ -195,8 +202,8 @@ class DataRetentionPolicyServiceTest {
         LoginLog expiredLog = new LoginLog();
         expiredLog.setId(1L);
 
-        when(systemLogRepository.findAll()).thenReturn(List.of());
-        when(testResultRepository.findAll()).thenReturn(List.of());
+        when(systemLogRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(testResultRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
         when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of(expiredLog));
         when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(0);
@@ -213,8 +220,8 @@ class DataRetentionPolicyServiceTest {
     @DisplayName("执行保留策略清理 - 清理过期会话")
     void executeRetentionCleanup_shouldCleanupExpiredSessions() {
         // 准备测试数据
-        when(systemLogRepository.findAll()).thenReturn(List.of());
-        when(testResultRepository.findAll()).thenReturn(List.of());
+        when(systemLogRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(testResultRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
         when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
         when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(5);
@@ -230,8 +237,9 @@ class DataRetentionPolicyServiceTest {
     @DisplayName("执行保留策略清理 - 系统日志清理异常时继续执行其他清理")
     void executeRetentionCleanup_shouldContinueWhenSystemLogCleanupFails() {
         // 模拟系统日志清理异常
-        when(systemLogRepository.findAll()).thenThrow(new RuntimeException("数据库异常"));
-        when(testResultRepository.findAll()).thenReturn(List.of());
+        when(systemLogRepository.deleteByCreatedAtBefore(any(LocalDateTime.class)))
+                .thenThrow(new RuntimeException("数据库异常"));
+        when(testResultRepository.deleteByCreatedAtBefore(any(LocalDateTime.class))).thenReturn(0);
         when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
         when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(0);
@@ -240,29 +248,31 @@ class DataRetentionPolicyServiceTest {
         assertDoesNotThrow(() -> policyService.executeRetentionCleanup());
 
         // 验证结果 - 其他清理仍然执行
-        verify(testResultRepository).findAll();
+        verify(testResultRepository).deleteByCreatedAtBefore(any(LocalDateTime.class));
         verify(loginLogRepository).findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class));
         verify(userSessionRepository).deleteInactiveSessionsBefore(any(LocalDateTime.class));
     }
 
-    @Test
-    @DisplayName("执行保留策略清理 - 未过期的数据不被删除")
-    void executeRetentionCleanup_shouldNotDeleteNonExpiredData() {
-        // 准备测试数据 - 未过期的日志
-        SystemLog recentLog = new SystemLog();
-        recentLog.setId(1L);
-        recentLog.setCreatedAt(LocalDateTime.now().minusDays(30)); // 未超过90天
+    // ==================== executeRetentionCleanupForTenant 测试 ====================
 
-        when(systemLogRepository.findAll()).thenReturn(List.of(recentLog));
-        when(testResultRepository.findAll()).thenReturn(List.of());
-        when(loginLogRepository.findByLoginTimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(List.of());
-        when(userSessionRepository.deleteInactiveSessionsBefore(any(LocalDateTime.class))).thenReturn(0);
+    @Test
+    @DisplayName("执行租户保留策略清理 - 成功按租户清理")
+    void executeRetentionCleanupForTenant_shouldCleanupByTenant() {
+        Long tenantId = 100L;
+
+        when(systemLogRepository.deleteByTenantIdAndCreatedAtBefore(eq(tenantId), any(LocalDateTime.class)))
+                .thenReturn(3);
+        when(testResultRepository.deleteByTenantIdAndCreatedAtBefore(eq(tenantId), any(LocalDateTime.class)))
+                .thenReturn(2);
 
         // 执行测试
-        policyService.executeRetentionCleanup();
+        long result = policyService.executeRetentionCleanupForTenant(tenantId);
 
-        // 验证结果 - 未过期的日志不应被删除
-        verify(systemLogRepository, never()).delete(any(SystemLog.class));
+        // 验证结果
+        assertEquals(5, result);
+        verify(systemLogRepository).deleteByTenantIdAndCreatedAtBefore(eq(tenantId), any(LocalDateTime.class));
+        verify(testResultRepository).deleteByTenantIdAndCreatedAtBefore(eq(tenantId), any(LocalDateTime.class));
+        // 验证审计日志被记录
+        verify(systemLogService).saveLog(any(SystemLog.class));
     }
 }

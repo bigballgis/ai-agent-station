@@ -6,6 +6,7 @@ import com.aiagent.dto.AgentInvokeResponse;
 import com.aiagent.engine.AgentExecutionEngine;
 import com.aiagent.entity.Agent;
 import com.aiagent.entity.ApiCallLog;
+import com.aiagent.exception.RateLimitException;
 import com.aiagent.security.UserPrincipal;
 import com.aiagent.service.AgentService;
 import com.aiagent.service.ApiCallLogService;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -34,6 +37,7 @@ public class AgentApiController {
     private final AgentExecutionEngine agentExecutionEngine;
     private final ApiCallLogService apiCallLogService;
     private final AgentService agentService;
+    private final StringRedisTemplate redisTemplate;
 
     @PostMapping("/agent/{agentId}/invoke")
     @Operation(summary = "调用Agent", description = "同步或异步调用已发布的Agent")
@@ -44,6 +48,10 @@ public class AgentApiController {
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @AuthenticationPrincipal UserPrincipal principal,
             HttpServletRequest httpRequest) {
+
+        // Agent调用限流：每用户每分钟最多30次
+        String clientIp = getClientIp(httpRequest);
+        checkRateLimit("agent-invoke:" + principal.getUserId() + ":" + clientIp, 30, 60);
 
         if (requestId == null || requestId.isEmpty()) {
             requestId = java.util.UUID.randomUUID().toString();
@@ -139,5 +147,18 @@ public class AgentApiController {
             ip = ip.split(",")[0].trim();
         }
         return ip;
+    }
+
+    // ==================== 速率限制辅助方法 ====================
+
+    private void checkRateLimit(String key, int maxAttempts, int windowSeconds) {
+        String redisKey = "rate_limit:" + key;
+        Long count = redisTemplate.opsForValue().increment(redisKey);
+        if (count != null && count == 1) {
+            redisTemplate.expire(redisKey, windowSeconds, TimeUnit.SECONDS);
+        }
+        if (count != null && count > maxAttempts) {
+            throw new RateLimitException("请求过于频繁，请稍后重试");
+        }
     }
 }
