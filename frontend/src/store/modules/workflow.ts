@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNodeLog } from '@/api/workflow'
 import type { ApiResponse, PageResult } from '@/types/common'
+import { logger } from '@/utils/logger'
 
 export const useWorkflowStore = defineStore('workflow', () => {
   // State
@@ -68,10 +69,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
     definitionId: number,
     variables?: Record<string, unknown>
   ) {
-    const res = await workflowApi.startWorkflow(definitionId, variables) as unknown as ApiResponse<WorkflowInstance>
-    const instance = res.data
-    instances.value.unshift(instance)
-    return instance
+    try {
+      const res = await workflowApi.startWorkflow(definitionId, variables) as unknown as ApiResponse<WorkflowInstance>
+      const instance = res.data
+      instances.value.unshift(instance)
+      return instance
+    } catch (error) {
+      logger.debug('Start workflow failed:', error)
+      throw error
+    }
   }
 
   async function approveNode(
@@ -80,19 +86,29 @@ export const useWorkflowStore = defineStore('workflow', () => {
     approved: boolean,
     comment?: string
   ) {
-    if (approved) {
-      const res = await workflowApi.approveNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
-      return res.data
-    } else {
-      const res = await workflowApi.rejectNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
-      return res.data
+    try {
+      if (approved) {
+        const res = await workflowApi.approveNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
+        return res.data
+      } else {
+        const res = await workflowApi.rejectNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
+        return res.data
+      }
+    } catch (error) {
+      logger.debug('Approve node failed:', error)
+      throw error
     }
   }
 
   async function fetchNodeLogs(instanceId: number) {
-    const res = await workflowApi.getInstanceHistory(instanceId) as unknown as ApiResponse<WorkflowNodeLog[]>
-    nodeLogs.value = res.data || []
-    return res.data
+    try {
+      const res = await workflowApi.getInstanceHistory(instanceId) as unknown as ApiResponse<WorkflowNodeLog[]>
+      nodeLogs.value = res.data || []
+      return res.data
+    } catch (error) {
+      logger.debug('Fetch node logs failed:', error)
+      return []
+    }
   }
 
   async function cancelInstance(instanceId: number) {

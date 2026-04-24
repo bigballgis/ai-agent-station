@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.entity.AgentTestResult;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentTestResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class AgentTestResultService {
     @Transactional(rollbackFor = Exception.class)
     public AgentTestResult updateResult(Long id, AgentTestResult updatedResult) {
         AgentTestResult existingResult = resultRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test result not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("测试结果不存在"));
 
         existingResult.setActualOutput(updatedResult.getActualOutput());
         existingResult.setExpectedOutput(updatedResult.getExpectedOutput());
@@ -91,9 +92,7 @@ public class AgentTestResultService {
         if (total == 0) {
             return 0.0;
         }
-        long passed = resultRepository.findByAgentId(agentId).stream()
-                .filter(result -> "SUCCESS".equals(result.getStatus()))
-                .count();
+        long passed = resultRepository.countByAgentIdAndStatus(agentId, "SUCCESS");
         return (double) passed / total * 100;
     }
 
@@ -103,9 +102,7 @@ public class AgentTestResultService {
         if (total == 0) {
             return 0.0;
         }
-        long passed = resultRepository.findByTestCaseId(testCaseId).stream()
-                .filter(result -> "SUCCESS".equals(result.getStatus()))
-                .count();
+        long passed = resultRepository.countByTestCaseIdAndStatus(testCaseId, "SUCCESS");
         return (double) passed / total * 100;
     }
 }

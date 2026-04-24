@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,9 @@ public class PermissionMatrixService {
 
     private static final String PERM_CACHE_PREFIX = "perm:matrix:";
     private static final String PERM_TREE_CACHE_KEY = "perm:tree";
-    private static final long PERM_CACHE_TTL_MINUTES = 30;
+
+    @Value("${ai-agent.cache.permission-ttl-minutes:30}")
+    private long permCacheTtlMinutes;
 
     /**
      * Get all permissions for a role as a matrix (grouped by resource type)
@@ -61,7 +64,7 @@ public class PermissionMatrixService {
 
         // Cache the result
         try {
-            cacheService.set(cacheKey, objectMapper.writeValueAsString(grouped), PERM_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            cacheService.set(cacheKey, objectMapper.writeValueAsString(grouped), permCacheTtlMinutes, TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize permission cache for role: {}", roleId);
         }
@@ -283,7 +286,7 @@ public class PermissionMatrixService {
 
         // Cache
         try {
-            cacheService.set(PERM_TREE_CACHE_KEY, objectMapper.writeValueAsString(tree), PERM_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            cacheService.set(PERM_TREE_CACHE_KEY, objectMapper.writeValueAsString(tree), permCacheTtlMinutes, TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize permission tree cache");
         }

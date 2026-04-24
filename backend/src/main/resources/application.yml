@@ -158,6 +158,31 @@ logging:
 
 # AI Agent配置
 ai-agent:
+  # 安全配置
+  security:
+    max-failed-attempts: ${SECURITY_MAX_FAILED_ATTEMPTS:5}
+    lockout-duration-minutes: ${SECURITY_LOCKOUT_DURATION_MINUTES:30}
+    password-history-count: ${SECURITY_PASSWORD_HISTORY_COUNT:5}
+    refresh-token-ttl-days: ${SECURITY_REFRESH_TOKEN_TTL_DAYS:7}
+  # 会话配置
+  session:
+    timeout-hours: ${SESSION_TIMEOUT_HOURS:24}
+    max-concurrent-sessions: ${SESSION_MAX_CONCURRENT:3}
+  # 登录速率限制
+  rate-limit:
+    max-attempts-per-minute: ${RATE_LIMIT_MAX_ATTEMPTS:5}
+    max-ip-global-per-minute: ${RATE_LIMIT_MAX_IP_GLOBAL:10}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+    base-backoff-seconds: ${RATE_LIMIT_BASE_BACKOFF:2}
+  # 告警配置
+  alert:
+    webhook-max-retries: ${ALERT_WEBHOOK_MAX_RETRIES:3}
+  # 缓存配置
+  cache:
+    default-ttl-minutes: ${CACHE_DEFAULT_TTL_MINUTES:30}
+    dict-ttl-hours: ${CACHE_DICT_TTL_HOURS:2}
+    permission-ttl-minutes: ${CACHE_PERMISSION_TTL_MINUTES:30}
+    llm-response-ttl-minutes: ${CACHE_LLM_RESPONSE_TTL_MINUTES:30}
   # 大模型配置 (LangChain4j 原生驱动)
   llm:
     default-provider: ${LLM_DEFAULT_PROVIDER:openai}

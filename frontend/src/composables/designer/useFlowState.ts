@@ -13,7 +13,7 @@ import type { CanvasNode } from './types'
  */
 export function useFlowState() {
   // Shared state key-value store
-  const state = reactive<Record<string, any>>({})
+  const state = reactive<Record<string, unknown>>({})
 
   // Initialize state from start node's inputVariables
   function initializeFromStartNode(nodes: CanvasNode[]) {
@@ -50,7 +50,7 @@ export function useFlowState() {
    * Supports: {{node_123.output}}, {{node_123.config.someField}}
    * Also supports: {{state.variableName}} for flow state variables
    */
-  function resolveReferences(template: string, nodes: CanvasNode[], nodeOutputs: Record<string, any>): string {
+  function resolveReferences(template: string, nodes: CanvasNode[], nodeOutputs: Record<string, unknown>): string {
     if (!template || typeof template !== 'string') return template
 
     const DANGEROUS_PROPS = ['__proto__', 'constructor', 'prototype', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']
@@ -102,8 +102,8 @@ export function useFlowState() {
   }
 
   // Resolve references in an entire config object (deep)
-  function resolveConfigReferences(config: Record<string, any>, nodes: CanvasNode[], nodeOutputs: Record<string, any>): Record<string, any> {
-    const resolved: Record<string, any> = {}
+  function resolveConfigReferences(config: Record<string, unknown>, nodes: CanvasNode[], nodeOutputs: Record<string, unknown>): Record<string, unknown> {
+    const resolved: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(config)) {
       if (typeof value === 'string') {
         resolved[key] = resolveReferences(value, nodes, nodeOutputs)

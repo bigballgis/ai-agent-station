@@ -89,4 +89,16 @@ public interface AgentTestResultRepository extends JpaRepository<AgentTestResult
     @Modifying
     @Query("DELETE FROM AgentTestResult r WHERE r.createdAt < :threshold")
     int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
+
+    /**
+     * 统计Agent下指定状态的测试结果数量（用于通过率计算）
+     */
+    @Query("SELECT COUNT(r) FROM AgentTestResult r WHERE r.agentId = :agentId AND r.status = :status")
+    long countByAgentIdAndStatus(@Param("agentId") Long agentId, @Param("status") String status);
+
+    /**
+     * 统计测试用例下指定状态的测试结果数量（用于通过率计算）
+     */
+    @Query("SELECT COUNT(r) FROM AgentTestResult r WHERE r.testCaseId = :testCaseId AND r.status = :status")
+    long countByTestCaseIdAndStatus(@Param("testCaseId") Long testCaseId, @Param("status") String status);
 }

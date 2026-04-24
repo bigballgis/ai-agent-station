@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.entity.AgentTestCase;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentTestCaseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class AgentTestCaseService {
     @Transactional(rollbackFor = Exception.class)
     public AgentTestCase updateTestCase(Long id, AgentTestCase updatedTestCase) {
         AgentTestCase existingTestCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test case not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("测试用例不存在"));
 
         existingTestCase.setTestName(updatedTestCase.getTestName());
         existingTestCase.setDescription(updatedTestCase.getDescription());
@@ -76,7 +77,7 @@ public class AgentTestCaseService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteTestCase(Long id) {
         AgentTestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test case not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("测试用例不存在"));
         log.info("Deleting test case: {}", testCase.getTestName());
         testCaseRepository.delete(testCase);
     }

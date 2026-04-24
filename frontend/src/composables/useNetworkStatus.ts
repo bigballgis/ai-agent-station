@@ -91,7 +91,7 @@ export function useNetworkStatus() {
 
   return {
     isOnline: readonly(isOnline),
-    isOffline: readonly(ref(false)), // will be computed below
+    isOffline: readonly(ref(false)), // Deprecated: use useOfflineState() instead
     effectiveOnline,
     queuedRequestCount: () => queuedRequests.length,
   }

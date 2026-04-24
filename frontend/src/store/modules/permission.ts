@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { TreeNode } from '@/types'
 import type { ApiResponse } from '@/types/common'
 import request from '@/utils/request'
+import { logger } from '@/utils/logger'
 
 interface Permission {
   id: number
@@ -57,14 +58,22 @@ export const usePermissionStore = defineStore('permission', () => {
 
   // Actions
   async function fetchPermissions() {
-    const res = await request.get('/v1/permissions/current') as ApiResponse<Permission[]>
-    permissions.value = res.data || []
-    menuTree.value = buildMenuTree(permissions.value)
+    try {
+      const res = await request.get('/v1/permissions/current') as ApiResponse<Permission[]>
+      permissions.value = res.data || []
+      menuTree.value = buildMenuTree(permissions.value)
+    } catch (error) {
+      logger.debug('Fetch permissions failed:', error)
+    }
   }
 
   async function fetchRoles() {
-    const res = await request.get('/v1/roles') as ApiResponse<Role[]>
-    roles.value = res.data || []
+    try {
+      const res = await request.get('/v1/roles') as ApiResponse<Role[]>
+      roles.value = res.data || []
+    } catch (error) {
+      logger.debug('Fetch roles failed:', error)
+    }
   }
 
   async function checkPermission(code: string): Promise<boolean> {

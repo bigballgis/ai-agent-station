@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,9 @@ import java.util.Optional;
 public class LlmResponseCacheService {
 
     private static final String KEY_PREFIX = "llm_cache:";
-    private static final Duration TTL = Duration.ofMinutes(30);
+
+    @Value("${ai-agent.cache.llm-response-ttl-minutes:30}")
+    private long ttlMinutes;
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -56,8 +59,8 @@ public class LlmResponseCacheService {
     public void cache(String provider, String systemPrompt, String userMessage, String response) {
         String key = buildCacheKey(provider, systemPrompt, userMessage);
         try {
-            stringRedisTemplate.opsForValue().set(key, response, TTL);
-            log.info("LLM response cached for provider={}, key={}, ttl={}s", provider, key, TTL.getSeconds());
+            stringRedisTemplate.opsForValue().set(key, response, Duration.ofMinutes(ttlMinutes));
+            log.info("LLM response cached for provider={}, key={}, ttl={}s", provider, key, ttlMinutes * 60);
         } catch (Exception e) {
             log.error("Failed to cache response for provider={}", provider, e);
         }

@@ -7,9 +7,9 @@ WORKDIR /app
 
 # Copy pom.xml and download dependencies first (layer caching)
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 
-# Copy source code and build (use BuildKit cache for Maven dependencies)
+# Copy source code and build (use BuildKit cache for Maven local repo)
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests -B
 
@@ -30,8 +30,8 @@ RUN apk add --no-cache wget curl
 # Copy built artifact (handle variable jar name)
 COPY --from=builder /app/target/*.jar app.jar
 
-# Create logs directory
-RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
+# Create logs and storage directories
+RUN mkdir -p /app/logs /app/data/storage && chown -R appuser:appgroup /app
 
 USER appuser
 

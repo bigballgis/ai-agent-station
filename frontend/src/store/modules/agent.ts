@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { PageRequest, PageResult } from '@/types'
 import { agentApi, type Agent } from '@/api/agent'
+import { logger } from '@/utils/logger'
 
 export const useAgentStore = defineStore('agent', () => {
   // State
@@ -86,22 +87,32 @@ export const useAgentStore = defineStore('agent', () => {
   }
 
   async function createAgent(data: Partial<Agent>) {
-    const res = await agentApi.createAgent(data as Record<string, unknown>)
-    agents.value.push(res.data as Agent)
-    return res.data
+    try {
+      const res = await agentApi.createAgent(data as Record<string, unknown>)
+      agents.value.push(res.data as Agent)
+      return res.data
+    } catch (error) {
+      logger.debug('Create agent failed:', error)
+      throw error
+    }
   }
 
   async function updateAgent(id: string | number, data: Partial<Agent>) {
-    const res = await agentApi.updateAgent(id, data as Record<string, unknown>)
-    const updated = res.data as Agent
-    const index = agents.value.findIndex((a) => a.id === id)
-    if (index !== -1) {
-      agents.value[index] = updated
+    try {
+      const res = await agentApi.updateAgent(id, data as Record<string, unknown>)
+      const updated = res.data as Agent
+      const index = agents.value.findIndex((a) => a.id === id)
+      if (index !== -1) {
+        agents.value[index] = updated
+      }
+      if (currentAgent.value?.id === id) {
+        currentAgent.value = updated
+      }
+      return updated
+    } catch (error) {
+      logger.debug('Update agent failed:', error)
+      throw error
     }
-    if (currentAgent.value?.id === id) {
-      currentAgent.value = updated
-    }
-    return updated
   }
 
   async function deleteAgent(id: string | number) {

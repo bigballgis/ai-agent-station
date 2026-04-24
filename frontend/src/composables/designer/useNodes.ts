@@ -91,7 +91,7 @@ export function useNodes(connections: Ref<Connection[]>) {
     const label = typeDef?.name ?? type
     const config = typeDef
       ? JSON.parse(JSON.stringify(typeDef.defaultConfig))
-      : ({} as Record<string, any>)
+      : ({} as Record<string, unknown>)
     const inputs = typeDef
       ? JSON.parse(JSON.stringify(typeDef.defaultInputs))
       : []
@@ -207,7 +207,7 @@ export function useNodes(connections: Ref<Connection[]>) {
    * @param id - 节点 ID
    * @param config - 新的配置对象（会合并到现有配置）
    */
-  function updateNodeConfig(id: string, config: Record<string, any>): void {
+  function updateNodeConfig(id: string, config: Record<string, unknown>): void {
     const node = nodes.value.find((n) => n.id === id)
     if (node) {
       node.config = { ...node.config, ...config }

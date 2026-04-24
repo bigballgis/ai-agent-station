@@ -3,6 +3,7 @@ package com.aiagent.service;
 import com.aiagent.entity.AgentTestExecution;
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.engine.TestExecutionEngine;
+import com.aiagent.exception.ResourceNotFoundException;
 import com.aiagent.repository.AgentTestExecutionRepository;
 import com.aiagent.repository.AgentTestResultRepository;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class AgentTestExecutionService {
     @Transactional(rollbackFor = Exception.class)
     public AgentTestExecution executeTest(Long executionId) {
         AgentTestExecution execution = executionRepository.findById(executionId)
-                .orElseThrow(() -> new RuntimeException("Test execution not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("测试执行记录不存在"));
 
         execution.setStatus(1); // 1: Running
         executionRepository.save(execution);
@@ -142,7 +143,7 @@ public class AgentTestExecutionService {
     @Transactional(rollbackFor = Exception.class)
     public void cancelExecution(Long id) {
         AgentTestExecution execution = executionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test execution not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("测试执行记录不存在"));
         execution.setStatus(4); // 4: Cancelled
         execution.setEndTime(LocalDateTime.now());
         executionRepository.save(execution);

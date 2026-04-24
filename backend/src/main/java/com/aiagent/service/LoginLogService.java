@@ -2,12 +2,15 @@ package com.aiagent.service;
 
 import com.aiagent.entity.LoginLog;
 import com.aiagent.repository.LoginLogRepository;
+import com.aiagent.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 
@@ -21,7 +24,8 @@ public class LoginLogService {
     /**
      * 记录登录/登录失败日志
      */
-    public void recordLogin(String username, Long userId, String status, String message, HttpServletRequest request) {
+    public void recordLogin(String username, Long userId, String status, String message) {
+        HttpServletRequest request = getCurrentHttpServletRequest();
         LoginLog loginLog = new LoginLog();
         loginLog.setUsername(username);
         loginLog.setUserId(userId);
@@ -38,7 +42,8 @@ public class LoginLogService {
     /**
      * 记录登出日志
      */
-    public void recordLogout(Long userId, HttpServletRequest request) {
+    public void recordLogout(Long userId) {
+        HttpServletRequest request = getCurrentHttpServletRequest();
         LoginLog loginLog = new LoginLog();
         loginLog.setUserId(userId);
         loginLog.setLoginType("LOGOUT");
@@ -69,7 +74,15 @@ public class LoginLogService {
         return loginLogRepository.countByUsernameAndLoginTimeAfterAndStatus(username, since, "FAIL");
     }
 
+    private HttpServletRequest getCurrentHttpServletRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
+    }
+
     private String getClientIp(HttpServletRequest request) {
+        if (request == null) {
+            return "unknown";
+        }
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("X-Real-IP");
@@ -81,6 +94,7 @@ public class LoginLogService {
     }
 
     private String parseBrowser(HttpServletRequest request) {
+        if (request == null) return "Unknown";
         String ua = request.getHeader("User-Agent");
         if (ua == null) return "Unknown";
         if (ua.contains("Edg/")) return "Edge";
@@ -91,6 +105,7 @@ public class LoginLogService {
     }
 
     private String parseOs(HttpServletRequest request) {
+        if (request == null) return "Unknown";
         String ua = request.getHeader("User-Agent");
         if (ua == null) return "Unknown";
         if (ua.contains("Windows")) return "Windows";

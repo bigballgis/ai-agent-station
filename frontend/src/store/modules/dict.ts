@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DictType, DictItem } from '@/types'
 import request from '@/utils/request'
+import { logger } from '@/utils/logger'
 
 export const useDictStore = defineStore('dict', () => {
   // State
@@ -25,9 +26,14 @@ export const useDictStore = defineStore('dict', () => {
 
   // Actions
   async function fetchDictTypes() {
-    const res = await request.get<DictType[]>('/v1/dict-types')
-    dictTypes.value = res.data || []
-    return res.data
+    try {
+      const res = await request.get<DictType[]>('/v1/dict-types')
+      dictTypes.value = res.data || []
+      return res.data
+    } catch (error) {
+      logger.debug('Fetch dict types failed:', error)
+      return []
+    }
   }
 
   async function fetchDictItems(dictType: string) {
@@ -35,12 +41,17 @@ export const useDictStore = defineStore('dict', () => {
       return dictItems.value.get(dictType)!
     }
 
-    const res = await request.get<DictItem[]>(
-      `/v1/dict-types/${dictType}/items`
-    )
-    const items = res.data || []
-    dictItems.value.set(dictType, items)
-    return items
+    try {
+      const res = await request.get<DictItem[]>(
+        `/v1/dict-types/${dictType}/items`
+      )
+      const items = res.data || []
+      dictItems.value.set(dictType, items)
+      return items
+    } catch (error) {
+      logger.debug('Fetch dict items failed:', error)
+      return []
+    }
   }
 
   async function getDictItemsByType(dictType: string): Promise<DictItem[]> {

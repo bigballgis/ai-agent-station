@@ -5,6 +5,7 @@ const pinia = createPinia()
 export default pinia
 
 // Re-export store modules for convenience
+export { useUserStore } from './modules/user'
 export { useAgentStore } from './modules/agent'
 export { usePermissionStore } from './modules/permission'
 export { useWorkflowStore } from './modules/workflow'

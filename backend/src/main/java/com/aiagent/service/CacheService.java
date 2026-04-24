@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +22,12 @@ public class CacheService {
     public static final String USER_CACHE_PREFIX = "user:";
     public static final String AGENT_CACHE_PREFIX = "agent:";
     public static final String QUOTA_CACHE_PREFIX = "quota:";
-    public static final long DEFAULT_TTL_MINUTES = 30;
-    public static final long DICT_TTL_HOURS = 2;
+
+    @Value("${ai-agent.cache.default-ttl-minutes:30}")
+    private long defaultTtlMinutes;
+
+    @Value("${ai-agent.cache.dict-ttl-hours:2}")
+    private long dictTtlHours;
 
     /**
      * 设置缓存
@@ -69,7 +74,7 @@ public class CacheService {
      * 缓存字典项
      */
     public void cacheDictItems(String dictType, String json) {
-        set(DICT_CACHE_PREFIX + dictType, json, DICT_TTL_HOURS, TimeUnit.HOURS);
+        set(DICT_CACHE_PREFIX + dictType, json, dictTtlHours, TimeUnit.HOURS);
     }
 
     /**
@@ -99,7 +104,7 @@ public class CacheService {
      * 缓存用户信息
      */
     public void cacheUserInfo(Long userId, String json) {
-        set(USER_CACHE_PREFIX + userId, json, DEFAULT_TTL_MINUTES, TimeUnit.MINUTES);
+        set(USER_CACHE_PREFIX + userId, json, defaultTtlMinutes, TimeUnit.MINUTES);
     }
 
     /**
@@ -122,7 +127,7 @@ public class CacheService {
      * 缓存Agent信息
      */
     public void cacheAgentInfo(Long agentId, String json) {
-        set(AGENT_CACHE_PREFIX + agentId, json, DEFAULT_TTL_MINUTES, TimeUnit.MINUTES);
+        set(AGENT_CACHE_PREFIX + agentId, json, defaultTtlMinutes, TimeUnit.MINUTES);
     }
 
     /**
@@ -145,7 +150,7 @@ public class CacheService {
      * 缓存配额信息
      */
     public void cacheQuota(Long tenantId, String json) {
-        set(QUOTA_CACHE_PREFIX + tenantId, json, DEFAULT_TTL_MINUTES, TimeUnit.MINUTES);
+        set(QUOTA_CACHE_PREFIX + tenantId, json, defaultTtlMinutes, TimeUnit.MINUTES);
     }
 
     /**

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { notificationApi, type Notification } from '@/api/notification'
+import { logger } from '@/utils/logger'
 
 export const useNotificationStore = defineStore('notification', () => {
   // State
@@ -26,16 +27,21 @@ export const useNotificationStore = defineStore('notification', () => {
 
   // Actions - delegate REST API calls to api/notification.ts
   async function fetchNotifications(params?: { page?: number; size?: number }) {
-    const res = await notificationApi.getNotifications(params)
-    // 兼容分页和非分页两种返回格式
-    const data = res.data
-    if (Array.isArray(data)) {
-      notifications.value = data
-    } else {
-      notifications.value = (data as { records?: Notification[] })?.records || []
+    try {
+      const res = await notificationApi.getNotifications(params)
+      // 兼容分页和非分页两种返回格式
+      const data = res.data
+      if (Array.isArray(data)) {
+        notifications.value = data
+      } else {
+        notifications.value = (data as { records?: Notification[] })?.records || []
+      }
+      unreadCount.value = notifications.value.filter((n) => !n.read).length
+      return res.data
+    } catch (error) {
+      logger.debug('Fetch notifications failed:', error)
+      return undefined
     }
-    unreadCount.value = notifications.value.filter((n) => !n.read).length
-    return res.data
   }
 
   async function markAsRead(id: number) {

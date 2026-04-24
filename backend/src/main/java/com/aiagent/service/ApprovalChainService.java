@@ -83,6 +83,8 @@ public class ApprovalChainService {
         // Parse steps from chain definition and create step records
         // JSON 反序列化后审批链步骤是 Object 类型，需要强制转换为 List<Map>
         @SuppressWarnings("unchecked")
+        List<Map<String, Object>> stepDefinitions = chain.getSteps() != null
+                ? (List<Map<String, Object>>) chain.getSteps() : null;
 
         if (stepDefinitions == null || stepDefinitions.isEmpty()) {
             throw new BusinessException("审批链步骤定义为空");

@@ -71,6 +71,12 @@ services:
       - redis-6
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -85,6 +91,12 @@ services:
       - redis_cluster_1_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -99,6 +111,12 @@ services:
       - redis_cluster_2_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -113,6 +131,12 @@ services:
       - redis_cluster_3_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -127,6 +151,12 @@ services:
       - redis_cluster_4_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -141,6 +171,12 @@ services:
       - redis_cluster_5_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -155,6 +191,12 @@ services:
       - redis_cluster_6_data:/data
     networks:
       - backend-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     profiles:
       - redis-cluster
 
@@ -299,7 +341,8 @@ services:
     ports:
       - "127.0.0.1:5173:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1"]
       interval: 30s

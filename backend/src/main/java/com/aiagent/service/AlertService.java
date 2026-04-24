@@ -10,6 +10,7 @@ import com.aiagent.util.SecurityUtils;
 import com.aiagent.vo.AlertRuleVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,9 @@ public class AlertService {
     private final AlertRecordRepository recordRepository;
     private final NotificationService notificationService;
 
-    private static final int WEBHOOK_MAX_RETRIES = 3;
+    @Value("${ai-agent.alert.webhook-max-retries:3}")
+    private int webhookMaxRetries;
+
     private static final long[] WEBHOOK_BACKOFF_MS = {1000L, 5000L, 15000L};
 
     // ==================== Alert Rule ====================
@@ -62,7 +65,7 @@ public class AlertService {
     @Transactional(rollbackFor = Exception.class)
     public AlertRuleVO updateRule(Long id, AlertRuleUpdateDTO dto) {
         AlertRule rule = ruleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("告警规则不存在: " + id));
+                .orElseThrow(() -> new BusinessException("告警规则不存在: " + id));
         if (dto.getName() != null) {
             rule.setName(dto.getName());
         }
@@ -189,7 +192,7 @@ public class AlertService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        for (int attempt = 0; attempt < WEBHOOK_MAX_RETRIES; attempt++) {
+        for (int attempt = 0; attempt < webhookMaxRetries; attempt++) {
             try {
                 if (attempt > 0) {
                     long backoff = WEBHOOK_BACKOFF_MS[attempt - 1];
@@ -212,11 +215,11 @@ public class AlertService {
                 return;
             } catch (Exception e) {
                 log.warn("Webhook 通知发送失败 (尝试 {}/{}), 告警规则: {}, 错误: {}",
-                        attempt + 1, WEBHOOK_MAX_RETRIES, rule.getName(), e.getMessage());
+                        attempt + 1, webhookMaxRetries, rule.getName(), e.getMessage());
             }
         }
 
-        log.error("Webhook 通知最终发送失败, 已重试 {} 次, 告警规则: {}", WEBHOOK_MAX_RETRIES, rule.getName());
+        log.error("Webhook 通知最终发送失败, 已重试 {} 次, 告警规则: {}", webhookMaxRetries, rule.getName());
     }
 
     /**

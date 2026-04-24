@@ -7,9 +7,12 @@ import com.aiagent.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,11 +32,11 @@ public class SessionService {
 
     private final UserSessionRepository sessionRepository;
 
-    /** Default session timeout: 24 hours */
-    private static final long DEFAULT_SESSION_TIMEOUT_HOURS = 24;
+    @Value("${ai-agent.session.timeout-hours:24}")
+    private long sessionTimeoutHours;
 
-    /** Maximum concurrent active sessions per user */
-    private static final int MAX_CONCURRENT_SESSIONS = 3;
+    @Value("${ai-agent.session.max-concurrent-sessions:3}")
+    private int maxConcurrentSessions;
 
     // User-Agent parsing patterns
     private static final Pattern BROWSER_PATTERN = Pattern.compile(
@@ -51,7 +54,8 @@ public class SessionService {
      * @return the created UserSession entity
      */
     @Transactional(rollbackFor = Exception.class)
-    public UserSession createSession(Long userId, String username, String sessionId, HttpServletRequest request) {
+    public UserSession createSession(Long userId, String username, String sessionId) {
+        HttpServletRequest request = getCurrentHttpServletRequest();
         // Enforce concurrent session limit: invalidate oldest sessions if limit exceeded
         enforceConcurrentSessionLimit(userId);
 
@@ -65,7 +69,7 @@ public class SessionService {
         session.setOs(parseOs(request.getHeader("User-Agent")));
         session.setLoginTime(LocalDateTime.now());
         session.setLastAccessTime(LocalDateTime.now());
-        session.setExpireTime(LocalDateTime.now().plusHours(DEFAULT_SESSION_TIMEOUT_HOURS));
+        session.setExpireTime(LocalDateTime.now().plusHours(sessionTimeoutHours));
         session.setStatus(SessionStatus.ACTIVE);
 
         session = sessionRepository.save(session);
@@ -83,10 +87,10 @@ public class SessionService {
     @Transactional(rollbackFor = Exception.class)
     public int enforceConcurrentSessionLimit(Long userId) {
         List<UserSession> activeSessions = sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE);
-        if (activeSessions.size() >= MAX_CONCURRENT_SESSIONS) {
+        if (activeSessions.size() >= maxConcurrentSessions) {
             // Sort by login time ascending (oldest first) and invalidate the excess
             activeSessions.sort(java.util.Comparator.comparing(UserSession::getLoginTime));
-            int excessCount = activeSessions.size() - MAX_CONCURRENT_SESSIONS + 1;
+            int excessCount = activeSessions.size() - maxConcurrentSessions + 1;
             for (int i = 0; i < excessCount && i < activeSessions.size(); i++) {
                 UserSession oldSession = activeSessions.get(i);
                 oldSession.setStatus(SessionStatus.KICKED);
@@ -111,7 +115,7 @@ public class SessionService {
             UserSession session = optional.get();
             if (session.getStatus() == SessionStatus.ACTIVE) {
                 session.setLastAccessTime(LocalDateTime.now());
-                session.setExpireTime(LocalDateTime.now().plusHours(DEFAULT_SESSION_TIMEOUT_HOURS));
+                session.setExpireTime(LocalDateTime.now().plusHours(sessionTimeoutHours));
                 sessionRepository.save(session);
             }
         }
@@ -244,6 +248,11 @@ public class SessionService {
     }
 
     // ==================== Private Helpers ====================
+
+    private HttpServletRequest getCurrentHttpServletRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
+    }
 
     private String truncateUserAgent(String userAgent) {
         if (userAgent == null) {

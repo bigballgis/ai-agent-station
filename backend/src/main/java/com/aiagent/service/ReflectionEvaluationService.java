@@ -291,7 +291,7 @@ public class ReflectionEvaluationService {
     @Transactional(rollbackFor = Exception.class)
     public void updateSuggestionStatus(Long suggestionId, String implementationStatus, Long userId) {
         AgentEvolutionSuggestion suggestion = suggestionRepository.findById(suggestionId)
-                .orElseThrow(() -> new RuntimeException("Suggestion not found"));
+                .orElseThrow(() -> new com.aiagent.exception.ResourceNotFoundException("改进建议不存在"));
         
         suggestion.setImplementationStatus(implementationStatus);
         if ("IMPLEMENTED".equals(implementationStatus)) {

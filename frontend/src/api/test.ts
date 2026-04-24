@@ -7,8 +7,8 @@ export interface TestCase {
   name: string
   description?: string
   testType: string
-  config: Record<string, any>
-  parameters?: Record<string, any>
+  config: Record<string, unknown>
+  parameters?: Record<string, unknown>
   isActive?: boolean
   createdBy?: number
   updatedBy?: number
@@ -24,7 +24,7 @@ export interface TestExecution {
   status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled'
   startTime?: string
   endTime?: string
-  result?: Record<string, any>
+  result?: Record<string, unknown>
   errorMessage?: string
   createdBy?: number
   createdAt?: string
@@ -39,7 +39,7 @@ export interface TestResult {
   status: 'SUCCESS' | 'FAILED' | 'SKIPPED'
   executionTime: number
   errorMessage?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
   createdAt?: string
 }
 
@@ -48,7 +48,7 @@ export interface TestCaseVersion {
   testCaseId: number
   tenantId?: number
   versionNumber: number
-  config: Record<string, any>
+  config: Record<string, unknown>
   changeLog?: string
   createdBy?: number
   createdAt?: string
@@ -111,7 +111,7 @@ export const testApi = {
     return request.get<TestExecution>(`/v1/test-executions/${id}`)
   },
 
-  getTestExecutions: (params?: Record<string, any>) => {
+  getTestExecutions: (params?: Record<string, unknown>) => {
     return request.get<TestExecution[]>('/v1/test-executions', { params })
   },
 
@@ -120,7 +120,7 @@ export const testApi = {
   },
 
   // 测试结果相关
-  getTestResults: (params?: Record<string, any>) => {
+  getTestResults: (params?: Record<string, unknown>) => {
     return request.get<TestResult[]>('/v1/test-results', { params })
   },
 
@@ -132,7 +132,7 @@ export const testApi = {
     return request.get<TestResult[]>(`/v1/test-results/execution/${executionId}`)
   },
 
-  exportTestResults: (params?: Record<string, any>) => {
+  exportTestResults: (params?: Record<string, unknown>) => {
     return request.get('/v1/export/test-results', { params, responseType: 'blob' })
   }
 }

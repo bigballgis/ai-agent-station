@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+docs/
+.trae/
+
+# CI/CD
+.github/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production.example
+!.env.staging.example
+
+# Docker
+docker-compose*.yml
+docker/
+
+# Uploads
+.uploads/
+
+# Logs
+logs/
+*.log
+
+# Build artifacts
+backend/target/
+frontend/dist/
+frontend/node_modules/

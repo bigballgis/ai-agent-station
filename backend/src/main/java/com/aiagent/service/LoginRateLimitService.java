@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +20,18 @@ public class LoginRateLimitService {
 
     private static final String LOGIN_ATTEMPT_PREFIX = "login:attempt:";
     private static final String IP_GLOBAL_PREFIX = "login:ip:global:";
-    private static final int MAX_ATTEMPTS_PER_MINUTE = 5;
-    private static final int MAX_IP_GLOBAL_ATTEMPTS_PER_MINUTE = 10;
-    private static final long WINDOW_SECONDS = 60;
-    private static final long BASE_BACKOFF_SECONDS = 2;
+
+    @Value("${ai-agent.rate-limit.max-attempts-per-minute:5}")
+    private int maxAttemptsPerMinute;
+
+    @Value("${ai-agent.rate-limit.max-ip-global-per-minute:10}")
+    private int maxIpGlobalAttemptsPerMinute;
+
+    @Value("${ai-agent.rate-limit.window-seconds:60}")
+    private long windowSeconds;
+
+    @Value("${ai-agent.rate-limit.base-backoff-seconds:2}")
+    private long baseBackoffSeconds;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -39,7 +48,7 @@ public class LoginRateLimitService {
         String ipCountStr = redisTemplate.opsForValue().get(ipGlobalKey);
         if (ipCountStr != null) {
             int ipCount = Integer.parseInt(ipCountStr);
-            if (ipCount >= MAX_IP_GLOBAL_ATTEMPTS_PER_MINUTE) {
+            if (ipCount >= maxIpGlobalAttemptsPerMinute) {
                 log.warn("IP全局登录速率限制触发: ip={}, attempts={}", ip, ipCount);
                 return "登录尝试次数过多，请稍后再试";
             }
@@ -51,9 +60,9 @@ public class LoginRateLimitService {
 
         if (countStr != null) {
             int count = Integer.parseInt(countStr);
-            if (count >= MAX_ATTEMPTS_PER_MINUTE) {
+            if (count >= maxAttemptsPerMinute) {
                 // 指数退避：基于失败次数计算建议等待时间
-                long backoffSeconds = BASE_BACKOFF_SECONDS * (long) Math.pow(2, Math.min(count - MAX_ATTEMPTS_PER_MINUTE, 4));
+                long backoffSeconds = baseBackoffSeconds * (long) Math.pow(2, Math.min(count - maxAttemptsPerMinute, 4));
                 String message = String.format("登录尝试次数过多，请%d秒后再试", backoffSeconds);
                 log.warn("登录速率限制触发: username={}, ip={}, attempts={}, backoff={}s", username, ip, count, backoffSeconds);
                 return message;
@@ -85,14 +94,14 @@ public class LoginRateLimitService {
         Long count = redisTemplate.opsForValue().increment(key);
         if (count != null && count == 1) {
             // 首次失败时设置过期时间
-            redisTemplate.expire(key, WINDOW_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
         }
 
         // 同时增加IP全局计数
         String ipGlobalKey = IP_GLOBAL_PREFIX + ip;
         Long ipCount = redisTemplate.opsForValue().increment(ipGlobalKey);
         if (ipCount != null && ipCount == 1) {
-            redisTemplate.expire(ipGlobalKey, WINDOW_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.expire(ipGlobalKey, windowSeconds, TimeUnit.SECONDS);
         }
 
         log.info("记录登录失败尝试: username={}, ip={}, count={}, ipGlobalCount={}", username, ip, count, ipCount);

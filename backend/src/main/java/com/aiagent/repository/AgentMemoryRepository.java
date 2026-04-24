@@ -28,7 +28,7 @@ public interface AgentMemoryRepository extends JpaRepository<AgentMemory, Long> 
     Page<AgentMemory> findByAgentIdAndTenantId(Long agentId, Long tenantId, Pageable pageable);
 
     @Query("SELECT m FROM AgentMemory m WHERE m.agentId = :agentId AND m.tenantId = :tenantId " +
-           "AND (:keyword IS NULL OR m.content LIKE %:keyword% OR m.summary LIKE %:keyword%) " +
+           "AND (:keyword IS NULL OR :keyword = '' OR m.content LIKE CONCAT('%', :keyword, '%') OR m.summary LIKE CONCAT('%', :keyword, '%')) " +
            "AND (:memoryType IS NULL OR m.memoryType = :memoryType)")
     Page<AgentMemory> searchMemories(@Param("agentId") Long agentId,
                                       @Param("tenantId") Long tenantId,
