@@ -931,8 +931,8 @@ function handleValidate() {
   }
 
   // 5秒后自动清除
-  clearTimeout(validationTimer)
-  validationTimer = window.setTimeout(() => {
+  if (validationTimer) clearTimeout(validationTimer)
+  validationTimer = setTimeout(() => {
     validationMessage.value = ''
   }, 5000)
 }

@@ -32,6 +32,7 @@ export interface RegisterRequest {
 export interface LoginResultData {
   token: string
   userInfo: UserInfo
+  refreshToken?: string
 }
 
 /** 用户信息（与后端 /v1/auth/userinfo 对齐） */

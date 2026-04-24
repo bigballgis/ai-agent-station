@@ -46,9 +46,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CheckCircleOutlined, WarningOutlined } from '@ant-design/icons-vue'
 import Chart from 'chart.js/auto'
-import { getReflections, triggerEvaluation } from '@/api/reflection'
+import { getReflections } from '@/api/reflection'
 
 const { t } = useI18n()
 
@@ -110,7 +109,7 @@ onMounted(async () => {
     new Chart(trendChart.value, {
       type: 'line',
       data: {
-        labels: (t('evolution.reflection.months') as string[]),
+        labels: t('evolution.reflection.months') as unknown as string[],
         datasets: [
           {
             label: t('evolution.reflection.overallScore'),

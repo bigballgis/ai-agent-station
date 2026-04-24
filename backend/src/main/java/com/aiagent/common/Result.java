@@ -8,6 +8,7 @@ public class Result<T> implements Serializable {
     private String message;
     private T data;
     private String traceId;
+    private String messageCode;
 
     public Result() {
     }
@@ -78,11 +79,27 @@ public class Result<T> implements Serializable {
         this.traceId = traceId;
     }
 
+    public String getMessageCode() {
+        return messageCode;
+    }
+
+    public void setMessageCode(String messageCode) {
+        this.messageCode = messageCode;
+    }
+
     /**
      * 从 MDC 中获取 traceId 并设置到当前 Result 对象
      */
     public Result<T> withTraceId(String traceId) {
         this.traceId = traceId;
+        return this;
+    }
+
+    /**
+     * 设置 messageCode 并返回当前 Result 对象（链式调用）
+     */
+    public Result<T> withMessageCode(String messageCode) {
+        this.messageCode = messageCode;
         return this;
     }
 }

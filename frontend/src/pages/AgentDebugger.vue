@@ -315,7 +315,8 @@ interface ExecutionHistoryItem {
   agentId: number
   role: string
   message: string
-  createdAt: string
+  createdAt?: string
+  timestamp?: string
 }
 
 interface SSEEventData {
@@ -542,54 +543,55 @@ async function sendMessage() {
 
   try {
     sseConnection = streamAgentExecution(agentId, { message: userMsg }, {
-      onMessage: (data: SSEEventData) => {
+      onMessage: (data: unknown) => {
+        const evt = data as SSEEventData
         // Handle different event types from SSE
-        if (data.type === 'chain' || data.type === 'step') {
+        if (evt.type === 'chain' || evt.type === 'step') {
           // Execution chain step
-          const node = executionChain.value.find(n => n.name === data.name)
+          const node = executionChain.value.find(n => n.name === evt.name)
           if (node) {
-            node.status = data.status === 'running' ? 'running' : 'completed'
-            node.duration = data.duration || 0
-            node.output = data.output || ''
+            node.status = evt.status === 'running' ? 'running' : 'completed'
+            node.duration = evt.duration || 0
+            node.output = evt.output || ''
           } else {
             executionChain.value.push({
-              name: data.name || data.step || t('debugger.unknownStep'),
-              status: data.status === 'running' ? 'running' : 'completed',
-              duration: data.duration || 0,
-              output: data.output || '',
-              type: data.type === 'chain' ? 'LLM' : (data.nodeType || 'Tool'),
+              name: evt.name || evt.step || t('debugger.unknownStep'),
+              status: evt.status === 'running' ? 'running' : 'completed',
+              duration: evt.duration || 0,
+              output: evt.output || '',
+              type: evt.type === 'chain' ? 'LLM' : (evt.nodeType || 'Tool'),
             })
           }
-        } else if (data.type === 'tool_call' || data.type === 'mcp') {
+        } else if (evt.type === 'tool_call' || evt.type === 'mcp') {
           // MCP tool call
           mcpCalls.value.push({
-            toolName: data.toolName || data.name || 'unknown',
-            request: typeof data.request === 'string' ? data.request : JSON.stringify(data.request || {}, null, 2),
-            response: typeof data.response === 'string' ? data.response : JSON.stringify(data.response || {}, null, 2),
-            duration: data.duration || 0,
+            toolName: evt.toolName || evt.name || 'unknown',
+            request: typeof evt.request === 'string' ? evt.request : JSON.stringify(evt.request || {}, null, 2),
+            response: typeof evt.response === 'string' ? evt.response : JSON.stringify(evt.response || {}, null, 2),
+            duration: evt.duration || 0,
           })
-        } else if (data.type === 'memory') {
+        } else if (evt.type === 'memory') {
           // Memory operation
           memoryOps.value.push({
-            type: data.action === 'save' ? 'save' : 'load',
-            content: data.content || '',
+            type: evt.action === 'save' ? 'save' : 'load',
+            content: evt.content || '',
             time: formatTime(new Date()),
           })
-        } else if (data.type === 'variable') {
+        } else if (evt.type === 'variable') {
           // Variable update
           variables.value.push({
-            name: data.name || '',
-            type: data.varType || data.type || 'string',
-            value: typeof data.value === 'string' ? data.value : JSON.stringify(data.value),
+            name: evt.name || '',
+            type: evt.varType || evt.type || 'string',
+            value: typeof evt.value === 'string' ? evt.value : JSON.stringify(evt.value),
             updatedAt: formatTime(new Date()),
           })
-        } else if (data.type === 'token') {
+        } else if (evt.type === 'token') {
           // Token usage
-          tokenUsage.value = data.usage || data.count || 0
-        } else if (data.type === 'content' || data.type === 'delta') {
+          tokenUsage.value = evt.usage || evt.count || 0
+        } else if (evt.type === 'content' || evt.type === 'delta') {
           // Streaming content
-          fullContent += data.content || data.text || data.delta || ''
-        } else if (data.type === 'done' || data.type === 'complete') {
+          fullContent += evt.content || evt.text || evt.delta || ''
+        } else if (evt.type === 'done' || evt.type === 'complete') {
           // Stream complete
           totalDuration.value = Date.now() - startTime
           executionStatus.value = 'completed'
@@ -597,8 +599,8 @@ async function sendMessage() {
 
           if (fullContent) {
             messages.value.push({ role: 'agent', content: fullContent })
-          } else if (data.content || data.text) {
-            messages.value.push({ role: 'agent', content: data.content || data.text })
+          } else if (evt.content || evt.text) {
+            messages.value.push({ role: 'agent', content: evt.content || evt.text || '' })
           }
 
           saveHistory(selectedAgent.value, messages.value)

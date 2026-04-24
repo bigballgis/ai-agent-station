@@ -65,7 +65,7 @@ import { changePassword } from '@/api/user'
 
 const { t } = useI18n()
 
-const props = defineProps<{
+defineProps<{
   visible: boolean
 }>()
 

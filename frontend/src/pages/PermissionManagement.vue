@@ -438,12 +438,12 @@ async function fetchUsers() {
   try {
     const res = await getUsers()
     const users = res.data || res || []
-    roleUsers.value = Array.isArray(users) ? users.map((u: Record<string, unknown>) => ({
+    roleUsers.value = Array.isArray(users) ? users.map((u) => ({
       id: String(u.id),
-      name: (u.name || u.username || '') as string,
-      email: (u.email || '') as string,
-      department: (u.department || '') as string,
-      joinedAt: (u.createdAt || '') as string,
+      name: u.nickname || u.username || '',
+      email: u.email || '',
+      department: '',
+      joinedAt: u.createdAt || '',
     })) : []
   } catch (e: unknown) {
     logger.error('获取用户列表失败:', e)
@@ -456,12 +456,12 @@ async function loadRoleUsers() {
   try {
     const res = await getUsers()
     const users = res.data || res || []
-    roleUsers.value = Array.isArray(users) ? users.map((u: Record<string, unknown>) => ({
+    roleUsers.value = Array.isArray(users) ? users.map((u) => ({
       id: String(u.id),
-      name: (u.name || u.username || '') as string,
-      email: (u.email || '') as string,
-      department: (u.department || '') as string,
-      joinedAt: (u.createdAt || '') as string,
+      name: u.nickname || u.username || '',
+      email: u.email || '',
+      department: '',
+      joinedAt: u.createdAt || '',
     })) : []
   } catch (e) {
     logger.error('获取角色用户失败:', e)
@@ -605,7 +605,6 @@ async function confirmDeleteRole() {
 
 function removeUser(userId: string) {
   if (!selectedRole.value) return
-  const user = roleUsers.value.find(u => u.id === userId)
   Modal.confirm({
     title: t('permission.confirmRemove'),
     content: t('permission.confirmRemoveContent'),

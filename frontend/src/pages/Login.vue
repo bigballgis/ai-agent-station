@@ -375,6 +375,56 @@ const registerForm = reactive({
   confirmPassword: ''
 })
 
+// Reset password state
+const showResetPassword = ref(false)
+const resetLoading = ref(false)
+const resetFormRef = ref()
+const resetForm = reactive({
+  username: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const resetRules = {
+  username: [
+    { required: true, message: t('login.usernameRequired'), trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: t('password.newPasswordRequired'), trigger: 'blur' },
+    { min: 6, message: t('password.newPasswordMinLength'), trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: t('password.confirmPasswordRequired'), trigger: 'blur' },
+    {
+      validator: (_rule: unknown, value: string) => {
+        if (value && value !== resetForm.newPassword) {
+          return Promise.reject(t('password.passwordMismatch'))
+        }
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+async function handleResetPassword() {
+  try {
+    await resetFormRef.value.validate()
+    resetLoading.value = true
+    const { resetPassword } = await import('@/api/user')
+    await resetPassword({ username: resetForm.username, newPassword: resetForm.newPassword })
+    message.success(t('password.resetPasswordSuccess'))
+    showResetPassword.value = false
+    resetForm.username = ''
+    resetForm.newPassword = ''
+    resetForm.confirmPassword = ''
+  } catch (error: unknown) {
+    logger.error('Reset password error:', error)
+    message.error(t('password.resetPasswordFailed'))
+  } finally {
+    resetLoading.value = false
+  }
+}
+
 const loginRules = {
   username: [
     { required: true, message: t('login.usernameRequired'), trigger: 'blur' }

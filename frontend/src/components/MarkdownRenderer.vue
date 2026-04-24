@@ -42,11 +42,11 @@ const { t } = useI18n()
  */
 
 // 配置 DOMPurify：仅允许安全的 HTML 标签和属性
-DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+DOMPurify.addHook('uponSanitizeElement', (_node, _data) => {
   // 可以在这里添加额外的清理逻辑
 })
 
-const PURIFY_CONFIG: DOMPurify.Config = {
+const PURIFY_CONFIG = {
   ALLOWED_TAGS: [
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'p', 'br', 'hr',

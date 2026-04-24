@@ -4,6 +4,8 @@ import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
+import com.aiagent.dto.AlertRuleCreateDTO;
+import com.aiagent.dto.AlertRuleUpdateDTO;
 import com.aiagent.entity.AlertRecord;
 import com.aiagent.entity.AlertRule;
 import com.aiagent.service.AlertService;
@@ -42,15 +44,15 @@ public class AlertController {
     @RequiresPermission("alert:manage")
     @PostMapping("/rules")
     @Operation(summary = "创建告警规则")
-    public Result<AlertRuleVO> createRule(@Valid @RequestBody AlertRule rule) {
-        return Result.success(alertService.createRule(rule));
+    public Result<AlertRuleVO> createRule(@Valid @RequestBody AlertRuleCreateDTO dto) {
+        return Result.success(alertService.createRule(dto));
     }
 
     @RequiresPermission("alert:manage")
     @PutMapping("/rules/{id}")
     @Operation(summary = "更新告警规则")
-    public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @Valid @RequestBody AlertRule rule) {
-        return Result.success(alertService.updateRule(id, rule));
+    public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @Valid @RequestBody AlertRuleUpdateDTO dto) {
+        return Result.success(alertService.updateRule(id, dto));
     }
 
     @RequiresPermission("alert:manage")

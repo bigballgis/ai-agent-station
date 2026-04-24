@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { workflowApi, type WorkflowDefinition, type WorkflowInstance, type WorkflowNodeLog } from '@/api/workflow'
+import type { ApiResponse, PageResult } from '@/types/common'
 
 export const useWorkflowStore = defineStore('workflow', () => {
   // State
@@ -22,10 +23,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
   )
 
   // Actions - delegate API calls to api/workflow.ts
+  // Note: The response interceptor returns response.data (ApiResponse<T>) at runtime,
+  // but TypeScript still sees AxiosResponse<ApiResponse<T>>. We cast to ApiResponse<T>.
   async function fetchDefinitions(page = 0, size = 10, status?: string) {
     loading.value = true
     try {
-      const res = await workflowApi.getDefinitions(page, size, status)
+      const res = await workflowApi.getDefinitions(page, size, status) as unknown as ApiResponse<PageResult<WorkflowDefinition>>
       const data = res.data
       if (data && 'records' in data) {
         definitions.value = data.records
@@ -39,7 +42,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function fetchInstances(page = 0, size = 10, filters?: { status?: string; definitionId?: number }) {
     loading.value = true
     try {
-      const res = await workflowApi.getInstances(page, size, filters)
+      const res = await workflowApi.getInstances(page, size, filters) as unknown as ApiResponse<PageResult<WorkflowInstance>>
       const data = res.data
       if (data && 'records' in data) {
         instances.value = data.records
@@ -53,7 +56,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function fetchInstanceById(id: number) {
     loading.value = true
     try {
-      const res = await workflowApi.getInstance(id)
+      const res = await workflowApi.getInstance(id) as unknown as ApiResponse<WorkflowInstance>
       currentInstance.value = res.data
       return res.data
     } finally {
@@ -65,7 +68,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     definitionId: number,
     variables?: Record<string, unknown>
   ) {
-    const res = await workflowApi.startWorkflow(definitionId, variables)
+    const res = await workflowApi.startWorkflow(definitionId, variables) as unknown as ApiResponse<WorkflowInstance>
     const instance = res.data
     instances.value.unshift(instance)
     return instance
@@ -78,16 +81,16 @@ export const useWorkflowStore = defineStore('workflow', () => {
     comment?: string
   ) {
     if (approved) {
-      const res = await workflowApi.approveNode(instanceId, nodeId, comment)
+      const res = await workflowApi.approveNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
       return res.data
     } else {
-      const res = await workflowApi.rejectNode(instanceId, nodeId, comment)
+      const res = await workflowApi.rejectNode(instanceId, nodeId, comment) as unknown as ApiResponse<WorkflowNodeLog>
       return res.data
     }
   }
 
   async function fetchNodeLogs(instanceId: number) {
-    const res = await workflowApi.getInstanceHistory(instanceId)
+    const res = await workflowApi.getInstanceHistory(instanceId) as unknown as ApiResponse<WorkflowNodeLog[]>
     nodeLogs.value = res.data || []
     return res.data
   }

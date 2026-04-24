@@ -83,11 +83,11 @@
                 </div>
               </div>
               <button
-                @click="toggleApiDetail(api.operationId || index)"
+                @click="toggleApiDetail(api.operationId || String(index))"
                 class="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg
-                  v-if="expandedApis.includes(api.operationId || index)"
+                  v-if="expandedApis.includes(api.operationId || String(index))"
                   class="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
@@ -109,7 +109,7 @@
           </div>
 
           <!-- API详情 -->
-          <div v-if="expandedApis.includes(api.operationId || index)" class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div v-if="expandedApis.includes(api.operationId || String(index))" class="p-6 border-b border-gray-200 dark:border-gray-700">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <!-- 请求参数 -->
               <div>
@@ -162,6 +162,7 @@ interface OpenApiSchemaProperty {
   example?: unknown
   properties?: Record<string, OpenApiSchemaProperty>
   items?: OpenApiSchemaProperty
+  $ref?: string
 }
 
 interface OpenApiRequestBody {

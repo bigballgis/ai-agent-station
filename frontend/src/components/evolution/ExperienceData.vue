@@ -125,7 +125,7 @@ onMounted(async () => {
     new Chart(experienceChart.value, {
       type: 'bar',
       data: {
-        labels: (t('evolution.experience.months') as string[]),
+        labels: t('evolution.experience.months') as unknown as string[],
         datasets: [
           {
             label: t('evolution.experience.typeSuccess'),
@@ -161,7 +161,7 @@ onMounted(async () => {
     new Chart(categoryChart.value, {
       type: 'doughnut',
       data: {
-        labels: (t('evolution.experience.categories') as string[]),
+        labels: t('evolution.experience.categories') as unknown as string[],
         datasets: [
           {
             data: [35, 25, 15, 10, 10, 5],

@@ -878,8 +878,8 @@ function handleValidate() {
     }
   }
   // Auto-hide validation message after 5s
-  clearTimeout(validationTimer)
-  validationTimer = window.setTimeout(() => {
+  if (validationTimer) clearTimeout(validationTimer)
+  validationTimer = setTimeout(() => {
     validationMessage.value = ''
   }, 5000)
 }
@@ -1297,7 +1297,7 @@ onMounted(async () => {
   if (agentId) {
     try {
       const res = await agentApi.getAgentById(agentId)
-      const agentData: Record<string, unknown> = (res as { data?: Record<string, unknown> })?.data || res as Record<string, unknown>
+      const agentData: Record<string, unknown> = (res as unknown as { data?: Record<string, unknown> })?.data || (res as unknown as Record<string, unknown>)
       if (agentData) {
         if (agentData.name) agentName.value = String(agentData.name)
         const graphDef = agentData.graphDefinition as Record<string, unknown> | undefined

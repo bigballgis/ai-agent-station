@@ -126,7 +126,7 @@ service.interceptors.response.use(
     }
     // 返回 response.data，保留 ApiResponse<T> 结构供调用方使用
     // 注意：axios 拦截器中无法自动推断泛型 T，调用方需通过 ApiResponse<T> 断言具体 data 类型
-    return response.data as ApiResponse
+    return response.data as unknown as AxiosResponse
   },
   async (error) => {
     const originalRequest = error.config

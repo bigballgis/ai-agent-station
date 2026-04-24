@@ -8,6 +8,7 @@ import com.aiagent.engine.graph.GraphExecutor;
 import com.aiagent.engine.graph.GraphNode;
 import com.aiagent.engine.graph.GraphParser;
 import com.aiagent.entity.Agent;
+import com.aiagent.dto.StreamAgentExecutionRequestDTO;
 import com.aiagent.security.PromptInjectionFilter;
 import com.aiagent.security.PromptInjectionFilter.FilterResult;
 import com.aiagent.security.UserPrincipal;
@@ -233,9 +234,9 @@ public class StreamController {
     @Operation(summary = "SSE流式Agent执行(POST)")
     public SseEmitter streamAgentExecutionPost(
             @PathVariable Long agentId,
-            @RequestBody Map<String, Object> request) {
-        String message = (String) request.get("message");
-        String sessionId = (String) request.get("sessionId");
+            @Valid @RequestBody StreamAgentExecutionRequestDTO request) {
+        String message = request.getMessage();
+        String sessionId = request.getSessionId();
 
         if (message == null || message.isBlank()) {
             SseEmitter emitter = new SseEmitter(1_000L);

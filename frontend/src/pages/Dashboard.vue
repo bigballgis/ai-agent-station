@@ -541,9 +541,9 @@ async function loadRecentActivities() {
     if (logsList.length > 0) {
       activities.value = logsList.map((log: LogItem) => ({
         title: log.action || log.description || log.module || t('common.noData'),
-        time: formatRelativeTime(log.createdAt || log.createTime),
+        time: formatRelativeTime(log.createdAt || log.createTime || ''),
         operator: log.operator || log.username || log.createdBy || t('dashboard.system'),
-        dotClass: moduleDotColors[log.module?.toLowerCase()] || moduleDotColors.default,
+        dotClass: moduleDotColors[(log.module?.toLowerCase()) || ''] || moduleDotColors.default,
       }))
     } else {
       activities.value = []
@@ -582,9 +582,9 @@ async function fetchDashboardData() {
     // Test pass rate
     if (testRes) {
       const testData = testRes?.data || testRes || []
-      const testList = Array.isArray(testData) ? testData : []
+      const testList = Array.isArray(testData) ? (testData as TestResultItem[]) : []
       if (testList.length > 0) {
-        const passed = testList.filter((r: TestResultItem) => r.status === 'SUCCESS').length
+        const passed = testList.filter((r) => r.status === 'SUCCESS').length
         passRate.value = (passed / testList.length) * 100
       } else {
         passRate.value = 0
@@ -600,8 +600,8 @@ async function fetchDashboardData() {
 
     // Fetch tool stats for API calls (non-critical)
     try {
-      const toolRes: ToolStatsResult = await getToolStats()
-      const toolData = toolRes?.data || toolRes || {}
+      const toolRes = await getToolStats() as unknown as { data?: ToolStatsResult }
+      const toolData: ToolStatsResult = toolRes?.data || (toolRes as unknown as ToolStatsResult) || {}
       apiCalls.value = toolData.totalCalls || toolData.apiCalls || 0
     } catch {
       apiCalls.value = 0

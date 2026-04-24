@@ -1,5 +1,7 @@
 package com.aiagent.service;
 
+import com.aiagent.dto.AlertRuleCreateDTO;
+import com.aiagent.dto.AlertRuleUpdateDTO;
 import com.aiagent.entity.AlertRecord;
 import com.aiagent.entity.AlertRule;
 import com.aiagent.repository.AlertRecordRepository;
@@ -33,13 +35,59 @@ public class AlertService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public AlertRuleVO createRule(AlertRule rule) {
+    public AlertRuleVO createRule(AlertRuleCreateDTO dto) {
+        AlertRule rule = new AlertRule();
+        rule.setName(dto.getName());
+        rule.setDescription(dto.getDescription());
+        rule.setAlertType(dto.getAlertType());
+        rule.setMetricName(dto.getMetricName());
+        rule.setThreshold(dto.getThreshold());
+        rule.setComparisonOperator(dto.getComparisonOperator() != null ? dto.getComparisonOperator() : "gt");
+        rule.setDurationSeconds(dto.getDurationSeconds() != null ? dto.getDurationSeconds() : 300);
+        rule.setSeverity(dto.getSeverity() != null ? dto.getSeverity() : AlertRule.Severity.WARNING);
+        rule.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
+        rule.setNotifyChannels(dto.getNotifyChannels() != null ? dto.getNotifyChannels() : "email");
+        rule.setNotifyTargets(dto.getNotifyTargets());
         return AlertRuleVO.fromEntity(ruleRepository.save(rule));
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public AlertRuleVO updateRule(Long id, AlertRule rule) {
-        rule.setId(id);
+    public AlertRuleVO updateRule(Long id, AlertRuleUpdateDTO dto) {
+        AlertRule rule = ruleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("告警规则不存在: " + id));
+        if (dto.getName() != null) {
+            rule.setName(dto.getName());
+        }
+        if (dto.getDescription() != null) {
+            rule.setDescription(dto.getDescription());
+        }
+        if (dto.getAlertType() != null) {
+            rule.setAlertType(dto.getAlertType());
+        }
+        if (dto.getMetricName() != null) {
+            rule.setMetricName(dto.getMetricName());
+        }
+        if (dto.getThreshold() != null) {
+            rule.setThreshold(dto.getThreshold());
+        }
+        if (dto.getComparisonOperator() != null) {
+            rule.setComparisonOperator(dto.getComparisonOperator());
+        }
+        if (dto.getDurationSeconds() != null) {
+            rule.setDurationSeconds(dto.getDurationSeconds());
+        }
+        if (dto.getSeverity() != null) {
+            rule.setSeverity(dto.getSeverity());
+        }
+        if (dto.getIsActive() != null) {
+            rule.setIsActive(dto.getIsActive());
+        }
+        if (dto.getNotifyChannels() != null) {
+            rule.setNotifyChannels(dto.getNotifyChannels());
+        }
+        if (dto.getNotifyTargets() != null) {
+            rule.setNotifyTargets(dto.getNotifyTargets());
+        }
         return AlertRuleVO.fromEntity(ruleRepository.save(rule));
     }
 

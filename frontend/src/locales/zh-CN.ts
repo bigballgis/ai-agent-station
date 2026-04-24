@@ -70,7 +70,6 @@ export default {
     confirmAction: '确认操作',
     confirmDelete: '确认删除',
     custom: '自定义',
-    systemRunning: '系统正常运行',
     error: {
       rateLimit: '请求过于频繁，请稍后重试',
       serviceUnavailable: '服务暂时不可用，请稍后重试',
