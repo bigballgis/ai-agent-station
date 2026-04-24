@@ -123,7 +123,7 @@
       @cancel="showGenerateModal = false"
     >
       <div class="mt-4">
-        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Agent ID</label>
+        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">{{ t('suggestionList.agentIdLabel') }}</label>
         <a-input-number v-model:value="agentId" :min="1" class="w-full" />
       </div>
     </a-modal>

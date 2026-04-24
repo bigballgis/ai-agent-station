@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
@@ -52,6 +54,7 @@ public class TenantController {
     @PostMapping
     @Operation(summary = "创建租户", description = "创建新的租户，仅超级管理员可操作")
     @OperationLog(value = "创建租户", module = "租户管理")
+    @Audited(action = AuditAction.CREATE, module = "租户管理", description = "创建租户", resourceType = "Tenant")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     @ApiResponses({
@@ -69,6 +72,7 @@ public class TenantController {
     @PutMapping("/{id}")
     @Operation(summary = "更新租户信息", description = "更新指定租户的信息")
     @OperationLog(value = "更新租户信息", module = "租户管理")
+    @Audited(action = AuditAction.UPDATE, module = "租户管理", description = "更新租户信息", resourceType = "Tenant")
     @RequiresPermission("tenant:write")
     @RequiresRole("SUPER_ADMIN")
     @ApiResponses({
@@ -87,6 +91,7 @@ public class TenantController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除租户", description = "删除指定租户，仅超级管理员可操作")
     @OperationLog(value = "删除租户", module = "租户管理")
+    @Audited(action = AuditAction.DELETE, module = "租户管理", description = "删除租户", resourceType = "Tenant")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     @ApiResponses({
@@ -103,6 +108,7 @@ public class TenantController {
     @PostMapping("/{id}/regenerate-api-key")
     @Operation(summary = "重新生成API密钥")
     @OperationLog(value = "重新生成API密钥", module = "租户管理")
+    @Audited(action = AuditAction.UPDATE, module = "租户管理", description = "重新生成API密钥", resourceType = "Tenant")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<TenantVO> regenerateApiKey(@PathVariable Long id) {
@@ -112,6 +118,7 @@ public class TenantController {
     @PostMapping("/{id}/reactivate")
     @Operation(summary = "重新激活租户")
     @OperationLog(value = "重新激活租户", module = "租户管理")
+    @Audited(action = AuditAction.UPDATE, module = "租户管理", description = "重新激活租户", resourceType = "Tenant")
     @RequiresPermission("tenant:manage")
     @RequiresRole("SUPER_ADMIN")
     public Result<TenantVO> reactivateTenant(@PathVariable Long id) {

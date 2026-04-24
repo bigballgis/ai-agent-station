@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.PageResult;
@@ -87,6 +89,7 @@ public class AgentController {
     @RequiresPermission("agent:create")
     @Operation(summary = "创建Agent", description = "创建新的Agent实例")
     @OperationLog(value = "创建Agent", module = "Agent管理")
+    @Audited(action = AuditAction.CREATE, module = "Agent管理", description = "创建Agent", resourceType = "Agent")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),
@@ -112,6 +115,7 @@ public class AgentController {
     @RequiresPermission("agent:update")
     @Operation(summary = "更新Agent", description = "根据ID更新Agent信息")
     @OperationLog(value = "更新Agent", module = "Agent管理")
+    @Audited(action = AuditAction.UPDATE, module = "Agent管理", description = "更新Agent", resourceType = "Agent")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "更新成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),
@@ -136,6 +140,7 @@ public class AgentController {
     @RequiresPermission("agent:delete")
     @Operation(summary = "删除Agent", description = "根据ID删除Agent")
     @OperationLog(value = "删除Agent", module = "Agent管理")
+    @Audited(action = AuditAction.DELETE, module = "Agent管理", description = "删除Agent", resourceType = "Agent")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "401", description = "未认证"),
@@ -267,6 +272,7 @@ public class AgentController {
     @RequiresPermission("agent:create")
     @Operation(summary = "从JSON导入Agent", description = "导入Agent配置，自动处理名称冲突")
     @OperationLog(value = "导入Agent", module = "Agent管理")
+    @Audited(action = AuditAction.IMPORT, module = "Agent管理", description = "导入Agent", resourceType = "Agent")
     public Result<AgentVO> importAgent(@RequestBody Map<String, Object> data) {
         // 验证必填字段
         if (data.get("name") == null || data.toString().isEmpty()) {

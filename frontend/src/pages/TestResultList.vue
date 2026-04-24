@@ -11,15 +11,15 @@
       <div class="search-bar">
         <a-input
           v-model:value="searchQuery"
-          placeholder="{{ $t('common.search') }}"
+          :placeholder="$t('common.search')"
           style="width: 300px"
           allow-clear
         />
-        <a-select v-model:value="statusFilter" placeholder="Filter by status" style="width: 200px; margin-left: 10px;">
-          <a-select-option value="">All</a-select-option>
-          <a-select-option value="passed">Passed</a-select-option>
-          <a-select-option value="failed">Failed</a-select-option>
-          <a-select-option value="skipped">Skipped</a-select-option>
+        <a-select v-model:value="statusFilter" :placeholder="$t('testResult.filterByStatus')" style="width: 200px; margin-left: 10px;">
+          <a-select-option value="">{{ $t('testResult.all') }}</a-select-option>
+          <a-select-option value="passed">{{ $t('testResult.passed') }}</a-select-option>
+          <a-select-option value="failed">{{ $t('testResult.failed') }}</a-select-option>
+          <a-select-option value="skipped">{{ $t('testResult.skipped') }}</a-select-option>
         </a-select>
         <a-button @click="handleSearch" style="margin-left: 10px;">
           {{ $t('common.search') }}
@@ -40,7 +40,7 @@
         </template>
         <template #action="{ record }">
           <a-button @click="handleViewDetails(record.id)">
-            {{ $t('common.viewDetails') }}
+            {{ $t('test.viewDetails') }}
           </a-button>
         </template>
       </a-table>
@@ -49,57 +49,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { testApi } from '@/api/test'
 import type { TestResult } from '@/api/test'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const results = ref<TestResult[]>([])
 const searchQuery = ref('')
 const statusFilter = ref('')
 
-const columns = [
+const columns = computed(() => [
   {
-    title: 'ID',
+    title: t('testResult.id'),
     dataIndex: 'id',
     key: 'id'
   },
   {
-    title: 'Test Case',
+    title: t('testResult.testCaseNameCol'),
     dataIndex: 'testCaseName',
     key: 'testCaseName'
   },
   {
-    title: 'Status',
+    title: t('testResult.status'),
     dataIndex: 'status',
     key: 'status',
     slots: { customRender: 'status' }
   },
   {
-    title: 'Execution Time (ms)',
+    title: t('testResult.executionTimeCol'),
     dataIndex: 'executionTime',
     key: 'executionTime'
   },
   {
-    title: 'Error Message',
+    title: t('testResult.errorMessageCol'),
     dataIndex: 'errorMessage',
     key: 'errorMessage',
     ellipsis: true
   },
   {
-    title: 'Created At',
+    title: t('testResult.createdAtCol'),
     dataIndex: 'createdAt',
     key: 'createdAt'
   },
   {
-    title: 'Actions',
+    title: t('testResult.actions'),
     key: 'action',
     slots: { customRender: 'action' }
   }
-]
+])
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -120,7 +122,7 @@ const fetchResults = async () => {
     const response = await testApi.getTestResults(params)
     results.value = response.data
   } catch (error) {
-    message.error('Failed to fetch test results')
+    message.error(t('testResult.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -142,10 +144,10 @@ const handleExport = () => {
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-      message.success('Test results exported successfully')
+      message.success(t('testResult.exportSuccess'))
     })
     .catch(() => {
-      message.error('Failed to export test results')
+      message.error(t('testResult.exportFailed'))
     })
 }
 

@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
@@ -79,6 +81,7 @@ public class DeploymentController {
     @PostMapping("/deploy")
     @Operation(summary = "部署Agent")
     @OperationLog(value = "部署Agent", module = "部署管理")
+    @Audited(action = AuditAction.DEPLOY, module = "部署管理", description = "部署Agent", resourceType = "Deployment")
     public Result<DeploymentVO> deploy(
             @Valid @RequestBody DeploymentDeployDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -94,6 +97,7 @@ public class DeploymentController {
     @PostMapping("/{id}/rollback")
     @Operation(summary = "回滚部署")
     @OperationLog(value = "回滚部署", module = "部署管理")
+    @Audited(action = AuditAction.DEPLOY, module = "部署管理", description = "回滚部署", resourceType = "Deployment")
     public Result<DeploymentVO> rollback(
             @Parameter(description = "部署ID") @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {

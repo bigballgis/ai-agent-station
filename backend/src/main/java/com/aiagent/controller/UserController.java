@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
@@ -59,6 +61,7 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "创建用户", module = "用户管理")
+    @Audited(action = AuditAction.CREATE, module = "用户管理", description = "创建用户", resourceType = "User")
     public Result<UserResponseDTO> createUser(@Valid @RequestBody CreateUserDTO dto) {
         User user = DTOConverter.toUserEntity(dto);
         User created = userService.createUser(user);
@@ -70,6 +73,7 @@ public class UserController {
     @RequiresPermission("user:write")
     @RequiresRole("ADMIN")
     @OperationLog(value = "更新用户", module = "用户管理")
+    @Audited(action = AuditAction.UPDATE, module = "用户管理", description = "更新用户", resourceType = "User")
     public Result<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserDTO dto) {
         User existingUser = userService.getUserById(id);
         DTOConverter.updateUserFromDTO(dto, existingUser);
@@ -82,6 +86,7 @@ public class UserController {
     @RequiresPermission("user:delete")
     @RequiresRole("ADMIN")
     @OperationLog(value = "删除用户", module = "用户管理")
+    @Audited(action = AuditAction.DELETE, module = "用户管理", description = "删除用户", resourceType = "User")
     public Result<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();

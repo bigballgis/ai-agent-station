@@ -1,5 +1,7 @@
 package com.aiagent.dto;
 
+import com.aiagent.annotation.Sensitive;
+import com.aiagent.annotation.SensitiveType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -15,10 +17,12 @@ public class ChangePasswordRequestDTO {
 
     @NotBlank(message = "旧密码不能为空")
     @Schema(description = "旧密码", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Sensitive(type = SensitiveType.PASSWORD)
     private String oldPassword;
 
     @NotBlank(message = "新密码不能为空")
     @Size(min = 8, max = 100, message = "新密码长度必须在8-100个字符之间")
     @Schema(description = "新密码(至少8位，含大小写字母、数字和特殊字符)", example = "NewPass@123", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Sensitive(type = SensitiveType.PASSWORD)
     private String newPassword;
 }

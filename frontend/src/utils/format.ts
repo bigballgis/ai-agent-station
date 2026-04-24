@@ -1,30 +1,39 @@
 /**
- * 格式化日期时间
+ * 格式化工具函数
+ *
+ * 保留原有 API 向后兼容，内部实现委托给 formatUtils
+ * 新代码建议直接使用 formatUtils.ts 中的函数
+ */
+
+// 重新导出 formatUtils 中的所有格式化函数
+export {
+  formatNumber,
+  formatCurrency,
+  formatDate as formatDateFull,
+  formatDateTime,
+  formatRelativeTime,
+  formatFileSize,
+  formatPercentage,
+  formatDuration,
+  formatCompactNumber,
+} from './formatUtils'
+
+import { formatDate as formatDateUtil, formatDateTime as formatDateTimeUtil } from './formatUtils'
+
+/**
+ * 格式化日期时间（向后兼容）
+ * @deprecated 请使用 formatDateTime from formatUtils
  */
 export function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return '-'
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return '-'
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  const seconds = String(d.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  return formatDateTimeUtil(date)
 }
 
 /**
- * 格式化日期（仅日期部分）
+ * 格式化日期（仅日期部分，向后兼容）
+ * @deprecated 请使用 formatDate from formatUtils (format: 'date')
  */
 export function formatDateShort(date: string | Date | null | undefined): string {
-  if (!date) return '-'
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return '-'
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return formatDateUtil(date, 'date')
 }
 
 /**

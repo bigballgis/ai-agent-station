@@ -1,5 +1,7 @@
 package com.aiagent.dto;
 
+import com.aiagent.annotation.Sensitive;
+import com.aiagent.annotation.SensitiveType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -18,6 +20,7 @@ public class LoginRequest {
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, max = 100, message = "密码长度为6-100个字符")
     @Schema(description = "密码", example = "Admin@123", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Sensitive(type = SensitiveType.PASSWORD)
     private String password;
 
     @Schema(description = "租户ID", example = "1")

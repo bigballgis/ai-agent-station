@@ -26,6 +26,8 @@ import java.util.Map;
  * - Content-Security-Policy — 限制资源加载来源
  * - Referrer-Policy — 控制 Referer 头泄露
  * - Permissions-Policy — 限制浏览器 API 使用
+ * - Cross-Origin-Opener-Policy — 跨域打开者策略（防止 Spectre 类攻击）
+ * - Cross-Origin-Embedder-Policy — 跨域嵌入者策略（防止 Spectre 类攻击）
  */
 @Slf4j
 @Configuration
@@ -69,7 +71,10 @@ public class SecurityHeadersConfig {
             HEADERS.put("Referrer-Policy", "strict-origin-when-cross-origin");
             // 限制浏览器 API
             HEADERS.put("Permissions-Policy",
-                    "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+                    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()");
+            // 跨域隔离策略（防止 Spectre/Meltdown 类侧信道攻击）
+            HEADERS.put("Cross-Origin-Opener-Policy", "same-origin");
+            HEADERS.put("Cross-Origin-Embedder-Policy", "require-corp");
             // 缓存控制（API 响应不缓存）
             HEADERS.put("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
             HEADERS.put("Pragma", "no-cache");

@@ -46,7 +46,7 @@
     <!-- Tab 切换 -->
     <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card overflow-hidden animate-slide-up" style="animation-delay: 200ms;">
       <div class="border-b border-neutral-100 dark:border-neutral-800 px-6">
-        <div class="flex items-center gap-1" role="tablist" aria-label="Alert notification tabs">
+        <div class="flex items-center gap-1" role="tablist" :aria-label="t('alertPage.alertNotificationTabs')">
           <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -81,7 +81,7 @@
       </div>
 
       <!-- 告警规则 Tab -->
-      <div v-if="activeTab === 'rules'" class="p-6" role="tabpanel" aria-label="Alert rules" id="tabpanel-rules">
+      <div v-if="activeTab === 'rules'" class="p-6" role="tabpanel" :aria-label="t('alertPage.alertRulesPanel')" id="tabpanel-rules">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
             <h2 class="text-base font-semibold text-neutral-800 dark:text-neutral-200">{{ t('alert.ruleList') }}</h2>
@@ -204,7 +204,7 @@
       </div>
 
       <!-- 告警记录 Tab -->
-      <div v-if="activeTab === 'records'" class="p-6" role="tabpanel" aria-label="Alert records" id="tabpanel-records">
+      <div v-if="activeTab === 'records'" class="p-6" role="tabpanel" :aria-label="t('alertPage.alertRecordsPanel')" id="tabpanel-records">
         <!-- 筛选栏 -->
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <select
@@ -382,7 +382,7 @@
         <a-form-item :label="t('alert.notifyChannels')">
           <a-select v-model:value="newRule.notifyChannels" :placeholder="t('alert.selectChannel')">
             <a-select-option value="email">{{ t('alert.channelEmail') }}</a-select-option>
-            <a-select-option value="webhook">Webhook</a-select-option>
+            <a-select-option value="webhook">{{ t('alertPage.channelWebhook') }}</a-select-option>
             <a-select-option value="sms">{{ t('alert.channelSms') }}</a-select-option>
           </a-select>
         </a-form-item>
@@ -478,6 +478,7 @@ import {
 } from '@/api/alert'
 import { PageHeader, StatCard, StatusBadge } from '@/components'
 import { logger } from '@/utils/logger'
+import { formatDateTime as formatDateTimeUtil } from '@/utils/formatUtils'
 
 const { t } = useI18n()
 
@@ -815,20 +816,7 @@ onMounted(async () => {
 // ==================== 格式化工具函数 ====================
 
 function formatDateTime(dateStr: string | null | undefined): string {
-  if (!dateStr) return '-'
-  try {
-    const date = new Date(dateStr)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  } catch {
-    return dateStr
-  }
+  return formatDateTimeUtil(dateStr)
 }
 
 function formatMetricValue(metricValue: number | undefined, threshold: number | undefined): string {

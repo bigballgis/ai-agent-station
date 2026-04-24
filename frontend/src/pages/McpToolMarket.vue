@@ -600,7 +600,7 @@ function saveConfig() {
 }
 
 function toggleTool(tool: McpTool) {
-  message.success(tool.enabled ? `正在禁用「${tool.name}」...` : `正在启用「${tool.name}」...`)
+  message.success(t('mcpToolMarket.togglingStatus', { action: tool.enabled ? t('mcpToolMarket.disabling') : t('mcpToolMarket.enabling'), name: tool.name }))
   refreshTools().then(() => {
     fetchTools()
   }).catch((e: Error) => {

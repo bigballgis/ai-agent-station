@@ -1,5 +1,7 @@
 package com.aiagent.dto;
 
+import com.aiagent.annotation.Sensitive;
+import com.aiagent.annotation.SensitiveType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -22,6 +24,7 @@ public class CreateUserDTO {
     @NotBlank(message = "密码不能为空")
     @Size(min = 8, max = 100, message = "密码长度必须在8-100个字符之间")
     @Schema(description = "密码(至少8位，含大小写字母、数字和特殊字符)", example = "Admin@12345", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Sensitive(type = SensitiveType.PASSWORD)
     private String password;
 
     @Email(message = "邮箱格式不正确")

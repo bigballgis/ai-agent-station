@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import type { UploadFile, UploadProps } from 'ant-design-vue'
 import {
@@ -82,6 +83,8 @@ import {
  * 支持拖拽上传、文件类型限制、大小限制、进度显示
  * 用于 FileManagement 等页面
  */
+
+const { t } = useI18n()
 
 interface Props {
   /** 上传接口地址 */
@@ -127,13 +130,13 @@ function formatFileSize(bytes: number): string {
 const handleBeforeUpload: UploadProps['beforeUpload'] = (file) => {
   // 校验文件大小
   if (props.maxSize && file.size > props.maxSize) {
-    message.error(`文件大小不能超过 ${formatFileSize(props.maxSize)}`)
+    message.error(t('fileUpload.fileTooLarge', { size: formatFileSize(props.maxSize) }))
     return false
   }
 
   // 校验文件数量
   if (fileList.value.length >= props.maxCount) {
-    message.error(`最多上传 ${props.maxCount} 个文件`)
+    message.error(t('fileUpload.maxFileCount', { count: props.maxCount }))
     return false
   }
 

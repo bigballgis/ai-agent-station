@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
@@ -80,6 +82,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions")
     @Operation(summary = "创建工作流定义", description = "创建新的工作流定义，初始状态为草稿")
+    @Audited(action = AuditAction.CREATE, module = "工作流", description = "创建工作流定义", resourceType = "WorkflowDefinition")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),
@@ -124,6 +127,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PutMapping("/definitions/{id}")
     @Operation(summary = "更新工作流定义")
+    @Audited(action = AuditAction.UPDATE, module = "工作流", description = "更新工作流定义", resourceType = "WorkflowDefinition")
     public Result<WorkflowDefinitionVO> updateDefinition(
             @Parameter(description = "工作流定义ID") @PathVariable Long id,
             @Valid @RequestBody WorkflowDefinitionDTO request) {
@@ -163,6 +167,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @DeleteMapping("/definitions/{id}")
     @Operation(summary = "删除工作流定义")
+    @Audited(action = AuditAction.DELETE, module = "工作流", description = "删除工作流定义", resourceType = "WorkflowDefinition")
     public Result<Void> deleteDefinition(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -179,6 +184,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/definitions/{id}/publish")
     @Operation(summary = "发布工作流定义")
+    @Audited(action = AuditAction.UPDATE, module = "工作流", description = "发布工作流定义", resourceType = "WorkflowDefinition")
     public Result<WorkflowDefinitionVO> publishDefinition(@Parameter(description = "工作流定义ID") @PathVariable Long id) {
         Long tenantId = TenantContextHolder.getTenantId();
 
@@ -244,6 +250,7 @@ public class WorkflowController {
     @PostMapping("/instances/start")
     @OperationLog(value = "启动工作流", module = "工作流")
     @Operation(summary = "启动工作流", description = "根据工作流定义启动一个新的工作流实例")
+    @Audited(action = AuditAction.CREATE, module = "工作流", description = "启动工作流", resourceType = "WorkflowInstance")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "启动成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败或工作流未发布"),
@@ -283,6 +290,7 @@ public class WorkflowController {
     @PostMapping("/instances/{id}/cancel")
     @OperationLog(value = "取消工作流", module = "工作流")
     @Operation(summary = "取消工作流")
+    @Audited(action = AuditAction.UPDATE, module = "工作流", description = "取消工作流", resourceType = "WorkflowInstance")
     public Result<WorkflowInstanceVO> cancelWorkflow(
             @Parameter(description = "工作流实例ID") @PathVariable Long id,
             @Valid @RequestBody WorkflowCancelDTO request) {
@@ -295,6 +303,7 @@ public class WorkflowController {
     @PostMapping("/instances/{id}/resume")
     @OperationLog(value = "恢复工作流", module = "工作流")
     @Operation(summary = "恢复中断的工作流实例")
+    @Audited(action = AuditAction.UPDATE, module = "工作流", description = "恢复工作流", resourceType = "WorkflowInstance")
     public Result<WorkflowInstanceVO> resumeWorkflow(@Parameter(description = "工作流实例ID") @PathVariable Long id) {
         WorkflowInstance instance = workflowEngine.resumeWorkflow(id);
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
@@ -304,6 +313,7 @@ public class WorkflowController {
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/approve")
     @OperationLog(value = "审批工作流节点", module = "工作流")
     @Operation(summary = "审批通过工作流节点")
+    @Audited(action = AuditAction.APPROVE, module = "工作流", description = "审批通过工作流节点", resourceType = "WorkflowInstance")
     public Result<WorkflowNodeLog> approveNode(
             @Parameter(description = "工作流实例ID") @PathVariable Long instanceId,
             @Parameter(description = "节点ID") @PathVariable String nodeId,
@@ -317,6 +327,7 @@ public class WorkflowController {
     @RequiresPermission("workflow:manage")
     @PostMapping("/instances/{instanceId}/nodes/{nodeId}/reject")
     @Operation(summary = "驳回工作流节点")
+    @Audited(action = AuditAction.REJECT, module = "工作流", description = "驳回工作流节点", resourceType = "WorkflowInstance")
     public Result<WorkflowNodeLog> rejectNode(
             @Parameter(description = "工作流实例ID") @PathVariable Long instanceId,
             @Parameter(description = "节点ID") @PathVariable String nodeId,
@@ -361,6 +372,7 @@ public class WorkflowController {
     @PostMapping("/definitions/import")
     @Operation(summary = "从JSON导入工作流定义", description = "导入工作流定义，自动处理名称冲突")
     @OperationLog(value = "导入工作流", module = "工作流")
+    @Audited(action = AuditAction.IMPORT, module = "工作流", description = "导入工作流定义", resourceType = "WorkflowDefinition")
     public Result<WorkflowDefinitionVO> importDefinition(@RequestBody Map<String, Object> data) {
         // 验证必填字段
         if (data.get("name") == null || String.valueOf(data.get("name")).isBlank()) {

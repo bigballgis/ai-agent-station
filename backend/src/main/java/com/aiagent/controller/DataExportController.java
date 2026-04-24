@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
@@ -40,6 +42,7 @@ public class DataExportController {
     @GetMapping("/agents")
     @Operation(summary = "导出Agent数据为CSV")
     @OperationLog(value = "导出Agent数据", module = "数据导出")
+    @Audited(action = AuditAction.EXPORT, module = "数据导出", description = "导出Agent数据")
     public void exportAgents(
             @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
             @RequestParam(required = false) @Parameter(description = "状态筛选") String status,
@@ -62,6 +65,7 @@ public class DataExportController {
     @GetMapping("/users")
     @Operation(summary = "导出用户数据为CSV")
     @OperationLog(value = "导出用户数据", module = "数据导出")
+    @Audited(action = AuditAction.EXPORT, module = "数据导出", description = "导出用户数据")
     public void exportUsers(
             @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
             @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword,
@@ -84,6 +88,7 @@ public class DataExportController {
     @GetMapping("/logs")
     @Operation(summary = "导出系统日志为CSV")
     @OperationLog(value = "导出系统日志", module = "数据导出")
+    @Audited(action = AuditAction.EXPORT, module = "数据导出", description = "导出系统日志")
     public void exportLogs(
             @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
             @RequestParam(required = false) @Parameter(description = "模块名称") String module,
@@ -107,6 +112,7 @@ public class DataExportController {
     @GetMapping("/test-results")
     @Operation(summary = "导出测试结果为CSV")
     @OperationLog(value = "导出测试结果", module = "数据导出")
+    @Audited(action = AuditAction.EXPORT, module = "数据导出", description = "导出测试结果")
     public void exportTestResults(
             @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
             @RequestParam(required = false) @Parameter(description = "Agent ID") Long agentId,
@@ -130,6 +136,7 @@ public class DataExportController {
     @GetMapping("/workflow-instances")
     @Operation(summary = "导出工作流实例为CSV")
     @OperationLog(value = "导出工作流实例", module = "数据导出")
+    @Audited(action = AuditAction.EXPORT, module = "数据导出", description = "导出工作流实例")
     public void exportWorkflowInstances(
             @RequestParam(required = false) @Parameter(description = "租户ID") Long tenantId,
             @RequestParam(required = false) @Parameter(description = "状态") String status,

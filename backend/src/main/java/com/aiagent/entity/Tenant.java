@@ -1,5 +1,7 @@
 package com.aiagent.entity;
 
+import com.aiagent.annotation.Sensitive;
+import com.aiagent.annotation.SensitiveType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -28,10 +30,12 @@ public class Tenant extends BaseEntity {
     private Boolean isActive = true;
 
     @JsonIgnore
+    @Sensitive(type = SensitiveType.PARTIAL, maskPrefix = 4, maskSuffix = 4)
     @Column(name = "api_key", unique = true, length = 100)
     private String apiKey;
 
     @JsonIgnore
+    @Sensitive(type = SensitiveType.PARTIAL, maskPrefix = 4, maskSuffix = 4)
     @Column(name = "api_secret", length = 100)
     private String apiSecret;
 

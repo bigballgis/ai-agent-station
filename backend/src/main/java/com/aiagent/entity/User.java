@@ -1,5 +1,7 @@
 package com.aiagent.entity;
 
+import com.aiagent.annotation.Sensitive;
+import com.aiagent.annotation.SensitiveType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -24,6 +26,7 @@ public class User extends BaseEntity {
     private String username;
 
     @JsonIgnore
+    @Sensitive(type = SensitiveType.PASSWORD)
     @Column(nullable = false, length = 255)
     private String password;
 

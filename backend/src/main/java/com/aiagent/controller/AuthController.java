@@ -11,6 +11,8 @@ import com.aiagent.dto.UserResponseDTO;
 import com.aiagent.entity.User;
 import com.aiagent.service.UserService;
 import com.aiagent.security.UserPrincipal;
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.common.Result;
@@ -83,6 +85,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "使用用户名和密码登录系统，返回JWT令牌")
     @OperationLog(value = "用户登录", module = "认证")
+    @Audited(action = AuditAction.LOGIN, module = "认证", description = "用户登录", resourceType = "User")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "登录成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败或验证码错误"),
@@ -114,6 +117,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "注册新用户账号")
     @OperationLog(value = "用户注册", module = "认证")
+    @Audited(action = AuditAction.CREATE, module = "认证", description = "用户注册", resourceType = "User")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "注册成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),
@@ -133,6 +137,7 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "刷新Token", description = "使用Refresh Token获取新的Access Token")
     @OperationLog(value = "刷新Token", module = "认证")
+    @Audited(action = AuditAction.LOGIN, module = "认证", description = "刷新Token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "刷新成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),
@@ -149,6 +154,7 @@ public class AuthController {
     @Operation(summary = "用户登出")
     @RequiresPermission("auth:manage")
     @OperationLog(value = "用户登出", module = "认证")
+    @Audited(action = AuditAction.LOGOUT, module = "认证", description = "用户登出")
     public Result<?> logout(@AuthenticationPrincipal UserPrincipal principal,
                             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (principal != null && principal.getId() != null) {
@@ -177,6 +183,7 @@ public class AuthController {
     @PutMapping("/password")
     @Operation(summary = "修改密码", description = "用户自行修改密码，需验证旧密码")
     @OperationLog(value = "修改密码", module = "认证")
+    @Audited(action = AuditAction.PASSWORD_CHANGE, module = "认证", description = "修改密码")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "密码修改成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败或旧密码错误"),
@@ -198,6 +205,7 @@ public class AuthController {
     @Operation(summary = "管理员重置密码", description = "管理员直接重置指定用户的密码")
     @RequiresPermission("user:manage")
     @OperationLog(value = "管理员重置密码", module = "认证")
+    @Audited(action = AuditAction.PASSWORD_CHANGE, module = "认证", description = "管理员重置密码", resourceType = "User")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "密码重置成功"),
             @ApiResponse(responseCode = "400", description = "参数校验失败"),

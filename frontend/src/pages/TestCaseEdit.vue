@@ -14,39 +14,39 @@
         ref="formRef"
         layout="vertical"
       >
-        <a-form-item label="Name" name="name">
-          <a-input v-model:value="testCase.name" placeholder="Test case name" />
+        <a-form-item :label="$t('testCaseEdit.nameLabel')" name="name">
+          <a-input v-model:value="testCase.name" :placeholder="$t('testCaseEdit.namePlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="Description" name="description">
-          <a-textarea v-model:value="testCase.description" placeholder="Test case description" />
+        <a-form-item :label="$t('testCaseEdit.descriptionLabel')" name="description">
+          <a-textarea v-model:value="testCase.description" :placeholder="$t('testCaseEdit.descriptionPlaceholder')" />
         </a-form-item>
 
-        <a-form-item label="Test Type" name="testType">
-          <a-select v-model:value="testCase.testType" placeholder="Select test type">
-            <a-select-option value="api">API Test</a-select-option>
-            <a-select-option value="ui">UI Test</a-select-option>
-            <a-select-option value="unit">Unit Test</a-select-option>
+        <a-form-item :label="$t('testCaseEdit.testTypeLabel')" name="testType">
+          <a-select v-model:value="testCase.testType" :placeholder="$t('testCaseEdit.selectTestType')">
+            <a-select-option value="api">{{ $t('testCaseEdit.apiTest') }}</a-select-option>
+            <a-select-option value="ui">{{ $t('testCaseEdit.uiTest') }}</a-select-option>
+            <a-select-option value="unit">{{ $t('testCaseEdit.unitTest') }}</a-select-option>
           </a-select>
         </a-form-item>
 
-        <a-form-item label="Config" name="config">
+        <a-form-item :label="$t('testCaseEdit.configLabel')" name="config">
           <a-textarea
             v-model:value="configStr"
-            placeholder="Test configuration (JSON format)"
+            :placeholder="$t('testCaseEdit.configPlaceholder')"
             rows={8}
           />
         </a-form-item>
 
-        <a-form-item label="Parameters" name="parameters">
+        <a-form-item :label="$t('testCaseEdit.parametersLabel')" name="parameters">
           <a-textarea
             v-model:value="parametersStr"
-            placeholder="Test parameters (JSON format)"
+            :placeholder="$t('testCaseEdit.parametersPlaceholder')"
             rows={4}
           />
         </a-form-item>
 
-        <a-form-item label="Status">
+        <a-form-item :label="$t('testCaseEdit.statusLabel')">
           <a-switch v-model:checked="testCase.isActive" />
         </a-form-item>
 
@@ -63,12 +63,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { testApi } from '@/api/test'
 import type { TestCase } from '@/api/test'
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 const formRef = ref()
 const loading = ref(false)
 const testCase = ref<TestCase>({
@@ -84,9 +86,9 @@ const configStr = ref('{\n  "url": "",\n  "method": "GET",\n  "headers": {},\n  
 const parametersStr = ref('{\n  "param1": "value1",\n  "param2": "value2"\n}')
 
 const rules = {
-  name: [{ required: true, message: 'Please input test case name' }],
-  testType: [{ required: true, message: 'Please select test type' }],
-  config: [{ required: true, message: 'Please input test configuration' }]
+  name: [{ required: true, message: () => t('testCaseEdit.nameRequired') }],
+  testType: [{ required: true, message: () => t('testCaseEdit.testTypeRequired') }],
+  config: [{ required: true, message: () => t('testCaseEdit.configRequired') }]
 }
 
 const isEdit = computed(() => !!route.params.id)
@@ -102,7 +104,7 @@ const fetchTestCase = async () => {
     configStr.value = JSON.stringify(testCase.value.config, null, 2)
     parametersStr.value = JSON.stringify(testCase.value.parameters || {}, null, 2)
   } catch (error) {
-    message.error('Failed to fetch test case')
+    message.error(t('testCaseEdit.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -113,29 +115,29 @@ const handleSubmit = async () => {
 
   try {
     await formRef.value.validate()
-    
+
     // Parse JSON strings
     try {
       testCase.value.config = JSON.parse(configStr.value)
       testCase.value.parameters = JSON.parse(parametersStr.value)
     } catch (e) {
-      message.error('Invalid JSON format in config or parameters')
+      message.error(t('testCaseEdit.jsonParseError'))
       return
     }
 
     loading.value = true
-    
+
     if (isEdit.value) {
       await testApi.updateTestCase(Number(route.params.id), testCase.value)
-      message.success('Test case updated successfully')
+      message.success(t('testCaseEdit.updateSuccess'))
     } else {
       await testApi.createTestCase(testCase.value)
-      message.success('Test case created successfully')
+      message.success(t('testCaseEdit.createSuccess'))
     }
 
     router.push('/test-cases')
   } catch (error) {
-    message.error('Failed to save test case')
+    message.error(t('testCaseEdit.saveFailed'))
   } finally {
     loading.value = false
   }

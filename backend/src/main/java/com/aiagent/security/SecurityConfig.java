@@ -32,12 +32,40 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOrigins;
 
+    @Value("${cors.allowed-origins-production:}")
+    private String allowedOriginsProduction;
+
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
-        origins.forEach(config::addAllowedOriginPattern);
+
+        // 生产环境使用专用 origins 列表，禁止通配符
+        boolean isProduction = activeProfiles != null && activeProfiles.contains("production");
+        String originsConfig = isProduction && allowedOriginsProduction != null && !allowedOriginsProduction.isBlank()
+                ? allowedOriginsProduction
+                : allowedOrigins;
+
+        List<String> origins = Arrays.asList(originsConfig.split(","));
+        for (String origin : origins) {
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty()) {
+                if ("*".equals(trimmed) && isProduction) {
+                    // 生产环境禁止使用通配符，跳过并记录警告
+                    continue;
+                }
+                config.addAllowedOrigin(trimmed);
+            }
+        }
+
+        // 生产环境必须配置至少一个合法 origin
+        if (isProduction && config.getAllowedOrigins() != null && config.getAllowedOrigins().isEmpty()) {
+            throw new IllegalStateException(
+                    "生产环境 CORS 配置错误: 必须通过 cors.allowed-origins-production 配置具体的允许域名，禁止使用通配符 *");
+        }
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization", "Content-Type", "X-Tenant-ID", "X-API-Key",
                 "X-Request-ID", "X-API-Version", "Accept", "Origin", "Cache-Control"

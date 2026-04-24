@@ -1,5 +1,7 @@
 package com.aiagent.controller;
 
+import com.aiagent.annotation.Audited;
+import com.aiagent.annotation.AuditAction;
 import com.aiagent.annotation.RequiresPermission;
 
 import com.aiagent.common.PageResult;
@@ -96,6 +98,7 @@ public class AgentApprovalController {
     @RequiresPermission("approval:manage")
     @PostMapping("/submit")
     @Operation(summary = "提交审批申请")
+    @Audited(action = AuditAction.CREATE, module = "审批管理", description = "提交审批申请", resourceType = "AgentApproval")
     public Result<AgentApprovalVO> submitForApproval(
             @Valid @RequestBody ApprovalSubmitDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -107,6 +110,7 @@ public class AgentApprovalController {
     @RequiresPermission("approval:manage")
     @PostMapping("/{id}/approve")
     @Operation(summary = "审批通过")
+    @Audited(action = AuditAction.APPROVE, module = "审批管理", description = "审批通过", resourceType = "AgentApproval")
     public Result<AgentApprovalVO> approve(
             @Parameter(description = "审批ID") @PathVariable Long id,
             @Valid @RequestBody ApprovalActionDTO request,
@@ -119,6 +123,7 @@ public class AgentApprovalController {
     @RequiresPermission("approval:manage")
     @PostMapping("/{id}/reject")
     @Operation(summary = "审批拒绝")
+    @Audited(action = AuditAction.REJECT, module = "审批管理", description = "审批拒绝", resourceType = "AgentApproval")
     public Result<AgentApprovalVO> reject(
             @Parameter(description = "审批ID") @PathVariable Long id,
             @Valid @RequestBody ApprovalActionDTO request,

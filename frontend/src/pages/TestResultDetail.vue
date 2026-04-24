@@ -4,7 +4,7 @@
       <h1>{{ $t('test.testResultDetail') }}</h1>
       <a-space>
         <a-button type="primary" @click="generateReport">
-          生成报告
+          {{ t('testResultDetailPage.generateReport') }}
         </a-button>
         <a-button @click="handleBack">
           {{ $t('common.back') }}
@@ -14,21 +14,21 @@
 
     <a-card>
       <a-descriptions :column="2" bordered>
-        <a-descriptions-item label="Test Case Name">
+        <a-descriptions-item :label="t('testResultDetailPage.testCaseName')">
           {{ testResult.testCaseName }}
         </a-descriptions-item>
-        <a-descriptions-item label="Status">
+        <a-descriptions-item :label="t('testResultDetailPage.status')">
           <a-tag :color="getStatusColor(testResult.status)">
             {{ testResult.status }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="Execution Time">
+        <a-descriptions-item :label="t('testResultDetailPage.executionTime')">
           {{ testResult.executionTime }} ms
         </a-descriptions-item>
-        <a-descriptions-item label="Created At">
+        <a-descriptions-item :label="t('testResultDetailPage.createdAt')">
           {{ testResult.createdAt }}
         </a-descriptions-item>
-        <a-descriptions-item label="Error Message" v-if="testResult.errorMessage">
+        <a-descriptions-item :label="t('testResultDetailPage.errorMessage')" v-if="testResult.errorMessage">
           <pre>{{ testResult.errorMessage }}</pre>
         </a-descriptions-item>
       </a-descriptions>
@@ -76,7 +76,7 @@ const fetchTestResult = async () => {
     const response = await testApi.getTestResultById(id)
     testResult.value = response.data
   } catch (_error) {
-    message.error('Failed to fetch test result')
+    message.error(t('testResultDetailPage.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -94,7 +94,7 @@ const generateReport = () => {
       URL.revokeObjectURL(url)
     })
     .catch(() => {
-      message.error('Failed to generate report')
+      message.error(t('testResultDetailPage.generateReportFailed'))
     })
 }
 

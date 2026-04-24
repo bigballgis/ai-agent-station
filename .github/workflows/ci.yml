@@ -29,6 +29,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
       - name: Type check
         working-directory: frontend
         run: npm run type-check
@@ -82,6 +86,14 @@ jobs:
           name: backend-test-results
           path: backend/target/surefire-reports/
           retention-days: 7
+
+      - name: Publish test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Backend Test Results
+          path: backend/target/surefire-reports/*.xml
+          reporter: java-junit
 
   # ===========================================
   # Docker Build & Security Scan
@@ -246,3 +258,106 @@ jobs:
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================
+  # CI/CD Notification (Slack/Webhook)
+  # ===========================================
+  notify:
+    needs: [frontend, backend, docker]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Determine build status
+        id: status
+        run: |
+          if [ "${{ needs.frontend.result }}" == "failure" ] || \
+             [ "${{ needs.backend.result }}" == "failure" ] || \
+             [ "${{ needs.docker.result }}" == "failure" ]; then
+            echo "result=failure" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.frontend.result }}" == "cancelled" ] || \
+               [ "${{ needs.backend.result }}" == "cancelled" ] || \
+               [ "${{ needs.docker.result }}" == "cancelled" ]; then
+            echo "result=cancelled" >> $GITHUB_OUTPUT
+            echo "color=warning" >> $GITHUB_OUTPUT
+            echo "emoji=:warning:" >> $GITHUB_OUTPUT
+          else
+            echo "result=success" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ steps.status.outputs.color }}",
+                  "title": "${{ steps.status.outputs.emoji }} CI Pipeline ${{ steps.status.outputs.result }}",
+                  "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref_name }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Commit",
+                      "value": "${{ github.sha }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Triggered by",
+                      "value": "${{ github.actor }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Frontend",
+                      "value": "${{ needs.frontend.result }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Backend",
+                      "value": "${{ needs.backend.result }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Docker",
+                      "value": "${{ needs.docker.result }}",
+                      "short": true
+                    }
+                  ],
+                  "footer": "AI Agent Platform CI",
+                  "footer_icon": "https://github.githubassets.com/favicon.ico",
+                  "ts": ${{ github.event.head_commit.timestamp || '0' }}
+                }
+              ]
+            }
+
+      - name: Send generic webhook notification
+        if: env.WEBHOOK_URL != '' && steps.status.outputs.result == 'failure'
+        env:
+          WEBHOOK_URL: ${{ secrets.CI_WEBHOOK_URL }}
+        run: |
+          curl -sf -X POST "${WEBHOOK_URL}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "event": "ci_failure",
+              "repository": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}",
+              "run_id": "${{ github.run_id }}",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }' || true

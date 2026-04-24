@@ -307,6 +307,7 @@ import { logger } from '@/utils/logger'
 import { useLoading } from '@/composables/useLoading'
 import { usePagination } from '@/composables/usePagination'
 import { useConfirm } from '@/composables/useConfirm'
+import { formatDate as formatDateUtil } from '@/utils/formatUtils'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -475,12 +476,7 @@ function handleRunTestCase(id: number) {
 
 // 辅助函数
 function formatDate(date: string | undefined) {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
+  return formatDateUtil(date, 'date')
 }
 
 function getAgentName(agentId: number | undefined): string {

@@ -30,44 +30,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { testApi } from '@/api/test'
 import type { TestCaseVersion } from '@/api/test'
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 const loading = ref(false)
 const versions = ref<TestCaseVersion[]>([])
 
-const columns = [
+const columns = computed(() => [
   {
-    title: 'Version',
+    title: t('testCaseVersion.version'),
     dataIndex: 'versionNumber',
     key: 'versionNumber'
   },
   {
-    title: 'Change Log',
+    title: t('testCaseVersion.changeLog'),
     dataIndex: 'changeLog',
     key: 'changeLog'
   },
   {
-    title: 'Created By',
+    title: t('testCaseVersion.createdBy'),
     dataIndex: 'createdBy',
     key: 'createdBy'
   },
   {
-    title: 'Created At',
+    title: t('testCaseVersion.createdAt'),
     dataIndex: 'createdAt',
     key: 'createdAt'
   },
   {
-    title: 'Actions',
+    title: t('testCaseVersion.actions'),
     key: 'action',
     slots: { customRender: 'action' }
   }
-]
+])
 
 const fetchVersions = async () => {
   const testCaseId = Number(route.params.id)
@@ -76,7 +78,7 @@ const fetchVersions = async () => {
     const response = await testApi.getTestCaseVersions(testCaseId)
     versions.value = response.data
   } catch (error) {
-    message.error('Failed to fetch test case versions')
+    message.error(t('testCaseVersion.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -84,11 +86,11 @@ const fetchVersions = async () => {
 
 const handleViewVersion = (version: TestCaseVersion) => {
   Modal.info({
-    title: `Version ${version.versionNumber}`,
+    title: t('testCaseVersion.versionDetailTitle', { version: version.versionNumber }),
     content: `
       <div>
-        <p><strong>Change Log:</strong> ${version.changeLog}</p>
-        <p><strong>Config:</strong></p>
+        <p><strong>${t('testCaseVersion.changeLogLabel')}:</strong> ${version.changeLog}</p>
+        <p><strong>${t('testCaseVersion.configLabel')}:</strong></p>
         <pre style="white-space: pre-wrap;">
           ${JSON.stringify(version.config, null, 2)}
         </pre>
@@ -99,17 +101,17 @@ const handleViewVersion = (version: TestCaseVersion) => {
 
 const handleRollback = (versionNumber: number) => {
   Modal.confirm({
-    title: 'Rollback to Version',
-    content: `Are you sure you want to rollback to version ${versionNumber}?`,
+    title: t('testCaseVersion.rollbackTitle'),
+    content: t('testCaseVersion.rollbackContent', { version: versionNumber }),
     onOk: () => {
       const testCaseId = Number(route.params.id)
       testApi.rollbackToVersion(testCaseId, versionNumber)
         .then(() => {
-          message.success('Rollback successful')
+          message.success(t('testCaseVersion.rollbackSuccess'))
           router.push('/test-cases')
         })
         .catch(() => {
-          message.error('Failed to rollback')
+          message.error(t('testCaseVersion.rollbackFailed'))
         })
     }
   })
