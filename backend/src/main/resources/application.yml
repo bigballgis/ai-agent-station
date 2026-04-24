@@ -247,3 +247,33 @@ workflow:
 # CORS配置
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+# SpringDoc OpenAPI / Swagger 配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    try-it-out-enabled: true
+    filter: true
+  group-configs:
+    - group: 认证管理
+      paths-to-match: /v1/auth/**
+    - group: Agent管理
+      paths-to-match: /v1/agents/**
+    - group: 工作流管理
+      paths-to-match: /v1/workflows/**
+    - group: 用户管理
+      paths-to-match: /v1/users/**
+    - group: 系统管理
+      paths-to-match: /v1/roles/**,/v1/permissions/**,/v1/tenants/**,/v1/dicts/**,/v1/system-logs/**,/v1/alerts/**
+    - group: 工具与接口
+      paths-to-match: /v1/tools/**,/v1/api-interfaces/**,/v1/api-call-logs/**
+    - group: 部署管理
+      paths-to-match: /v1/deployments/**
+    - group: 监控与测试
+      paths-to-match: /v1/agent-tests/**,/v1/quotas/**,/v1/data-export/**,/v1/memory/**,/v1/sessions/**,/v1/executions/**
