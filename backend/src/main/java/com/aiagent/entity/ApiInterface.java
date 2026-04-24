@@ -39,6 +39,18 @@ public class ApiInterface extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "api_version", nullable = false, length = 20)
+    private String apiVersion = "v1";
+
+    @Column(name = "deprecated", nullable = false)
+    private Boolean deprecated = false;
+
+    @Column(name = "deprecation_message", length = 500)
+    private String deprecationMessage;
+
+    @Column(name = "base_api_id")
+    private Long baseApiId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agent_id", insertable = false, updatable = false)
     private Agent agent;

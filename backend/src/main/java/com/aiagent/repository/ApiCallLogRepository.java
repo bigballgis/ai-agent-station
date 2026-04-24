@@ -30,4 +30,13 @@ public interface ApiCallLogRepository extends JpaRepository<ApiCallLog, Long> {
 
     @Query("SELECT AVG(a.executionTime) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.agentId = :agentId AND a.createdAt >= :startTime")
     Double findAverageExecutionTimeByTenantIdAndAgentIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("agentId") Long agentId, @Param("startTime") LocalDateTime startTime);
+
+    @Query("SELECT MAX(a.executionTime) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.agentId = :agentId AND a.createdAt >= :startTime")
+    Integer findMaxExecutionTimeByTenantIdAndAgentIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("agentId") Long agentId, @Param("startTime") LocalDateTime startTime);
+
+    @Query("SELECT a.status, COUNT(a) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.createdAt >= :startTime GROUP BY a.status")
+    List<Object[]> countByStatusByTenantIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("startTime") LocalDateTime startTime);
+
+    @Query("SELECT a.status, COUNT(a) FROM ApiCallLog a WHERE a.tenantId = :tenantId AND a.agentId = :agentId AND a.createdAt >= :startTime GROUP BY a.status")
+    List<Object[]> countByStatusByTenantIdAndAgentIdAndCreatedAtAfter(@Param("tenantId") Long tenantId, @Param("agentId") Long agentId, @Param("startTime") LocalDateTime startTime);
 }

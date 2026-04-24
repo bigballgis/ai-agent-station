@@ -347,7 +347,7 @@
         <a-form-item :label="t('alert.metricName')" required>
           <a-input v-model:value="newRule.metricName" :placeholder="t('alert.metricNamePlaceholder')" />
         </a-form-item>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <a-form-item :label="t('alert.threshold')" required>
             <a-input-number v-model:value="newRule.threshold" :placeholder="t('alert.threshold')" :style="{ width: '100%' }" />
           </a-form-item>
@@ -361,7 +361,7 @@
             </a-select>
           </a-form-item>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <a-form-item :label="t('alert.severity')">
             <a-select v-model:value="newRule.severity" :placeholder="t('alert.selectSeverity')">
               <a-select-option value="INFO">{{ t('alert.severityInfo') }}</a-select-option>
@@ -394,7 +394,7 @@
       width="560px"
     >
       <div v-if="detailRecord" class="mt-4 space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <h4 class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">{{ t('alert.firedAt') }}</h4>
             <p class="text-sm text-neutral-800 dark:text-neutral-200">{{ formatDateTime(detailRecord.firedAt) }}</p>

@@ -6,15 +6,36 @@
 
     <a-tabs default-active-key="reflection" class="mb-6">
       <a-tab-pane tab="t('evolution.reflection')" key="reflection">
-        <ReflectionEvaluation />
+        <Suspense>
+          <template #default>
+            <ReflectionEvaluation />
+          </template>
+          <template #fallback>
+            <LoadingSkeleton type="chart" :rows="2" />
+          </template>
+        </Suspense>
       </a-tab-pane>
 
       <a-tab-pane tab="t('evolution.experience')" key="experience">
-        <ExperienceData />
+        <Suspense>
+          <template #default>
+            <ExperienceData />
+          </template>
+          <template #fallback>
+            <LoadingSkeleton type="table" :rows="3" />
+          </template>
+        </Suspense>
       </a-tab-pane>
 
       <a-tab-pane tab="t('evolution.suggestion')" key="suggestion">
-        <OptimizationSuggestion />
+        <Suspense>
+          <template #default>
+            <OptimizationSuggestion />
+          </template>
+          <template #fallback>
+            <LoadingSkeleton type="table" :rows="3" />
+          </template>
+        </Suspense>
       </a-tab-pane>
     </a-tabs>
   </div>
@@ -23,6 +44,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { defineAsyncComponent } from 'vue'
+import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
 // 三个进化子组件通过 Tab 切换显示，仅激活时才需要加载，使用异步组件按需加载
 const ReflectionEvaluation = defineAsyncComponent(() => import('@/components/evolution/ReflectionEvaluation.vue'))
 const ExperienceData = defineAsyncComponent(() => import('@/components/evolution/ExperienceData.vue'))

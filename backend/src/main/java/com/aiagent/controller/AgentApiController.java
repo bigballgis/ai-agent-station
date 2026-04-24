@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +42,8 @@ public class AgentApiController {
             @Parameter(description = "Agent ID") @PathVariable Long agentId,
             @Valid @RequestBody AgentInvokeRequest request,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            HttpServletRequest httpRequest) {
 
         if (requestId == null || requestId.isEmpty()) {
             requestId = java.util.UUID.randomUUID().toString();
@@ -59,8 +61,10 @@ public class AgentApiController {
         HttpStatus status = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())
                 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 
+        String clientIp = getClientIp(httpRequest);
+
         apiCallLogService.logApiCall(
-                requestId, agentId, tenantId, userId, "POST",
+                requestId, agentId, tenantId, userId, clientIp, "POST",
                 "/api/v1/agent/" + agentId + "/invoke", null,
                 request, response, status.value(), null,
                 mapStatus(response.getStatus()), executionTime, request.getAsync(), response.getTaskId()
@@ -120,5 +124,20 @@ public class AgentApiController {
             case "UNAUTHORIZED" -> ApiCallLog.ApiCallStatus.UNAUTHORIZED;
             default -> ApiCallLog.ApiCallStatus.FAILED;
         };
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // X-Forwarded-For may contain multiple IPs, take the first one
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 }

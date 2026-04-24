@@ -77,6 +77,44 @@ public class GraphDefinition {
                 break;
             }
         }
+        // 验证：非入口节点必须有至少一条入边
+        for (GraphNode node : nodes.values()) {
+            if (!node.getId().equals(entryNodeId)) {
+                boolean hasIncoming = edges.stream().anyMatch(e -> e.getTargetNodeId().equals(node.getId()));
+                if (!hasIncoming) {
+                    errors.add("节点 " + node.getId() + " (" + node.getLabel() + ") 没有输入连接");
+                }
+            }
+        }
+        // 验证：end 节点不能有出边
+        for (GraphNode node : nodes.values()) {
+            if ("end".equals(node.getType())) {
+                boolean hasOutgoing = edges.stream().anyMatch(e -> e.getSourceNodeId().equals(node.getId()));
+                if (hasOutgoing) {
+                    errors.add("结束节点 " + node.getId() + " (" + node.getLabel() + ") 不应有输出连接");
+                }
+            }
+        }
+        // 验证：节点类型有效性
+        Set<String> validTypes = Set.of(
+                "start", "end", "llm", "condition", "tool", "memory",
+                "variable", "retriever", "exception", "http", "code",
+                "delay", "parallel", "merge", "switch", "subgraph", "human_approval"
+        );
+        for (GraphNode node : nodes.values()) {
+            if (node.getType() == null || !validTypes.contains(node.getType())) {
+                errors.add("节点 " + node.getId() + " 的类型 '" + node.getType() + "' 无效");
+            }
+        }
+        // 验证：边引用的节点必须存在
+        for (GraphEdge edge : edges) {
+            if (!nodes.containsKey(edge.getSourceNodeId())) {
+                errors.add("边引用了不存在的源节点: " + edge.getSourceNodeId());
+            }
+            if (!nodes.containsKey(edge.getTargetNodeId())) {
+                errors.add("边引用了不存在的目标节点: " + edge.getTargetNodeId());
+            }
+        }
         return errors;
     }
 

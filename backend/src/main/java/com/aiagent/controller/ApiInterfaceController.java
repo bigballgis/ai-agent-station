@@ -76,7 +76,46 @@ public class ApiInterfaceController {
         apiInterface.setMethod(dto.getMethod());
         apiInterface.setDescription(dto.getDescription());
         apiInterface.setIsActive(dto.getIsActive());
+        apiInterface.setApiVersion(dto.getApiVersion() != null ? dto.getApiVersion() : "v1");
         return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.create(apiInterface)));
+    }
+
+    @RequiresPermission("api:write")
+    @PostMapping("/{id}/version")
+    @Operation(summary = "创建API接口新版本")
+    public Result<ApiInterfaceVO> createVersion(
+            @PathVariable Long id,
+            @RequestHeader("X-Tenant-ID") Long tenantId,
+            @Valid @RequestBody ApiInterfaceUpdateDTO dto) {
+        ApiInterface apiInterface = new ApiInterface();
+        apiInterface.setAgentId(dto.getAgentId());
+        apiInterface.setVersionId(dto.getVersionId());
+        apiInterface.setPath(dto.getPath());
+        apiInterface.setMethod(dto.getMethod());
+        apiInterface.setDescription(dto.getDescription());
+        apiInterface.setIsActive(dto.getIsActive());
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.createNewVersion(id, tenantId, apiInterface)));
+    }
+
+    @RequiresPermission("api:read")
+    @GetMapping("/{id}/versions")
+    @Operation(summary = "获取API接口所有版本")
+    public Result<List<ApiInterfaceVO>> listVersions(
+            @PathVariable Long id,
+            @RequestHeader("X-Tenant-ID") Long tenantId) {
+        return Result.success(apiInterfaceService.listVersions(id, tenantId).stream()
+                .map(ApiInterfaceVO::fromEntity).toList());
+    }
+
+    @RequiresPermission("api:write")
+    @PatchMapping("/{id}/deprecate")
+    @Operation(summary = "废弃API接口")
+    public Result<ApiInterfaceVO> deprecate(
+            @PathVariable Long id,
+            @RequestHeader("X-Tenant-ID") Long tenantId,
+            @RequestBody Map<String, String> body) {
+        String message = body.get("message");
+        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.deprecate(id, tenantId, message)));
     }
 
     @RequiresPermission("api:write")

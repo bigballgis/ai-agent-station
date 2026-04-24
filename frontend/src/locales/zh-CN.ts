@@ -445,6 +445,8 @@ export default {
     deleteConfirm: '确定要删除这个建议吗？',
     deleteFailed: '删除建议失败',
     generateFailed: '生成建议失败',
+    noSuggestions: '暂无优化建议',
+    noSuggestionsHint: '点击上方按钮生成优化建议',
   },
   approval: {
     management: '审批管理',
@@ -589,6 +591,8 @@ export default {
     contactRequired: '请输入联系人',
     emailRequired: '请输入邮箱地址',
     emailInvalid: '请输入有效的邮箱地址',
+    noTenants: '暂无租户',
+    noTenantsHint: '点击上方按钮创建第一个租户',
   },
   error: {
     '403': '抱歉，您无权访问该页面',
@@ -1459,6 +1463,7 @@ export default {
     fetchLogsFailed: '获取调用日志失败',
     testSuccess: '测试成功',
     testFailed: '测试失败',
+    noApis: '暂无 API 接口',
   },
   fileMgmt: {
     desc: '上传、管理和下载 Agent 相关的文件资源，支持拖拽上传',
@@ -1549,6 +1554,10 @@ export default {
     invalidFormat: '返回的 OpenAPI 文档格式无效',
     unknownError: '未知错误',
     retry: '重试',
+    pathParams: '路径参数',
+    errorResponses: '错误响应',
+    requestSchema: '请求Schema',
+    responseSchema: '响应Schema',
   },
   quota: {
     desc: '管理各租户的资源配额，监控 Agent 数量、API 调用、Token 消耗和存储空间的使用情况',

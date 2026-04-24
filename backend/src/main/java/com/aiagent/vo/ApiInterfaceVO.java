@@ -31,6 +31,18 @@ public class ApiInterfaceVO {
     @Schema(description = "是否启用")
     private Boolean isActive;
 
+    @Schema(description = "API版本号")
+    private String apiVersion;
+
+    @Schema(description = "是否已废弃")
+    private Boolean deprecated;
+
+    @Schema(description = "废弃说明")
+    private String deprecationMessage;
+
+    @Schema(description = "基础API ID（版本链路）")
+    private Long baseApiId;
+
     @Schema(description = "创建时间")
     private LocalDateTime createdAt;
 
@@ -46,6 +58,10 @@ public class ApiInterfaceVO {
         vo.setMethod(entity.getMethod());
         vo.setDescription(entity.getDescription());
         vo.setIsActive(entity.getIsActive());
+        vo.setApiVersion(entity.getApiVersion());
+        vo.setDeprecated(entity.getDeprecated());
+        vo.setDeprecationMessage(entity.getDeprecationMessage());
+        vo.setBaseApiId(entity.getBaseApiId());
         vo.setCreatedAt(entity.getCreatedAt());
         vo.setUpdatedAt(entity.getUpdatedAt());
         return vo;

@@ -52,6 +52,43 @@
 
     <!-- 租户表格 -->
     <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-card border border-neutral-100 dark:border-neutral-800 overflow-hidden animate-slide-up">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="p-6 space-y-4">
+        <div v-for="i in 5" :key="i" class="flex items-center gap-4 animate-pulse">
+          <div class="h-4 w-32 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-4 w-16 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-4 w-20 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-4 w-20 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div
+        v-else-if="filteredTenants.length === 0"
+        class="flex flex-col items-center justify-center py-16"
+      >
+        <div class="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-5">
+          <svg class="w-10 h-10 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-1">{{ t('tenant.noTenants') }}</h3>
+        <p class="text-sm text-neutral-400 dark:text-neutral-500 mb-5">{{ t('tenant.noTenantsHint') }}</p>
+        <button
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+          @click="openCreateModal"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ t('tenant.create') }}
+        </button>
+      </div>
+
+      <template v-else>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
@@ -195,6 +232,7 @@
           </button>
         </div>
       </div>
+      </template>
     </div>
 
     <!-- 新建/编辑租户弹窗 -->
@@ -224,7 +262,7 @@
             class="w-full px-3.5 py-2 rounded-xl text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:border-primary-500 transition-all duration-200 resize-none"
           />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.contactLabel') }} <span class="text-red-500">*</span></label>
             <input
@@ -247,7 +285,7 @@
         <!-- 配额设置 -->
         <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800">
           <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-3">{{ t('tenant.quotaSettings') }}</p>
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">{{ t('tenant.agentLimitLabel') }}</label>
               <input

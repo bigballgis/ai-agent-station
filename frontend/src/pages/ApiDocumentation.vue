@@ -110,19 +110,104 @@
 
           <!-- API详情 -->
           <div v-if="expandedApis.includes(api.operationId || String(index))" class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <!-- 认证与限流信息 -->
+            <div v-if="hasSecurityOrRateLimit(api)" class="mb-4 flex flex-wrap gap-3">
+              <span v-if="api.security && api.security.length" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                {{ formatSecurity(api.security) }}
+              </span>
+              <span v-if="api.rateLimit" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {{ api.rateLimit }}
+              </span>
+              <span v-if="api.deprecated" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                Deprecated
+              </span>
+            </div>
+
+            <!-- 请求参数列表 -->
+            <div v-if="api.parameters && api.parameters.length" class="mb-4">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.pathParams') || '路径参数' }}</h4>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-600">
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">名称</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">位置</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">类型</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">必填</th>
+                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">描述</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="param in api.parameters" :key="param.name" class="border-b border-gray-100 dark:border-gray-700">
+                      <td class="py-1.5 px-3 font-mono text-gray-800 dark:text-gray-200">{{ param.name }}</td>
+                      <td class="py-1.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">{{ param.in }}</span></td>
+                      <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.type || (param.schema && param.schema.type) || '-' }}</td>
+                      <td class="py-1.5 px-3">
+                        <span v-if="param.required" class="text-red-500 font-medium">Yes</span>
+                        <span v-else class="text-gray-400">No</span>
+                      </td>
+                      <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.description || '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 请求/响应 Schema 和示例 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <!-- 请求参数 -->
               <div>
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ t('apiDocs.requestParams') }}</h4>
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('apiDocs.requestParams') }}</h4>
+                  <div v-if="api.requestSchema" class="flex gap-2">
+                    <button
+                      @click="toggleSchemaView(api.operationId || String(index), 'request')"
+                      class="text-xs px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {{ (schemaViewMode[api.operationId || String(index)] || {}).request === 'schema' ? 'Example' : 'Schema' }}
+                    </button>
+                  </div>
+                </div>
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestExample }}</pre>
+                  <pre v-if="!api.requestSchema || (schemaViewMode[api.operationId || String(index)] || {}).request !== 'schema'" class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestExample }}</pre>
+                  <pre v-else class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestSchema }}</pre>
                 </div>
               </div>
               <!-- 响应示例 -->
               <div>
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ t('apiDocs.responseExample') }}</h4>
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('apiDocs.responseExample') }}</h4>
+                  <div v-if="api.responseSchema" class="flex gap-2">
+                    <button
+                      @click="toggleSchemaView(api.operationId || String(index), 'response')"
+                      class="text-xs px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {{ (schemaViewMode[api.operationId || String(index)] || {}).response === 'schema' ? 'Example' : 'Schema' }}
+                    </button>
+                  </div>
+                </div>
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseExample }}</pre>
+                  <pre v-if="!api.responseSchema || (schemaViewMode[api.operationId || String(index)] || {}).response !== 'schema'" class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseExample }}</pre>
+                  <pre v-else class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseSchema }}</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- 错误响应 -->
+            <div v-if="api.errorResponses && api.errorResponses.length" class="mt-4">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.errorResponses') || '错误响应' }}</h4>
+              <div class="space-y-2">
+                <div v-for="err in api.errorResponses" :key="err.code" class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                  <span :class="[
+                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-bold',
+                    err.code >= 500 ? 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
+                  ]">{{ err.code }}</span>
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ err.description || '' }}</p>
+                    <p v-if="err.example" class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">{{ err.example }}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -146,6 +231,7 @@ const selectedTag = ref('')
 const expandedApis = ref<string[]>([])
 const loading = ref(false)
 const loadError = ref('')
+const schemaViewMode = ref<Record<string, { request?: string; response?: string }>>({})
 
 interface OpenApiParameter {
   name: string
@@ -198,6 +284,12 @@ interface ParsedApiItem {
   responses?: Record<string, OpenApiResponse>
   requestExample: string
   responseExample: string
+  requestSchema: string
+  responseSchema: string
+  security: Record<string, string[]>[]
+  rateLimit: string
+  deprecated: boolean
+  errorResponses: { code: number; description: string; example: string }[]
 }
 
 const apiList = ref<ParsedApiItem[]>([])
@@ -306,6 +398,12 @@ async function fetchOpenApiSpec() {
             responses,
             requestExample,
             responseExample,
+            requestSchema: extractSchemaString(requestBody, componentsSchemas),
+            responseSchema: extractSchemaString(successResp, componentsSchemas),
+            security: (op.security as Record<string, string[]>[]) || [],
+            rateLimit: extractRateLimit(detail as Record<string, unknown>, spec as Record<string, unknown>),
+            deprecated: (op.deprecated as boolean) || false,
+            errorResponses: extractErrorResponses(responses, componentsSchemas),
           })
         }
       }
@@ -352,6 +450,89 @@ function toggleApiDetail(apiId: string) {
   } else {
     expandedApis.value.push(apiId)
   }
+}
+
+function toggleSchemaView(apiId: string, type: 'request' | 'response') {
+  if (!schemaViewMode.value[apiId]) {
+    schemaViewMode.value[apiId] = {}
+  }
+  schemaViewMode.value[apiId][type] = schemaViewMode.value[apiId][type] === 'schema' ? 'example' : 'schema'
+}
+
+function hasSecurityOrRateLimit(api: ParsedApiItem): boolean {
+  return (api.security && api.security.length > 0) || !!api.rateLimit || !!api.deprecated
+}
+
+function formatSecurity(security: Record<string, string[]>[]): string {
+  if (!security || !security.length) return ''
+  const schemes = security.map(s => Object.keys(s).join(', ')).join(', ')
+  return 'Auth: ' + schemes
+}
+
+function extractSchemaString(
+  contentEntry: { schema?: { $ref?: string; properties?: Record<string, OpenApiSchemaProperty> }; example?: unknown } | undefined,
+  componentsSchemas: Record<string, OpenApiSchemaProperty>
+): string {
+  if (!contentEntry?.schema) return ''
+  let schema = contentEntry.schema
+  if (schema.$ref && componentsSchemas) {
+    const name = extractSchemaName(schema.$ref)
+    schema = componentsSchemas[name] || schema
+  }
+  if (schema.properties) {
+    const props: string[] = []
+    for (const [key, prop] of Object.entries(schema.properties)) {
+      const typeStr = prop.type || (prop.$ref ? extractSchemaName(prop.$ref) : 'object')
+      const req = (schema as unknown as { required?: string[] }).required?.includes(key) ? ' (required)' : ''
+      const desc = prop.description ? ` - ${prop.description}` : ''
+      props.push(`  ${key}: ${typeStr}${req}${desc}`)
+    }
+    return '{\n' + props.join('\n') + '\n}'
+  }
+  return ''
+}
+
+function extractRateLimit(
+  opDetail: Record<string, unknown>,
+  spec: Record<string, unknown>
+): string {
+  // Check x-rateLimit extension on operation
+  const opLimit = opDetail['x-rateLimit'] || opDetail['x-rate-limit']
+  if (opLimit) return String(opLimit)
+  // Check global security / extensions
+  const globalLimit = spec['x-rateLimit'] || spec['x-rate-limit']
+  if (globalLimit) return String(globalLimit)
+  return ''
+}
+
+function extractErrorResponses(
+  responses: Record<string, OpenApiResponse> | undefined,
+  componentsSchemas: Record<string, OpenApiSchemaProperty>
+): { code: number; description: string; example: string }[] {
+  if (!responses) return []
+  const errors: { code: number; description: string; example: string }[] = []
+  const errorCodes = ['400', '401', '403', '404', '409', '422', '429', '500', '502', '503']
+  for (const code of errorCodes) {
+    const resp = responses[code]
+    if (resp) {
+      let example = ''
+      if (resp.content) {
+        const entry = resp.content['application/json'] || Object.values(resp.content)[0]
+        if (entry?.example) {
+          example = JSON.stringify(entry.example)
+        } else if (entry?.schema) {
+          const ex = generateExampleFromSchema(entry.schema as OpenApiSchemaProperty, componentsSchemas)
+          example = JSON.stringify(ex)
+        }
+      }
+      errors.push({
+        code: parseInt(code),
+        description: (resp as unknown as { description?: string }).description || '',
+        example: example.length > 200 ? example.substring(0, 200) + '...' : example,
+      })
+    }
+  }
+  return errors
 }
 
 onMounted(() => {

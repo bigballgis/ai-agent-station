@@ -29,4 +29,7 @@ public class ApiInterfaceCreateDTO {
 
     @Schema(description = "是否启用")
     private Boolean isActive = true;
+
+    @Schema(description = "API版本号")
+    private String apiVersion = "v1";
 }

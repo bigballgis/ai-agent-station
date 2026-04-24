@@ -28,7 +28,24 @@
 
     <!-- API列表 -->
     <div v-if="activeTab === 'apis'" class="space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="space-y-4">
+          <div v-for="i in 4" :key="i" class="flex items-center gap-4 animate-pulse">
+            <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+            <div class="h-4 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+            <div class="h-4 w-16 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+            <div class="h-4 w-16 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+            <div class="h-4 w-20 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="mockApis.length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16">
+        <svg class="w-10 h-10 mb-2 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('apiMgmt.noApis') }}</p>
+      </div>
+      <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -180,54 +197,41 @@
       </div>
     </div>
 
-    <!-- API测试模态框 -->
-    <div v-if="showTestModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4">
-        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ t('apiMgmt.testApi') }}</h3>
-            <button @click="showTestModal = false" class="text-gray-400 hover:text-gray-500">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <!-- API测试模态框 (使用 a-modal 支持焦点陷阱和键盘导航) -->
+    <a-modal
+      v-model:open="showTestModal"
+      :title="t('apiMgmt.testApi')"
+      :ok-text="t('apiMgmt.sendRequest')"
+      :cancel-text="t('common.cancel')"
+      :width="640"
+      :footer="null"
+      @cancel="showTestModal = false"
+    >
+      <div class="space-y-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestUrl') }}</label>
+          <code class="block text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+            {{ selectedApi?.path }}
+          </code>
         </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestUrl') }}</label>
-              <code class="block text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded">
-                {{ selectedApi?.path }}
-              </code>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestParams') }}</label>
-              <textarea
-                v-model="testRequest"
-                rows="6"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder='{"inputs": {"key": "value"}}'
-              />
-            </div>
-            <div v-if="testResponse">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.responseResult') }}</label>
-              <pre class="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-4 rounded overflow-x-auto">
-                {{ testResponse }}
-              </pre>
-            </div>
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestParams') }}</label>
+          <a-textarea
+            v-model:value="testRequest"
+            :rows="6"
+            :placeholder='"{\"inputs\": {\"key\": \"value\"}}"'
+          />
         </div>
-        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-          <button @click="showTestModal = false" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-200 dark:hover:bg-gray-700 dark:hover:text-gray-200 rounded-md transition-colors">
-            取消
-          </button>
-          <button @click="executeTest" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            发送请求
-          </button>
+        <div v-if="testResponse">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.responseResult') }}</label>
+          <pre class="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-4 rounded overflow-x-auto">{{ testResponse }}</pre>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <a-button @click="showTestModal = false">{{ t('common.cancel') }}</a-button>
+          <a-button type="primary" @click="executeTest">{{ t('apiMgmt.sendRequest') }}</a-button>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 

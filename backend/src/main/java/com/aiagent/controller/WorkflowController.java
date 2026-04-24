@@ -76,6 +76,9 @@ public class WorkflowController {
 
         Long tenantId = TenantContextHolder.getTenantId();
 
+        // 验证节点数量限制
+        workflowService.validateNodeCount(request.getNodes());
+
         WorkflowDefinition definition = new WorkflowDefinition();
         definition.setName(request.getName());
         definition.setDescription(request.getDescription());
@@ -86,7 +89,12 @@ public class WorkflowController {
         definition.setTriggers(request.getTriggers());
         definition.setTenantId(tenantId);
 
-        return Result.success(WorkflowDefinitionVO.fromEntity(workflowService.createDefinition(definition)));
+        WorkflowDefinition saved = workflowService.createDefinition(definition);
+        // 首次创建时 baseDefinitionId 等于自身 ID
+        saved.setBaseDefinitionId(saved.getId());
+        saved = workflowService.updateDefinition(saved);
+
+        return Result.success(WorkflowDefinitionVO.fromEntity(saved));
     }
 
     @RequiresPermission("workflow:view")
@@ -111,6 +119,11 @@ public class WorkflowController {
 
         if (definition.getStatus() == WorkflowDefinition.WorkflowStatus.PUBLISHED) {
             throw new com.aiagent.exception.BusinessException("已发布的工作流定义不能直接修改，请先创建新版本");
+        }
+
+        // 验证节点数量限制
+        if (request.getNodes() != null) {
+            workflowService.validateNodeCount(request.getNodes());
         }
 
         if (request.getName() != null) {
@@ -161,6 +174,26 @@ public class WorkflowController {
         }
 
         return Result.success(WorkflowDefinitionVO.fromEntity(workflowService.publishDefinition(definition)));
+    }
+
+    @RequiresPermission("workflow:manage")
+    @PostMapping("/definitions/{id}/new-version")
+    @Operation(summary = "基于当前定义创建新版本（草稿）")
+    public Result<WorkflowDefinitionVO> createNewVersion(@PathVariable Long id) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        WorkflowDefinition newVersion = workflowService.createNewVersion(id, tenantId);
+        return Result.success(WorkflowDefinitionVO.fromEntity(newVersion));
+    }
+
+    @RequiresPermission("workflow:manage")
+    @PostMapping("/definitions/{id}/rollback/{targetVersion}")
+    @Operation(summary = "回滚工作流到指定版本（创建新草稿）")
+    public Result<WorkflowDefinitionVO> rollbackToVersion(
+            @PathVariable Long id,
+            @PathVariable Integer targetVersion) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        WorkflowDefinition rollbackDraft = workflowService.rollbackToVersion(id, targetVersion, tenantId);
+        return Result.success(WorkflowDefinitionVO.fromEntity(rollbackDraft));
     }
 
     // ==================== Workflow Instance APIs ====================
@@ -233,6 +266,15 @@ public class WorkflowController {
             @Valid @RequestBody WorkflowCancelDTO request) {
 
         WorkflowInstance instance = workflowEngine.cancelWorkflow(id, request.getReason());
+        return Result.success(WorkflowInstanceVO.fromEntity(instance));
+    }
+
+    @RequiresPermission("workflow:manage")
+    @PostMapping("/instances/{id}/resume")
+    @OperationLog(value = "恢复工作流", module = "工作流")
+    @Operation(summary = "恢复中断的工作流实例")
+    public Result<WorkflowInstanceVO> resumeWorkflow(@PathVariable Long id) {
+        WorkflowInstance instance = workflowEngine.resumeWorkflow(id);
         return Result.success(WorkflowInstanceVO.fromEntity(instance));
     }
 

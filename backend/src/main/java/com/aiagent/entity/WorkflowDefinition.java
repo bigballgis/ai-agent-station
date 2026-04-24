@@ -41,6 +41,13 @@ public class WorkflowDefinition extends BaseEntity {
     @Column(name = "tenant_id", nullable = false)
     private Long tenantId;
 
+    /**
+     * 基础定义ID，用于关联同一工作流的不同版本。
+     * 首次创建时等于自身ID，创建新版本时继承自原定义。
+     */
+    @Column(name = "base_definition_id")
+    private Long baseDefinitionId;
+
     public WorkflowDefinition() {
     }
 
@@ -114,6 +121,14 @@ public class WorkflowDefinition extends BaseEntity {
 
     public void setTenantId(Long tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public Long getBaseDefinitionId() {
+        return baseDefinitionId;
+    }
+
+    public void setBaseDefinitionId(Long baseDefinitionId) {
+        this.baseDefinitionId = baseDefinitionId;
     }
 
     public enum WorkflowStatus {

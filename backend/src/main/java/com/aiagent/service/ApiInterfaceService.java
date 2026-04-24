@@ -26,6 +26,48 @@ public class ApiInterfaceService {
         return apiInterfaceRepository.save(apiInterface);
     }
 
+    /**
+     * 版本化更新：创建新版本而非原地修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ApiInterface createNewVersion(Long id, Long tenantId, ApiInterface apiInterface) {
+        ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException());
+
+        // 创建新版本
+        ApiInterface newVersion = new ApiInterface();
+        newVersion.setTenantId(existing.getTenantId());
+        newVersion.setAgentId(apiInterface.getAgentId() != null ? apiInterface.getAgentId() : existing.getAgentId());
+        newVersion.setVersionId(apiInterface.getVersionId() != null ? apiInterface.getVersionId() : existing.getVersionId());
+        newVersion.setPath(apiInterface.getPath() != null ? apiInterface.getPath() : existing.getPath());
+        newVersion.setMethod(apiInterface.getMethod() != null ? apiInterface.getMethod() : existing.getMethod());
+        newVersion.setDescription(apiInterface.getDescription() != null ? apiInterface.getDescription() : existing.getDescription());
+        newVersion.setIsActive(apiInterface.getIsActive() != null ? apiInterface.getIsActive() : existing.getIsActive());
+        newVersion.setDeprecated(false);
+        newVersion.setBaseApiId(existing.getBaseApiId() != null ? existing.getBaseApiId() : existing.getId());
+
+        // 自动递增版本号
+        String currentVersion = existing.getApiVersion() != null ? existing.getApiVersion() : "v1";
+        newVersion.setApiVersion(incrementVersion(currentVersion));
+
+        log.info("Created new API version for baseApiId={}, newVersion={}, tenantId={}",
+                newVersion.getBaseApiId(), newVersion.getApiVersion(), tenantId);
+        return apiInterfaceRepository.save(newVersion);
+    }
+
+    private String incrementVersion(String version) {
+        try {
+            String numPart = version.replaceAll("[^0-9]", "");
+            int num = Integer.parseInt(numPart);
+            return "v" + (num + 1);
+        } catch (NumberFormatException e) {
+            return "v2";
+        }
+    }
+
+    /**
+     * 原地更新（仅更新非核心字段如 deprecated、isActive）
+     */
     @Transactional(rollbackFor = Exception.class)
     public ApiInterface update(Long id, Long tenantId, ApiInterface apiInterface) {
         ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
@@ -49,8 +91,29 @@ public class ApiInterfaceService {
         if (apiInterface.getIsActive() != null) {
             existing.setIsActive(apiInterface.getIsActive());
         }
+        if (apiInterface.getDeprecated() != null) {
+            existing.setDeprecated(apiInterface.getDeprecated());
+        }
+        if (apiInterface.getDeprecationMessage() != null) {
+            existing.setDeprecationMessage(apiInterface.getDeprecationMessage());
+        }
 
         log.info("Updated API interface id={}, tenantId={}", id, tenantId);
+        return apiInterfaceRepository.save(existing);
+    }
+
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public List<ApiInterface> listVersions(Long baseApiId, Long tenantId) {
+        return apiInterfaceRepository.findByBaseApiIdAndTenantIdOrderByApiVersionDesc(baseApiId, tenantId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ApiInterface deprecate(Long id, Long tenantId, String message) {
+        ApiInterface existing = apiInterfaceRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException());
+        existing.setDeprecated(true);
+        existing.setDeprecationMessage(message);
+        log.info("Deprecated API interface id={}, tenantId={}, message={}", id, tenantId, message);
         return apiInterfaceRepository.save(existing);
     }
 

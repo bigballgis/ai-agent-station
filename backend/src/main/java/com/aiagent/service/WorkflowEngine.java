@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,9 @@ public class WorkflowEngine {
     private final WorkflowInstanceRepository instanceRepository;
     private final WorkflowNodeLogRepository nodeLogRepository;
     private final WorkflowAsyncExecutor workflowAsyncExecutor;
+
+    @org.springframework.beans.factory.annotation.Value("${workflow.max-execution-duration:300}")
+    private int maxExecutionDurationSeconds;
 
     /**
      * Start a workflow instance from a published definition
@@ -84,6 +88,20 @@ public class WorkflowEngine {
         if (instance.getStatus() != WorkflowInstance.InstanceStatus.RUNNING
                 && instance.getStatus() != WorkflowInstance.InstanceStatus.SUSPENDED) {
             throw new BusinessException("工作流实例不在运行状态");
+        }
+
+        // 检查全局执行超时
+        if (instance.getStartedAt() != null) {
+            long elapsedSeconds = Duration.between(instance.getStartedAt(), LocalDateTime.now()).getSeconds();
+            if (elapsedSeconds > maxExecutionDurationSeconds) {
+                log.warn("工作流执行超时: instanceId={}, elapsed={}s, max={}s",
+                        instanceId, elapsedSeconds, maxExecutionDurationSeconds);
+                instance.setStatus(WorkflowInstance.InstanceStatus.FAILED);
+                instance.setError("工作流执行超时（已超过 " + maxExecutionDurationSeconds + " 秒限制）");
+                instance.setCompletedAt(LocalDateTime.now());
+                instanceRepository.save(instance);
+                throw new BusinessException("工作流执行超时");
+            }
         }
 
         String currentNodeId = instance.getCurrentNodeId();
@@ -231,6 +249,31 @@ public class WorkflowEngine {
         instance.setError(reason);
         instance.setCompletedAt(LocalDateTime.now());
         return instanceRepository.save(instance);
+    }
+
+    /**
+     * Resume an interrupted workflow instance
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowInstance resumeWorkflow(Long instanceId) {
+        WorkflowInstance instance = instanceRepository.findById(instanceId)
+                .orElseThrow(() -> new ResourceNotFoundException("工作流实例不存在"));
+
+        if (instance.getStatus() != WorkflowInstance.InstanceStatus.RUNNING
+                && instance.getStatus() != WorkflowInstance.InstanceStatus.PENDING) {
+            throw new BusinessException("只能恢复 RUNNING 或 PENDING 状态的工作流实例，当前状态: " + instance.getStatus());
+        }
+
+        if (instance.getCurrentNodeId() == null) {
+            throw new BusinessException("工作流实例没有当前节点信息，无法恢复");
+        }
+
+        log.info("手动恢复工作流实例: instanceId={}, currentNode={}", instanceId, instance.getCurrentNodeId());
+
+        // 异步继续执行
+        workflowAsyncExecutor.executeNodeAsync(instance.getId());
+
+        return instance;
     }
 
     /**

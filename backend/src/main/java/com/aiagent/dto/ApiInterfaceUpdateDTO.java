@@ -24,4 +24,10 @@ public class ApiInterfaceUpdateDTO {
 
     @Schema(description = "是否启用")
     private Boolean isActive;
+
+    @Schema(description = "是否废弃")
+    private Boolean deprecated;
+
+    @Schema(description = "废弃说明")
+    private String deprecationMessage;
 }

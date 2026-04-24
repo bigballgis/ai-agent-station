@@ -25,7 +25,8 @@ public class ApiCallLogService {
     }
 
     @Async
-    public void logApiCall(String requestId, Long agentId, Long tenantId, Long userId, 
+    public void logApiCall(String requestId, Long agentId, Long tenantId, Long userId,
+                          String clientIp,
                           String requestMethod, String requestPath, String requestHeaders,
                           AgentInvokeRequest requestBody, AgentInvokeResponse response,
                           Integer responseStatus, String responseHeaders, ApiCallLog.ApiCallStatus status,
@@ -36,22 +37,28 @@ public class ApiCallLogService {
             apiCallLog.setAgentId(agentId);
             apiCallLog.setTenantId(tenantId);
             apiCallLog.setUserId(userId);
+            apiCallLog.setClientIp(clientIp);
             apiCallLog.setRequestMethod(requestMethod);
             apiCallLog.setRequestPath(requestPath);
             apiCallLog.setRequestHeaders(requestHeaders);
-            apiCallLog.setRequestBody(objectMapper.writeValueAsString(requestBody));
+            apiCallLog.setRequestBody(truncate(objectMapper.writeValueAsString(requestBody), 10000));
             apiCallLog.setResponseStatus(responseStatus);
             apiCallLog.setResponseHeaders(responseHeaders);
-            apiCallLog.setResponseBody(objectMapper.writeValueAsString(response));
+            apiCallLog.setResponseBody(truncate(objectMapper.writeValueAsString(response), 10000));
             apiCallLog.setStatus(status);
-            apiCallLog.setErrorMessage(response.getErrorMessage());
+            apiCallLog.setErrorMessage(truncate(response.getErrorMessage(), 2000));
             apiCallLog.setExecutionTime(executionTime);
             apiCallLog.setIsAsync(isAsync);
             apiCallLog.setAsyncTaskId(asyncTaskId);
-            
+
             apiCallLogRepository.save(apiCallLog);
         } catch (JsonProcessingException e) {
             log.error("Error serializing API call log", e);
         }
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null) return null;
+        return value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 }

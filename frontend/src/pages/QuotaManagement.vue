@@ -206,6 +206,8 @@
         :label-col="{ span: 8 }"
         :wrapper-col="{ span: 16 }"
         class="mt-4"
+        :label-col-responsive="{ xs: 24, sm: 8 }"
+        :wrapper-col-responsive="{ xs: 24, sm: 16 }"
       >
         <a-form-item :label="t('quota.agentLimit')">
           <a-input-number v-model:value="editForm.agentLimit" :min="1" :max="1000" class="w-full" />

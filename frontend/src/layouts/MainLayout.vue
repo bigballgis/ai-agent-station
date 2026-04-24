@@ -272,7 +272,7 @@
         </div>
 
         <!-- 内容区域 -->
-        <div class="flex-1 overflow-auto p-6">
+        <div class="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <router-view v-slot="{ Component, route: viewRoute }">
             <transition name="page-fade" mode="out-in">
               <component :is="Component" :key="viewRoute.path" />

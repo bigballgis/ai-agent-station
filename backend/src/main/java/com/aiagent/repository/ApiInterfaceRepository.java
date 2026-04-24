@@ -19,4 +19,8 @@ public interface ApiInterfaceRepository extends JpaRepository<ApiInterface, Long
     Optional<ApiInterface> findByIdAndTenantId(Long id, Long tenantId);
 
     List<ApiInterface> findByAgentIdAndTenantIdAndIsActive(Long agentId, Long tenantId, Boolean isActive);
+
+    List<ApiInterface> findByBaseApiIdAndTenantIdOrderByApiVersionDesc(Long baseApiId, Long tenantId);
+
+    List<ApiInterface> findByAgentIdAndTenantIdAndDeprecatedFalse(Long agentId, Long tenantId);
 }

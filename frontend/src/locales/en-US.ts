@@ -445,9 +445,10 @@ export default {
     deleteConfirm: 'Are you sure you want to delete this suggestion?',
     deleteFailed: 'Failed to delete suggestion',
     generateFailed: 'Failed to generate suggestions',
+    noSuggestions: 'No suggestions yet',
+    noSuggestionsHint: 'Click the button above to generate suggestions',
   },
   approval: {
-    management: 'Approval Management',
     managementDesc: 'View and process Agent approval requests',
     pending: 'Pending',
     approved: 'Approved',
@@ -589,6 +590,8 @@ export default {
     contactRequired: 'Please enter contact name',
     emailRequired: 'Please enter email address',
     emailInvalid: 'Please enter a valid email address',
+    noTenants: 'No tenants yet',
+    noTenantsHint: 'Click the button above to create your first tenant',
   },
   error: {
     '403': 'Sorry, you don\'t have permission to access this page',
@@ -1459,6 +1462,7 @@ export default {
     fetchLogsFailed: 'Failed to fetch call logs',
     testSuccess: 'Test successful',
     testFailed: 'Test failed',
+    noApis: 'No API interfaces available',
   },
   fileMgmt: {
     desc: 'Upload, manage and download Agent-related files, supports drag & drop',
@@ -1549,6 +1553,10 @@ export default {
     invalidFormat: 'Invalid OpenAPI document format',
     unknownError: 'Unknown error',
     retry: 'Retry',
+    pathParams: 'Parameters',
+    errorResponses: 'Error Responses',
+    requestSchema: 'Request Schema',
+    responseSchema: 'Response Schema',
   },
   quota: {
     desc: 'Manage tenant resource quotas, monitor Agent count, API calls, Token usage and storage',

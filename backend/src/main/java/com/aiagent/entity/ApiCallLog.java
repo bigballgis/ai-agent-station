@@ -24,6 +24,9 @@ public class ApiCallLog {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(name = "client_ip", length = 45)
+    private String clientIp;
+
     @Column(name = "request_id", nullable = false, length = 100)
     private String requestId;
 
@@ -85,12 +88,13 @@ public class ApiCallLog {
     public ApiCallLog() {
     }
 
-    public ApiCallLog(Long id, Long apiInterfaceId, Long agentId, Long tenantId, Long userId, String requestId, String requestMethod, String requestPath, String requestHeaders, String requestParams, String requestBody, Integer responseStatus, String responseHeaders, String responseBody, ApiCallStatus status, String errorMessage, Integer executionTime, Boolean isAsync, String asyncTaskId, LocalDateTime createdAt, ApiInterface apiInterface, Agent agent, Tenant tenant) {
+    public ApiCallLog(Long id, Long apiInterfaceId, Long agentId, Long tenantId, Long userId, String clientIp, String requestId, String requestMethod, String requestPath, String requestHeaders, String requestParams, String requestBody, Integer responseStatus, String responseHeaders, String responseBody, ApiCallStatus status, String errorMessage, Integer executionTime, Boolean isAsync, String asyncTaskId, LocalDateTime createdAt, ApiInterface apiInterface, Agent agent, Tenant tenant) {
         this.id = id;
         this.apiInterfaceId = apiInterfaceId;
         this.agentId = agentId;
         this.tenantId = tenantId;
         this.userId = userId;
+        this.clientIp = clientIp;
         this.requestId = requestId;
         this.requestMethod = requestMethod;
         this.requestPath = requestPath;
@@ -154,6 +158,14 @@ public class ApiCallLog {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getClientIp() {
+        return clientIp;
+    }
+
+    public void setClientIp(String clientIp) {
+        this.clientIp = clientIp;
     }
 
     public String getRequestId() {
