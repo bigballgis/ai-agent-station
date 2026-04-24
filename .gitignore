@@ -4,6 +4,7 @@
 
 # Logs
 logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -17,6 +18,14 @@ dist-ssr
 *.local
 backend/target/
 
+# Compiled class files
+*.class
+
+# JAR files
+*.jar
+*.war
+*.ear
+
 # Environment
 .env
 .env.local
@@ -25,12 +34,14 @@ backend/target/
 # IDE
 .vscode/*
 !.vscode/extensions.json
+.idea/
 .idea
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.iml
 .vite
 
 # OS

@@ -60,7 +60,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 认证接口：仅登录和注册放行，其他（refresh/logout/userinfo）需要认证
                         .requestMatchers("/v1/auth/login", "/v1/auth/register", "/v1/auth/captcha", "/v1/auth/refresh").permitAll()
-                        // Actuator 端点需要 ADMIN 角色
+                        // Actuator 健康检查和信息端点公开
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // Actuator 其他端点需要 ADMIN 角色
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // 用户管理接口需要 ADMIN 或 TENANT_ADMIN 角色
                         .requestMatchers("/v1/users/**").hasAnyRole("ADMIN", "TENANT_ADMIN")

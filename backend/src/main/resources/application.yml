@@ -2,6 +2,7 @@ server:
   port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api
+  shutdown: graceful
   # HTTP 响应压缩（最佳实践：减少 3-10x 网络传输量）
   compression:
     enabled: true
@@ -20,6 +21,8 @@ server:
 spring:
   application:
     name: ai-agent-platform
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   # Jackson日期格式统一
   jackson:

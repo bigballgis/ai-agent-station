@@ -24,6 +24,13 @@ services:
     networks:
       - backend-network
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   # Redis (单机模式 - 默认)
   redis:
@@ -42,6 +49,13 @@ services:
     networks:
       - backend-network
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   # Redis Cluster (可选 - 需要时单独使用)
   redis-cluster:
@@ -166,6 +180,13 @@ services:
     networks:
       - monitoring-network
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "30m"
+        max-file: "3"
 
   # Grafana 可视化
   grafana:
@@ -191,6 +212,13 @@ services:
     networks:
       - monitoring-network
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "30m"
+        max-file: "3"
 
   # 后端服务
   backend:
@@ -254,6 +282,13 @@ services:
       - backend-network
       - frontend-network
     restart: unless-stopped
+    mem_limit: 2g
+    cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
 
   # 前端服务
   frontend:
@@ -274,6 +309,13 @@ services:
     networks:
       - frontend-network
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
 volumes:
   postgres_data:
