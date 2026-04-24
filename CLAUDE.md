@@ -449,6 +449,32 @@ tags: [ai-agent, low-code, workflow, api-management, financial, evolution]
 - **Migrations**: V1-V28 (Flyway)
 - **API**: 120+ endpoints, 16 OpenAPI groups
 
+### Round 211-220 (Security, Dark Mode, API Consistency)
+
+#### Round 211-213: Security Hardening
+- CSP: object-src 'none' (OWASP Level 2)
+- JWT: audience claim, requireIssuer, clockSkew 60s, explicit HS256
+- CORS: verified env-driven, credentials, 3600s
+
+#### Round 214-216: Dark Mode + Theme
+- 7 components: gray->neutral + dark: variants
+- theme.css: CSS custom properties (colors, spacing, radius, typography)
+- Accessibility: focus-visible, skip-to-content, prefers-reduced-motion
+
+#### Round 217-219: API Consistency
+- AgentApiController: ResponseEntity -> Result<T>
+- 6 exceptions: messageCode always set
+- 13 endpoints: List -> PageResult with pagination
+
+## Quality Metrics (Round 220)
+- **Testing**: 291+ test cases (100 frontend + 191 backend)
+- **Security**: CSP (10 directives), JWT (aud+iss+clockSkew+HS256), CORS, HSTS, 8 exception classes
+- **Dark Mode**: 7 components fixed, CSS variable system, WCAG AA contrast
+- **API**: All endpoints return Result<T>, 13 paginated, consistent error format
+- **Build**: Clean ~10s, index 222KB, zero warnings
+- **All Round 210 metrics maintained** + above improvements
+- **Migrations**: V1-V28 (Flyway)
+
 #### Round 181-183: Backend Service Audit
 - LoginLogService/SessionService: HttpServletRequest removed from signatures
 - 6 RuntimeExceptions -> ResourceNotFoundException/BusinessException
