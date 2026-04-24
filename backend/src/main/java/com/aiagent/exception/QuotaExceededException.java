@@ -8,7 +8,7 @@ import com.aiagent.common.ResultCode;
 public class QuotaExceededException extends BusinessException {
 
     public QuotaExceededException(String message) {
-        super(ResultCode.TOO_MANY_REQUESTS.getCode(), message);
+        super(ResultCode.TOO_MANY_REQUESTS.getCode(), ResultCode.TOO_MANY_REQUESTS.getMessageCode(), message);
     }
 
     public QuotaExceededException() {

@@ -109,8 +109,9 @@ public class SecurityHeadersConfig {
                     "img-src 'self' data: blob: https:; " +
                     "connect-src " + connectSrc + " https:; " +
                     "frame-ancestors 'self'; " +
+                    "form-action 'self'; " +
                     "base-uri 'self'; " +
-                    "form-action 'self'";
+                    "object-src 'none'";
             httpResponse.setHeader("Content-Security-Policy", csp);
 
             // 移除可能暴露服务器信息的头

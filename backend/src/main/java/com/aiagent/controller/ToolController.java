@@ -1,6 +1,7 @@
 package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.entity.McpTool;
 import com.aiagent.mcp.McpToolHealthChecker;
@@ -20,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -138,7 +140,9 @@ public class ToolController {
      */
     @Operation(summary = "获取 MCP 工具健康状态")
     @GetMapping("/health")
-    public Result<List<Map<String, Object>>> getToolsHealth() {
+    public Result<PageResult<Map<String, Object>>> getToolsHealth(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
         List<McpTool> tools = mcpToolRepository.findAll();
         List<Map<String, Object>> healthList = new ArrayList<>();
         for (McpTool tool : tools) {
@@ -152,7 +156,7 @@ public class ToolController {
             item.put("active", tool.getIsActive());
             healthList.add(item);
         }
-        return Result.success(healthList);
+        return Result.success(PageResult.paginate(healthList, page, size));
     }
 
     /**

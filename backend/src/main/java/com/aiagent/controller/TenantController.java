@@ -3,6 +3,7 @@ package com.aiagent.controller;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 import com.aiagent.annotation.RequiresRole;
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.dto.CreateTenantRequestDTO;
 import com.aiagent.dto.DTOConverter;
@@ -31,8 +32,11 @@ public class TenantController {
     @Operation(summary = "获取所有租户列表")
     @RequiresPermission("tenant:read")
     @RequiresRole("SUPER_ADMIN")
-    public Result<List<TenantVO>> getAllTenants() {
-        return Result.success(tenantService.getAllTenants().stream().map(DTOConverter::toTenantVO).toList());
+    public Result<PageResult<TenantVO>> getAllTenants(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<TenantVO> allTenants = tenantService.getAllTenants().stream().map(DTOConverter::toTenantVO).toList();
+        return Result.success(PageResult.paginate(allTenants, page, size));
     }
 
     @GetMapping("/{id}")

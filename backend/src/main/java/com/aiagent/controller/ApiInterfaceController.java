@@ -55,11 +55,14 @@ public class ApiInterfaceController {
     @RequiresPermission("api:read")
     @Operation(summary = "根据Agent ID获取API接口列表")
     @GetMapping("/agent/{agentId}")
-    public Result<List<ApiInterfaceVO>> listByAgent(
+    public Result<PageResult<ApiInterfaceVO>> listByAgent(
             @PathVariable Long agentId,
-            @RequestHeader("X-Tenant-ID") Long tenantId) {
-        return Result.success(apiInterfaceService.listByAgent(agentId, tenantId).stream()
-                .map(ApiInterfaceVO::fromEntity).toList());
+            @RequestHeader("X-Tenant-ID") Long tenantId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<ApiInterfaceVO> all = apiInterfaceService.listByAgent(agentId, tenantId).stream()
+                .map(ApiInterfaceVO::fromEntity).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     @RequiresPermission("api:manage")
@@ -100,11 +103,14 @@ public class ApiInterfaceController {
     @RequiresPermission("api:read")
     @GetMapping("/{id}/versions")
     @Operation(summary = "获取API接口所有版本")
-    public Result<List<ApiInterfaceVO>> listVersions(
+    public Result<PageResult<ApiInterfaceVO>> listVersions(
             @PathVariable Long id,
-            @RequestHeader("X-Tenant-ID") Long tenantId) {
-        return Result.success(apiInterfaceService.listVersions(id, tenantId).stream()
-                .map(ApiInterfaceVO::fromEntity).toList());
+            @RequestHeader("X-Tenant-ID") Long tenantId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<ApiInterfaceVO> all = apiInterfaceService.listVersions(id, tenantId).stream()
+                .map(ApiInterfaceVO::fromEntity).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     @RequiresPermission("api:write")

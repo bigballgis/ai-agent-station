@@ -8,11 +8,15 @@ import com.aiagent.common.ResultCode;
 public class FileProcessingException extends BusinessException {
 
     public FileProcessingException(String message) {
-        super(422, message);
+        super(ResultCode.FILE_PROCESSING_FAILED.getCode(), ResultCode.FILE_PROCESSING_FAILED.getMessageCode(), message);
     }
 
     public FileProcessingException(String message, Throwable cause) {
-        super(422, message);
+        super(ResultCode.FILE_PROCESSING_FAILED.getCode(), ResultCode.FILE_PROCESSING_FAILED.getMessageCode(), message);
         initCause(cause);
+    }
+
+    public FileProcessingException() {
+        super(ResultCode.FILE_PROCESSING_FAILED);
     }
 }

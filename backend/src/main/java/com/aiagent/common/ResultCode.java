@@ -25,7 +25,8 @@ public enum ResultCode {
     UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型", "error.common.unsupported_media_type"),
     MISSING_PARAMETER(400, "缺少必要的请求参数", "error.common.missing_param"),
     CONSTRAINT_VIOLATION(400, "约束校验失败", "error.validation.constraint_violation"),
-    VALIDATION_FAILED(400, "参数校验失败", "error.validation.failed");
+    VALIDATION_FAILED(400, "参数校验失败", "error.validation.failed"),
+    FILE_PROCESSING_FAILED(422, "文件处理失败", "error.file.processing_failed");
 
     private final Integer code;
     private final String message;

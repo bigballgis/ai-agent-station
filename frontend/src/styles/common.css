@@ -19,6 +19,7 @@
 
 .btn-secondary {
   @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:bg-gray-100
+         dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:active:bg-neutral-600
          focus:ring-blue-500 shadow-sm;
 }
 

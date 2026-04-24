@@ -8,7 +8,7 @@ import com.aiagent.common.ResultCode;
 public class ValidationException extends BusinessException {
 
     public ValidationException(String message) {
-        super(ResultCode.VALIDATION_FAILED.getCode(), message);
+        super(ResultCode.VALIDATION_FAILED.getCode(), ResultCode.VALIDATION_FAILED.getMessageCode(), message);
     }
 
     public ValidationException() {

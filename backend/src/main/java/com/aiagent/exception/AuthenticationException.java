@@ -8,7 +8,7 @@ import com.aiagent.common.ResultCode;
 public class AuthenticationException extends BusinessException {
 
     public AuthenticationException(String message) {
-        super(ResultCode.UNAUTHORIZED.getCode(), message);
+        super(ResultCode.UNAUTHORIZED.getCode(), ResultCode.UNAUTHORIZED.getMessageCode(), message);
     }
 
     public AuthenticationException() {

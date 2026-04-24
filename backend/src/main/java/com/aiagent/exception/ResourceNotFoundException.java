@@ -8,7 +8,7 @@ import com.aiagent.common.ResultCode;
 public class ResourceNotFoundException extends BusinessException {
 
     public ResourceNotFoundException(String message) {
-        super(ResultCode.NOT_FOUND.getCode(), message);
+        super(ResultCode.NOT_FOUND.getCode(), ResultCode.NOT_FOUND.getMessageCode(), message);
     }
 
     public ResourceNotFoundException() {

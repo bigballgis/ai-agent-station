@@ -4,7 +4,7 @@
     <BrandPanel />
 
     <!-- 右侧登录表单区域 -->
-    <div class="form-panel w-full lg:w-1/2 flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8 lg:px-8">
+    <div class="form-panel w-full lg:w-1/2 flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 px-4 py-8 lg:px-8">
       <div class="login-card w-full max-w-md animate-slide-up">
         <!-- 移动端 Logo -->
         <div class="lg:hidden text-center mb-8">
@@ -15,11 +15,11 @@
               <circle cx="12" cy="6" r="1" fill="white" stroke="none"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">AI Agent Station</h2>
+          <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">AI Agent Station</h2>
         </div>
 
         <!-- 表单卡片 -->
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl dark:shadow-gray-900/50 p-8 lg:p-10">
+        <div class="bg-white dark:bg-neutral-800 rounded-3xl shadow-xl dark:shadow-neutral-900/50 p-8 lg:p-10">
           <!-- Tab 切换 -->
           <div class="auth-tabs mb-8">
             <button
@@ -38,13 +38,13 @@
 
           <!-- 标题 -->
           <div class="mb-8">
-            <h2 v-if="activeTab === 'login'" class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 v-if="activeTab === 'login'" class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
               {{ t('login.welcomeBack') }}
             </h2>
-            <h2 v-else class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 v-else class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
               {{ t('login.createAccount') }}
             </h2>
-            <p class="text-gray-500 dark:text-gray-400 text-base">
+            <p class="text-neutral-500 dark:text-neutral-400 text-base">
               {{ activeTab === 'login'
                 ? (t('login.loginToStation') || '登录到 AI Agent Station')
                 : (t('login.registerToStation') || '注册 AI Agent Station 账号') }}
@@ -162,7 +162,7 @@
 
             <!-- 邮箱（可选） -->
             <a-form-item name="email" class="form-item-custom">
-              <label for="register-email" class="form-label">{{ t('login.email') }} <span class="text-gray-400 text-xs">({{ t('login.optional') }})</span></label>
+              <label for="register-email" class="form-label">{{ t('login.email') }} <span class="text-neutral-400 text-xs">({{ t('login.optional') }})</span></label>
               <a-input
                 id="register-email"
                 v-model:value="registerForm.email"
@@ -236,7 +236,7 @@
             >
               中文
             </a>
-            <span class="text-gray-300 dark:text-gray-600 mx-1">|</span>
+            <span class="text-neutral-300 dark:text-neutral-600 mx-1">|</span>
             <a
               @click="changeLocale('en-US')"
               :class="[

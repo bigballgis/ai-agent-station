@@ -57,11 +57,14 @@ public class DeploymentController {
     @RequiresPermission("deployment:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取部署历史")
-    public Result<List<DeploymentVO>> getDeploymentHistoryByAgentId(@PathVariable Long agentId) {
-        List<DeploymentVO> voList = deploymentService.getDeploymentHistoryByAgentId(agentId).stream()
+    public Result<PageResult<DeploymentVO>> getDeploymentHistoryByAgentId(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<DeploymentVO> allByAgent = deploymentService.getDeploymentHistoryByAgentId(agentId).stream()
                 .map(DeploymentVO::fromEntity)
                 .collect(Collectors.toList());
-        return Result.success(voList);
+        return Result.success(PageResult.paginate(allByAgent, page, size));
     }
 
     @RequiresPermission("deployment:view")

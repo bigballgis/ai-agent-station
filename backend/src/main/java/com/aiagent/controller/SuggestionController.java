@@ -135,27 +135,39 @@ public class SuggestionController {
     @RequiresPermission("suggestion:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取建议列表")
-    public Result<List<SuggestionResponseDTO>> getSuggestionsByAgentId(@PathVariable Long agentId) {
-        List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByAgentId(agentId);
-        return Result.success(suggestions.stream().map(DTOConverter::toSuggestionResponseDTO).toList());
+    public Result<PageResult<SuggestionResponseDTO>> getSuggestionsByAgentId(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<SuggestionResponseDTO> all = suggestionService.getSuggestionsByAgentId(agentId).stream()
+                .map(DTOConverter::toSuggestionResponseDTO).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     // 按类型获取建议
     @RequiresPermission("suggestion:view")
     @Operation(summary = "根据类型获取建议列表")
     @GetMapping("/type/{suggestionType}")
-    public Result<List<SuggestionResponseDTO>> getSuggestionsByType(@PathVariable String suggestionType) {
-        List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByType(suggestionType);
-        return Result.success(suggestions.stream().map(DTOConverter::toSuggestionResponseDTO).toList());
+    public Result<PageResult<SuggestionResponseDTO>> getSuggestionsByType(
+            @PathVariable String suggestionType,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<SuggestionResponseDTO> all = suggestionService.getSuggestionsByType(suggestionType).stream()
+                .map(DTOConverter::toSuggestionResponseDTO).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     // 按优先级获取建议
     @RequiresPermission("suggestion:view")
     @Operation(summary = "根据优先级获取建议列表")
     @GetMapping("/priority/{agentId}")
-    public Result<List<SuggestionResponseDTO>> getSuggestionsByPriority(@PathVariable Long agentId) {
-        List<AgentEvolutionSuggestion> suggestions = suggestionService.getSuggestionsByPriority(agentId);
-        return Result.success(suggestions.stream().map(DTOConverter::toSuggestionResponseDTO).toList());
+    public Result<PageResult<SuggestionResponseDTO>> getSuggestionsByPriority(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<SuggestionResponseDTO> all = suggestionService.getSuggestionsByPriority(agentId).stream()
+                .map(DTOConverter::toSuggestionResponseDTO).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     // 更新建议状态

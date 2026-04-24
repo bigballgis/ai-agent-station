@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
         log.warn("业务异常: {}", e.getMessage());
         return Result.error(e.getCode(), e.getMessage())
                 .withTraceId(getTraceId())
-                .withMessageCode(e.getMessageCode())
+                .withMessageCode(e.getMessageCode() != null ? e.getMessageCode() : ResultCode.INTERNAL_SERVER_ERROR.getMessageCode())
                 .withTimestamp(now())
                 .withPath(getRequestPath(request));
     }
@@ -123,6 +123,7 @@ public class GlobalExceptionHandler {
         log.warn("文件处理失败: {}", e.getMessage());
         return Result.error(e.getCode(), e.getMessage())
                 .withTraceId(getTraceId())
+                .withMessageCode(e.getMessageCode() != null ? e.getMessageCode() : ResultCode.FILE_PROCESSING_FAILED.getMessageCode())
                 .withTimestamp(now())
                 .withPath(getRequestPath(request));
     }

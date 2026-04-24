@@ -1,7 +1,7 @@
 <template>
   <div class="evolution-container">
     <a-card :title="t('evolution.title')" class="mb-6">
-      <p class="text-gray-500">{{ t('evolution.desc') }}</p>
+      <p class="text-neutral-500 dark:text-neutral-400">{{ t('evolution.desc') }}</p>
     </a-card>
 
     <a-tabs default-active-key="reflection" class="mb-6">

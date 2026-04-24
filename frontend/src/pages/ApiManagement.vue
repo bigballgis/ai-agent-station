@@ -2,13 +2,13 @@
   <div class="api-management">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('routes.apiManagement') }}</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ t('apiMgmt.desc') }}</p>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{{ t('routes.apiManagement') }}</h1>
+        <p class="text-neutral-600 dark:text-neutral-400 mt-1">{{ t('apiMgmt.desc') }}</p>
       </div>
     </div>
 
     <!-- 标签页导航 -->
-    <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+    <div class="border-b border-neutral-200 dark:border-neutral-700 mb-6">
       <nav class="flex space-x-8">
         <button
           v-for="tab in tabs"
@@ -18,7 +18,7 @@
             'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
             activeTab === tab.key
               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:border-gray-300'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 hover:border-neutral-300'
           ]"
         >
           {{ tab.label }}
@@ -28,7 +28,7 @@
 
     <!-- API列表 -->
     <div v-if="activeTab === 'apis'" class="space-y-6">
-      <div v-if="loading" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div v-if="loading" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-6">
         <div class="space-y-4">
           <div v-for="i in 4" :key="i" class="flex items-center gap-4 animate-pulse">
             <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700"></div>
@@ -39,44 +39,44 @@
           </div>
         </div>
       </div>
-      <div v-else-if="mockApis.length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16">
+      <div v-else-if="mockApis.length === 0" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center py-16">
         <svg class="w-10 h-10 mb-2 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <p class="text-sm text-neutral-400 dark:text-neutral-500">{{ t('apiMgmt.noApis') }}</p>
       </div>
-      <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div v-else class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-700">
+          <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+            <thead class="bg-neutral-50 dark:bg-neutral-800">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.agentNameCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.apiPathCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.methodCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.status') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.callCountCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.operation') }}
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="api in mockApis" :key="api.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
+              <tr v-for="api in mockApis" :key="api.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">{{ api.agentName }}</div>
+                  <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ api.agentName }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <code class="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-gray-700 px-2 py-1 rounded">
+                  <code class="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-neutral-800 px-2 py-1 rounded">
                     {{ api.path }}
                   </code>
                 </td>
@@ -98,14 +98,14 @@
                     {{ api.isActive ? t('apiMgmt.enabled') : t('apiMgmt.disabled') }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-400">
                   {{ api.callCount }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button @click="testApi(api)" :aria-label="t('apiMgmt.test')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                     {{ t('apiMgmt.test') }}
                   </button>
-                  <button :aria-label="t('apiMgmt.viewLog')" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
+                  <button :aria-label="t('apiMgmt.viewLog')" class="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200">
                     {{ t('apiMgmt.viewLog') }}
                   </button>
                 </td>
@@ -118,17 +118,17 @@
 
     <!-- 调用日志 -->
     <div v-if="activeTab === 'logs'" class="space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
+        <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
           <div class="flex items-center justify-between">
           <div class="flex space-x-4">
             <input
               type="text"
               :placeholder="t('apiMgmt.searchPlaceholder')"
               :aria-label="t('apiMgmt.searchPlaceholder')"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100"
             />
-            <select :aria-label="t('apiMgmt.allStatus')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+            <select :aria-label="t('apiMgmt.allStatus')" class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100">
               <option value="">{{ t('apiMgmt.allStatus') }}</option>
               <option value="SUCCESS">{{ t('apiMgmt.success') }}</option>
               <option value="FAILED">{{ t('apiMgmt.failed') }}</option>
@@ -141,38 +141,38 @@
         </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-700">
+          <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+            <thead class="bg-neutral-50 dark:bg-neutral-800">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.requestIdCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Agent
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.timeCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.status') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.durationCol') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {{ t('apiMgmt.operation') }}
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="log in mockLogs" :key="log.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
+              <tr v-for="log in mockLogs" :key="log.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-400">
                   <code class="text-xs">{{ log.requestId }}</code>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">{{ log.agentName }}</div>
+                  <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ log.agentName }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-400">
                   {{ log.timestamp }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -183,7 +183,7 @@
                     {{ log.status }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-400">
                   {{ log.executionTime }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -210,13 +210,13 @@
     >
       <div class="space-y-4 mt-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestUrl') }}</label>
-          <code class="block text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">{{ t('apiMgmt.requestUrl') }}</label>
+          <code class="block text-sm text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 p-2 rounded">
             {{ selectedApi?.path }}
           </code>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.requestParams') }}</label>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">{{ t('apiMgmt.requestParams') }}</label>
           <a-textarea
             v-model:value="testRequest"
             :rows="6"
@@ -224,8 +224,8 @@
           />
         </div>
         <div v-if="testResponse">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('apiMgmt.responseResult') }}</label>
-          <pre class="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-4 rounded overflow-x-auto">{{ testResponse }}</pre>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">{{ t('apiMgmt.responseResult') }}</label>
+          <pre class="text-sm text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 p-4 rounded overflow-x-auto">{{ testResponse }}</pre>
         </div>
         <div class="flex justify-end gap-3 pt-2">
           <a-button @click="showTestModal = false">{{ t('common.cancel') }}</a-button>
@@ -324,7 +324,7 @@ function getMethodColor(method: string) {
     case 'GET': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
     case 'PUT': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
     case 'DELETE': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    default: return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200'
   }
 }
 
@@ -334,7 +334,7 @@ function getStatusColor(status: string) {
     case 'FAILED': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
     case 'RATE_LIMITED': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
     case 'UNAUTHORIZED': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    default: return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200'
   }
 }
 

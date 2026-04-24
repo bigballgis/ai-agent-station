@@ -2,8 +2,8 @@
   <div class="api-documentation">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('routes.apiDocs') }}</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ t('apiDocs.desc') }}</p>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{{ t('routes.apiDocs') }}</h1>
+        <p class="text-neutral-600 dark:text-neutral-400 mt-1">{{ t('apiDocs.desc') }}</p>
       </div>
       <div class="flex space-x-4">
         <a
@@ -23,7 +23,7 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="flex items-center justify-center py-20">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span class="ml-3 text-gray-600 dark:text-gray-400">{{ t('apiDocs.loading') }}</span>
+      <span class="ml-3 text-neutral-600 dark:text-neutral-400">{{ t('apiDocs.loading') }}</span>
     </div>
 
     <!-- 错误状态 -->
@@ -40,15 +40,15 @@
 
     <!-- 搜索和筛选 -->
     <div v-else>
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
         <div class="flex flex-col md:flex-row gap-4">
           <input
             v-model="searchQuery"
             type="text"
             :placeholder="t('apiDocs.searchPlaceholder')"
-            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            class="flex-1 px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100"
           />
-          <select v-model="selectedTag" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+          <select v-model="selectedTag" class="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-100">
             <option value="">{{ t('apiDocs.allTags') }}</option>
             <option v-for="tag in tags" :key="tag" :value="tag">
               {{ tag }}
@@ -59,8 +59,8 @@
 
       <!-- API列表 -->
       <div class="space-y-6">
-        <div v-for="(api, index) in filteredApis" :key="api.operationId || index" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div v-for="(api, index) in filteredApis" :key="api.operationId || index" class="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+          <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-3 mb-2">
@@ -70,12 +70,12 @@
                   ]">
                     {{ api.method }}
                   </span>
-                  <code class="text-sm text-gray-800 dark:text-gray-200 font-mono bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded">
+                  <code class="text-sm text-neutral-800 dark:text-neutral-200 font-mono bg-neutral-100 dark:bg-neutral-800 px-3 py-1 rounded">
                     {{ api.path }}
                   </code>
                 </div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ api.summary }}</h3>
-                <p v-if="api.description" class="text-gray-600 dark:text-gray-400">{{ api.description }}</p>
+                <h3 class="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-1">{{ api.summary }}</h3>
+                <p v-if="api.description" class="text-neutral-600 dark:text-neutral-400">{{ api.description }}</p>
                 <div v-if="api.tags && api.tags.length" class="mt-2 flex gap-2">
                   <span v-for="tag in api.tags" :key="tag" class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                     {{ tag }}
@@ -84,7 +84,7 @@
               </div>
               <button
                 @click="toggleApiDetail(api.operationId || String(index))"
-                class="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                class="ml-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
               >
                 <svg
                   v-if="expandedApis.includes(api.operationId || String(index))"
@@ -109,7 +109,7 @@
           </div>
 
           <!-- API详情 -->
-          <div v-if="expandedApis.includes(api.operationId || String(index))" class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div v-if="expandedApis.includes(api.operationId || String(index))" class="p-6 border-b border-neutral-200 dark:border-neutral-700">
             <!-- 认证与限流信息 -->
             <div v-if="hasSecurityOrRateLimit(api)" class="mb-4 flex flex-wrap gap-3">
               <span v-if="api.security && api.security.length" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
@@ -127,28 +127,28 @@
 
             <!-- 请求参数列表 -->
             <div v-if="api.parameters && api.parameters.length" class="mb-4">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.pathParams') }}</h4>
+              <h4 class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">{{ t('apiDocs.pathParams') }}</h4>
               <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                   <thead>
-                    <tr class="border-b border-gray-200 dark:border-gray-600">
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramCol') }}</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramLocation') }}</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramType') }}</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramRequired') }}</th>
-                      <th class="text-left py-1.5 px-3 text-gray-500 dark:text-gray-400 font-medium">{{ t('apiMgmt.paramDescription') }}</th>
+                    <tr class="border-b border-neutral-200 dark:border-neutral-600">
+                      <th class="text-left py-1.5 px-3 text-neutral-500 dark:text-neutral-400 font-medium">{{ t('apiMgmt.paramCol') }}</th>
+                      <th class="text-left py-1.5 px-3 text-neutral-500 dark:text-neutral-400 font-medium">{{ t('apiMgmt.paramLocation') }}</th>
+                      <th class="text-left py-1.5 px-3 text-neutral-500 dark:text-neutral-400 font-medium">{{ t('apiMgmt.paramType') }}</th>
+                      <th class="text-left py-1.5 px-3 text-neutral-500 dark:text-neutral-400 font-medium">{{ t('apiMgmt.paramRequired') }}</th>
+                      <th class="text-left py-1.5 px-3 text-neutral-500 dark:text-neutral-400 font-medium">{{ t('apiMgmt.paramDescription') }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="param in api.parameters" :key="param.name" class="border-b border-gray-100 dark:border-gray-700">
-                      <td class="py-1.5 px-3 font-mono text-gray-800 dark:text-gray-200">{{ param.name }}</td>
-                      <td class="py-1.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">{{ param.in }}</span></td>
-                      <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.type || (param.schema && param.schema.type) || '-' }}</td>
+                    <tr v-for="param in api.parameters" :key="param.name" class="border-b border-neutral-100 dark:border-neutral-700">
+                      <td class="py-1.5 px-3 font-mono text-neutral-800 dark:text-neutral-200">{{ param.name }}</td>
+                      <td class="py-1.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300">{{ param.in }}</span></td>
+                      <td class="py-1.5 px-3 text-neutral-600 dark:text-neutral-400">{{ param.type || (param.schema && param.schema.type) || '-' }}</td>
                       <td class="py-1.5 px-3">
                         <span v-if="param.required" class="text-red-500 font-medium">{{ t('apiMgmt.yes') }}</span>
-                        <span v-else class="text-gray-400">{{ t('apiMgmt.no') }}</span>
+                        <span v-else class="text-neutral-400">{{ t('apiMgmt.no') }}</span>
                       </td>
-                      <td class="py-1.5 px-3 text-gray-600 dark:text-gray-400">{{ param.description || '-' }}</td>
+                      <td class="py-1.5 px-3 text-neutral-600 dark:text-neutral-400">{{ param.description || '-' }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -160,44 +160,44 @@
               <!-- 请求参数 -->
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('apiDocs.requestParams') }}</h4>
+                  <h4 class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ t('apiDocs.requestParams') }}</h4>
                   <div v-if="api.requestSchema" class="flex gap-2">
                     <button
                       @click="toggleSchemaView(api.operationId || String(index), 'request')"
-                      class="text-xs px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      class="text-xs px-2 py-0.5 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                     >
                       {{ (schemaViewMode[api.operationId || String(index)] || {}).request === 'schema' ? 'Example' : 'Schema' }}
                     </button>
                   </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <pre v-if="!api.requestSchema || (schemaViewMode[api.operationId || String(index)] || {}).request !== 'schema'" class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestExample }}</pre>
-                  <pre v-else class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.requestSchema }}</pre>
+                <div class="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4">
+                  <pre v-if="!api.requestSchema || (schemaViewMode[api.operationId || String(index)] || {}).request !== 'schema'" class="text-sm text-neutral-800 dark:text-neutral-200 overflow-x-auto">{{ api.requestExample }}</pre>
+                  <pre v-else class="text-sm text-neutral-800 dark:text-neutral-200 overflow-x-auto">{{ api.requestSchema }}</pre>
                 </div>
               </div>
               <!-- 响应示例 -->
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('apiDocs.responseExample') }}</h4>
+                  <h4 class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ t('apiDocs.responseExample') }}</h4>
                   <div v-if="api.responseSchema" class="flex gap-2">
                     <button
                       @click="toggleSchemaView(api.operationId || String(index), 'response')"
-                      class="text-xs px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      class="text-xs px-2 py-0.5 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                     >
                       {{ (schemaViewMode[api.operationId || String(index)] || {}).response === 'schema' ? 'Example' : 'Schema' }}
                     </button>
                   </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <pre v-if="!api.responseSchema || (schemaViewMode[api.operationId || String(index)] || {}).response !== 'schema'" class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseExample }}</pre>
-                  <pre v-else class="text-sm text-gray-800 dark:text-gray-200 overflow-x-auto">{{ api.responseSchema }}</pre>
+                <div class="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4">
+                  <pre v-if="!api.responseSchema || (schemaViewMode[api.operationId || String(index)] || {}).response !== 'schema'" class="text-sm text-neutral-800 dark:text-neutral-200 overflow-x-auto">{{ api.responseExample }}</pre>
+                  <pre v-else class="text-sm text-neutral-800 dark:text-neutral-200 overflow-x-auto">{{ api.responseSchema }}</pre>
                 </div>
               </div>
             </div>
 
             <!-- 错误响应 -->
             <div v-if="api.errorResponses && api.errorResponses.length" class="mt-4">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('apiDocs.errorResponses') }}</h4>
+              <h4 class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">{{ t('apiDocs.errorResponses') }}</h4>
               <div class="space-y-2">
                 <div v-for="err in api.errorResponses" :key="err.code" class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
                   <span :class="[
@@ -205,8 +205,8 @@
                     err.code >= 500 ? 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
                   ]">{{ err.code }}</span>
                   <div>
-                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ err.description || '' }}</p>
-                    <p v-if="err.example" class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">{{ err.example }}</p>
+                    <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">{{ err.description || '' }}</p>
+                    <p v-if="err.example" class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-mono">{{ err.example }}</p>
                   </div>
                 </div>
               </div>
@@ -439,7 +439,7 @@ function getMethodColor(method: string) {
     case 'PUT': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
     case 'DELETE': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
     case 'PATCH': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    default: return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200'
   }
 }
 

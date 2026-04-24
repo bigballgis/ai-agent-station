@@ -3,6 +3,7 @@ package com.aiagent.controller;
 import com.aiagent.annotation.OperationLog;
 import com.aiagent.annotation.RequiresPermission;
 
+import com.aiagent.common.PageResult;
 import com.aiagent.common.Result;
 import com.aiagent.exception.RateLimitException;
 import com.aiagent.service.FileStorageService;
@@ -117,14 +118,16 @@ public class FileController {
     @RequiresPermission("file:read")
     @Operation(summary = "获取文件列表")
     @GetMapping("/list")
-    public Result<List<FileInfo>> listFiles(
-            @RequestParam(value = "subDir", required = false) String subDir) {
+    public Result<PageResult<FileInfo>> listFiles(
+            @RequestParam(value = "subDir", required = false) String subDir,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
         // 路径遍历防护
         validateSubDir(subDir);
         log.info("List files request: subDir={}", subDir);
         try {
             List<FileInfo> files = fileStorageService.listFiles(subDir);
-            return Result.success(files);
+            return Result.success(PageResult.paginate(files, page, size));
         } catch (Exception e) {
             log.error("List files failed", e);
             return Result.error("Failed to list files: " + e.getMessage());

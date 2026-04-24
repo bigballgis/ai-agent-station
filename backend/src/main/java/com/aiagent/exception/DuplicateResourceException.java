@@ -8,7 +8,7 @@ import com.aiagent.common.ResultCode;
 public class DuplicateResourceException extends BusinessException {
 
     public DuplicateResourceException(String message) {
-        super(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), message);
+        super(ResultCode.RESOURCE_ALREADY_EXISTS.getCode(), ResultCode.RESOURCE_ALREADY_EXISTS.getMessageCode(), message);
     }
 
     public DuplicateResourceException() {

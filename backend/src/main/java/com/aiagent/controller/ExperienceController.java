@@ -126,18 +126,26 @@ public class ExperienceController {
     @RequiresPermission("experience:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取经验列表")
-    public Result<List<ExperienceResponseDTO>> getExperiencesByAgentId(@PathVariable Long agentId) {
-        List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByAgentId(agentId);
-        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
+    public Result<PageResult<ExperienceResponseDTO>> getExperiencesByAgentId(
+            @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<ExperienceResponseDTO> all = experienceService.getExperiencesByAgentId(agentId).stream()
+                .map(DTOConverter::toExperienceResponseDTO).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     // 按类型获取经验
     @RequiresPermission("experience:view")
     @Operation(summary = "根据类型获取经验列表")
     @GetMapping("/type/{experienceType}")
-    public Result<List<ExperienceResponseDTO>> getExperiencesByType(@PathVariable String experienceType) {
-        List<AgentEvolutionExperience> experiences = experienceService.getExperiencesByType(experienceType);
-        return Result.success(experiences.stream().map(DTOConverter::toExperienceResponseDTO).toList());
+    public Result<PageResult<ExperienceResponseDTO>> getExperiencesByType(
+            @PathVariable String experienceType,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<ExperienceResponseDTO> all = experienceService.getExperiencesByType(experienceType).stream()
+                .map(DTOConverter::toExperienceResponseDTO).toList();
+        return Result.success(PageResult.paginate(all, page, size));
     }
 
     // 分析经验有效性

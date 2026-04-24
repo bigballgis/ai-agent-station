@@ -1,6 +1,8 @@
 package com.aiagent.controller;
 
 import com.aiagent.annotation.RequiresPermission;
+import com.aiagent.common.Result;
+import com.aiagent.common.ResultCode;
 import com.aiagent.dto.AgentInvokeRequest;
 import com.aiagent.dto.AgentInvokeResponse;
 import com.aiagent.engine.AgentExecutionEngine;
@@ -17,8 +19,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +44,7 @@ public class AgentApiController {
     @PostMapping("/agent/{agentId}/invoke")
     @Operation(summary = "调用Agent", description = "同步或异步调用已发布的Agent")
     @RequiresPermission("agent:invoke")
-    public ResponseEntity<AgentInvokeResponse> invokeAgent(
+    public Result<AgentInvokeResponse> invokeAgent(
             @Parameter(description = "Agent ID") @PathVariable Long agentId,
             @Valid @RequestBody AgentInvokeRequest request,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -57,8 +57,7 @@ public class AgentApiController {
 
         // 并发执行限制：每个 Agent 最多 N 个并发执行
         if (!executionMonitor.tryAcquireExecution(agentId)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(createConcurrencyLimitResponse(agentId));
+            return Result.error(ResultCode.TOO_MANY_REQUESTS.getCode(), "Agent " + agentId + " 并发执行数已达上限，请稍后重试");
         }
 
         if (requestId == null || requestId.isEmpty()) {
@@ -84,27 +83,30 @@ public class AgentApiController {
         }
 
         // 记录API调用日志
-        HttpStatus status = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())
-                ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        int statusCode = "SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())
+                ? 200 : 500;
 
         apiCallLogService.logApiCall(
                 requestId, agentId, tenantId, userId, clientIp, "POST",
                 "/api/v1/agent/" + agentId + "/invoke", null,
-                request, response, status.value(), null,
+                request, response, statusCode, null,
                 mapStatus(response.getStatus()), response.getExecutionTime(), request.getAsync(), response.getTaskId()
         );
 
-        return ResponseEntity.status(status).body(response);
+        if ("SUCCESS".equals(response.getStatus()) || "ACCEPTED".equals(response.getStatus())) {
+            return Result.success(response);
+        }
+        return Result.error(statusCode, response.getErrorMessage(), response);
     }
 
     @GetMapping("/agent/{agentId}/status")
     @Operation(summary = "获取Agent状态", description = "查询Agent的当前状态和发布信息")
     @RequiresPermission("agent:invoke")
-    public ResponseEntity<?> getAgentStatus(
+    public Result<Map<String, Object>> getAgentStatus(
             @Parameter(description = "Agent ID") @PathVariable Long agentId) {
         Agent agent = agentService.findAgentById(agentId).orElse(null);
         if (agent == null) {
-            return ResponseEntity.notFound().build();
+            return Result.error(ResultCode.RESOURCE_NOT_FOUND);
         }
 
         Map<String, Object> statusInfo = new HashMap<>();
@@ -125,19 +127,19 @@ public class AgentApiController {
             });
         }
 
-        return ResponseEntity.ok(statusInfo);
+        return Result.success(statusInfo);
     }
 
     @GetMapping("/task/{taskId}")
     @Operation(summary = "查询异步任务状态", description = "获取异步执行的Agent任务状态")
     @RequiresPermission("agent:invoke")
-    public ResponseEntity<AgentInvokeResponse> getTaskStatus(
+    public Result<AgentInvokeResponse> getTaskStatus(
             @Parameter(description = "任务ID") @PathVariable String taskId) {
         AgentInvokeResponse response = agentExecutionEngine.getTaskStatus(taskId);
         if (response == null) {
-            return ResponseEntity.notFound().build();
+            return Result.error(ResultCode.RESOURCE_NOT_FOUND);
         }
-        return ResponseEntity.ok(response);
+        return Result.success(response);
     }
 
     private ApiCallLog.ApiCallStatus mapStatus(String responseStatus) {
@@ -166,13 +168,6 @@ public class AgentApiController {
     }
 
     // ==================== 速率限制辅助方法 ====================
-
-    private AgentInvokeResponse createConcurrencyLimitResponse(Long agentId) {
-        AgentInvokeResponse response = new AgentInvokeResponse();
-        response.setStatus("RATE_LIMITED");
-        response.setErrorMessage("Agent " + agentId + " 并发执行数已达上限，请稍后重试");
-        return response;
-    }
 
     private void checkRateLimit(String key, int maxAttempts, int windowSeconds) {
         String redisKey = "rate_limit:" + key;

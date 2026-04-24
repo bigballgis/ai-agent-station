@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.JwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Collections;
 
 @Component
 public class JwtUtil {
@@ -32,6 +34,10 @@ public class JwtUtil {
     private Long refreshExpiration;
 
     private static final String ISSUER = "ai-agent-platform";
+    private static final String AUDIENCE = "ai-agent-platform-client";
+
+    /** 时钟偏移容忍度（秒），防止服务器间时钟不同步导致 Token 提前失效 */
+    private static final long CLOCK_SKEW_SECONDS = 60;
 
     @PostConstruct
     public void validateSecret() {
@@ -53,13 +59,14 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .issuer(ISSUER)
+                .audience().add(AUDIENCE).and()
                 .subject(username)
                 .claim("userId", userId)
                 .claim("tenantId", tenantId)
                 .claim("type", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -72,13 +79,14 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .issuer(ISSUER)
+                .audience().add(AUDIENCE).and()
                 .subject(username)
                 .claim("userId", userId)
                 .claim("tenantId", tenantId)
                 .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -98,21 +106,21 @@ public class JwtUtil {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(getSigningKey())
+                    .requireAudience(AUDIENCE)
+                    .requireIssuer(ISSUER)
+                    .clockSkewSeconds(CLOCK_SKEW_SECONDS)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            // issuer 验证：不匹配则拒绝 Token
-            String issuer = claims.getIssuer();
-            if (issuer != null && !ISSUER.equals(issuer)) {
-                log.warn("Token issuer 不匹配: expected={}, actual={}", ISSUER, issuer);
-                throw new IllegalArgumentException("Token issuer 不匹配，拒绝访问");
-            }
             return claims;
         } catch (ExpiredJwtException e) {
             log.warn("Token已过期");
             throw e;
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
             log.warn("无效的Token", e);
+            throw e;
+        } catch (JwtException e) {
+            log.warn("Token验证失败: {}", e.getMessage());
             throw e;
         }
     }

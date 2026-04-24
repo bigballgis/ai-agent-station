@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import i18n from './locales'
 import { setupErrorHandler } from './utils/errorHandler'
 import './style.css'
+import './assets/styles/theme.css'
 import './styles/common.css'
 
 const app = createApp(App)

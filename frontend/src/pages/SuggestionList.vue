@@ -61,20 +61,20 @@
       <!-- 表格 -->
       <div v-else class="overflow-x-auto">
         <table class="min-w-full">
-          <thead class="bg-gray-100 dark:bg-neutral-800">
+          <thead class="bg-neutral-100 dark:bg-neutral-800">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.titleCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.typeCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.priorityCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.statusCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.implementationCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.impactCol') }}</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.actionsCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.titleCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.typeCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.priorityCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.statusCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.implementationCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.impactCol') }}</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{{ t('suggestion.actionsCol') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
+          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
             <tr v-for="suggestion in suggestions" :key="suggestion.id">
-              <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-neutral-100">{{ suggestion.title }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-neutral-900 dark:text-neutral-100">{{ suggestion.title }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="{
                   'px-2 py-1 rounded-full text-xs': true,
@@ -88,16 +88,16 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="{
                   'px-2 py-1 rounded-full text-xs': true,
-                  'bg-red-100 text-red-800': suggestion.priority === 1,
-                  'bg-yellow-100 text-yellow-800': suggestion.priority === 2,
-                  'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-neutral-200': suggestion.priority === 3
+                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': suggestion.priority === 1,
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': suggestion.priority === 2,
+                  'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200': suggestion.priority === 3
                 }">
                   {{ getPriorityLabel(suggestion.priority) }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-neutral-100">{{ suggestion.status }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-neutral-100">{{ suggestion.implementationStatus }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-neutral-100">{{ suggestion.expectedImpact }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-neutral-900 dark:text-neutral-100">{{ suggestion.status }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-neutral-900 dark:text-neutral-100">{{ suggestion.implementationStatus }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-neutral-900 dark:text-neutral-100">{{ suggestion.expectedImpact }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex space-x-2">
                   <button @click="viewSuggestion(suggestion)" class="text-blue-600 hover:text-blue-800">{{ t('suggestion.viewButton') }}</button>
@@ -123,7 +123,7 @@
       @cancel="showGenerateModal = false"
     >
       <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Agent ID</label>
+        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Agent ID</label>
         <a-input-number v-model:value="agentId" :min="1" class="w-full" />
       </div>
     </a-modal>

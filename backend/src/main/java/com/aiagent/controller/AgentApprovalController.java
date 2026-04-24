@@ -84,9 +84,13 @@ public class AgentApprovalController {
     @RequiresPermission("approval:view")
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "根据Agent ID获取审批列表")
-    public Result<List<AgentApprovalVO>> getApprovalsByAgentId(@Parameter(description = "Agent ID") @PathVariable Long agentId) {
-        List<AgentApproval> approvals = agentApprovalService.getApprovalsByAgentId(agentId);
-        return Result.success(approvals.stream().map(AgentApprovalVO::fromEntity).toList());
+    public Result<PageResult<AgentApprovalVO>> getApprovalsByAgentId(
+            @Parameter(description = "Agent ID") @PathVariable Long agentId,
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码，从0开始") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") int size) {
+        List<AgentApprovalVO> allByAgent = agentApprovalService.getApprovalsByAgentId(agentId).stream()
+                .map(AgentApprovalVO::fromEntity).toList();
+        return Result.success(PageResult.paginate(allByAgent, page, size));
     }
 
     @RequiresPermission("approval:manage")
