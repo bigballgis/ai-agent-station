@@ -122,7 +122,7 @@ public class ConfigurationValidator {
 
         if (dbUrl == null || dbUrl.isBlank()) {
             errors.add("数据库 URL 未配置。请设置环境变量 SPRING_DATASOURCE_URL。" +
-                    "示例: jdbc:postgresql://localhost:5432/ai_agent_platform");
+                    "示例: jdbc:postgresql://localhost:5432/aegisnexus");
             return;
         }
 

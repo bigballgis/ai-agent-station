@@ -1,13 +1,19 @@
 # 系统架构文档
 
-> 版本: v1.0 | 最后更新: Round 279
+> 当前用途：描述现有架构与 v2 Core 重构目标。历史 Round 数字不再作为当前完成状态依据；可信状态以代码和验证命令为准。
 
 ---
 
 ## 1. 架构概览
 
-AI Agent Station 采用前后端分离的微服务架构，基于 Spring Boot 3 + Vue 3 构建，
-通过 Docker Compose 进行容器编排，实现一键部署。
+AegisNexus 采用前后端分离架构，基于 Spring Boot 3 + Vue 3 构建，通过 Docker Compose / K8s 清单部署。
+
+v2 Core 的目标不是推倒重写，而是将平台逐步拆清为：
+
+- **Control Plane**：Agent、Workflow、Tool、Tenant、权限、审计、版本和发布管理。
+- **Runtime Plane**：Graph DSL 校验、调度、节点执行、checkpoint、暂停/恢复和事件流。
+- **Designer Plane**：可视化编排画布，计划以 Vue Flow 替换自研底层交互。
+- **Tool Plane**：统一 MCP、HTTP、Internal Function、LLM Tool 的描述、调用、审计和结果归一化。
 
 ### 1.1 整体架构图
 

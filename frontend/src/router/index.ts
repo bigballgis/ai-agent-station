@@ -255,7 +255,7 @@ router.beforeEach(async (to, from, next) => {
     const currentLocale = localStorage.getItem('locale') || 'zh-CN'
     const localeMessages = messages[currentLocale as keyof typeof messages]
     const translatedTitle = (localeMessages as unknown as Record<string, Record<string, string>>)?.routes?.[titleKey] || titleKey
-    document.title = `${translatedTitle} - AI Agent Station`
+    document.title = `${translatedTitle} - AegisNexus`
   }
 
   const userStore = useUserStore()

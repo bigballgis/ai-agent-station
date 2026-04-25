@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- 预连接 API 服务器，减少首屏请求延迟 -->
+    <!-- Preconnect to the API origin to reduce first-screen request latency. -->
     <link rel="preconnect" href="/" />
-    <!-- 预加载关键资源 -->
+    <!-- Preload critical assets. -->
     <link rel="preload" href="/favicon.svg" type="image/svg+xml" as="image" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <!-- CDN 缓存策略：静态资源由 CDN/浏览器长期缓存（通过内容哈希文件名实现缓存失效） -->
+    <!-- CDN cache policy: hashed static assets are cached long-term. -->
     <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable">
-    <title>AI Agent Station</title>
-    <!-- 预加载关键 vendor chunks，提升首屏加载速度 -->
+    <title>AegisNexus</title>
+    <!-- Preload critical vendor chunks for faster first-screen loading. -->
     <link rel="modulepreload" href="/src/main.ts" />
     <link rel="modulepreload" href="/src/App.vue" />
     <link rel="modulepreload" href="/src/layouts/MainLayout.vue" />

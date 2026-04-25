@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.Tenant;
 import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
@@ -15,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +61,9 @@ class TenantServiceTest {
     @Mock
     private SessionService sessionService;
 
+    @Mock
+    private AiAgentProperties aiAgentProperties;
+
     @InjectMocks
     private TenantService tenantService;
 
@@ -68,8 +71,10 @@ class TenantServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(tenantService, "schemaPrefix", "t_");
-        ReflectionTestUtils.setField(tenantService, "defaultAdminPassword", "Admin@123456");
+        AiAgentProperties.Tenant tenantCfg = new AiAgentProperties.Tenant();
+        tenantCfg.setSchemaPrefix("t_");
+        tenantCfg.setDefaultAdminPassword("Admin@123456");
+        lenient().when(aiAgentProperties.getTenant()).thenReturn(tenantCfg);
     }
 
     // ==================== getAllTenants ====================

@@ -1,5 +1,6 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.WorkflowProperties;
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.exception.ResourceNotFoundException;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -38,6 +38,9 @@ class WorkflowServiceTest {
     @Mock
     private QuotaService quotaService;
 
+    @Mock
+    private WorkflowProperties workflowProperties;
+
     @InjectMocks
     private WorkflowService workflowService;
 
@@ -45,8 +48,8 @@ class WorkflowServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(workflowService, "maxNodeCount", 50);
-        ReflectionTestUtils.setField(workflowService, "maxEdgeCount", 100);
+        lenient().when(workflowProperties.getMaxNodeCount()).thenReturn(50);
+        lenient().when(workflowProperties.getMaxEdgeCount()).thenReturn(100);
     }
 
     // ==================== 创建工作流定义 ====================
@@ -315,7 +318,7 @@ class WorkflowServiceTest {
 
             when(definitionRepository.save(any(WorkflowDefinition.class))).thenReturn(savedRollback);
 
-            WorkflowDefinition result = workflowService.rollbackToVersion(3L, 1, TENANT_ID);
+            WorkflowDefinition result = workflowService.rollbackToVersion(3L, 1L, TENANT_ID);
 
             assertNotNull(result);
             assertEquals(2, result.getVersion());
@@ -343,7 +346,7 @@ class WorkflowServiceTest {
                     .thenReturn(List.of(current));
 
             BusinessException exception = assertThrows(BusinessException.class,
-                    () -> workflowService.rollbackToVersion(3L, 99, TENANT_ID));
+                    () -> workflowService.rollbackToVersion(3L, 99L, TENANT_ID));
 
             assertTrue(exception.getMessage().contains("v99"));
         }

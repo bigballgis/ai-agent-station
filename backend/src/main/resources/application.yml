@@ -20,7 +20,7 @@ server:
 
 spring:
   application:
-    name: ai-agent-platform
+    name: aegisnexus
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
@@ -34,7 +34,7 @@ spring:
   # PostgreSQL数据库配置
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/ai_agent_platform?stringtype=unspecified}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/aegisnexus?stringtype=unspecified}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${DB_PASSWORD:}
     hikari:
@@ -242,6 +242,14 @@ ai-agent:
     enabled: true
     max-sessions: 10000
     session-ttl: 86400s
+  # MCP 远端工具（Model Context Protocol）：initialize 中的 protocolVersion 与官方规范「按日期的修订」对齐，非独立「MCP2」产品名
+  mcp:
+    protocol-version: ${MCP_PROTOCOL_VERSION:2025-11-25}
+    client-name: ${MCP_CLIENT_NAME:AegisNexus}
+    client-version: ${MCP_CLIENT_VERSION:1.0.0}
+    connect-timeout-ms: ${MCP_CONNECT_TIMEOUT_MS:10000}
+    read-timeout-ms: ${MCP_READ_TIMEOUT_MS:60000}
+    send-initialized-notification: ${MCP_SEND_INITIALIZED:true}
   # 测试配置
   test:
     # 测试数据隔离配置

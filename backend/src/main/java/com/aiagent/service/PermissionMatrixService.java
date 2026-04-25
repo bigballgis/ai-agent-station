@@ -8,6 +8,7 @@ import com.aiagent.repository.PermissionMatrixRepository;
 import com.aiagent.repository.UserRoleRepository;
 import com.aiagent.tenant.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +47,7 @@ public class PermissionMatrixService {
         String cached = cacheService.get(cacheKey);
         if (cached != null) {
             try {
-                // 从 Redis 缓存反序列化的 JSON 字符串，ObjectMapper.readValue 返回 Map.class 无法携带泛型信息
-                @SuppressWarnings("unchecked")
-                return result;
+                return objectMapper.readValue(cached, new TypeReference<Map<String, List<PermissionMatrix>>>() {});
             } catch (JsonProcessingException e) {
                 log.warn("Failed to deserialize permission cache for role: {}", roleId);
             }
@@ -244,9 +243,7 @@ public class PermissionMatrixService {
         String cached = cacheService.get(PERM_TREE_CACHE_KEY);
         if (cached != null) {
             try {
-                // 从 Redis 缓存反序列化的 JSON 字符串，ObjectMapper.readValue 返回 List.class 无法携带泛型信息
-                @SuppressWarnings("unchecked")
-                return result;
+                return objectMapper.readValue(cached, new TypeReference<List<Map<String, Object>>>() {});
             } catch (JsonProcessingException e) {
                 log.warn("Failed to deserialize permission tree cache");
             }

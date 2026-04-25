@@ -1,4 +1,4 @@
-# AI Agent Platform - Deployment Guide
+# AegisNexus Platform - Deployment Guide
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@
 
 ```bash
 git clone <repository-url>
-cd ai-agent-platform
+cd aegisnexus
 
 # Create production environment file
 cp .env.production.example .env.production

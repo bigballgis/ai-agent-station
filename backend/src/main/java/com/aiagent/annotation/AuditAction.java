@@ -14,6 +14,8 @@ public enum AuditAction {
     UPDATE,
     /** 删除资源 */
     DELETE,
+    /** 只读查询 / 读取类操作 */
+    READ,
     /** 数据导出 */
     EXPORT,
     /** 数据导入 */

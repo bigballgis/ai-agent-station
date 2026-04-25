@@ -1,7 +1,7 @@
 {
-  "name": "AI Agent Station",
-  "short_name": "AgentStation",
-  "description": "AI Agent management and orchestration platform",
+  "name": "AegisNexus",
+  "short_name": "AegisNexus",
+  "description": "Financial-grade AI agent service gateway for secure enterprise automation",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

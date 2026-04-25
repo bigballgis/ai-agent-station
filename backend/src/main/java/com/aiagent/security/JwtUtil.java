@@ -30,8 +30,8 @@ public class JwtUtil {
         this.jwtProperties = jwtProperties;
     }
 
-    private static final String ISSUER = "ai-agent-platform";
-    private static final String AUDIENCE = "ai-agent-platform-client";
+    private static final String ISSUER = "aegisnexus";
+    private static final String AUDIENCE = "aegisnexus-client";
 
     /** 时钟偏移容忍度（秒），防止服务器间时钟不同步导致 Token 提前失效 */
     private static final long CLOCK_SKEW_SECONDS = 60;

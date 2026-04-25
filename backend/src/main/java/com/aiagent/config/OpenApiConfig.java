@@ -3,7 +3,6 @@ package com.aiagent.config;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
@@ -68,7 +67,7 @@ public class OpenApiConfig {
                         .addResponses("429", createErrorResponse("请求过于频繁", "已触发速率限制，请稍后重试"))
                         .addResponses("500", createErrorResponse("服务器内部错误", "服务器处理请求时发生异常")))
                 .info(new Info()
-                        .title("AI Agent Platform API")
+                        .title("AegisNexus Platform API")
                         .version("1.0.0")
                         .description("""
                                 ## 企业级低代码 AI Agent 平台 API 文档
@@ -100,8 +99,8 @@ public class OpenApiConfig {
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
                 .externalDocs(new ExternalDocumentation()
-                        .description("AI Agent Station 完整文档")
-                        .url("https://github.com/aiagent-platform/ai-agent-platform#readme"))
+                        .description("AegisNexus 完整文档")
+                        .url("https://github.com/aegisnexus/aegisnexus#readme"))
                 .tags(List.of(
                         new Tag().name("认证管理").description("用户登录、注册、Token刷新、验证码、密码管理。支持 JWT Bearer Token 和 API Key 两种认证方式。"),
                         new Tag().name("Agent管理").description("AI Agent的CRUD、版本管理、模板市场、复制与评分。支持 DAG 图编排和多 LLM 集成。"),

@@ -15,7 +15,7 @@
               <circle cx="12" cy="6" r="1" fill="white" stroke="none"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">AI Agent Station</h2>
+          <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">AegisNexus</h2>
         </div>
 
         <!-- 表单卡片 -->
@@ -52,8 +52,8 @@
             </h2>
             <p class="text-neutral-500 dark:text-neutral-400 text-base">
               {{ activeTab === 'login'
-                ? (t('login.loginToStation') || '登录到 AI Agent Station')
-                : (t('login.registerToStation') || '注册 AI Agent Station 账号') }}
+                ? (t('login.loginToStation') || '登录到 AegisNexus')
+                : (t('login.registerToStation') || '注册 AegisNexus 账号') }}
             </p>
           </div>
 

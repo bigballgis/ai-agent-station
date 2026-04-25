@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import com.aiagent.config.properties.WorkflowProperties;
 import com.aiagent.entity.WorkflowInstance;
+import com.aiagent.repository.WorkflowInstanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

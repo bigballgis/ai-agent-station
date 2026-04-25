@@ -21,7 +21,7 @@ public class AuthenticationFilter implements GatewayFilter, Ordered {
     public static final String TENANT_ID_ATTR = "tenantId";
     public static final String USER_ID_ATTR = "userId";
     public static final String API_KEY_HEADER = "X-API-Key";
-    public static final AUTHORIZATION_HEADER = "Authorization";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final JwtProperties jwtProperties;
 

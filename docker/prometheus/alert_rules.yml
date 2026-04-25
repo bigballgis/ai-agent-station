@@ -1,5 +1,5 @@
 groups:
-  - name: ai-agent-platform
+  - name: aegisnexus
     rules:
       # API 错误率告警
       - alert: HighErrorRate

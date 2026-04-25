@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -58,15 +59,22 @@ public class UserDataService {
     public Map<String, Object> exportUserData(Long userId) {
         log.info("导出用户数据: userId={}", userId);
 
-        // 一次性获取用户信息，避免重复查询
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("用户不存在: userId=" + userId));
-
         Map<String, Object> userData = new LinkedHashMap<>();
         userData.put("exportTime", LocalDateTime.now().toString());
         userData.put("userId", userId);
 
-        // 用户基本信息
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            userData.put("userInfo", null);
+            userData.put("loginLogs", loginLogRepository.findByUserIdOrderByLoginTimeDesc(userId).stream()
+                    .map(this::loginLogToMap).toList());
+            userData.put("sessions", userSessionRepository.findByUserId(userId).stream()
+                    .map(this::sessionToMap).toList());
+            return userData;
+        }
+
+        User user = userOpt.get();
+
         Map<String, Object> userInfo = new LinkedHashMap<>();
         userInfo.put("id", user.getId());
         userInfo.put("username", user.getUsername());

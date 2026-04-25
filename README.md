@@ -1,6 +1,6 @@
-# AI Agent Station
+# AegisNexus
 
-> 企业级低代码 AI Agent 智能编排平台 -- 面向非 IT 业务用户的智能体开发、测试、审批与交付一体化平台
+> Financial-grade AI agent service gateway for secure enterprise automation in large banking environments.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Java 17](https://img.shields.io/badge/Java-17-green.svg)](https://openjdk.org/)
@@ -21,6 +21,7 @@
 - [API 文档](#api-文档)
 - [测试指南](#测试指南)
 - [部署指南](#部署指南)
+- [AI 开发入口](#ai-开发入口)
 - [贡献指南](#贡献指南)
 - [License](#license)
 
@@ -33,7 +34,7 @@
 - **Agent 管理** -- 低代码 DAG 图编排、多 LLM 集成（OpenAI / Qwen / Ollama）、版本管理与回滚、模板市场与评分
 - **工作流引擎** -- 可视化拖拽编排、DAG 图执行引擎、节点超时与并行策略、版本管理与回滚、执行恢复机制
 - **API 网关** -- 统一接口管理、版本控制与废弃机制、调用日志与统计分析、速率限制仪表盘
-- **测试体系** -- 用例管理、自动执行引擎、结果分析与报告、363+ 测试用例覆盖
+- **测试体系** -- 用例管理、自动执行引擎、结果分析与报告；覆盖范围以当前 CI 与测试命令为准
 - **审批流程** -- 多级审批链、工作流内嵌审批、审批历史追踪
 - **部署管理** -- 一键部署、版本回滚、环境隔离
 
@@ -66,7 +67,7 @@
 | Ant Design Vue | 4 | UI 组件库 |
 | Pinia | - | 状态管理 |
 | Vue Router | 4 | 路由管理 |
-| vue-i18n | - | 国际化（zh-CN / en-US，1134+ 翻译键） |
+| vue-i18n | - | 国际化（zh-CN / en-US，翻译键数量以源码统计为准） |
 | Chart.js | - | 数据可视化 |
 | Tailwind CSS | - | 样式系统 + 暗黑模式 |
 | Playwright | - | E2E 测试 |
@@ -169,7 +170,7 @@ PostgreSQL + Redis
 ```bash
 # 1. 克隆项目
 git clone <repository-url>
-cd ai-agent-platform
+cd aegisnexus
 
 # 2. 复制环境变量模板并配置
 cp .env.example .env
@@ -201,10 +202,9 @@ docker compose logs -f backend
 
 ```bash
 cd backend
-cp src/main/resources/application-example.yml src/main/resources/application.yml
-# 编辑数据库和 Redis 连接配置
-mvn clean package -DskipTests
-java -jar target/ai-agent-platform-1.0.0.jar
+# 推荐先使用根目录 .env / docker compose 启动依赖
+mvn compile "-Dmaven.test.skip=true"
+mvn spring-boot:run
 ```
 
 #### 前端启动
@@ -251,13 +251,13 @@ npm run dev
 ## 项目结构
 
 ```
-ai-agent-platform/
+aegisnexus/
 ├── backend/                          # Spring Boot 后端
 │   ├── src/main/java/com/aiagent/
 │   │   ├── controller/               # REST 控制器（33 个）
 │   │   ├── service/                  # 业务服务层（含 llm/、tool/ 子包）
 │   │   ├── engine/graph/             # DAG 图执行引擎
-│   │   ├── entity/                   # JPA 实体（40+ 个）
+│   │   ├── entity/                   # JPA 实体
 │   │   ├── repository/               # Spring Data JPA 仓库（38 个）
 │   │   ├── dto/                      # 数据传输对象（请求/响应）
 │   │   ├── vo/                       # 视图对象（16 个）
@@ -296,10 +296,12 @@ ai-agent-platform/
 ├── docker-compose.prod.yml           # 生产环境编排
 ├── .env.example                      # 环境变量模板
 ├── .github/workflows/                # CI/CD 流水线
+├── .cursor/skills/                   # 项目级 AI Skills
+├── AGENTS.md                         # AI 编程代理统一入口
 ├── README.md                         # 本文件
 ├── DEPLOYMENT.md                     # 部署指南
 ├── CONTRIBUTING.md                   # 贡献指南
-└── CLAUDE.md                         # AI 迭代规范
+└── CLAUDE.md                         # Claude 简短入口（指向 AGENTS.md）
 ```
 
 ---
@@ -362,7 +364,13 @@ http://localhost:8080/api/swagger-ui.html
 ```bash
 cd backend
 
-# 运行所有测试（730+ 测试用例）
+# 主代码编译（当前最小基线）
+mvn compile "-Dmaven.test.skip=true"
+
+# 测试代码编译（用于发现测试与主代码是否同步）
+mvn test-compile
+
+# 运行全部测试
 mvn test
 
 # 运行单个测试类
@@ -370,15 +378,9 @@ mvn test -Dtest=AgentControllerTest
 
 # 运行单个测试方法
 mvn test -Dtest=AgentServiceTest#testCreateAgent
-
-# 跳过测试打包
-mvn clean package -DskipTests
 ```
 
-**测试覆盖范围**：
-- 单元测试：Service 层（351 个方法）
-- 集成测试：Controller 层（MockMvc + H2）
-- 安全测试：认证/授权/公开端点覆盖
+说明：若 `mvn test-compile` 失败，先按失败测试文件修复测试债，不要为了测试通过降低生产代码安全性。
 
 ### 前端测试
 
@@ -406,8 +408,7 @@ npx playwright test --project=chromium
 
 ```bash
 cd frontend
-npx vue-tsc --noEmit
-# 预期结果: ZERO ERRORS
+npm run type-check
 ```
 
 ---
@@ -435,6 +436,25 @@ docker compose --profile redis-cluster up -d
 
 ---
 
+## AI 开发入口
+
+本仓库已按 AI 编程代理最佳实践整理入口：
+
+- `AGENTS.md`：所有 AI 的统一规则入口。
+- `CLAUDE.md`：Claude 专用短入口，避免长上下文污染。
+- `docs/PLATFORM_V2_EXECUTION_PLAN.md`：v2 Core 重构总方案。
+- `docs/AI_AGENT_READINESS.md`：AI 使用方式、Skills 与文档治理说明。
+- `.cursor/skills/`：项目级 Skills，用于规划、实现、验证、架构审查和依赖升级。
+
+推荐启动提示：
+
+```text
+请先读取 AGENTS.md，并使用 platform-v2-execution-plan 与 platform-v2-verification-gate。
+执行 Phase 0 Task 1：恢复编译基线。一次只处理一个失败类别。
+```
+
+---
+
 ## 贡献指南
 
 请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详细的贡献流程。
@@ -443,7 +463,7 @@ docker compose --profile redis-cluster up -d
 
 1. 从 `master` 创建 feature 分支
 2. 遵循代码规范（后端阿里巴巴 Java 手册，前端 Vue 3 Composition API）
-3. 编写测试（核心业务逻辑覆盖率 > 60%）
+3. 按任务范围补充或修复测试
 4. 提交 PR，至少 1 人 Code Review
 5. CI 自动运行测试，通过后合并
 
@@ -460,22 +480,17 @@ chore: 构建/工具变更
 
 ---
 
-## 质量指标（截至 Round 270）
+## 当前工程状态
 
-| 指标 | 数值 |
-|------|------|
-| 测试用例 | 730+（343 前端 + 36 E2E + 351 后端） |
-| TypeScript 错误 | 0（vue-tsc --noEmit clean） |
-| i18n 翻译键 | 1134+（zh-CN + en-US） |
-| API 端点 | 120+ |
-| Flyway 迁移 | V1-V31 |
-| 自定义异常 | 10 个 |
-| DTO/VO | 50+ |
-| Repository | 38 个（全部租户安全） |
-| @Transactional | 128 个 |
-| @Valid | 27 个 |
-| OpenAPI 分组 | 16 个 |
-| Docker 服务 | 7 个（含资源限制） |
+当前主线是 `v2 Core` 重构准备阶段。可信状态以命令验证为准，不再以历史 Round 数字作为完成依据。
+
+优先级：
+
+1. 恢复后端主代码与测试代码编译基线。
+2. 恢复前端类型检查与构建基线。
+3. 稳定 Graph DSL v2 与运行时重构路径。
+4. 以 Vue Flow POC 替换自研画布底座。
+5. 统一 MCP / HTTP / Function Tool Plane。
 
 ---
 

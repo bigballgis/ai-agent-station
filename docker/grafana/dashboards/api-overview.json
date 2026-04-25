@@ -154,6 +154,6 @@
     ]
   },
   "time": { "from": "now-1h", "to": "now" },
-  "title": "AI Agent Platform - API Overview",
+  "title": "AegisNexus Platform - API Overview",
   "uid": "ai-agent-api-overview"
 }

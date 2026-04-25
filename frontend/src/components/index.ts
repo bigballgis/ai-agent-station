@@ -1,6 +1,6 @@
 /**
  * 组件库统一导出文件
- * AI Agent Station 可复用组件库
+ * AegisNexus 可复用组件库
  *
  * 使用方式：
  * import { PageHeader, SearchBar, StatusBadge } from '@/components'

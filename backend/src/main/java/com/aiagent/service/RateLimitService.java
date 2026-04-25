@@ -5,6 +5,7 @@ import com.aiagent.entity.RateLimitConfig;
 import com.aiagent.exception.RateLimitExceededException;
 import com.aiagent.repository.RateLimitConfigRepository;
 import com.aiagent.tenant.TenantContextHolder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;

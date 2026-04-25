@@ -1,67 +1,54 @@
-# 部署文档
+# Deployment Quick Reference
 
-> 完整的部署指南请参阅项目根目录的 [DEPLOYMENT.md](../DEPLOYMENT.md)。
+> See the root [`DEPLOYMENT.md`](../DEPLOYMENT.md) for the full deployment guide. This file is only a short entry point.
 
----
+## Requirements
 
-## 快速参考
-
-### 环境要求
-
-- Docker 24+ 和 Docker Compose v2+
+- Docker 24+ and Docker Compose v2+
 - Git
-- 容器镜像仓库访问权限
+- Container registry access for production deployments
 
-### 必填密钥
+## Required Secrets
 
-| 密钥 | 环境变量 | 说明 |
-|------|---------|------|
-| 数据库密码 | `DB_PASSWORD` | PostgreSQL 密码 |
-| Redis 密码 | `REDIS_PASSWORD` | Redis 密码 |
-| JWT 密钥 | `JWT_SECRET` | JWT 签名密钥（至少 32 字符） |
-| Grafana 密码 | `GRAFANA_ADMIN_PASSWORD` | Grafana 管理员密码 |
+| Secret | Environment Variable | Description |
+|--------|----------------------|-------------|
+| Database password | `DB_PASSWORD` | PostgreSQL password |
+| Redis password | `REDIS_PASSWORD` | Redis password |
+| JWT secret | `JWT_SECRET` | JWT signing secret, at least 32 characters |
+| Grafana password | `GRAFANA_ADMIN_PASSWORD` | Grafana admin password |
 
-### 一键部署
+## Start Services
 
 ```bash
-# 开发环境
+# Development
 cp .env.example .env
 docker compose up -d
 
-# 生产环境
-cp .env.production.example .env
-docker compose -f docker-compose.prod.yml up -d --build
+# Production
+cp .env.production.example .env.production
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-### 服务验证
+## Verify Services
 
 ```bash
-# 健康检查
 curl http://localhost:8080/api/actuator/health
-
-# 服务状态
 docker compose ps
-
-# 查看日志
 docker compose logs -f backend
 ```
 
-### 端口说明
+## Common Endpoints
 
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| Nginx | 80/443 | 反向代理入口 |
-| Frontend | 5173 | Vue 3 SPA（通过 Nginx 代理） |
-| Backend | 8080 | Spring Boot API（通过 Nginx 代理） |
-| Grafana | 3000 | 监控仪表盘 |
-| Prometheus | 9090 | 指标查询 |
+| Service | URL |
+|---------|-----|
+| Backend health | `http://localhost:8080/api/actuator/health` |
+| Swagger UI | `http://localhost:8080/api/swagger-ui.html` |
+| Grafana | `http://localhost:3000` |
+| Prometheus | `http://localhost:9090` |
 
----
+## Related Documents
 
-## 详细文档
+- [`../DEPLOYMENT.md`](../DEPLOYMENT.md): full deployment guide
+- [`architecture.md`](architecture.md): system architecture
+- [`security.md`](security.md): security baseline
 
-完整的部署指南（包括网络隔离、资源限制、CI/CD、回滚、监控、故障排除等）请参阅:
-
-- [DEPLOYMENT.md](../DEPLOYMENT.md) -- 完整部署指南
-- [architecture.md](architecture.md) -- 系统架构文档
-- [security.md](security.md) -- 安全措施文档

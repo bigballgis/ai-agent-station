@@ -25,7 +25,7 @@
           <RobotOutlined class="text-white text-base" />
         </div>
         <span class="text-base font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight whitespace-nowrap">
-          AI Agent Station
+          AegisNexus
         </span>
       </div>
 

@@ -35,7 +35,7 @@ public class AgentExecutionMonitor {
         this.aiAgentProperties = aiAgentProperties;
         this.agentErrorCounter = Counter.builder("agent_execution_errors_total")
                 .description("Total number of agent execution errors")
-                .tag("application", "ai-agent-platform")
+                .tag("application", "aegisnexus")
                 .register(registry);
     }
 

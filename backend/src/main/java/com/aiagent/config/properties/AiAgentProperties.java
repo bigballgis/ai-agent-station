@@ -57,6 +57,11 @@ public class AiAgentProperties {
     /** 加密配置 */
     private Crypto crypto = new Crypto();
 
+    /**
+     * MCP（Model Context Protocol）客户端 — 与远端 MCP Server 协商协议版本与传输参数。
+     */
+    private Mcp mcp = new Mcp();
+
     @Data
     public static class Security {
         /** 最大登录失败次数 */
@@ -328,5 +333,37 @@ public class AiAgentProperties {
     public static class Crypto {
         /** 加密密钥 */
         private String secretKey = "";
+    }
+
+    /**
+     * MCP 工具调用：协议版本字符串与官方规范按日期发布的修订对齐（非「MCP2 产品代号」）。
+     */
+    @Data
+    public static class Mcp {
+        /**
+         * initialize 请求中的 protocolVersion，须与目标 MCP Server 支持的规范版本一致。
+         * 常见值如 2024-11-05、2025-03-26、2025-11-25 等，以 modelcontextprotocol.io 当前文档为准。
+         */
+        @NotBlank
+        private String protocolVersion = "2025-11-25";
+
+        @NotBlank
+        private String clientName = "AegisNexus";
+
+        @NotBlank
+        private String clientVersion = "1.0.0";
+
+        @Min(1000)
+        @Max(120_000)
+        private int connectTimeoutMs = 10_000;
+
+        @Min(1000)
+        @Max(300_000)
+        private int readTimeoutMs = 60_000;
+
+        /**
+         * initialize 成功后发送 {@code notifications/initialized}（规范推荐；极简实现可关闭）。
+         */
+        private boolean sendInitializedNotification = true;
     }
 }

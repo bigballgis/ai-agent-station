@@ -54,7 +54,7 @@ public class McpToolHealthChecker {
 
     /**
      * 定时健康检查：每 5 分钟执行一次
-     * cron = "0 */5 * * * ?" 表示每分钟的第 0 秒，每 5 分钟执行
+     * （避免在 Javadoc 中写 "星号+斜杠" 的 cron 片段，否则会被误解析为注释结束。）
      */
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     public void checkAllToolsHealth() {

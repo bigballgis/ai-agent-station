@@ -4,6 +4,7 @@ import com.aiagent.common.ResultCode;
 import com.aiagent.entity.User;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.UserRepository;
+import com.aiagent.security.validator.PasswordPolicyValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +36,9 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private PasswordPolicyValidator passwordPolicyValidator;
+
     @InjectMocks
     private UserService userService;
 
@@ -49,6 +54,8 @@ class UserServiceTest {
         testUser.setPhone("13800138000");
         testUser.setTenantId(100L);
         testUser.setIsActive(true);
+
+        lenient().when(passwordPolicyValidator.validate(anyString())).thenReturn(Collections.emptyList());
     }
 
     @Test

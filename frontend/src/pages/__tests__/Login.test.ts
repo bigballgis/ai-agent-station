@@ -82,8 +82,8 @@ const i18n = createI18n({
       login: {
         welcomeBack: '欢迎回来',
         createAccount: '创建账号',
-        loginToStation: '登录到 AI Agent Station',
-        registerToStation: '注册 AI Agent Station 账号',
+        loginToStation: '登录到 AegisNexus',
+        registerToStation: '注册 AegisNexus 账号',
         username: '用户名',
         password: '密码',
         confirmPassword: '确认密码',
@@ -236,7 +236,7 @@ describe('Login 页面', () => {
       global: getGlobalMountOptions()
     })
 
-    expect(wrapper.text()).toContain('AI Agent Station')
+    expect(wrapper.text()).toContain('AegisNexus')
   })
 
   // ---------- 4. 表单验证 ----------

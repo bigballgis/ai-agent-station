@@ -1,5 +1,6 @@
 package com.aiagent.mcp;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.entity.McpTool;
 import com.aiagent.entity.McpToolCallLog;
 import com.aiagent.entity.McpToolCallLog.ErrorCategory;
@@ -38,14 +39,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCP Tool Gateway — JSON-RPC 2.0 协议合规
- * 
- * 核心能力:
- * 1. JSON-RPC 2.0 协议封装（标准请求/响应格式）
- * 2. MCP 协议方法支持（initialize, tools/list, tools/call）
- * 3. 工具发现与注册（getAvailableTools）
- * 4. 多传输层支持（HTTP POST / SSE）
- * 5. 调用日志与审计
+ * MCP Tool Gateway — JSON-RPC 2.0 协议与 MCP 方法（initialize、tools/*、通知）协调。
+ * <p>
+ * 协议随官方规范按<strong>日期版本</strong>演进（如 2025-11-25），与 JSON-RPC 的「2.0」不是同一件事；
+ * 具体协商版本由 {@link AiAgentProperties.Mcp#protocolVersion} 配置。传输层见 {@link McpJsonRpcHttpClient}。
  * 
  * JSON-RPC 2.0 请求格式:
  * {
@@ -66,12 +63,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class McpToolGateway {
 
     private static final Logger log = LoggerFactory.getLogger(McpToolGateway.class);
-    private static final String JSON_RPC_VERSION = "2.0";
 
     private final McpToolRepository mcpToolRepository;
     private final McpToolCallLogRepository mcpToolCallLogRepository;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate;
+    private final AiAgentProperties aiAgentProperties;
+    private final McpJsonRpcHttpClient mcpJsonRpcClient;
+    /** 非 MCP 类型的 HTTP 工具调用（与 JSON-RPC 传输解耦，共享超时配置） */
+    private final RestTemplate httpToolRestTemplate;
 
     /**
      * MCP 服务器会话缓存: serverUrl -> McpSession
@@ -87,15 +86,25 @@ public class McpToolGateway {
 
     public McpToolGateway(McpToolRepository mcpToolRepository,
                           McpToolCallLogRepository mcpToolCallLogRepository,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          AiAgentProperties aiAgentProperties,
+                          McpJsonRpcHttpClient mcpJsonRpcClient) {
         this.mcpToolRepository = mcpToolRepository;
         this.mcpToolCallLogRepository = mcpToolCallLogRepository;
         this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
-        // 设置超时
-        SimpleClientHttpRequestFactory factory = (SimpleClientHttpRequestFactory) this.restTemplate.getRequestFactory();
-        factory.setConnectTimeout(10_000);
-        factory.setReadTimeout(60_000);
+        this.aiAgentProperties = aiAgentProperties;
+        this.mcpJsonRpcClient = mcpJsonRpcClient;
+        AiAgentProperties.Mcp m = aiAgentProperties.getMcp() != null
+                ? aiAgentProperties.getMcp() : new AiAgentProperties.Mcp();
+        this.httpToolRestTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory httpFactory = new SimpleClientHttpRequestFactory();
+        httpFactory.setConnectTimeout(m.getConnectTimeoutMs());
+        httpFactory.setReadTimeout(m.getReadTimeoutMs());
+        this.httpToolRestTemplate.setRequestFactory(httpFactory);
+    }
+
+    private AiAgentProperties.Mcp mcpConfig() {
+        return aiAgentProperties.getMcp() != null ? aiAgentProperties.getMcp() : new AiAgentProperties.Mcp();
     }
 
     // ==================== 工具发现 ====================
@@ -238,7 +247,7 @@ public class McpToolGateway {
     private Object executeMcpToolCall(McpTool tool, Map<String, Object> parameters) {
         String serverUrl = resolveMcpServerUrl(tool);
         if (serverUrl == null) {
-            throw new ValidationException("error.tool.server_not_configured",
+            throw new ValidationException(
                     "MCP server URL not configured for tool: " + tool.getToolName());
         }
 
@@ -247,9 +256,9 @@ public class McpToolGateway {
 
         // 构建 JSON-RPC 2.0 tools/call 请求
         ObjectNode rpcRequest = objectMapper.createObjectNode();
-        rpcRequest.put("jsonrpc", JSON_RPC_VERSION);
+        rpcRequest.put("jsonrpc", McpJsonRpcConstants.JSON_RPC_2_0);
         rpcRequest.put("id", session.nextRequestId());
-        rpcRequest.put("method", "tools/call");
+        rpcRequest.put("method", McpJsonRpcConstants.METHOD_TOOLS_CALL);
 
         ObjectNode params = objectMapper.createObjectNode();
         params.put("name", tool.getToolCode());
@@ -267,15 +276,19 @@ public class McpToolGateway {
      * MCP 协议: 初始化服务器连接
      */
     public Map<String, Object> initializeServer(String serverUrl, Map<String, Object> clientInfo) {
+        AiAgentProperties.Mcp mcp = mcpConfig();
         ObjectNode rpcRequest = objectMapper.createObjectNode();
-        rpcRequest.put("jsonrpc", JSON_RPC_VERSION);
+        rpcRequest.put("jsonrpc", McpJsonRpcConstants.JSON_RPC_2_0);
         rpcRequest.put("id", 1);
-        rpcRequest.put("method", "initialize");
+        rpcRequest.put("method", McpJsonRpcConstants.METHOD_INITIALIZE);
 
         ObjectNode params = objectMapper.createObjectNode();
-        params.put("protocolVersion", "2024-11-05");
+        params.put("protocolVersion", mcp.getProtocolVersion());
+        Map<String, String> defaultClient = Map.of(
+                "name", mcp.getClientName(),
+                "version", mcp.getClientVersion());
         params.set("clientInfo", objectMapper.valueToTree(
-                clientInfo != null ? clientInfo : Map.of("name", "AI-Agent-Station", "version", "3.0.0")));
+                clientInfo != null ? clientInfo : defaultClient));
         params.set("capabilities", objectMapper.createObjectNode());
         rpcRequest.set("params", params);
 
@@ -286,8 +299,25 @@ public class McpToolGateway {
         session.setInitialized(true);
         sessionCache.put(serverUrl, session);
 
-        log.info("[MCP Gateway] MCP 服务器初始化成功: {}", serverUrl);
+        sendNotificationInitializedIfConfigured(serverUrl, mcp);
+
+        log.info("[MCP Gateway] MCP 服务器初始化成功: server={}, protocolVersion={}", serverUrl, mcp.getProtocolVersion());
         return objectMapper.convertValue(response, Map.class);
+    }
+
+    private void sendNotificationInitializedIfConfigured(String serverUrl, AiAgentProperties.Mcp mcp) {
+        if (!mcp.isSendInitializedNotification()) {
+            return;
+        }
+        try {
+            ObjectNode n = objectMapper.createObjectNode();
+            n.put("jsonrpc", McpJsonRpcConstants.JSON_RPC_2_0);
+            n.put("method", McpJsonRpcConstants.METHOD_NOTIFICATION_INITIALIZED);
+            n.set("params", objectMapper.createObjectNode());
+            mcpJsonRpcClient.postJson(serverUrl, objectMapper.writeValueAsString(n));
+        } catch (Exception e) {
+            log.warn("[MCP Gateway] notifications/initialized 未送达（部分服务端不强制）: {}", e.getMessage());
+        }
     }
 
     /**
@@ -298,9 +328,9 @@ public class McpToolGateway {
         int requestId = session != null ? session.nextRequestId() : 1;
 
         ObjectNode rpcRequest = objectMapper.createObjectNode();
-        rpcRequest.put("jsonrpc", JSON_RPC_VERSION);
+        rpcRequest.put("jsonrpc", McpJsonRpcConstants.JSON_RPC_2_0);
         rpcRequest.put("id", requestId);
-        rpcRequest.put("method", "tools/list");
+        rpcRequest.put("method", McpJsonRpcConstants.METHOD_TOOLS_LIST);
         rpcRequest.set("params", objectMapper.createObjectNode());
 
         Object response = sendJsonRpcRequest(serverUrl, rpcRequest);
@@ -328,18 +358,10 @@ public class McpToolGateway {
      */
     private Object sendJsonRpcRequest(String serverUrl, ObjectNode request) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Accept", "application/json, text/event-stream");
-
             String requestBody = objectMapper.writeValueAsString(request);
             log.debug("[MCP Gateway] JSON-RPC 请求: {}", requestBody);
 
-            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.exchange(
-                    serverUrl, HttpMethod.POST, entity, String.class);
-
-            String responseBody = response.getBody();
+            String responseBody = mcpJsonRpcClient.postJson(serverUrl, requestBody);
             log.debug("[MCP Gateway] JSON-RPC 响应: {}", responseBody);
 
             if (responseBody == null || responseBody.isEmpty()) {
@@ -459,7 +481,7 @@ public class McpToolGateway {
         }
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(parameters, headers);
-        ResponseEntity<Map> response = restTemplate.exchange(
+        ResponseEntity<Map> response = httpToolRestTemplate.exchange(
                 url, HttpMethod.valueOf(httpMethod), entity, Map.class);
         return response.getBody();
     }

@@ -1,4 +1,4 @@
-# AI Agent Platform - Backend
+# AegisNexus Platform - Backend
 
 ## Tech Stack
 
@@ -52,8 +52,8 @@ docker compose logs -f backend
 
 3. **Build and run**:
    ```bash
-   mvn clean package -DskipTests
-   java -jar target/ai-agent-platform-1.0.0.jar
+   mvn compile "-Dmaven.test.skip=true"
+   mvn spring-boot:run
    ```
 
 The API is available at `http://localhost:8080/api`.
@@ -64,7 +64,7 @@ The API is available at `http://localhost:8080/api`.
 |---|---|---|
 | `SERVER_PORT` | Server port | `8080` |
 | `DB_PASSWORD` | PostgreSQL password | (required) |
-| `SPRING_DATASOURCE_URL` | Database JDBC URL | `jdbc:postgresql://postgres:5432/ai_agent_platform` |
+| `SPRING_DATASOURCE_URL` | Database JDBC URL | `jdbc:postgresql://postgres:5432/aegisnexus` |
 | `REDIS_PASSWORD` | Redis password | (empty) |
 | `JWT_SECRET` | JWT signing secret | (required) |
 | `JWT_EXPIRATION` | JWT expiration (ms) | `1800000` (30min) |
@@ -108,3 +108,18 @@ src/main/java/com/aiagent/
 ## Database Migrations
 
 Flyway migrations are located in `src/main/resources/db/migration/`. They run automatically on application startup.
+
+## Verification Baseline
+
+```bash
+# Main sources
+mvn compile "-Dmaven.test.skip=true"
+
+# Test sources
+mvn test-compile
+
+# Unit/integration tests
+mvn test
+```
+
+If `mvn test-compile` fails, fix test code or mocks in a dedicated task. Do not weaken production code to satisfy stale tests.

@@ -2,8 +2,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ai-agent-station
-  namespace: ai-agent-platform
+  name: aegisnexus
+  namespace: aegisnexus
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
@@ -14,7 +14,7 @@ spec:
   tls:
     - hosts:
         - example.com
-      secretName: ai-agent-station-tls
+      secretName: aegisnexus-tls
   rules:
     - host: example.com
       http:

@@ -40,7 +40,7 @@ public class StartupLogConfig {
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("==========================================================");
-        log.info("  AI Agent Platform - Startup Configuration");
+        log.info("  AegisNexus Platform - Startup Configuration");
         log.info("==========================================================");
         log.info("  Active Profile    : {}", activeProfile);
         log.info("  Server Port       : {}", serverPort);

@@ -22,7 +22,7 @@ public class ApiResponseTimeMetrics {
     public Timer httpResponseTimeTimer(MeterRegistry registry) {
         return Timer.builder("http_server_requests_seconds")
                 .description("API response time in seconds")
-                .tags("application", "ai-agent-platform")
+                .tags("application", "aegisnexus")
                 .publishPercentileHistogram()
                 .serviceLevelObjectives(
                         java.time.Duration.ofMillis(100),

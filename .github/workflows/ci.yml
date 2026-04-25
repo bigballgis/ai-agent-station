@@ -338,7 +338,7 @@ jobs:
                       "short": true
                     }
                   ],
-                  "footer": "AI Agent Platform CI",
+                  "footer": "AegisNexus Platform CI",
                   "footer_icon": "https://github.githubassets.com/favicon.ico",
                   "ts": ${{ github.event.head_commit.timestamp || '0' }}
                 }

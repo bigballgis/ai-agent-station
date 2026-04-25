@@ -1,5 +1,6 @@
 package com.aiagent.util;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,9 @@ class CryptoUtilsTest {
 
     @BeforeEach
     void setUp() {
-        cryptoUtils = new CryptoUtils(TEST_SECRET_KEY);
+        AiAgentProperties props = new AiAgentProperties();
+        props.getCrypto().setSecretKey(TEST_SECRET_KEY);
+        cryptoUtils = new CryptoUtils(props);
     }
 
     // ==================== encrypt / decrypt 基本功能测试 ====================

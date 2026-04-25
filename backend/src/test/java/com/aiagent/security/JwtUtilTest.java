@@ -62,7 +62,7 @@ class JwtUtilTest {
         assertEquals(TEST_USER_ID, claims.get("userId", Long.class));
         assertEquals(TEST_TENANT_ID, claims.get("tenantId", Long.class));
         assertEquals("access", claims.get("type"));
-        assertEquals("ai-agent-platform", claims.getIssuer());
+        assertEquals("aegisnexus", claims.getIssuer());
     }
 
     // ==================== generateRefreshToken 测试 ====================
@@ -117,8 +117,8 @@ class JwtUtilTest {
         SecretKey otherKey = Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8));
 
         String invalidToken = Jwts.builder()
-                .issuer("ai-agent-platform")
-                .audience().add("ai-agent-platform-client").and()
+                .issuer("aegisnexus")
+                .audience().add("aegisnexus-client").and()
                 .subject(TEST_USERNAME)
                 .claim("userId", TEST_USER_ID)
                 .claim("tenantId", TEST_TENANT_ID)

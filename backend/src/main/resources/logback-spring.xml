@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- ==================== 属性定义 ==================== -->
+    <!-- Common property definitions -->
     <property name="LOG_PATH" value="${LOG_PATH:-logs}" />
     <property name="LOG_FILE" value="${LOG_FILE:-application}" />
     <property name="MAX_FILE_SIZE" value="100MB" />
     <property name="MAX_HISTORY" value="30" />
     <property name="TOTAL_SIZE_CAP" value="3GB" />
 
-    <!-- 控制台日志格式 (开发环境) - 包含 traceId, tenantId, userId -->
+    <!-- Console pattern (dev) — traceId, tenantId, userId via MDC -->
     <property name="CONSOLE_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [traceId=%X{traceId}] [tenantId=%X{tenantId}] [userId=%X{userId}] %-5level %logger{36} - %msg%n" />
 
-    <!-- 文件日志格式 (JSON 风格，生产环境) - 包含 traceId, tenantId, userId -->
+    <!-- JSON line pattern (prod file appenders); use &quot; for JSON quotes inside XML attribute -->
     <property name="JSON_PATTERN"
-              value='{"timestamp":"%d{yyyy-MM-dd'"'"'T'"'"'HH:mm:ss.SSS}","thread":"%thread","traceId":"%X{traceId}","tenantId":"%X{tenantId}","userId":"%X{userId}","level":"%-5level","logger":"%logger{36}","message":"%msg","exception":"%rEx{full}"}%n' />
+              value="{&quot;timestamp&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss.SSS}&quot;,&quot;thread&quot;:&quot;%thread&quot;,&quot;traceId&quot;:&quot;%X{traceId}&quot;,&quot;tenantId&quot;:&quot;%X{tenantId}&quot;,&quot;userId&quot;:&quot;%X{userId}&quot;,&quot;level&quot;:&quot;%-5level&quot;,&quot;logger&quot;:&quot;%logger{36}&quot;,&quot;message&quot;:&quot;%msg&quot;,&quot;exception&quot;:&quot;%rEx{full}&quot;}%n" />
 
-    <!-- ==================== 敏感数据过滤 TurboFilter ==================== -->
-    <!-- 防止密码、令牌、API密钥等敏感信息出现在日志中 -->
+    <!-- TurboFilter: MDC-based filtering hook -->
     <turboFilter class="ch.qos.logback.classic.turbo.MDCFilter">
         <MDCKey>traceId</MDCKey>
     </turboFilter>

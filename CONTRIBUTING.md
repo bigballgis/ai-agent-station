@@ -1,66 +1,83 @@
-# Contributing to AI Agent Station
+# Contributing to AegisNexus
 
-感谢您对 AI Agent Station 的贡献！
+Thank you for contributing to AegisNexus.
 
-## 开发环境
+## Development Environment
 
-### 前置要求
+### Prerequisites
 - JDK 17+
 - Node.js 20+
 - PostgreSQL 16+
 - Redis 7+
 
-### 后端开发
+### Backend Development
 ```bash
 cd backend
-mvn clean package -DskipTests
-java -jar target/ai-agent-platform-1.0.0.jar
+mvn compile "-Dmaven.test.skip=true"
+mvn spring-boot:run
 ```
 
-### 前端开发
+### Frontend Development
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-## 代码规范
+## Coding Standards
 
-### 后端 (Java)
-- 遵循阿里巴巴 Java 开发手册
-- Controller 层使用 DTO/VO，禁止直接返回 Entity
-- 所有 API 入参使用 `@Valid` 校验
-- Service 方法添加 `@Transactional` 注解
-- 使用 `@Slf4j` 进行日志记录，禁止 `System.out`
-- 新增方法必须编写单元测试
+### Backend (Java)
+- Controllers use DTOs/VOs and must not expose Entities directly.
+- Validate API inputs with `@Valid` and DTO validation annotations.
+- Use `@Transactional` where business consistency requires it.
+- Use structured logging through SLF4J; do not use `System.out`.
+- Add or update tests for new behavior.
+- Keep tenant isolation, permissions, audit, and security checks explicit.
 
-### 前端 (Vue/TypeScript)
-- 使用 Vue 3 Composition API + `<script setup>`
-- 组件使用 TypeScript 强类型
-- 优先使用 `@/components` 中的通用组件
-- API 调用统一通过 `@/api` 模块
-- 状态管理使用 Pinia Store
-- 文本使用 i18n 翻译 key
+### Frontend (Vue/TypeScript)
+- Use Vue 3 Composition API with `<script setup>`.
+- Use TypeScript types for component props, API responses, and store state.
+- Prefer shared components from `@/components`.
+- Route API calls through `@/api` modules and shared request utilities.
+- Use Pinia for state management.
+- Put user-facing text behind i18n keys.
 
-### Git 提交规范
-- `feat:` 新功能
-- `fix:` 修复 Bug
-- `docs:` 文档更新
-- `refactor:` 代码重构
-- `test:` 测试相关
-- `chore:` 构建/工具变更
+### Repository Language
+- Repository language is English.
+- Comments, documentation, commit messages, PR descriptions, and Skill content must be written in English.
+- Chat with the owner remains Simplified Chinese unless requested otherwise.
 
-## Pull Request 流程
-1. 从 master 创建 feature 分支
-2. 提交 PR 并填写变更说明
-3. CI 自动运行测试（后端 Maven Test + 前端 Vitest）
-4. 至少 1 人 Code Review
-5. 合并后自动触发 CI 构建
+### Git Commit Convention
+- `feat:` new capability
+- `fix:` bug fix
+- `docs:` documentation update
+- `refactor:` behavior-preserving refactor
+- `test:` test changes
+- `chore:` build/tooling/maintenance changes
 
-## 测试
-- 后端: `mvn test` (JUnit 5 + Mockito)
-- 前端: `npx vitest run` (Vitest + Vue Test Utils)
-- 覆盖率要求: 核心业务逻辑 > 60%
+## Pull Request Process
+1. Create a feature branch from `master`.
+2. Keep changes small and reviewable.
+3. Run the relevant verification gates.
+4. Submit a PR with a clear summary, verification result, and remaining risks.
+5. Require code review before merge.
+
+## Verification
+- Backend main sources: `mvn compile "-Dmaven.test.skip=true"`
+- Backend test sources: `mvn test-compile`
+- Backend tests: `mvn test`
+- Frontend type-check: `npm run type-check`
+- Frontend tests: `npm run test:run`
+- Frontend build: `npm run build`
+
+## AI Collaboration
+
+- All AI agents must read `AGENTS.md` first.
+- v2 Core work follows `docs/PLATFORM_V2_EXECUTION_PLAN.md`.
+- Prefer project Skills under `.cursor/skills/`.
+- Do not infer current completion status from old Round-based documents; status must be verified through code or commands.
+- Use `platform-v2-code-review` before declaring complex work complete.
+- Use `platform-v2-commit-discipline` before creating commits.
 
 ## License
 MIT

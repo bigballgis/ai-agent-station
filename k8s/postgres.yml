@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
-  namespace: ai-agent-platform
+  namespace: aegisnexus
 spec:
   accessModes:
     - ReadWriteOnce
@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: ai-agent-platform
+  namespace: aegisnexus
 spec:
   replicas: 1
   selector:
@@ -41,7 +41,7 @@ spec:
                   name: ai-agent-secrets
                   key: db-password
             - name: POSTGRES_DB
-              value: ai_agent_platform
+              value: aegisnexus
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
@@ -56,12 +56,12 @@ spec:
               memory: 2Gi
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", "postgres", "-d", "ai_agent_platform"]
+              command: ["pg_isready", "-U", "postgres", "-d", "aegisnexus"]
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "postgres", "-d", "ai_agent_platform"]
+              command: ["pg_isready", "-U", "postgres", "-d", "aegisnexus"]
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
@@ -75,7 +75,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
-  namespace: ai-agent-platform
+  namespace: aegisnexus
 spec:
   selector:
     app: postgres

@@ -82,17 +82,23 @@ public class HttpExecutor {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (nodeConfig.containsKey("headers")) {
-            // 节点配置中的 headers 是 Map<String, Object> 中的 Object，需要强制转换
-            @SuppressWarnings("unchecked")
-            for (Map.Entry<String, String> header : headerMap.entrySet()) {
-                // 过滤敏感头，防止SSRF攻击
-                if ("host".equalsIgnoreCase(header.getKey()) ||
-                    "authorization".equalsIgnoreCase(header.getKey()) ||
-                    "cookie".equalsIgnoreCase(header.getKey()) ||
-                    "set-cookie".equalsIgnoreCase(header.getKey())) {
-                    continue;
+            Object raw = nodeConfig.get("headers");
+            if (raw instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> headerMap = (Map<String, Object>) raw;
+                for (Map.Entry<String, Object> header : headerMap.entrySet()) {
+                    if (header.getValue() == null) {
+                        continue;
+                    }
+                    // 过滤敏感头，防止SSRF攻击
+                    if ("host".equalsIgnoreCase(header.getKey()) ||
+                        "authorization".equalsIgnoreCase(header.getKey()) ||
+                        "cookie".equalsIgnoreCase(header.getKey()) ||
+                        "set-cookie".equalsIgnoreCase(header.getKey())) {
+                        continue;
+                    }
+                    headers.set(header.getKey(), header.getValue().toString());
                 }
-                headers.set(header.getKey(), header.getValue());
             }
         }
         return headers;

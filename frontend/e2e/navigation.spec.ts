@@ -191,7 +191,7 @@ test.describe('Sidebar Navigation', () => {
     // Logo should be visible
     const logo = page.locator('header')
     await expect(logo).toBeVisible()
-    await expect(logo).toContainText('AI Agent Station')
+    await expect(logo).toContainText('AegisNexus')
 
     // User avatar should be visible
     const userAvatar = page.locator('header .ant-avatar')
