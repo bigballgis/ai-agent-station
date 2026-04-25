@@ -34,7 +34,7 @@ public class AgentTestExecutionController {
     public Result<ExecutionResponseDTO> createExecution(@Valid @RequestBody CreateExecutionRequestDTO request) {
         AgentTestExecution execution = DTOConverter.toExecutionEntity(request);
         AgentTestExecution createdExecution = executionService.createExecution(execution);
-        return Result.success(DTOConverter.toExecutionResponseDTO(createdExecution));
+        return Result.created(DTOConverter.toExecutionResponseDTO(createdExecution));
     }
 
     @RequiresPermission("test:execute")

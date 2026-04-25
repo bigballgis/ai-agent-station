@@ -4,6 +4,9 @@ import com.aiagent.entity.McpTool;
 import com.aiagent.entity.McpToolCallLog;
 import com.aiagent.entity.McpToolCallLog.ErrorCategory;
 import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ResourceNotFoundException;
+import com.aiagent.exception.ServiceUnavailableException;
+import com.aiagent.exception.ValidationException;
 import com.aiagent.repository.McpToolCallLogRepository;
 import com.aiagent.repository.McpToolRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -168,10 +171,10 @@ public class McpToolGateway {
 
         try {
             McpTool tool = mcpToolRepository.findById(toolId)
-                    .orElseThrow(() -> new BusinessException("Tool not found: " + toolId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
 
             if (!tool.getIsActive()) {
-                throw new BusinessException("Tool is not active: " + toolId);
+                throw new ValidationException("Tool is not active: " + toolId);
             }
 
             callLog.setRequestParams(objectMapper.writeValueAsString(parameters));
@@ -185,19 +188,32 @@ public class McpToolGateway {
             } else if ("CUSTOM".equalsIgnoreCase(tool.getToolType())) {
                 result = executeCustomTool(tool, parameters);
             } else {
-                throw new BusinessException("Unsupported tool type: " + tool.getToolType());
+                throw new ValidationException("Unsupported tool type: " + tool.getToolType());
             }
 
             callLog.setResponseResult(objectMapper.writeValueAsString(result));
             callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.SUCCESS);
             return result;
 
-        } catch (Exception e) {
-            log.error("[MCP Gateway] 工具调用失败: toolId={}", toolId, e);
+        } catch (BusinessException e) {
+            log.error("[MCP Gateway] 工具调用业务异常: toolId={}, error={}", toolId, e.getMessage());
             callLog.setErrorMessage(e.getMessage());
             callLog.setErrorCategory(classifyError(e));
             callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.FAILED);
-            throw new BusinessException("MCP tool invocation failed: " + e.getMessage(), e);
+            throw e;
+        } catch (ResourceAccessException e) {
+            log.error("[MCP Gateway] 工具调用网络异常: toolId={}, error={}", toolId, e.getMessage());
+            callLog.setErrorMessage(e.getMessage());
+            callLog.setErrorCategory(ErrorCategory.TIMEOUT);
+            callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.FAILED);
+            throw new ServiceUnavailableException("MCP-Tool-" + toolId, "网络连接失败: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("[MCP Gateway] 工具调用未知异常: toolId={}", toolId, e);
+            callLog.setErrorMessage(e.getMessage());
+            callLog.setErrorCategory(classifyError(e));
+            callLog.setStatus(com.aiagent.entity.ApiCallLog.ApiCallStatus.FAILED);
+            throw new BusinessException("error.tool.invocation_failed",
+                    "MCP tool invocation failed: " + e.getMessage(), e);
         } finally {
             callLog.setExecutionTime((int) (System.currentTimeMillis() - startTime));
             mcpToolCallLogRepository.save(callLog);
@@ -210,7 +226,8 @@ public class McpToolGateway {
     private Object invokeToolRecover(Exception e, Long toolId, Map<String, Object> parameters,
                                       Long tenantId, Long apiCallLogId) {
         log.error("[MCP Gateway] invokeTool() 重试耗尽, toolId={}, error={}", toolId, e.getMessage());
-        throw new BusinessException("MCP tool invocation failed after retries: " + e.getMessage(), e);
+        throw new ServiceUnavailableException("MCP-Tool-" + toolId,
+                "MCP tool invocation failed after retries: " + e.getMessage(), e);
     }
 
     // ==================== JSON-RPC 2.0 MCP 协议调用 ====================
@@ -221,7 +238,8 @@ public class McpToolGateway {
     private Object executeMcpToolCall(McpTool tool, Map<String, Object> parameters) {
         String serverUrl = resolveMcpServerUrl(tool);
         if (serverUrl == null) {
-            throw new BusinessException("MCP server URL not configured for tool: " + tool.getToolName());
+            throw new ValidationException("error.tool.server_not_configured",
+                    "MCP server URL not configured for tool: " + tool.getToolName());
         }
 
         // 确保 MCP 服务器已初始化
@@ -325,7 +343,7 @@ public class McpToolGateway {
             log.debug("[MCP Gateway] JSON-RPC 响应: {}", responseBody);
 
             if (responseBody == null || responseBody.isEmpty()) {
-                throw new BusinessException("MCP server returned empty response");
+                throw new BusinessException("error.tool.empty_response", "MCP server returned empty response");
             }
 
             // 解析 JSON-RPC 2.0 响应
@@ -336,7 +354,8 @@ public class McpToolGateway {
                 JsonNode error = responseNode.get("error");
                 int code = error.has("code") ? error.get("code").asInt() : -32603;
                 String message = error.has("message") ? error.get("message").asText() : "Unknown error";
-                throw new BusinessException("JSON-RPC 2.0 Error [" + code + "]: " + message);
+                throw new BusinessException("error.tool.jsonrpc_error",
+                        "JSON-RPC 2.0 Error [" + code + "]: " + message, code, message);
             }
 
             // 提取 result
@@ -362,7 +381,10 @@ public class McpToolGateway {
 
             return responseBody;
         } catch (JsonProcessingException e) {
-            throw new BusinessException("JSON-RPC 2.0 序列化失败: " + e.getMessage(), e);
+            throw new BusinessException("error.tool.serialization_failed",
+                    "JSON-RPC 2.0 序列化失败: " + e.getMessage(), e);
+        } catch (ResourceAccessException e) {
+            throw new ServiceUnavailableException("MCP-Server", "连接MCP服务器失败: " + e.getMessage(), e);
         }
     }
 

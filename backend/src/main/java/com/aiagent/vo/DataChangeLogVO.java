@@ -2,12 +2,13 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.DataChangeLog;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class DataChangeLogVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class DataChangeLogVO extends BaseVO {
     private String tableName;
     private String recordId;
     private String operationType;

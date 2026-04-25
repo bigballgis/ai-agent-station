@@ -47,14 +47,14 @@ public class AlertController {
     @PostMapping("/rules")
     @Operation(summary = "创建告警规则")
     public Result<AlertRuleVO> createRule(@Valid @RequestBody AlertRuleCreateDTO dto) {
-        return Result.success(alertService.createRule(dto));
+        return Result.created(alertService.createRule(dto));
     }
 
     @RequiresPermission("alert:manage")
     @PutMapping("/rules/{id}")
     @Operation(summary = "更新告警规则")
     public Result<AlertRuleVO> updateRule(@Parameter(description = "规则ID") @PathVariable Long id, @Valid @RequestBody AlertRuleUpdateDTO dto) {
-        return Result.success(alertService.updateRule(id, dto));
+        return Result.updated(alertService.updateRule(id, dto));
     }
 
     @RequiresPermission("alert:manage")
@@ -62,7 +62,7 @@ public class AlertController {
     @Operation(summary = "删除告警规则")
     public Result<Void> deleteRule(@Parameter(description = "规则ID") @PathVariable Long id) {
         alertService.deleteRule(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     // 告警记录查询
@@ -98,6 +98,6 @@ public class AlertController {
     @Operation(summary = "解决告警记录")
     public Result<Void> resolveAlertRecord(@Parameter(description = "告警记录ID") @PathVariable Long id) {
         alertService.resolveAlertRecord(id);
-        return Result.success(null);
+        return Result.updated();
     }
 }

@@ -66,7 +66,7 @@ public class TenantController {
     })
     public Result<TenantVO> createTenant(@Valid @RequestBody CreateTenantRequestDTO requestDTO) {
         Tenant tenant = DTOConverter.toTenantEntity(requestDTO);
-        return Result.success(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
+        return Result.created(DTOConverter.toTenantVO(tenantService.createTenant(tenant)));
     }
 
     @PutMapping("/{id}")
@@ -85,7 +85,7 @@ public class TenantController {
     public Result<TenantVO> updateTenant(@PathVariable Long id, @Valid @RequestBody UpdateTenantRequestDTO requestDTO) {
         Tenant existing = tenantService.getTenantById(id);
         DTOConverter.updateTenantFromDTO(requestDTO, existing);
-        return Result.success(DTOConverter.toTenantVO(tenantService.updateTenant(id, existing)));
+        return Result.updated(DTOConverter.toTenantVO(tenantService.updateTenant(id, existing)));
     }
 
     @DeleteMapping("/{id}")
@@ -102,7 +102,7 @@ public class TenantController {
     })
     public Result<Void> deleteTenant(@PathVariable Long id) {
         tenantService.deleteTenant(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @PostMapping("/{id}/regenerate-api-key")

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * 提供常用的内置工具，无需外部 MCP 服务器即可使用。
  * 所有方法使用 langchain4j @Tool 注解声明，自动被 FunctionToolRegistry 扫描注册。
  * 
- * 工具分类:
+ * 工具分类: {数学计算, 文本处理, 日期时间, 系统信息, 文件操作, {}}}
  * - 数学计算: calculate, convertUnit
  * - 文本处理: extractRegex, countWords, generateUuid, formatText
  * - 日期时间: getCurrentTime, formatDate, calculateDateDiff

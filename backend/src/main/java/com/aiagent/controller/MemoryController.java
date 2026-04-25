@@ -30,7 +30,7 @@ public class MemoryController {
     @Operation(summary = "创建Agent记忆")
     public Result<MemoryResponseDTO> createMemory(@Valid @RequestBody CreateMemoryRequestDTO requestDTO) {
         AgentMemory memory = DTOConverter.toMemoryEntity(requestDTO);
-        return Result.success(DTOConverter.toMemoryResponseDTO(memoryService.createMemory(memory)));
+        return Result.created(DTOConverter.toMemoryResponseDTO(memoryService.createMemory(memory)));
     }
 
     @RequiresPermission("memory:view")
@@ -60,7 +60,7 @@ public class MemoryController {
     @Operation(summary = "删除记忆")
     public Result<Void> deleteMemory(@Parameter(description = "记忆ID") @PathVariable Long id) {
         memoryService.deleteMemory(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @RequiresPermission("memory:manage")

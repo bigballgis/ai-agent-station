@@ -1,12 +1,11 @@
 package com.aiagent.vo;
 
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class TenantVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class TenantVO extends BaseVO {
     private String name;
     private String description;
     private String schemaName;
@@ -20,7 +19,5 @@ public class TenantVO {
     private Integer usedAgents;
     private Long usedApiCallsToday;
     private Long usedTokensToday;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     // 不包含 apiKey, apiSecret 等敏感字段
 }

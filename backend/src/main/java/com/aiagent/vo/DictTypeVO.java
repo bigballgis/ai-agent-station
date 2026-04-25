@@ -2,18 +2,16 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.DictType;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class DictTypeVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class DictTypeVO extends BaseVO {
     private String dictName;
     private String dictType;
     private String status;
     private Long itemCount;
     private String remark;
-    private LocalDateTime createdAt;
 
     public static DictTypeVO fromEntity(DictType entity) {
         DictTypeVO vo = new DictTypeVO();

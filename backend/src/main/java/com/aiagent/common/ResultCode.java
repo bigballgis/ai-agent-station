@@ -26,7 +26,11 @@ public enum ResultCode {
     MISSING_PARAMETER(400, "缺少必要的请求参数", "error.common.missing_param"),
     CONSTRAINT_VIOLATION(400, "约束校验失败", "error.validation.constraint_violation"),
     VALIDATION_FAILED(400, "参数校验失败", "error.validation.failed"),
-    FILE_PROCESSING_FAILED(422, "文件处理失败", "error.file.processing_failed");
+    FILE_PROCESSING_FAILED(422, "文件处理失败", "error.file.processing_failed"),
+    CONCURRENT_MODIFICATION(409, "数据并发冲突", "error.common.concurrent_modification"),
+    SERVICE_UNAVAILABLE(503, "服务暂不可用", "error.common.service_unavailable"),
+    FILE_UPLOAD_SIZE_EXCEEDED(413, "文件上传大小超限", "error.file.upload_size_exceeded"),
+    PARAMETER_TYPE_MISMATCH(400, "参数类型不匹配", "error.validation.type_mismatch");
 
     private final Integer code;
     private final String message;

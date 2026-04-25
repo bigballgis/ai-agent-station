@@ -2,10 +2,11 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.DictItem;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class DictItemVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class DictItemVO extends BaseVO {
     private String dictType;
     private String dictLabel;
     private String dictValue;

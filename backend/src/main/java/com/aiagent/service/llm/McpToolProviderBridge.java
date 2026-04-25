@@ -14,6 +14,7 @@ import dev.langchain4j.model.chat.request.json.JsonNumberSchema;
 import dev.langchain4j.model.chat.request.json.JsonBooleanSchema;
 import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import com.aiagent.mcp.McpToolGateway;
+import com.aiagent.exception.ServiceUnavailableException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -109,6 +110,9 @@ public class McpToolProviderBridge implements ToolProvider {
             lastCacheTime = now;
             log.debug("[MCP Bridge] 已转换 {} 个 MCP 工具为 langchain4j ToolSpecification", specs.size());
             return specs;
+        } catch (ServiceUnavailableException e) {
+            log.error("[MCP Bridge] MCP 服务不可用，无法获取工具列表: {}", e.getMessage());
+            return cachedToolSpecs != null ? cachedToolSpecs : List.of();
         } catch (Exception e) {
             log.error("[MCP Bridge] 获取 MCP 工具列表失败: {}", e.getMessage());
             return cachedToolSpecs != null ? cachedToolSpecs : List.of();
@@ -151,6 +155,7 @@ public class McpToolProviderBridge implements ToolProvider {
      */
     // 整个方法涉及 JSON Schema 的 Map/Object 递归转换，编译器无法验证泛型类型
     @SuppressWarnings("unchecked")
+    private JsonObjectSchema convertSchemaToJsonObjectSchema(Map<String, Object> schema) {
         try {
             JsonObjectSchema.Builder schemaBuilder = JsonObjectSchema.builder();
 
@@ -184,6 +189,7 @@ public class McpToolProviderBridge implements ToolProvider {
      */
     // JSON Schema 元素是 Object 类型，递归转换时需要强制转换为 Map/List 等具体类型
     @SuppressWarnings("unchecked")
+    private JsonSchemaElement convertJsonSchemaElement(Object element) {
         if (element instanceof String) {
             return mapSimpleType((String) element);
         }

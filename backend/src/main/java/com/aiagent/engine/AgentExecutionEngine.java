@@ -291,6 +291,7 @@ public class AgentExecutionEngine {
 
     // Agent 配置从数据库 JSON 字段反序列化，值为 Object 类型，需要强制转换
     @SuppressWarnings("unchecked")
+    private Map<String, Object> parseAgentConfig(Agent agent) {
         Map<String, Object> config = new HashMap<>();
         if (agent.getConfig() != null) {
             config.putAll(agent.getConfig());

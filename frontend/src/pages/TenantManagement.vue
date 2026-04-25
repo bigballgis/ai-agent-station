@@ -12,6 +12,7 @@
           </p>
         </div>
         <button
+          v-permission="'tenant:create'"
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
           @click="openCreateModal"
         >
@@ -160,6 +161,7 @@
               <td class="py-4 px-5 text-right">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    v-permission="'tenant:update'"
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer"
                     :title="t('tenant.edit')"
                     :aria-label="t('tenant.edit')"
@@ -170,6 +172,7 @@
                     </svg>
                   </button>
                   <button
+                    v-permission="'tenant:update'"
                     class="p-1.5 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
                     :title="tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')"
                     :aria-label="tenant.status === 'active' ? t('tenant.disable') : t('tenant.enable')"

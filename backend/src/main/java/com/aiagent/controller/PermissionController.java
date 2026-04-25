@@ -54,7 +54,7 @@ public class PermissionController {
     public Result<PermissionDTO> createPermission(@Valid @RequestBody PermissionDTO permissionDTO) {
         Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
         Permission created = permissionService.createPermission(permission);
-        return Result.success(DTOConverter.toPermissionDTO(created));
+        return Result.created(DTOConverter.toPermissionDTO(created));
     }
 
     @PutMapping("/{id}")
@@ -64,7 +64,7 @@ public class PermissionController {
     public Result<PermissionDTO> updatePermission(@PathVariable Long id, @Valid @RequestBody PermissionDTO permissionDTO) {
         Permission permission = DTOConverter.toPermissionEntity(permissionDTO);
         Permission updated = permissionService.updatePermission(id, permission);
-        return Result.success(DTOConverter.toPermissionDTO(updated));
+        return Result.updated(DTOConverter.toPermissionDTO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +73,7 @@ public class PermissionController {
     @RequiresRole("ADMIN")
     public Result<Void> deletePermission(@PathVariable Long id) {
         permissionService.deletePermission(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @PostMapping("/roles/{roleId}/permissions/{permissionId}")

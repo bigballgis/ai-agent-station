@@ -765,7 +765,7 @@ public class GraphExecutor {
      */
     private String resolveVariableReferences(String template, Map<String, Object> nodeOutputs, GraphDefinition graph) {
         if (template == null) return null;
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{\\{([^}]+)\\}\\}");
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{\\{([^{}]+)\\}\\}");
         java.util.regex.Matcher matcher = pattern.matcher(template);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {

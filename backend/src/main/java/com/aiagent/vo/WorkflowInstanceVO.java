@@ -2,13 +2,14 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.WorkflowInstance;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
 
 @Data
-public class WorkflowInstanceVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class WorkflowInstanceVO extends BaseVO {
     private String workflowName;
     private String status;
     private String currentNodeId;

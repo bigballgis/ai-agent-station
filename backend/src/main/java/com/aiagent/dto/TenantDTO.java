@@ -2,17 +2,16 @@ package com.aiagent.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "租户数据传输对象")
-public class TenantDTO {
-
-    @Schema(description = "租户ID")
-    private Long id;
+public class TenantDTO extends BaseDTO {
 
     @NotBlank(message = "租户名称不能为空")
     @Size(max = 100, message = "租户名称不能超过100个字符")

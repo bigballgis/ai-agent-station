@@ -54,7 +54,7 @@ public class RoleController {
     public Result<RoleDTO> createRole(@Valid @RequestBody RoleDTO roleDTO) {
         Role role = DTOConverter.toRoleEntity(roleDTO);
         Role created = roleService.createRole(role);
-        return Result.success(DTOConverter.toRoleDTO(created));
+        return Result.created(DTOConverter.toRoleDTO(created));
     }
 
     @PutMapping("/{id}")
@@ -64,7 +64,7 @@ public class RoleController {
     public Result<RoleDTO> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDTO roleDTO) {
         Role role = DTOConverter.toRoleEntity(roleDTO);
         Role updated = roleService.updateRole(id, role);
-        return Result.success(DTOConverter.toRoleDTO(updated));
+        return Result.updated(DTOConverter.toRoleDTO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +73,7 @@ public class RoleController {
     @RequiresRole("ADMIN")
     public Result<Void> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @PostMapping("/users/{userId}/roles/{roleId}")

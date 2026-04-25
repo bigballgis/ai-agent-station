@@ -1,16 +1,16 @@
 package com.aiagent.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
  * 测试用例响应 DTO
  */
 @Data
-public class TestCaseResponseDTO implements Serializable {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class TestCaseResponseDTO extends BaseDTO {
     private Long tenantId;
     private Long agentId;
     private String testName;
@@ -21,6 +21,4 @@ public class TestCaseResponseDTO implements Serializable {
     private String expectedOutput;
     private Integer status;
     private Long createdBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

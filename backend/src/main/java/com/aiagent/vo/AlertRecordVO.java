@@ -3,15 +3,14 @@ package com.aiagent.vo;
 import com.aiagent.entity.AlertRecord;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "告警记录视图对象")
-public class AlertRecordVO {
-
-    @Schema(description = "记录ID")
-    private Long id;
+public class AlertRecordVO extends BaseVO {
 
     @Schema(description = "规则ID")
     private Long ruleId;

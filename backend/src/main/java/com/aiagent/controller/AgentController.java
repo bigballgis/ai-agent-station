@@ -108,7 +108,7 @@ public class AgentController {
         if (dto.getType() != null) {
             agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
         }
-        return Result.success(DTOConverter.toAgentVO(agentService.createAgent(agent)));
+        return Result.created(DTOConverter.toAgentVO(agentService.createAgent(agent)));
     }
 
     @PutMapping("/{id}")
@@ -133,7 +133,7 @@ public class AgentController {
         if (dto.getType() != null) {
             agent.setStatus(Agent.AgentStatus.valueOf(dto.getType()));
         }
-        return Result.success(DTOConverter.toAgentVO(agentService.updateAgent(id, agent)));
+        return Result.updated(DTOConverter.toAgentVO(agentService.updateAgent(id, agent)));
     }
 
     @DeleteMapping("/{id}")
@@ -149,14 +149,14 @@ public class AgentController {
     })
     public Result<Void> deleteAgent(@Parameter(description = "Agent ID") @PathVariable Long id) {
         agentService.deleteAgent(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @PostMapping("/{id}/copy")
     @RequiresPermission("agent:create")
     @Operation(summary = "复制Agent")
     public Result<AgentVO> copyAgent(@Parameter(description = "Agent ID") @PathVariable Long id, @Valid @RequestBody AgentCopyDTO request) {
-        return Result.success(DTOConverter.toAgentVO(agentService.copyAgent(id, request.getNewName())));
+        return Result.created(DTOConverter.toAgentVO(agentService.copyAgent(id, request.getNewName())));
     }
 
     @GetMapping("/{id}/versions")
@@ -177,7 +177,7 @@ public class AgentController {
     @RequiresPermission("agent:update")
     @Operation(summary = "回滚到指定版本")
     public Result<AgentVO> rollbackToVersion(@Parameter(description = "Agent ID") @PathVariable Long id, @Parameter(description = "版本号") @PathVariable Integer versionNumber) {
-        return Result.success(DTOConverter.toAgentVO(agentService.rollbackToVersion(id, versionNumber)));
+        return Result.updated(DTOConverter.toAgentVO(agentService.rollbackToVersion(id, versionNumber)));
     }
 
     // ==================== 模板市场接口 ====================
@@ -198,7 +198,7 @@ public class AgentController {
     @RequiresPermission("agent:create")
     @Operation(summary = "使用模板创建Agent", description = "基于模板创建新的Agent实例")
     public Result<AgentVO> useTemplate(@Parameter(description = "模板 ID") @PathVariable Long id) {
-        return Result.success(DTOConverter.toAgentVO(agentService.createFromTemplate(id)));
+        return Result.created(DTOConverter.toAgentVO(agentService.createFromTemplate(id)));
     }
 
     @PostMapping("/templates/{id}/rate")
@@ -311,7 +311,7 @@ public class AgentController {
         }
 
         Agent created = agentService.createAgent(agent);
-        return Result.success(DTOConverter.toAgentVO(created));
+        return Result.created(DTOConverter.toAgentVO(created));
     }
 
 }

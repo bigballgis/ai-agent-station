@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import i18n from './locales'
 import { setupErrorHandler } from './utils/errorHandler'
 import { useWebVitals } from './composables/useWebVitals'
+import { setupDirectives } from './directives'
 import './style.css'
 import './assets/styles/theme.css'
 import './styles/common.css'
@@ -21,6 +22,9 @@ setupErrorHandler(app)
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+
+// 注册全局指令（v-permission, v-role）
+setupDirectives(app)
 
 // 初始化 Web Vitals 性能监控（非阻塞上报，不影响业务逻辑）
 useWebVitals({

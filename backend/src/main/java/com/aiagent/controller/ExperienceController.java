@@ -47,7 +47,7 @@ public class ExperienceController {
     public Result<ExperienceResponseDTO> createExperience(@Valid @RequestBody CreateExperienceRequestDTO requestDTO) {
         AgentEvolutionExperience experience = DTOConverter.toExperienceEntity(requestDTO);
         AgentEvolutionExperience createdExperience = experienceService.createExperience(experience);
-        return Result.success(DTOConverter.toExperienceResponseDTO(createdExperience));
+        return Result.created(DTOConverter.toExperienceResponseDTO(createdExperience));
     }
 
     // 更新经验
@@ -58,7 +58,7 @@ public class ExperienceController {
         AgentEvolutionExperience existing = experienceService.getExperienceById(id);
         DTOConverter.updateExperienceFromDTO(requestDTO, existing);
         AgentEvolutionExperience updatedExperience = experienceService.updateExperience(id, existing);
-        return Result.success(DTOConverter.toExperienceResponseDTO(updatedExperience));
+        return Result.updated(DTOConverter.toExperienceResponseDTO(updatedExperience));
     }
 
     // 删除经验
@@ -67,7 +67,7 @@ public class ExperienceController {
     @DeleteMapping("/{id}")
     public Result<Void> deleteExperience(@PathVariable Long id) {
         experienceService.deleteExperience(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     // 获取单个经验

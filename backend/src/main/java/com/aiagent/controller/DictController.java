@@ -93,7 +93,7 @@ public class DictController {
         dictType.setDictType(dto.getDictType());
         dictType.setStatus(dto.getStatus());
         dictType.setRemark(dto.getRemark());
-        return Result.success(DictTypeVO.fromEntity(dictService.createDictType(dictType)));
+        return Result.created(DictTypeVO.fromEntity(dictService.createDictType(dictType)));
     }
 
     /**
@@ -110,7 +110,7 @@ public class DictController {
         dictType.setDictType(dto.getDictType());
         dictType.setStatus(dto.getStatus());
         dictType.setRemark(dto.getRemark());
-        return Result.success(DictTypeVO.fromEntity(dictService.updateDictType(dictType)));
+        return Result.updated(DictTypeVO.fromEntity(dictService.updateDictType(dictType)));
     }
 
     /**

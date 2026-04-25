@@ -425,3 +425,4 @@ public class AgentService {
         double newRating = currentRating * 0.7 + rating * 0.3;
         agentRepository.updateRating(templateId, Math.round(newRating * 100.0) / 100.0);
     }
+}

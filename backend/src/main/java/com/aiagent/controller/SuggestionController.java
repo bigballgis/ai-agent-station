@@ -57,7 +57,7 @@ public class SuggestionController {
     public Result<SuggestionResponseDTO> createSuggestion(@Valid @RequestBody CreateSuggestionRequestDTO requestDTO) {
         AgentEvolutionSuggestion suggestion = DTOConverter.toSuggestionEntity(requestDTO);
         AgentEvolutionSuggestion createdSuggestion = suggestionService.createSuggestion(suggestion);
-        return Result.success(DTOConverter.toSuggestionResponseDTO(createdSuggestion));
+        return Result.created(DTOConverter.toSuggestionResponseDTO(createdSuggestion));
     }
 
     // 更新建议
@@ -68,7 +68,7 @@ public class SuggestionController {
         AgentEvolutionSuggestion existing = suggestionService.getSuggestionById(id);
         DTOConverter.updateSuggestionFromDTO(requestDTO, existing);
         AgentEvolutionSuggestion updatedSuggestion = suggestionService.updateSuggestion(id, existing);
-        return Result.success(DTOConverter.toSuggestionResponseDTO(updatedSuggestion));
+        return Result.updated(DTOConverter.toSuggestionResponseDTO(updatedSuggestion));
     }
 
     // 删除建议
@@ -77,7 +77,7 @@ public class SuggestionController {
     @DeleteMapping("/{id}")
     public Result<Void> deleteSuggestion(@PathVariable Long id) {
         suggestionService.deleteSuggestion(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     // 获取单个建议
@@ -179,7 +179,7 @@ public class SuggestionController {
             @Parameter(description = "建议ID") @PathVariable Long id,
             @RequestParam @Size(max = 20) @Parameter(description = "状态") String status) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateSuggestionStatus(id, status);
-        return Result.success(DTOConverter.toSuggestionResponseDTO(suggestion));
+        return Result.updated(DTOConverter.toSuggestionResponseDTO(suggestion));
     }
 
     // 更新实现状态
@@ -190,7 +190,7 @@ public class SuggestionController {
             @Parameter(description = "建议ID") @PathVariable Long id,
             @RequestParam @Size(max = 20) @Parameter(description = "实现状态") String implementationStatus) {
         AgentEvolutionSuggestion suggestion = suggestionService.updateImplementationStatus(id, implementationStatus);
-        return Result.success(DTOConverter.toSuggestionResponseDTO(suggestion));
+        return Result.updated(DTOConverter.toSuggestionResponseDTO(suggestion));
     }
 
     // 分析建议效果

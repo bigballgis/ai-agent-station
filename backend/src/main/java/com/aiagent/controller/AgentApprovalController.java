@@ -104,7 +104,7 @@ public class AgentApprovalController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         AgentApproval approval = agentApprovalService.submitForApproval(request.getAgentId(), request.getVersionId(), request.getRemark(), principal.getId());
-        return Result.success(AgentApprovalVO.fromEntity(approval));
+        return Result.created(AgentApprovalVO.fromEntity(approval));
     }
 
     @RequiresPermission("approval:manage")
@@ -117,7 +117,7 @@ public class AgentApprovalController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         AgentApproval approval = agentApprovalService.approve(id, request.getApprovalRemark(), principal.getId());
-        return Result.success(AgentApprovalVO.fromEntity(approval));
+        return Result.updated(AgentApprovalVO.fromEntity(approval));
     }
 
     @RequiresPermission("approval:manage")
@@ -130,7 +130,7 @@ public class AgentApprovalController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         AgentApproval approval = agentApprovalService.reject(id, request.getApprovalRemark(), principal.getId());
-        return Result.success(AgentApprovalVO.fromEntity(approval));
+        return Result.updated(AgentApprovalVO.fromEntity(approval));
     }
 
 }

@@ -11,10 +11,10 @@
         <div class="panel-header">
           <h2>{{ t('workflow.definitionList') }}</h2>
           <div class="flex items-center gap-2">
-            <a-button size="small" @click="showImportModal = true" :aria-label="t('workflow.importWorkflow')">
+            <a-button v-permission="'workflow:create'" size="small" @click="showImportModal = true" :aria-label="t('workflow.importWorkflow')">
               {{ t('workflow.importWorkflow') }}
             </a-button>
-            <a-button type="primary" size="small" @click="showCreateModal = true" :aria-label="t('workflow.newCreate')">
+            <a-button v-permission="'workflow:create'" type="primary" size="small" @click="showCreateModal = true" :aria-label="t('workflow.newCreate')">
               {{ t('workflow.newCreate') }}
             </a-button>
           </div>
@@ -64,10 +64,11 @@
               <a-button @click="handleExportDefinition" :aria-label="t('workflow.exportWorkflow')">
                 {{ t('workflow.exportWorkflow') }}
               </a-button>
-              <a-button v-if="selectedDefinition.status === 'DRAFT'" type="primary" @click="showEditModal = true" :aria-label="t('workflow.edit')">
+              <a-button v-permission="'workflow:update'" v-if="selectedDefinition.status === 'DRAFT'" type="primary" @click="showEditModal = true" :aria-label="t('workflow.edit')">
                 {{ t('workflow.edit') }}
               </a-button>
               <a-button
+                v-permission="'workflow:publish'"
                 v-if="selectedDefinition.status === 'DRAFT'"
                 type="primary"
                 @click="handlePublish"
@@ -83,6 +84,7 @@
                 {{ t('workflow.startInstance') }}
               </a-button>
               <a-popconfirm
+                v-permission="'workflow:delete'"
                 v-if="selectedDefinition.status !== 'PUBLISHED'"
                 :title="t('workflow.deleteConfirm')"
                 @confirm="handleDelete"

@@ -90,7 +90,7 @@ public class DeploymentController {
                 request.getAgentId(), request.getVersionId(),
                 request.getIsCanary(), request.getCanaryPercentage(),
                 request.getRemark(), principal.getId());
-        return Result.success(DeploymentVO.fromEntity(deployment));
+        return Result.created(DeploymentVO.fromEntity(deployment));
     }
 
     @RequiresPermission("deployment:manage")

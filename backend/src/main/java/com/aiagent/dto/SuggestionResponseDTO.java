@@ -1,8 +1,8 @@
 package com.aiagent.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
  * 建议响应 DTO
  */
 @Data
-public class SuggestionResponseDTO implements Serializable {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class SuggestionResponseDTO extends BaseDTO {
     private Long tenantId;
     private Long agentId;
     private Long reflectionId;
@@ -28,6 +28,4 @@ public class SuggestionResponseDTO implements Serializable {
     private LocalDateTime implementedAt;
     private Long createdBy;
     private Long updatedBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

@@ -2,19 +2,16 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.WorkflowDefinition;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class WorkflowDefinitionVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class WorkflowDefinitionVO extends BaseVO {
     private String name;
     private String description;
     private Integer version;
     private String status;
     private Integer nodeCount;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     public static WorkflowDefinitionVO fromEntity(WorkflowDefinition entity) {
         WorkflowDefinitionVO vo = new WorkflowDefinitionVO();

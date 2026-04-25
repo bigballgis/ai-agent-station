@@ -2,12 +2,13 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.DeploymentHistory;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class DeploymentVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class DeploymentVO extends BaseVO {
     private String agentName;
     private Long agentId;
     private String environment;

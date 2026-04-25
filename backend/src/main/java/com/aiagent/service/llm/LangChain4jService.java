@@ -1,5 +1,7 @@
 package com.aiagent.service.llm;
 
+import com.aiagent.exception.BusinessException;
+import com.aiagent.exception.ServiceUnavailableException;
 import com.aiagent.exception.ValidationException;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -119,7 +121,7 @@ public class LangChain4jService {
      */
     private String chatRecover(RuntimeException e, String providerName, String systemPrompt, String userMessage) {
         log.error("[LangChain4j] chat() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-Chat", e.getMessage(), e);
     }
 
     /**
@@ -150,7 +152,7 @@ public class LangChain4jService {
     private String chatWithConfigRecover(RuntimeException e, String providerName, String systemPrompt,
                                           String userMessage, LlmProviderConfig config) {
         log.error("[LangChain4j] chatWithConfig() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-ChatWithConfig", e.getMessage(), e);
     }
 
     /**
@@ -174,7 +176,7 @@ public class LangChain4jService {
     private Response<AiMessage> chatWithHistoryRecover(RuntimeException e, String providerName,
                                                         List<ChatMessage> messages) {
         log.error("[LangChain4j] chatWithHistory() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-ChatWithHistory", e.getMessage(), e);
     }
 
     // ==================== ChatMemory 管理 ====================
@@ -251,7 +253,7 @@ public class LangChain4jService {
                                           String userMessage, int maxMessages) {
         log.error("[LangChain4j] chatWithMemory() 重试耗尽, provider={}, memoryId={}, error={}",
                 providerName, memoryId, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-ChatWithMemory", e.getMessage(), e);
     }
 
     /**
@@ -261,7 +263,7 @@ public class LangChain4jService {
                                                 String systemPrompt, String userMessage, int maxMessages) {
         log.error("[LangChain4j] chatWithMemory(systemPrompt) 重试耗尽, provider={}, memoryId={}, error={}",
                 providerName, memoryId, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-ChatWithMemorySystem", e.getMessage(), e);
     }
 
     /**
@@ -332,10 +334,14 @@ public class LangChain4jService {
                 try {
                     String result = toolExecutor.execute(toolRequest.name(), toolRequest.arguments());
                     currentMessages.add(ToolExecutionResultMessage.from(toolRequest, result));
-                } catch (Exception e) {
-                    log.error("[LangChain4j] 工具执行失败: {} - {}", toolRequest.name(), e.getMessage());
+                } catch (BusinessException e) {
+                    log.error("[LangChain4j] 工具执行业务异常: {} - {}", toolRequest.name(), e.getMessage());
                     currentMessages.add(ToolExecutionResultMessage.from(toolRequest,
                             "工具执行失败: " + e.getMessage()));
+                } catch (Exception e) {
+                    log.error("[LangChain4j] 工具执行未知异常: {} - {}", toolRequest.name(), e.getMessage(), e);
+                    currentMessages.add(ToolExecutionResultMessage.from(toolRequest,
+                            "工具执行失败(内部错误): " + e.getMessage()));
                 }
             }
             iteration++;
@@ -355,7 +361,7 @@ public class LangChain4jService {
                                                       ToolExecutor toolExecutor,
                                                       int maxToolIterations) {
         log.error("[LangChain4j] chatWithTools() 重试耗尽, provider={}, error={}", providerName, e.getMessage());
-        throw e;
+        throw new ServiceUnavailableException("LLM-ChatWithTools", e.getMessage(), e);
     }
 
     /**

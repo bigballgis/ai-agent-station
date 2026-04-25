@@ -2,17 +2,16 @@ package com.aiagent.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Agent数据传输对象")
-public class AgentDTO {
-
-    @Schema(description = "Agent ID")
-    private Long id;
+public class AgentDTO extends BaseDTO {
 
     @NotBlank(message = "Agent名称不能为空")
     @Size(max = 100, message = "Agent名称不能超过100个字符")

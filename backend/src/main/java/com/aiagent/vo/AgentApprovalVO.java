@@ -3,15 +3,14 @@ package com.aiagent.vo;
 import com.aiagent.entity.AgentApproval;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "审批记录视图对象")
-public class AgentApprovalVO {
-
-    @Schema(description = "审批ID")
-    private Long id;
+public class AgentApprovalVO extends BaseVO {
 
     @Schema(description = "Agent ID")
     private Long agentId;
@@ -39,12 +38,6 @@ public class AgentApprovalVO {
 
     @Schema(description = "审批时间")
     private LocalDateTime approvedAt;
-
-    @Schema(description = "创建时间")
-    private LocalDateTime createdAt;
-
-    @Schema(description = "更新时间")
-    private LocalDateTime updatedAt;
 
     public static AgentApprovalVO fromEntity(AgentApproval entity) {
         AgentApprovalVO vo = new AgentApprovalVO();

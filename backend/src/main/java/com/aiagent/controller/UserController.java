@@ -65,7 +65,7 @@ public class UserController {
     public Result<UserResponseDTO> createUser(@Valid @RequestBody CreateUserDTO dto) {
         User user = DTOConverter.toUserEntity(dto);
         User created = userService.createUser(user);
-        return Result.success(DTOConverter.toUserResponseDTO(created));
+        return Result.created(DTOConverter.toUserResponseDTO(created));
     }
 
     @PutMapping("/{id}")
@@ -78,7 +78,7 @@ public class UserController {
         User existingUser = userService.getUserById(id);
         DTOConverter.updateUserFromDTO(dto, existingUser);
         User updated = userService.updateUser(id, existingUser);
-        return Result.success(DTOConverter.toUserResponseDTO(updated));
+        return Result.updated(DTOConverter.toUserResponseDTO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -89,7 +89,7 @@ public class UserController {
     @Audited(action = AuditAction.DELETE, module = "用户管理", description = "删除用户", resourceType = "User")
     public Result<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @PostMapping("/{id}/reset-password")

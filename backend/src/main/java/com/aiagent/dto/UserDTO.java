@@ -2,17 +2,16 @@ package com.aiagent.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "用户数据传输对象")
-public class UserDTO {
-
-    @Schema(description = "用户ID")
-    private Long id;
+public class UserDTO extends BaseDTO {
 
     @NotBlank(message = "用户名不能为空")
     @Size(min = 3, max = 50, message = "用户名长度必须在3-50个字符之间")
@@ -35,9 +34,6 @@ public class UserDTO {
 
     @Schema(description = "昵称")
     private String nickname;
-
-    @Schema(description = "租户ID", example = "1")
-    private Long tenantId;
 
     @Schema(description = "用户状态", example = "ACTIVE")
     private String status;

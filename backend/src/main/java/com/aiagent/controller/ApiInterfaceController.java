@@ -80,7 +80,7 @@ public class ApiInterfaceController {
         apiInterface.setDescription(dto.getDescription());
         apiInterface.setIsActive(dto.getIsActive());
         apiInterface.setApiVersion(dto.getApiVersion() != null ? dto.getApiVersion() : "v1");
-        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.create(apiInterface)));
+        return Result.created(ApiInterfaceVO.fromEntity(apiInterfaceService.create(apiInterface)));
     }
 
     @RequiresPermission("api:write")
@@ -97,7 +97,7 @@ public class ApiInterfaceController {
         apiInterface.setMethod(dto.getMethod());
         apiInterface.setDescription(dto.getDescription());
         apiInterface.setIsActive(dto.getIsActive());
-        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.createNewVersion(id, tenantId, apiInterface)));
+        return Result.created(ApiInterfaceVO.fromEntity(apiInterfaceService.createNewVersion(id, tenantId, apiInterface)));
     }
 
     @RequiresPermission("api:read")
@@ -138,7 +138,7 @@ public class ApiInterfaceController {
         apiInterface.setMethod(dto.getMethod());
         apiInterface.setDescription(dto.getDescription());
         apiInterface.setIsActive(dto.getIsActive());
-        return Result.success(ApiInterfaceVO.fromEntity(apiInterfaceService.update(id, tenantId, apiInterface)));
+        return Result.updated(ApiInterfaceVO.fromEntity(apiInterfaceService.update(id, tenantId, apiInterface)));
     }
 
     @RequiresPermission("api:delete")
@@ -148,7 +148,7 @@ public class ApiInterfaceController {
             @PathVariable Long id,
             @RequestHeader("X-Tenant-ID") Long tenantId) {
         apiInterfaceService.delete(id, tenantId);
-        return Result.success();
+        return Result.deleted();
     }
 
     @RequiresPermission("api:write")

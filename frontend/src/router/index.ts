@@ -3,6 +3,13 @@ import { useUserStore } from '@/store/modules/user'
 import { messages } from '@/locales'
 import { setupRouteChangeCancellation } from '@/utils/request'
 import { globalPerformanceTracker } from '@/composables/usePerformanceMark'
+import {
+  isTokenExpired,
+  checkRoutePermission,
+  logRouteChange,
+  handleTokenExpired,
+  handleNoPermission,
+} from '@/router/guards'
 // MainLayout 作为所有认证路由的布局包装器，保持静态导入
 // 避免嵌套懒加载导致的布局闪烁问题
 import MainLayout from '@/layouts/MainLayout.vue'
@@ -235,9 +242,12 @@ const router = createRouter({
 setupRouteChangeCancellation(router)
 
 // 路由守卫
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, from, next) => {
   // 性能追踪：记录路由切换开始时间
   globalPerformanceTracker.startMark(`route:${to.fullPath}`)
+
+  // 路由变化日志（仅开发模式）
+  logRouteChange(to, from)
 
   // 设置页面标题（使用 i18n 翻译）
   const titleKey = to.meta.title as string | undefined
@@ -249,11 +259,12 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   const userStore = useUserStore()
-  
+
   // 检查路由是否需要认证
   if (to.meta.requiresAuth !== false) {
     if (!userStore.isLoggedIn) {
       // 未登录，跳转到登录页
+      logRouteChange(to, from, 'redirect')
       next({
         path: '/login',
         query: { redirect: to.fullPath }
@@ -261,41 +272,28 @@ router.beforeEach(async (to, _from, next) => {
       return
     }
 
-    // 检查token是否过期
+    // 检查 token 是否过期（使用增强的守卫工具函数）
     const token = userStore.token
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          userStore.logout()
-          return next({ path: '/login', query: { redirect: to.fullPath } })
-        }
-      } catch {
-        // token格式无效
-        userStore.logout()
-        return next({ path: '/login', query: { redirect: to.fullPath } })
-      }
+    if (token && isTokenExpired(token)) {
+      logRouteChange(to, from, 'redirect')
+      return next(handleTokenExpired(to))
     }
 
-    // 检查路由角色权限
-    const requiredRoles = to.meta.roles as string[] | undefined
-    if (requiredRoles && requiredRoles.length > 0) {
-      const userRoles = userStore.userInfo?.roles || []
-      const hasRole = userRoles.some((role: string) => requiredRoles.includes(role))
-      if (!hasRole) {
-        // 使用 query 参数传递提示信息，避免直接操作 UI
-        return next({ path: '/dashboard', query: { noPermission: '1' } })
-      }
+    // 检查路由权限（统一权限检查：roles + requiresPermission + requiresAllPermissions + requiresAllRoles）
+    if (!checkRoutePermission(to)) {
+      logRouteChange(to, from, 'redirect')
+      return next(handleNoPermission(to))
     }
   } else {
     // 不需要认证的页面
     if (to.path === '/login' && userStore.isLoggedIn) {
       // 已登录但访问登录页，重定向到首页
+      logRouteChange(to, from, 'redirect')
       next('/dashboard')
       return
     }
   }
-  
+
   next()
 })
 
@@ -310,9 +308,12 @@ const prefetchMap: Record<string, string[]> = {
 
 let prefetchTimer: ReturnType<typeof setTimeout> | null = null
 
-router.afterEach((to) => {
+router.afterEach((to, from) => {
   // 性能追踪：记录路由切换结束时间
   globalPerformanceTracker.endMark(`route:${to.fullPath}`)
+
+  // 路由变化日志（仅开发模式）
+  logRouteChange(to, from)
 
   // 清除之前的预取定时器
   if (prefetchTimer) {

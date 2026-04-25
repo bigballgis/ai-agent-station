@@ -1,13 +1,13 @@
 package com.aiagent.vo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class UserVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class UserVO extends BaseVO {
     private String username;
     private String nickname;
     private String email;
@@ -16,7 +16,6 @@ public class UserVO {
     private Long tenantId;
     private String tenantName;
     private List<String> roles;
-    private LocalDateTime createdAt;
     // 脱敏字段
     private String maskedPhone;
     private String maskedEmail;

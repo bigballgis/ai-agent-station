@@ -2,12 +2,13 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.LoginLog;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class LoginLogVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class LoginLogVO extends BaseVO {
     private String username;
     private String loginType;
     private String ip;

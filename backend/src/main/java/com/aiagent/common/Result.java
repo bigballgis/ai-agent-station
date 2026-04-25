@@ -12,6 +12,7 @@ public class Result<T> implements Serializable {
     private String messageCode;
     private LocalDateTime timestamp;
     private String path;
+    private PageResult<?> pagination;
 
     public Result() {
     }
@@ -20,7 +21,10 @@ public class Result<T> implements Serializable {
         this.code = code;
         this.message = message;
         this.data = data;
+        this.timestamp = LocalDateTime.now();
     }
+
+    // ==================== 通用成功方法 ====================
 
     public static <T> Result<T> success() {
         return new Result<>(200, "操作成功", null);
@@ -33,6 +37,54 @@ public class Result<T> implements Serializable {
     public static <T> Result<T> success(String message, T data) {
         return new Result<>(200, message, data);
     }
+
+    // ==================== 语义化工厂方法 ====================
+
+    /**
+     * POST 创建资源成功
+     */
+    public static <T> Result<T> created(T data) {
+        return new Result<>(201, "创建成功", data);
+    }
+
+    /**
+     * POST 创建资源成功（无返回数据）
+     */
+    public static <T> Result<T> created() {
+        return new Result<>(201, "创建成功", null);
+    }
+
+    /**
+     * PUT 更新资源成功
+     */
+    public static <T> Result<T> updated(T data) {
+        return new Result<>(200, "更新成功", data);
+    }
+
+    /**
+     * PUT 更新资源成功（无返回数据）
+     */
+    public static <T> Result<T> updated() {
+        return new Result<>(200, "更新成功", null);
+    }
+
+    /**
+     * DELETE 删除资源成功
+     */
+    public static <T> Result<T> deleted() {
+        return new Result<>(200, "删除成功", null);
+    }
+
+    /**
+     * 分页查询成功（自动设置 pagination 字段）
+     */
+    public static <T> Result<PageResult<T>> okPage(PageResult<T> pageResult) {
+        Result<PageResult<T>> result = new Result<>(200, "查询成功", pageResult);
+        result.setPagination(pageResult);
+        return result;
+    }
+
+    // ==================== 错误方法 ====================
 
     public static <T> Result<T> error(String message) {
         return new Result<>(500, message, null);
@@ -49,6 +101,8 @@ public class Result<T> implements Serializable {
     public static <T> Result<T> error(Integer code, String message, T data) {
         return new Result<>(code, message, data);
     }
+
+    // ==================== Getter / Setter ====================
 
     public Integer getCode() {
         return code;
@@ -106,6 +160,16 @@ public class Result<T> implements Serializable {
         this.path = path;
     }
 
+    public PageResult<?> getPagination() {
+        return pagination;
+    }
+
+    public void setPagination(PageResult<?> pagination) {
+        this.pagination = pagination;
+    }
+
+    // ==================== 链式调用方法 ====================
+
     /**
      * 从 MDC 中获取 traceId 并设置到当前 Result 对象
      */
@@ -135,6 +199,14 @@ public class Result<T> implements Serializable {
      */
     public Result<T> withPath(String path) {
         this.path = path;
+        return this;
+    }
+
+    /**
+     * 设置 pagination 并返回当前 Result 对象（链式调用）
+     */
+    public Result<T> withPagination(PageResult<?> pagination) {
+        this.pagination = pagination;
         return this;
     }
 }

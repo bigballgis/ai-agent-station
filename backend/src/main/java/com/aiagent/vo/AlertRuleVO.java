@@ -2,19 +2,19 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.AlertRule;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class AlertRuleVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class AlertRuleVO extends BaseVO {
     private String name;
     private String severity;
     private String status;
     private Boolean enabled;
     private String notifyChannels;
     private String webhookUrl;
-    private LocalDateTime createdAt;
 
     public static AlertRuleVO fromEntity(AlertRule entity) {
         AlertRuleVO vo = new AlertRuleVO();

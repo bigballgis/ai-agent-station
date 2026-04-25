@@ -1,16 +1,16 @@
 package com.aiagent.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
  * 记忆响应 DTO
  */
 @Data
-public class MemoryResponseDTO implements Serializable {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class MemoryResponseDTO extends BaseDTO {
     private Long agentId;
     private String sessionId;
     private String memoryType;
@@ -23,6 +23,4 @@ public class MemoryResponseDTO implements Serializable {
     private LocalDateTime expiresAt;
     private Long tenantId;
     private Long createdBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

@@ -122,7 +122,7 @@ public class AgentTestResultController {
                 .orElseThrow(() -> new ResourceNotFoundException("Test result not found"));
         DTOConverter.updateTestResultFromDTO(request, result);
         AgentTestResult updatedResult = resultService.updateResult(id, result);
-        return Result.success(DTOConverter.toTestResultResponseDTO(updatedResult));
+        return Result.updated(DTOConverter.toTestResultResponseDTO(updatedResult));
     }
 
     @Operation(summary = "更新测试结果")

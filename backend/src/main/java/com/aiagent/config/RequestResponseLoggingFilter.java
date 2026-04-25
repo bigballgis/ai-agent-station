@@ -235,7 +235,7 @@ public class RequestResponseLoggingFilter implements Filter, Ordered {
                     "$1****$3");
             // 匹配 "fieldName": value (非字符串值)
             masked = masked.replaceAll(
-                    "(?i)(\"" + field + "\"\\s*:\\s*)([^\",}\\]\\s]+)",
+                    "(?i)(\"" + field + "\"\\s*:\\s*)([^\",{}\\]\\s]+)",
                     "$1****");
         }
         return masked;

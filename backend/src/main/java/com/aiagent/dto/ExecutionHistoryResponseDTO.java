@@ -1,12 +1,13 @@
 package com.aiagent.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class ExecutionHistoryResponseDTO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class ExecutionHistoryResponseDTO extends BaseDTO {
     private Long agentId;
     private Long tenantId;
     private Long userId;

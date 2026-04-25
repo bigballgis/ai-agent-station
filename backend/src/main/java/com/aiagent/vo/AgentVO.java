@@ -1,14 +1,14 @@
 package com.aiagent.vo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class AgentVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class AgentVO extends BaseVO {
     private Long tenantId;
     private String name;
     private String description;
@@ -24,7 +24,5 @@ public class AgentVO {
     private Integer usageCount;
     private Long version;
     private Long publishedVersionId;
-    private LocalDateTime publishedAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private java.time.LocalDateTime publishedAt;
 }

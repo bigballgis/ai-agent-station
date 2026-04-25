@@ -57,6 +57,13 @@ public class PageResult<T> implements Serializable {
         return new PageResult<>((long) total, pageRecords, page, size);
     }
 
+    /**
+     * 别名方法，与 Spring Data 命名保持一致
+     */
+    public Long getTotalElements() {
+        return total;
+    }
+
     public Long getTotal() {
         return total;
     }

@@ -5,6 +5,7 @@
       <template #actions>
         <div class="flex items-center gap-2">
           <button
+            v-permission="'agent:import'"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition-all duration-200 cursor-pointer"
             :aria-label="t('agent.importAgent')"
             @click="showImportModal = true"
@@ -15,6 +16,7 @@
             {{ t('agent.importAgent') }}
           </button>
           <button
+            v-permission="'agent:export'"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition-all duration-200 cursor-pointer"
             :aria-label="t('agent.exportAllAgents')"
             @click="handleExportAll"
@@ -25,6 +27,7 @@
             {{ t('agent.exportAllAgents') }}
           </button>
           <button
+            v-permission="'agent:create'"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             :aria-label="t('agent.createAgent')"
             @click="showCreateModal = true"
@@ -153,6 +156,7 @@
               </svg>
             </button>
             <button
+              v-permission="'agent:update'"
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               :aria-label="t('common.edit')"
               :title="t('common.edit')"
@@ -175,6 +179,7 @@
               </svg>
             </button>
             <button
+              v-permission="'agent:delete'"
               class="p-2 rounded-lg text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               :aria-label="t('common.delete')"
               :title="t('common.delete')"

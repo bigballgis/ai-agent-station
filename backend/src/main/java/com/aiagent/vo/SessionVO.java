@@ -2,12 +2,13 @@ package com.aiagent.vo;
 
 import com.aiagent.entity.UserSession;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-public class SessionVO {
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class SessionVO extends BaseVO {
     private String username;
     private String ip;
     private String browser;

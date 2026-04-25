@@ -3,15 +3,12 @@ package com.aiagent.vo;
 import com.aiagent.entity.ApiInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "API接口视图对象")
-public class ApiInterfaceVO {
-
-    @Schema(description = "接口ID")
-    private Long id;
+public class ApiInterfaceVO extends BaseVO {
 
     @Schema(description = "关联Agent ID")
     private Long agentId;
@@ -42,12 +39,6 @@ public class ApiInterfaceVO {
 
     @Schema(description = "基础API ID（版本链路）")
     private Long baseApiId;
-
-    @Schema(description = "创建时间")
-    private LocalDateTime createdAt;
-
-    @Schema(description = "更新时间")
-    private LocalDateTime updatedAt;
 
     public static ApiInterfaceVO fromEntity(ApiInterface entity) {
         ApiInterfaceVO vo = new ApiInterfaceVO();

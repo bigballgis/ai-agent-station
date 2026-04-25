@@ -35,7 +35,7 @@ public class AgentTestCaseController {
     public Result<TestCaseResponseDTO> createTestCase(@Valid @RequestBody CreateTestCaseRequestDTO request) {
         AgentTestCase testCase = DTOConverter.toTestCaseEntity(request);
         AgentTestCase createdTestCase = testCaseService.createTestCase(testCase);
-        return Result.success(DTOConverter.toTestCaseResponseDTO(createdTestCase));
+        return Result.created(DTOConverter.toTestCaseResponseDTO(createdTestCase));
     }
 
     @RequiresPermission("test:view")
@@ -78,7 +78,7 @@ public class AgentTestCaseController {
                 .orElseThrow(() -> new RuntimeException("Test case not found"));
         DTOConverter.updateTestCaseFromDTO(request, testCase);
         AgentTestCase updatedTestCase = testCaseService.updateTestCase(id, testCase);
-        return Result.success(DTOConverter.toTestCaseResponseDTO(updatedTestCase));
+        return Result.updated(DTOConverter.toTestCaseResponseDTO(updatedTestCase));
     }
 
     @RequiresPermission("test:manage")
@@ -86,7 +86,7 @@ public class AgentTestCaseController {
     @Operation(summary = "删除测试用例")
     public Result<Void> deleteTestCase(@PathVariable Long id) {
         testCaseService.deleteTestCase(id);
-        return Result.success();
+        return Result.deleted();
     }
 
     @RequiresPermission("test:view")

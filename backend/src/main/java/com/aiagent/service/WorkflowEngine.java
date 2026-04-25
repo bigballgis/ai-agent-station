@@ -5,6 +5,7 @@ import com.aiagent.entity.WorkflowInstance;
 import com.aiagent.entity.WorkflowNodeLog;
 import com.aiagent.exception.BusinessException;
 import com.aiagent.exception.ResourceNotFoundException;
+import com.aiagent.exception.ServiceUnavailableException;
 import com.aiagent.repository.WorkflowDefinitionRepository;
 import com.aiagent.repository.WorkflowInstanceRepository;
 import com.aiagent.repository.WorkflowNodeLogRepository;
@@ -170,8 +171,9 @@ public class WorkflowEngine {
             }
 
             return nodeLog;
-        } catch (Exception e) {
-            log.error("Node execution failed: nodeId={}, error={}", currentNodeId, e.getMessage(), e);
+        } catch (BusinessException e) {
+            log.error("Node execution business error: nodeId={}, instanceId={}, error={}",
+                    currentNodeId, instanceId, e.getMessage());
             nodeLog.setStatus(WorkflowNodeLog.NodeLogStatus.FAILED);
             nodeLog.setError(e.getMessage());
             nodeLog.setCompletedAt(LocalDateTime.now());
@@ -183,19 +185,27 @@ public class WorkflowEngine {
             instance.setCompletedAt(LocalDateTime.now());
             instanceRepository.save(instance);
 
-            // Publish real-time workflow status changed event
-            try {
-                notificationService.publishWorkflowStatusChanged(
-                        instance.getStartedBy(),
-                        instance.getWorkflowName(),
-                        instance.getId(),
-                        "FAILED"
-                );
-            } catch (Exception notifyEx) {
-                log.warn("Failed to publish workflow failed event: {}", notifyEx.getMessage());
-            }
+            publishWorkflowFailedEvent(instance);
 
-            throw new BusinessException("节点执行失败: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Node execution unexpected error: nodeId={}, instanceId={}, error={}",
+                    currentNodeId, instanceId, e.getMessage(), e);
+            nodeLog.setStatus(WorkflowNodeLog.NodeLogStatus.FAILED);
+            nodeLog.setError(e.getMessage());
+            nodeLog.setCompletedAt(LocalDateTime.now());
+            nodeLog.setDuration(calculateDuration(nodeLog.getStartedAt(), nodeLog.getCompletedAt()));
+            nodeLogRepository.save(nodeLog);
+
+            instance.setStatus(WorkflowInstance.InstanceStatus.FAILED);
+            instance.setError("节点 " + nodeName + " 执行异常: " + e.getMessage());
+            instance.setCompletedAt(LocalDateTime.now());
+            instanceRepository.save(instance);
+
+            publishWorkflowFailedEvent(instance);
+
+            throw new BusinessException("error.workflow.node_execution_failed",
+                    "节点 " + nodeName + " 执行异常: " + e.getMessage(), currentNodeId);
         }
     }
 
@@ -331,7 +341,6 @@ public class WorkflowEngine {
         instanceRepository.save(instance);
         log.info("Workflow completed: instanceId={}, name={}", instance.getId(), instance.getWorkflowName());
 
-        // Publish real-time workflow status changed event
         try {
             notificationService.publishWorkflowStatusChanged(
                     instance.getStartedBy(),
@@ -340,7 +349,25 @@ public class WorkflowEngine {
                     "COMPLETED"
             );
         } catch (Exception e) {
-            log.warn("Failed to publish workflow completed event: {}", e.getMessage());
+            log.warn("Failed to publish workflow completed event: instanceId={}, error={}",
+                    instance.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * 发布工作流失败事件（提取为公共方法，避免重复代码）
+     */
+    private void publishWorkflowFailedEvent(WorkflowInstance instance) {
+        try {
+            notificationService.publishWorkflowStatusChanged(
+                    instance.getStartedBy(),
+                    instance.getWorkflowName(),
+                    instance.getId(),
+                    "FAILED"
+            );
+        } catch (Exception notifyEx) {
+            log.warn("Failed to publish workflow failed event: instanceId={}, error={}",
+                    instance.getId(), notifyEx.getMessage());
         }
     }
 
