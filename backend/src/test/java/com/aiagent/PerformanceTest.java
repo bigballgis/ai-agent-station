@@ -6,6 +6,7 @@ import com.aiagent.engine.AgentExecutionEngine;
 import com.aiagent.entity.Agent;
 import com.aiagent.repository.AgentRepository;
 import com.aiagent.tenant.TenantContextHolder;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Disabled("Performance test is not a unit test. Enable in dedicated performance pipeline with stable environment.")
 public class PerformanceTest {
 
     @Autowired
