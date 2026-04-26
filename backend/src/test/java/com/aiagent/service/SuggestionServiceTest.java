@@ -82,7 +82,7 @@ class SuggestionServiceTest {
 
         // 模拟安全上下文
         securityContextHolderMock = mockStatic(SecurityContextHolder.class);
-        UserPrincipal userPrincipal = new UserPrincipal(1L, "admin", "password", Collections.emptyList());
+        UserPrincipal userPrincipal = new UserPrincipal(1L, "admin", 100L);
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(userPrincipal, null, Collections.emptyList());
         org.springframework.security.core.context.SecurityContext context = mock(org.springframework.security.core.context.SecurityContext.class);
@@ -296,6 +296,6 @@ class SuggestionServiceTest {
 
         suggestionService.deleteSuggestion(999L);
 
-        verify(suggestionRepository, never()).delete(any());
+        verify(suggestionRepository, never()).delete(any(AgentEvolutionSuggestion.class));
     }
 }

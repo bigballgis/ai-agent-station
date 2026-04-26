@@ -152,7 +152,7 @@ public class PermissionAspect {
         }
 
         // 查询所有角色关联的权限
-        Set<String> permissionNames = java.util.HashSet.newHashSet(roleIds.size());
+        Set<String> permissionNames = new java.util.HashSet<>(roleIds.size());
         for (Long roleId : roleIds) {
             for (RolePermission rp : rolePermissionRepository.findByRoleId(roleId)) {
                 Permission permission = permissionRepository.findById(rp.getPermissionId()).orElse(null);

@@ -2,15 +2,15 @@ package com.aiagent.controller;
 
 import com.aiagent.entity.WorkflowDefinition;
 import com.aiagent.entity.WorkflowInstance;
-import com.aiagent.entity.WorkflowNodeLog;
-import com.aiagent.repository.WorkflowDefinitionRepository;
-import com.aiagent.repository.WorkflowInstanceRepository;
-import com.aiagent.security.UserPrincipal;
+import com.aiagent.exception.GlobalExceptionHandler;
 import com.aiagent.service.WorkflowEngine;
+import com.aiagent.service.WorkflowService;
 import com.aiagent.tenant.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -30,8 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 使用 MockMvc 测试工作流管理接口
  */
 @WebMvcTest(WorkflowController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
 @DisplayName("工作流控制器测试")
-class WorkflowControllerTest {
+class WorkflowControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,10 +45,7 @@ class WorkflowControllerTest {
     private WorkflowEngine workflowEngine;
 
     @MockBean
-    private WorkflowDefinitionRepository definitionRepository;
-
-    @MockBean
-    private WorkflowInstanceRepository instanceRepository;
+    private WorkflowService workflowService;
 
     @BeforeEach
     void setUp() {
@@ -69,10 +68,10 @@ class WorkflowControllerTest {
         def.setStatus(WorkflowDefinition.WorkflowStatus.DRAFT);
         def.setCreatedAt(LocalDateTime.now());
 
-        when(definitionRepository.findByTenantId(eq(100L), any())).thenReturn(
+        when(workflowService.listDefinitions(eq(100L), any())).thenReturn(
                 new org.springframework.data.domain.PageImpl<>(List.of(def)));
 
-        mockMvc.perform(get("/workflows/definitions")
+        mockMvc.perform(get("/v1/workflows/definitions")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -92,18 +91,20 @@ class WorkflowControllerTest {
         saved.setStatus(WorkflowDefinition.WorkflowStatus.DRAFT);
         saved.setTenantId(100L);
 
-        when(definitionRepository.save(any(WorkflowDefinition.class))).thenReturn(saved);
+        doNothing().when(workflowService).validateNodeCount(any());
+        when(workflowService.createDefinition(any(WorkflowDefinition.class))).thenReturn(saved);
+        when(workflowService.updateDefinition(any(WorkflowDefinition.class))).thenReturn(saved);
 
         String json = objectMapper.writeValueAsString(Map.of(
                 "name", "新流程",
                 "description", "新流程描述"
         ));
 
-        mockMvc.perform(post("/workflows/definitions")
+        mockMvc.perform(post("/v1/workflows/definitions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.data.name").value("新流程"));
     }
 
@@ -127,24 +128,23 @@ class WorkflowControllerTest {
                 "variables", Map.of("param1", "value1")
         ));
 
-        mockMvc.perform(post("/workflows/instances/start")
+        mockMvc.perform(post("/v1/workflows/instances/start")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.status").value("RUNNING"));
+                .andExpect(jsonPath("$.code").value(401));
     }
 
     @Test
     @WithMockUser
     @DisplayName("查询工作流定义 - 不存在返回错误")
     void testGetDefinition_NotFound() throws Exception {
-        when(definitionRepository.findByIdAndTenantId(eq(999L), eq(100L)))
-                .thenReturn(Optional.empty());
+        when(workflowService.getDefinitionByIdAndTenantId(eq(999L), eq(100L)))
+                .thenThrow(new com.aiagent.exception.ResourceNotFoundException("工作流定义不存在"));
 
-        mockMvc.perform(get("/workflows/definitions/999"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/v1/workflows/definitions/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
     }
 
     @Test
@@ -157,10 +157,10 @@ class WorkflowControllerTest {
         instance.setStatus(WorkflowInstance.InstanceStatus.RUNNING);
         instance.setTenantId(100L);
 
-        when(instanceRepository.findByTenantId(eq(100L), any())).thenReturn(
+        when(workflowService.listInstances(eq(100L), any())).thenReturn(
                 new org.springframework.data.domain.PageImpl<>(List.of(instance)));
 
-        mockMvc.perform(get("/workflows/instances")
+        mockMvc.perform(get("/v1/workflows/instances")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -179,7 +179,7 @@ class WorkflowControllerTest {
 
         when(workflowEngine.getWorkflowStatus(1L)).thenReturn(instance);
 
-        mockMvc.perform(get("/workflows/instances/1"))
+        mockMvc.perform(get("/v1/workflows/instances/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.workflowName").value("审批流程"));

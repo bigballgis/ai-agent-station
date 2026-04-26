@@ -67,10 +67,11 @@ class ApiCallLogServiceTest {
 
         apiCallLogService.logApiCall(
                 "req-001", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/invoke", "{\"Content-Type\": \"application/json\"}",
                 testRequest, testResponse,
                 200, "{\"Content-Type\": \"application/json\"}",
-                ApiCallLog.ApiCallStatus.SUCCESS, 150, false, null
+                ApiCallLog.ApiCallStatus.SUCCESS, 150, Boolean.FALSE, null
         );
 
         verify(apiCallLogRepository).save(logCaptor.capture());
@@ -95,10 +96,11 @@ class ApiCallLogServiceTest {
 
         apiCallLogService.logApiCall(
                 "req-002", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/invoke", "{}",
                 testRequest, testResponse,
                 202, "{}",
-                ApiCallLog.ApiCallStatus.SUCCESS, null, true, "task-async-001"
+                ApiCallLog.ApiCallStatus.SUCCESS, null, Boolean.TRUE, "task-async-001"
         );
 
         verify(apiCallLogRepository).save(logCaptor.capture());
@@ -119,10 +121,11 @@ class ApiCallLogServiceTest {
 
         apiCallLogService.logApiCall(
                 "req-003", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/invoke", "{}",
                 testRequest, testResponse,
                 500, "{}",
-                ApiCallLog.ApiCallStatus.FAILED, 5000, false, null
+                ApiCallLog.ApiCallStatus.FAILED, 5000, Boolean.FALSE, null
         );
 
         verify(apiCallLogRepository).save(logCaptor.capture());
@@ -144,10 +147,11 @@ class ApiCallLogServiceTest {
         assertDoesNotThrow(() ->
                 apiCallLogService.logApiCall(
                         "req-004", 1L, 100L, 1L,
+                        "127.0.0.1",
                         "POST", "/api/v1/agents/invoke", "{}",
                         badRequest, testResponse,
                         200, "{}",
-                        ApiCallLog.ApiCallStatus.SUCCESS, 100, false, null
+                        ApiCallLog.ApiCallStatus.SUCCESS, 100, Boolean.FALSE, null
                 ));
     }
 
@@ -158,10 +162,11 @@ class ApiCallLogServiceTest {
 
         apiCallLogService.logApiCall(
                 "req-005", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/invoke", "{}",
                 testRequest, testResponse,
                 200, "{}",
-                ApiCallLog.ApiCallStatus.SUCCESS, 100, false, null
+                ApiCallLog.ApiCallStatus.SUCCESS, 100, Boolean.FALSE, null
         );
 
         verify(apiCallLogRepository).save(logCaptor.capture());
@@ -191,19 +196,22 @@ class ApiCallLogServiceTest {
     void logApiCall_MultipleCalls() throws JsonProcessingException {
         // 记录多条日志
         apiCallLogService.logApiCall("req-001", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/1/invoke", "{}",
                 testRequest, testResponse, 200, "{}",
-                ApiCallLog.ApiCallStatus.SUCCESS, 100, false, null);
+                ApiCallLog.ApiCallStatus.SUCCESS, 100, Boolean.FALSE, null);
 
         apiCallLogService.logApiCall("req-002", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/2/invoke", "{}",
                 testRequest, testResponse, 200, "{}",
-                ApiCallLog.ApiCallStatus.SUCCESS, 200, false, null);
+                ApiCallLog.ApiCallStatus.SUCCESS, 200, Boolean.FALSE, null);
 
         apiCallLogService.logApiCall("req-003", 2L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/1/invoke", "{}",
                 testRequest, testResponse, 500, "{}",
-                ApiCallLog.ApiCallStatus.FAILED, 3000, false, null);
+                ApiCallLog.ApiCallStatus.FAILED, 3000, Boolean.FALSE, null);
 
         // 验证保存了3条日志
         verify(apiCallLogRepository, times(3)).save(any(ApiCallLog.class));
@@ -215,9 +223,10 @@ class ApiCallLogServiceTest {
         ArgumentCaptor<ApiCallLog> logCaptor = ArgumentCaptor.forClass(ApiCallLog.class);
 
         apiCallLogService.logApiCall("req-timeout", 1L, 100L, 1L,
+                "127.0.0.1",
                 "POST", "/api/v1/agents/invoke", "{}",
                 testRequest, testResponse, 504, "{}",
-                ApiCallLog.ApiCallStatus.TIMEOUT, 30000, false, null);
+                ApiCallLog.ApiCallStatus.TIMEOUT, 30000, Boolean.FALSE, null);
 
         verify(apiCallLogRepository).save(logCaptor.capture());
         ApiCallLog savedLog = logCaptor.getValue();

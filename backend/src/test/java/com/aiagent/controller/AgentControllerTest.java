@@ -6,6 +6,7 @@ import com.aiagent.tenant.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -23,8 +24,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 使用 MockMvc 测试 Agent 管理接口
  */
 @WebMvcTest(AgentController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("Agent控制器测试")
-class AgentControllerTest {
+class AgentControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,14 +57,22 @@ class AgentControllerTest {
         agent2.setId(2L);
         agent2.setName("Agent2");
 
-        when(agentService.getAllAgents()).thenReturn(List.of(testAgent, agent2));
+        org.springframework.data.domain.Page<Agent> page = new org.springframework.data.domain.PageImpl<>(
+                List.of(testAgent, agent2),
+                org.springframework.data.domain.PageRequest.of(0, 20),
+                2
+        );
+        when(agentService.getAgentsPaged(any(), any(), any(), eq(0), eq(20))).thenReturn(page);
 
-        mockMvc.perform(get("/agents"))
+        mockMvc.perform(get("/v1/agents")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].name").value("测试Agent"))
-                .andExpect(jsonPath("$.data[1].name").value("Agent2"));
+                .andExpect(jsonPath("$.data.total").value(2))
+                .andExpect(jsonPath("$.data.records.length()").value(2))
+                .andExpect(jsonPath("$.data.records[0].name").value("测试Agent"))
+                .andExpect(jsonPath("$.data.records[1].name").value("Agent2"));
     }
 
     @Test
@@ -70,7 +80,7 @@ class AgentControllerTest {
     void testGetAgentById() throws Exception {
         when(agentService.getAgentById(1L)).thenReturn(testAgent);
 
-        mockMvc.perform(get("/agents/1"))
+        mockMvc.perform(get("/v1/agents/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -93,11 +103,11 @@ class AgentControllerTest {
                 "description", "新描述"
         ));
 
-        mockMvc.perform(post("/agents")
+        mockMvc.perform(post("/v1/agents")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.data.id").value(3))
                 .andExpect(jsonPath("$.data.name").value("新Agent"));
     }
@@ -107,7 +117,7 @@ class AgentControllerTest {
     void testDeleteAgent() throws Exception {
         doNothing().when(agentService).deleteAgent(1L);
 
-        mockMvc.perform(delete("/agents/1"))
+        mockMvc.perform(delete("/v1/agents/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
@@ -129,7 +139,7 @@ class AgentControllerTest {
                 "description", "更新后描述"
         ));
 
-        mockMvc.perform(put("/agents/1")
+        mockMvc.perform(put("/v1/agents/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -150,11 +160,11 @@ class AgentControllerTest {
                 "newName", "复制的Agent"
         ));
 
-        mockMvc.perform(post("/agents/1/copy")
+        mockMvc.perform(post("/v1/agents/1/copy")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.data.name").value("复制的Agent"));
     }
 
@@ -163,7 +173,7 @@ class AgentControllerTest {
     void testCopyAgent_EmptyName() throws Exception {
         String json = objectMapper.writeValueAsString(Map.of());
 
-        mockMvc.perform(post("/agents/1/copy")
+        mockMvc.perform(post("/v1/agents/1/copy")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());

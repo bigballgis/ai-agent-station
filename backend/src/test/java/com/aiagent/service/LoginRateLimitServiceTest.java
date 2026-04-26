@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -31,12 +32,21 @@ class LoginRateLimitServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
+    @Mock
+    private AiAgentProperties aiAgentProperties;
+
     @InjectMocks
     private LoginRateLimitService loginRateLimitService;
 
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        AiAgentProperties.RateLimit rateLimit = new AiAgentProperties.RateLimit();
+        rateLimit.setMaxAttemptsPerMinute(5);
+        rateLimit.setMaxIpGlobalPerMinute(10);
+        rateLimit.setWindowSeconds(60);
+        rateLimit.setBaseBackoffSeconds(2);
+        when(aiAgentProperties.getRateLimit()).thenReturn(rateLimit);
     }
 
     @Test
@@ -44,31 +54,34 @@ class LoginRateLimitServiceTest {
     void testCheckRateLimit_NoRecord() {
         when(valueOperations.get(anyString())).thenReturn(null);
 
-        assertTrue(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        assertTrue(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 
     @Test
     @DisplayName("检查速率限制 - 未达到上限时允许")
     void testCheckRateLimit_BelowLimit() {
-        when(valueOperations.get(anyString())).thenReturn("3");
+        when(valueOperations.get(startsWith("login:ip:global:"))).thenReturn(null);
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn("3");
 
-        assertTrue(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        assertTrue(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 
     @Test
     @DisplayName("检查速率限制 - 达到上限时拒绝")
     void testCheckRateLimit_AtLimit() {
-        when(valueOperations.get(anyString())).thenReturn("5");
+        when(valueOperations.get(startsWith("login:ip:global:"))).thenReturn(null);
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn("5");
 
-        assertFalse(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        assertFalse(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 
     @Test
     @DisplayName("检查速率限制 - 超过上限时拒绝")
     void testCheckRateLimit_ExceedsLimit() {
-        when(valueOperations.get(anyString())).thenReturn("10");
+        when(valueOperations.get(startsWith("login:ip:global:"))).thenReturn(null);
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn("10");
 
-        assertFalse(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        assertFalse(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 
     @Test
@@ -79,7 +92,7 @@ class LoginRateLimitServiceTest {
         loginRateLimitService.recordFailedAttempt("testuser", "192.168.1.1");
 
         verify(valueOperations).increment(anyString());
-        verify(redisTemplate).expire(anyString(), eq(60L), eq(TimeUnit.SECONDS));
+        verify(redisTemplate, times(2)).expire(anyString(), eq(60L), eq(TimeUnit.SECONDS));
     }
 
     @Test
@@ -131,32 +144,34 @@ class LoginRateLimitServiceTest {
     @DisplayName("完整流程 - 多次失败后触发限流")
     void testFullFlow_MultipleFailuresThenRateLimited() {
         // 前4次允许
-        when(valueOperations.get(anyString())).thenReturn(null, "1", "2", "3", "4");
-        when(valueOperations.increment(anyString())).thenReturn(1L, 2L, 3L, 4L, 5L);
+        when(valueOperations.get(startsWith("login:ip:global:"))).thenReturn(null);
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn(null, "1", "2", "3", "4", "5");
+        when(valueOperations.increment(anyString())).thenReturn(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
 
         for (int i = 0; i < 4; i++) {
-            assertTrue(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+            assertTrue(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
             loginRateLimitService.recordFailedAttempt("testuser", "192.168.1.1");
         }
 
         // 第5次应该被限流
-        when(valueOperations.get(anyString())).thenReturn("5");
-        assertFalse(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn("5");
+        assertFalse(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 
     @Test
     @DisplayName("完整流程 - 登录成功后重置计数")
     void testFullFlow_LoginSuccessResetsCount() {
         // 模拟已有失败记录
-        when(valueOperations.get(anyString())).thenReturn("3");
-        assertFalse(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1") == false); // 3 < 5, still allowed
+        when(valueOperations.get(startsWith("login:ip:global:"))).thenReturn(null);
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn("3");
+        assertTrue(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1")); // 3 < 5, allowed
 
         // 登录成功，重置
         when(redisTemplate.keys(anyString())).thenReturn(Collections.singleton("login:attempt:testuser:192.168.1.1"));
         loginRateLimitService.resetAttempts("testuser");
 
         // 之后应该允许
-        when(valueOperations.get(anyString())).thenReturn(null);
-        assertTrue(loginRateLimitService.checkRateLimit("testuser", "192.168.1.1"));
+        when(valueOperations.get(startsWith("login:attempt:"))).thenReturn(null);
+        assertTrue(loginRateLimitService.checkRateLimitBool("testuser", "192.168.1.1"));
     }
 }

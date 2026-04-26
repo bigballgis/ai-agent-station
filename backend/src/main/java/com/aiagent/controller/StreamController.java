@@ -177,8 +177,8 @@ public class StreamController {
                     emitter.send(SseEmitter.event()
                             .name("error")
                             .data(objectMapper.writeValueAsString(eventData)));
-                } catch (Exception e) {
-                    log.error("Failed to send SSE error event", e);
+                } catch (Exception sendError) {
+                    log.error("Failed to send SSE error event", sendError);
                 }
                 emitter.complete();
             }
@@ -450,8 +450,8 @@ public class StreamController {
                             emitter.send(SseEmitter.event()
                                     .name("node_end")
                                     .data(objectMapper.writeValueAsString(nodeFailData)));
-                        } catch (Exception e) {
-                            log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                        } catch (Exception sendError) {
+                            log.debug("SSE operation failed (client may have disconnected): {}", sendError.getMessage());
                         }
 
                         // 查找异常处理节点
@@ -490,8 +490,8 @@ public class StreamController {
                             .name("error")
                             .data(objectMapper.writeValueAsString(errorData)));
                     emitter.complete();
-                } catch (Exception e) {
-                    log.debug("SSE operation failed (client may have disconnected): {}", e.getMessage());
+                } catch (Exception sendError) {
+                    log.debug("SSE operation failed (client may have disconnected): {}", sendError.getMessage());
                 }
             }
         });

@@ -165,7 +165,8 @@ public class WorkflowService {
         Long baseId = current.getBaseDefinitionId() != null ? current.getBaseDefinitionId() : current.getId();
         List<WorkflowDefinition> allVersions = definitionRepository.findByTenantId(tenantId);
         WorkflowDefinition target = allVersions.stream()
-                .filter(d -> d.getVersion().equals(targetVersion)
+                .filter(d -> d.getVersion() != null && targetVersion != null
+                        && d.getVersion().longValue() == targetVersion.longValue()
                         && (baseId.equals(d.getBaseDefinitionId()) || baseId.equals(d.getId())))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("目标版本 v" + targetVersion + " 不存在"));

@@ -50,7 +50,6 @@ public class IntegrationTest {
         testAgent = new Agent();
         testAgent.setTenantId(1L);
         testAgent.setName("Test Agent");
-        testAgent.setAgentCode("test-agent");
         testAgent.setDescription("Test Agent for integration testing");
         testAgent.setStatus(Agent.AgentStatus.DRAFT);
         testAgent.setCreatedBy(1L);

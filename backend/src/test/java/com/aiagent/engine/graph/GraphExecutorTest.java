@@ -1,5 +1,6 @@
 package com.aiagent.engine.graph;
 
+import com.aiagent.exception.BusinessException;
 import com.aiagent.mcp.McpToolGateway;
 import com.aiagent.service.MemoryService;
 import com.aiagent.service.llm.LangChain4jService;
@@ -12,9 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
+import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -37,13 +38,29 @@ class GraphExecutorTest {
     @Mock
     private MemoryService memoryService;
 
+    @Mock
+    private HttpExecutor httpExecutor;
+
+    @Mock
+    private NodeExecutors nodeExecutors;
+
+    /** Same-thread executor for deterministic unit tests */
+    private final Executor directExecutor = r -> r.run();
+
     private GraphDefinition graphDefinition;
     private GraphExecutor executor;
 
     @BeforeEach
     void setUp() {
         graphDefinition = new GraphDefinition();
-        executor = new GraphExecutor(langChain4jService, compositeToolProvider, mcpToolGateway, memoryService);
+        executor = new GraphExecutor(
+                langChain4jService,
+                compositeToolProvider,
+                mcpToolGateway,
+                memoryService,
+                httpExecutor,
+                nodeExecutors,
+                directExecutor);
     }
 
     // Helper to create a graph node
@@ -375,7 +392,7 @@ class GraphExecutorTest {
         GraphNode code = createNode("code_1", "code", "代码节点");
         code.getConfig().put("language", "javascript");
         code.getConfig().put("code", "throw new Error('test error')");
-        code.setInputPorts().add("input");
+        code.getInputPorts().add("input");
         code.getOutputPorts().add("output");
 
         GraphNode end = createNode("end_1", "end", "结束");

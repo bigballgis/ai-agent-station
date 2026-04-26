@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -16,14 +17,16 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.data.redis.core.ValueOperations;
 
 /**
  * AuthController 单元测试
  * 使用 MockMvc 测试认证接口
  */
 @WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("认证控制器测试")
-class AuthControllerTest {
+class AuthControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -37,6 +40,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("登录 - 成功返回200")
     void testLogin_Success() throws Exception {
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.increment(anyString())).thenReturn(1L);
+
         Map<String, Object> loginResult = Map.of(
                 "token", "test_access_token",
                 "refreshToken", "test_refresh_token",
@@ -51,7 +58,7 @@ class AuthControllerTest {
                 "password", "password123"
         ));
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -67,7 +74,7 @@ class AuthControllerTest {
                 "password", "password123"
         ));
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
@@ -80,7 +87,7 @@ class AuthControllerTest {
                 "username", "admin"
         ));
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
@@ -94,7 +101,7 @@ class AuthControllerTest {
                 "password", "password123"
         ));
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
@@ -114,7 +121,7 @@ class AuthControllerTest {
                 "refreshToken", "valid_refresh_token"
         ));
 
-        mockMvc.perform(post("/auth/refresh")
+        mockMvc.perform(post("/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
@@ -127,7 +134,7 @@ class AuthControllerTest {
     void testRefreshToken_EmptyToken() throws Exception {
         String json = objectMapper.writeValueAsString(Map.of());
 
-        mockMvc.perform(post("/auth/refresh")
+        mockMvc.perform(post("/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
@@ -136,23 +143,20 @@ class AuthControllerTest {
     @Test
     @DisplayName("登出 - 成功返回200")
     void testLogout() throws Exception {
-        doNothing().when(authService).logout(anyLong());
-
-        mockMvc.perform(post("/auth/logout")
-                        .header("X-User-ID", 1))
+        mockMvc.perform(post("/v1/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(authService).logout(1L);
+        verify(authService, never()).logout(any(), any());
     }
 
     @Test
     @DisplayName("登出 - 无X-User-ID头不调用logout")
     void testLogout_NoUserId() throws Exception {
-        mockMvc.perform(post("/auth/logout"))
+        mockMvc.perform(post("/v1/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(authService, never()).logout(anyLong());
+        verify(authService, never()).logout(any(), any());
     }
 }

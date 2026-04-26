@@ -4,18 +4,19 @@
 
 ## KI-001: Backend Test Sources Are Not Yet a Reliable Gate
 
-Status: Open  
-Severity: High
+Status: Open (narrowed)  
+Severity: Medium
 
 Evidence:
-- Main sources can be compiled with `mvn compile "-Dmaven.test.skip=true"` after recent fixes.
-- `mvn test-compile` has exposed stale tests and mocks that do not match current constructors, repositories, and runtime classes.
+- `mvn compile "-Dmaven.test.skip=true"` and `mvn test-compile` succeed on current main + test sources.
+- `mvn test` still reports many failures: WebMvc slices needed extra `@MockBean`s (see `AbstractWebMvcSliceTest`), `GraphExecutor` constructor drift, repository/service API mismatches in older tests, and behavioral assertions that no longer match async / validation rules.
+- Hypersistence JSON type imports and Spring Data `RedisCache*` package names were corrected; several missing Java imports and `AuditAction.READ` were restored so main sources compile cleanly.
 
 Risk:
-CI may fail or create false confidence depending on which commands are run.
+CI is only trustworthy once `mvn test` is green for the agreed scope; until then rely on compile + test-compile + targeted test packages.
 
 Next action:
-Run `mvn test-compile`, group failures by cause, and repair one failure category at a time. Do not weaken production code to satisfy stale tests.
+Run `mvn test`, group remaining failures by package (controller slice vs unit vs integration), and fix one category per task. Do not weaken production security to satisfy stale tests.
 
 ## KI-002: Gateway vs MVC Boundary Needs a Decision
 

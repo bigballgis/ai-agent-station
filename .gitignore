@@ -51,3 +51,7 @@ Thumbs.db
 # Trae
 .trae/
 .uploads/
+
+# Local build/typecheck artifacts
+frontend/stats.html
+frontend/tsconfig.tsbuildinfo

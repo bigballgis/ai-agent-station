@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -188,7 +189,7 @@ class MemoryServiceTest {
         memoryService.cleanupExpiredMemories();
 
         // 验证结果
-        verify(memoryRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        verify(memoryRepository).deleteByExpiresAtBeforeAndTenantId(any(LocalDateTime.class), eq(TENANT_ID));
     }
 
     // ==================== scheduledCleanup 测试 ====================
@@ -200,7 +201,7 @@ class MemoryServiceTest {
         memoryService.scheduledCleanup();
 
         // 验证结果
-        verify(memoryRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        verify(memoryRepository).deleteByExpiresAtBeforeAndTenantId(any(LocalDateTime.class), eq(TENANT_ID));
     }
 
     // ==================== countMemories 测试 ====================

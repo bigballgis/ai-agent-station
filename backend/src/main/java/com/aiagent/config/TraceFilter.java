@@ -1,5 +1,7 @@
 package com.aiagent.config;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +11,6 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -21,10 +22,10 @@ public class TraceFilter implements Filter, Ordered {
     private static final String RESPONSE_TIME_HEADER = "X-Response-Time";
     private static final String RESPONSE_TIME_MDC = "responseTimeMs";
 
-    private final Timer httpResponseTimeTimer;
+    private final MeterRegistry meterRegistry;
 
-    public TraceFilter(Timer httpResponseTimeTimer) {
-        this.httpResponseTimeTimer = httpResponseTimeTimer;
+    public TraceFilter(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -52,14 +53,15 @@ public class TraceFilter implements Filter, Ordered {
             int status = httpResponse.getStatus();
             String method = httpRequest.getMethod();
             String uri = normalizeUri(httpRequest.getRequestURI());
-            httpResponseTimeTimer.record(
-                    Duration.ofMillis(elapsed),
-                    io.micrometer.core.instrument.Tags.of(
+            Timer timer = meterRegistry.timer(
+                    "http_server_requests_seconds",
+                    Tags.of(
                             "method", method,
                             "uri", uri,
                             "status", String.valueOf(status)
                     )
             );
+            timer.record(elapsed, TimeUnit.MILLISECONDS);
 
             // 慢请求告警: 超过 3 秒记录 warn 日志
             if (elapsed > 3000) {

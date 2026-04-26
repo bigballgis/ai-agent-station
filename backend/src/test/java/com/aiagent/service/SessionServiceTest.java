@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import com.aiagent.entity.UserSession;
 import com.aiagent.entity.UserSession.SessionStatus;
+import com.aiagent.config.properties.AiAgentProperties;
 import com.aiagent.repository.UserSessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,9 @@ class SessionServiceTest {
     @Mock
     private UserSessionRepository sessionRepository;
 
+    @Mock
+    private AiAgentProperties aiAgentProperties;
+
     @InjectMocks
     private SessionService sessionService;
 
@@ -54,6 +58,11 @@ class SessionServiceTest {
     @Test
     @DisplayName("创建会话 - 成功")
     void testCreateSession_Success() {
+        AiAgentProperties.Session sessionProps = new AiAgentProperties.Session();
+        sessionProps.setTimeoutHours(24);
+        sessionProps.setMaxConcurrentSessions(3);
+        when(aiAgentProperties.getSession()).thenReturn(sessionProps);
+
         // Mock concurrent session limit check: user has no active sessions
         when(sessionRepository.findByUserIdAndStatus(1L, SessionStatus.ACTIVE)).thenReturn(List.of());
         when(sessionRepository.save(any(UserSession.class))).thenAnswer(invocation -> {
@@ -62,21 +71,25 @@ class SessionServiceTest {
             return session;
         });
 
-        jakarta.servlet.http.HttpServletRequest mockRequest = mock(jakarta.servlet.http.HttpServletRequest.class);
-        when(mockRequest.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
-        when(mockRequest.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(mockRequest.getHeader("X-Real-IP")).thenReturn(null);
-        when(mockRequest.getHeader("Proxy-Client-IP")).thenReturn(null);
-        when(mockRequest.getRemoteAddr()).thenReturn("192.168.1.1");
+        org.springframework.mock.web.MockHttpServletRequest mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
+        mockRequest.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
+        mockRequest.setRemoteAddr("192.168.1.1");
+        try {
+            org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                    new org.springframework.web.context.request.ServletRequestAttributes(mockRequest)
+            );
 
-        UserSession created = sessionService.createSession(1L, "testuser", "session-abc-123", mockRequest);
+            UserSession created = sessionService.createSession(1L, "testuser", "session-abc-123");
 
-        assertNotNull(created);
-        assertEquals(1L, created.getUserId());
-        assertEquals("session-abc-123", created.getSessionId());
-        assertEquals(SessionStatus.ACTIVE, created.getStatus());
-        assertEquals("192.168.1.1", created.getIpAddress());
-        verify(sessionRepository).save(any(UserSession.class));
+            assertNotNull(created);
+            assertEquals(1L, created.getUserId());
+            assertEquals("session-abc-123", created.getSessionId());
+            assertEquals(SessionStatus.ACTIVE, created.getStatus());
+            assertEquals("192.168.1.1", created.getIpAddress());
+            verify(sessionRepository).save(any(UserSession.class));
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     @Test

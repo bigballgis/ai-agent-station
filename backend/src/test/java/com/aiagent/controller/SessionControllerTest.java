@@ -4,9 +4,9 @@ import com.aiagent.entity.UserSession;
 import com.aiagent.entity.UserSession.SessionStatus;
 import com.aiagent.service.SessionService;
 import com.aiagent.util.SecurityUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,14 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 使用 MockMvc 测试会话管理接口
  */
 @WebMvcTest(SessionController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("会话控制器测试")
-class SessionControllerTest {
+class SessionControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockBean
     private SessionService sessionService;
@@ -61,11 +58,11 @@ class SessionControllerTest {
     void testGetOnlineSessions() throws Exception {
         when(sessionService.getOnlineSessions()).thenReturn(List.of(testSession));
 
-        mockMvc.perform(get("/sessions/online"))
+        mockMvc.perform(get("/v1/sessions/online"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].sessionId").value("session-abc-123"))
+                .andExpect(jsonPath("$.data[0].id").value(1))
                 .andExpect(jsonPath("$.data[0].username").value("testuser"));
     }
 
@@ -75,7 +72,7 @@ class SessionControllerTest {
     void testGetOnlineSessions_Empty() throws Exception {
         when(sessionService.getOnlineSessions()).thenReturn(List.of());
 
-        mockMvc.perform(get("/sessions/online"))
+        mockMvc.perform(get("/v1/sessions/online"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.length()").value(0));
@@ -87,7 +84,7 @@ class SessionControllerTest {
     void testKickSession() throws Exception {
         doNothing().when(sessionService).kickSession("session-abc-123");
 
-        mockMvc.perform(delete("/sessions/session-abc-123"))
+        mockMvc.perform(delete("/v1/sessions/session-abc-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
@@ -100,7 +97,7 @@ class SessionControllerTest {
     void testKickUserFromAllDevices() throws Exception {
         when(sessionService.invalidateAllUserSessions(1L)).thenReturn(3);
 
-        mockMvc.perform(delete("/sessions/user/1"))
+        mockMvc.perform(delete("/v1/sessions/user/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.kickedSessions").value(3));
@@ -122,7 +119,7 @@ class SessionControllerTest {
         when(sessionService.getOnlineUserCount()).thenReturn(2L);
         when(sessionService.getOnlineSessions()).thenReturn(List.of(testSession, session2));
 
-        mockMvc.perform(get("/sessions/stats"))
+        mockMvc.perform(get("/v1/sessions/stats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.onlineUserCount").value(2))
@@ -137,7 +134,7 @@ class SessionControllerTest {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
             when(sessionService.getUserSessions(1L)).thenReturn(List.of(testSession));
 
-            mockMvc.perform(get("/sessions/me"))
+            mockMvc.perform(get("/v1/sessions/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.data.length()").value(1));

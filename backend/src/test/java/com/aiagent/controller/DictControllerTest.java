@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
@@ -27,8 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 使用 MockMvc 测试字典管理接口
  */
 @WebMvcTest(DictController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("字典控制器测试")
-class DictControllerTest {
+class DictControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,7 +53,7 @@ class DictControllerTest {
         when(dictService.getDictTypes(anyInt(), anyInt(), anyString(), anyString()))
                 .thenReturn(pageResult);
 
-        mockMvc.perform(get("/dict-types")
+        mockMvc.perform(get("/v1/dict-types")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -76,11 +78,11 @@ class DictControllerTest {
                 "dictType", "order_status"
         ));
 
-        mockMvc.perform(post("/dict-types")
+        mockMvc.perform(post("/v1/dict-types")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.code").value(201))
                 .andExpect(jsonPath("$.data.dictType").value("order_status"));
     }
 
@@ -95,7 +97,7 @@ class DictControllerTest {
 
         when(dictService.getDictItems("user_status")).thenReturn(List.of(item));
 
-        mockMvc.perform(get("/dict-types/user_status/items"))
+        mockMvc.perform(get("/v1/dict-types/user_status/items"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].dictLabel").value("启用"))
@@ -112,7 +114,7 @@ class DictControllerTest {
 
         when(dictService.getDictType(1L)).thenReturn(dictType);
 
-        mockMvc.perform(get("/dict-types/1"))
+        mockMvc.perform(get("/v1/dict-types/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").value(1));
@@ -123,7 +125,7 @@ class DictControllerTest {
     void testDeleteDictType() throws Exception {
         doNothing().when(dictService).deleteDictType(1L);
 
-        mockMvc.perform(delete("/dict-types/1"))
+        mockMvc.perform(delete("/v1/dict-types/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
 
@@ -135,7 +137,7 @@ class DictControllerTest {
     void testGetDictItemsMap() throws Exception {
         when(dictService.getDictItemsMap(anyList())).thenReturn(new LinkedHashMap<>());
 
-        mockMvc.perform(get("/dict-types/dict-items/batch")
+        mockMvc.perform(get("/v1/dict-types/dict-items/batch")
                         .param("dictTypes", "user_status,order_status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));

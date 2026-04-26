@@ -213,7 +213,7 @@ public class WorkflowController {
             @Parameter(description = "工作流定义ID") @PathVariable Long id,
             @Parameter(description = "目标版本号") @PathVariable Integer targetVersion) {
         Long tenantId = TenantContextHolder.getTenantId();
-        WorkflowDefinition rollbackDraft = workflowService.rollbackToVersion(id, targetVersion, tenantId);
+        WorkflowDefinition rollbackDraft = workflowService.rollbackToVersion(id, targetVersion.longValue(), tenantId);
         return Result.created(WorkflowDefinitionVO.fromEntity(rollbackDraft));
     }
 
@@ -261,6 +261,10 @@ public class WorkflowController {
     public Result<WorkflowInstanceVO> startWorkflow(
             @Valid @RequestBody WorkflowStartDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
+
+        if (principal == null || principal.getId() == null) {
+            throw new com.aiagent.exception.BusinessException(com.aiagent.common.ResultCode.UNAUTHORIZED);
+        }
 
         WorkflowInstance instance = workflowEngine.startWorkflow(
                 request.getDefinitionId(),

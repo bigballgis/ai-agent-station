@@ -18,11 +18,15 @@ class CryptoUtilsTest {
 
     private static final String TEST_SECRET_KEY = "this-is-a-32-byte-secret-key-for-test!!";
 
+    private static CryptoUtils newCryptoUtils(String secretKey) {
+        AiAgentProperties props = new AiAgentProperties();
+        props.getCrypto().setSecretKey(secretKey);
+        return new CryptoUtils(props);
+    }
+
     @BeforeEach
     void setUp() {
-        AiAgentProperties props = new AiAgentProperties();
-        props.getCrypto().setSecretKey(TEST_SECRET_KEY);
-        cryptoUtils = new CryptoUtils(props);
+        cryptoUtils = newCryptoUtils(TEST_SECRET_KEY);
     }
 
     // ==================== encrypt / decrypt 基本功能测试 ====================
@@ -89,7 +93,7 @@ class CryptoUtilsTest {
     @Test
     @DisplayName("使用不同密钥解密 - 抛出异常")
     void testDecrypt_WrongKey_ThrowsException() {
-        CryptoUtils otherCrypto = new CryptoUtils("another-different-secret-key-for-testing!");
+        CryptoUtils otherCrypto = newCryptoUtils("another-different-secret-key-for-testing!");
 
         String encrypted = cryptoUtils.encrypt("secret data");
 
@@ -153,14 +157,14 @@ class CryptoUtilsTest {
     @Test
     @DisplayName("验证密钥 - 空密钥抛出异常")
     void testValidateSecretKey_EmptyKey_ThrowsException() {
-        CryptoUtils util = new CryptoUtils("");
+        CryptoUtils util = newCryptoUtils("");
         assertThrows(IllegalStateException.class, util::validateSecretKey);
     }
 
     @Test
     @DisplayName("验证密钥 - 默认密钥抛出异常")
     void testValidateSecretKey_DefaultKey_ThrowsException() {
-        CryptoUtils util = new CryptoUtils("default-secret-key-change-in-production!!");
+        CryptoUtils util = newCryptoUtils("default-secret-key-change-in-production!!");
         assertThrows(IllegalStateException.class, util::validateSecretKey);
     }
 

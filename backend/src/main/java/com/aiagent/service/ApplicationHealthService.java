@@ -10,6 +10,7 @@ import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -186,8 +187,10 @@ public class ApplicationHealthService {
 
         try {
             RestTemplate restTemplate = new RestTemplate();
-            restTemplate.getRequestFactory().setConnectTimeout(java.net.SocketTimeout.class.cast(
-                    java.net.SocketTimeout.class).isInstance(null) ? 5000 : 5000);
+            if (restTemplate.getRequestFactory() instanceof SimpleClientHttpRequestFactory f) {
+                f.setConnectTimeout(5000);
+                f.setReadTimeout(5000);
+            }
 
             boolean anyProviderAvailable = false;
             Map<String, String> providerStatuses = new LinkedHashMap<>();

@@ -8,6 +8,7 @@ import com.aiagent.security.UserPrincipal;
 import com.aiagent.tenant.TenantContextHolder;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -70,7 +72,7 @@ class ExperienceServiceTest {
 
         // 模拟安全上下文
         securityContextHolderMock = mockStatic(SecurityContextHolder.class);
-        UserPrincipal userPrincipal = new UserPrincipal(1L, "admin", "password", Collections.emptyList());
+        UserPrincipal userPrincipal = new UserPrincipal(1L, "admin", 100L);
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(userPrincipal, null, Collections.emptyList());
         org.springframework.security.core.context.SecurityContext context = mock(org.springframework.security.core.context.SecurityContext.class);
@@ -211,14 +213,14 @@ class ExperienceServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<AgentEvolutionExperience> page = new PageImpl<>(Arrays.asList(testExperience));
 
-        when(experienceRepository.findAll(any(), eq(pageable))).thenReturn(page);
+        when(experienceRepository.findAll(ArgumentMatchers.<Specification<AgentEvolutionExperience>>any(), eq(pageable))).thenReturn(page);
 
         Page<AgentEvolutionExperience> result = experienceService.searchExperiences(
                 "测试", null, null, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
-        verify(experienceRepository).findAll(any(), eq(pageable));
+        verify(experienceRepository).findAll(ArgumentMatchers.<Specification<AgentEvolutionExperience>>any(), eq(pageable));
     }
 
     @Test
@@ -227,7 +229,7 @@ class ExperienceServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<AgentEvolutionExperience> page = new PageImpl<>(Arrays.asList(testExperience));
 
-        when(experienceRepository.findAll(any(), eq(pageable))).thenReturn(page);
+        when(experienceRepository.findAll(ArgumentMatchers.<Specification<AgentEvolutionExperience>>any(), eq(pageable))).thenReturn(page);
 
         Page<AgentEvolutionExperience> result = experienceService.searchExperiences(
                 null, "process", Arrays.asList("tag1"), pageable);
@@ -242,7 +244,7 @@ class ExperienceServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<AgentEvolutionExperience> page = new PageImpl<>(Arrays.asList(testExperience));
 
-        when(experienceRepository.findAll(any(), eq(pageable))).thenReturn(page);
+        when(experienceRepository.findAll(ArgumentMatchers.<Specification<AgentEvolutionExperience>>any(), eq(pageable))).thenReturn(page);
 
         Page<AgentEvolutionExperience> result = experienceService.searchExperiences(
                 null, null, null, pageable);

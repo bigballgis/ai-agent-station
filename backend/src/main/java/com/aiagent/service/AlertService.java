@@ -5,6 +5,7 @@ import com.aiagent.dto.AlertRuleCreateDTO;
 import com.aiagent.dto.AlertRuleUpdateDTO;
 import com.aiagent.entity.AlertRecord;
 import com.aiagent.entity.AlertRule;
+import com.aiagent.exception.BusinessException;
 import com.aiagent.repository.AlertRecordRepository;
 import com.aiagent.repository.AlertRuleRepository;
 import com.aiagent.util.SecurityUtils;
@@ -116,7 +117,7 @@ public class AlertService {
     }
 
     public List<AlertRecord> getActiveAlerts() {
-        return recordRepository.findByStatus("firing", PageRequest.of(0, 100));
+        return recordRepository.findByStatus("firing", PageRequest.of(0, 100)).getContent();
     }
 
     public Map<String, Object> getAlertStats() {

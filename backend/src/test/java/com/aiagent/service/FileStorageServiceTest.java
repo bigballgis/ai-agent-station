@@ -1,9 +1,11 @@
 package com.aiagent.service;
 
+import com.aiagent.config.properties.AppProperties;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,7 @@ import java.nio.file.*;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 /**
  * FileStorageService 单元测试
@@ -25,19 +28,18 @@ class FileStorageServiceTest {
     @TempDir
     Path tempDir;
 
+    @Mock
+    private AppProperties appProperties;
+
     private FileStorageService fileStorageService;
 
     @BeforeEach
     void setUp() throws IOException {
-        fileStorageService = new FileStorageService();
-        // 使用反射设置 storagePath 和初始化
-        try {
-            var field = FileStorageService.class.getDeclaredField("storagePath");
-            field.setAccessible(true);
-            field.set(fileStorageService, tempDir.toString());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        AppProperties.Storage storage = new AppProperties.Storage();
+        storage.setPath(tempDir.toString());
+        when(appProperties.getStorage()).thenReturn(storage);
+
+        fileStorageService = new FileStorageService(appProperties);
         fileStorageService.init();
     }
 

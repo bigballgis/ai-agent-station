@@ -2,7 +2,6 @@ package com.aiagent.service;
 
 import com.aiagent.entity.LoginLog;
 import com.aiagent.repository.LoginLogRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,19 +27,18 @@ class LoginLogServiceTest {
     @Mock
     private LoginLogRepository loginLogRepository;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
     private LoginLogService loginLogService;
 
-    @BeforeEach
-    void setUp() {
-        // 默认模拟请求头
-        when(request.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(request.getHeader("X-Real-IP")).thenReturn(null);
-        when(request.getRemoteAddr()).thenReturn("192.168.1.100");
-        when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
+    private static void withRequest(org.springframework.mock.web.MockHttpServletRequest request, Runnable runnable) {
+        try {
+            org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                    new org.springframework.web.context.request.ServletRequestAttributes(request)
+            );
+            runnable.run();
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     @Test
@@ -52,7 +50,11 @@ class LoginLogServiceTest {
             return log;
         });
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.100");
+        request.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
+
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "admin".equals(log.getUsername()) &&
@@ -69,11 +71,15 @@ class LoginLogServiceTest {
     void testRecordLogin_Fail() {
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", null, "LOGIN_FAIL", "密码错误", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.100");
+        request.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
+
+        withRequest(request, () -> loginLogService.recordLogin("admin", null, "LOGIN_FAIL", "密码错误"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "LOGIN_FAIL".equals(log.getLoginType()) &&
-                "FAIL".equals(log.getStatus())
+                "LOGIN_FAIL".equals(log.getStatus())
         ));
     }
 
@@ -82,7 +88,11 @@ class LoginLogServiceTest {
     void testRecordLogout() {
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogout(1L, request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.100");
+        request.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0");
+
+        withRequest(request, () -> loginLogService.recordLogout(1L));
 
         verify(loginLogRepository).save(argThat(log ->
                 log.getUserId() == 1L &&
@@ -94,10 +104,13 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("获取客户端IP - 从X-Forwarded-For获取")
     void testGetClientIp_FromXForwardedFor() {
-        when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1, 192.168.1.1");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "10.0.0.1, 192.168.1.1");
+        request.setRemoteAddr("192.168.1.100");
+
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "10.0.0.1".equals(log.getIp())
@@ -107,11 +120,13 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("获取客户端IP - 从X-Real-IP获取")
     void testGetClientIp_FromXRealIp() {
-        when(request.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(request.getHeader("X-Real-IP")).thenReturn("10.0.0.2");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("X-Real-IP", "10.0.0.2");
+        request.setRemoteAddr("192.168.1.100");
+
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "10.0.0.2".equals(log.getIp())
@@ -121,12 +136,11 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("获取客户端IP - 从RemoteAddr获取")
     void testGetClientIp_FromRemoteAddr() {
-        when(request.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(request.getHeader("X-Real-IP")).thenReturn(null);
-        when(request.getRemoteAddr()).thenReturn("172.16.0.1");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setRemoteAddr("172.16.0.1");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "172.16.0.1".equals(log.getIp())
@@ -136,11 +150,13 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("获取客户端IP - X-Forwarded-For为unknown时降级")
     void testGetClientIp_UnknownForwardedFor() {
-        when(request.getHeader("X-Forwarded-For")).thenReturn("unknown");
-        when(request.getHeader("X-Real-IP")).thenReturn("10.0.0.5");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("X-Forwarded-For", "unknown");
+        request.addHeader("X-Real-IP", "10.0.0.5");
+        request.setRemoteAddr("172.16.0.1");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "10.0.0.5".equals(log.getIp())
@@ -150,10 +166,12 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("解析浏览器 - Chrome")
     void testParseBrowser_Chrome() {
-        when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 Chrome/120.0.0.0");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("User-Agent", "Mozilla/5.0 Chrome/120.0.0.0");
+        request.setRemoteAddr("192.168.1.100");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "Chrome".equals(log.getBrowser())
@@ -163,10 +181,12 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("解析浏览器 - Firefox")
     void testParseBrowser_Firefox() {
-        when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 Firefox/121.0");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("User-Agent", "Mozilla/5.0 Firefox/121.0");
+        request.setRemoteAddr("192.168.1.100");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "Firefox".equals(log.getBrowser())
@@ -176,10 +196,12 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("解析浏览器 - Edge")
     void testParseBrowser_Edge() {
-        when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 Edg/120.0.0.0");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("User-Agent", "Mozilla/5.0 Edg/120.0.0.0");
+        request.setRemoteAddr("192.168.1.100");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "Edge".equals(log.getBrowser())
@@ -189,10 +211,12 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("解析浏览器 - Safari")
     void testParseBrowser_Safari() {
-        when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 Safari/605.1.15");
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("User-Agent", "Mozilla/5.0 Safari/605.1.15");
+        request.setRemoteAddr("192.168.1.100");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "Safari".equals(log.getBrowser())
@@ -202,10 +226,11 @@ class LoginLogServiceTest {
     @Test
     @DisplayName("解析浏览器 - 未知浏览器")
     void testParseBrowser_Unknown() {
-        when(request.getHeader("User-Agent")).thenReturn(null);
         when(loginLogRepository.save(any(LoginLog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功", request);
+        org.springframework.mock.web.MockHttpServletRequest request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.100");
+        withRequest(request, () -> loginLogService.recordLogin("admin", 1L, "SUCCESS", "登录成功"));
 
         verify(loginLogRepository).save(argThat(log ->
                 "Unknown".equals(log.getBrowser())

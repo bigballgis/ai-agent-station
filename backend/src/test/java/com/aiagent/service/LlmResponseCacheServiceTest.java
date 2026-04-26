@@ -8,7 +8,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import com.aiagent.config.properties.AiAgentProperties;
 import java.util.Optional;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -28,6 +30,9 @@ class LlmResponseCacheServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
+    @Mock
+    private AiAgentProperties aiAgentProperties;
+
     @InjectMocks
     private LlmResponseCacheService llmResponseCacheService;
 
@@ -40,6 +45,9 @@ class LlmResponseCacheServiceTest {
     void setUp() {
         // 模拟 Redis ValueOperations
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        AiAgentProperties.Cache cache = new AiAgentProperties.Cache();
+        cache.setLlmResponseTtlMinutes(30);
+        when(aiAgentProperties.getCache()).thenReturn(cache);
     }
 
     // ==================== getCachedResponse 测试 ====================
@@ -80,19 +88,19 @@ class LlmResponseCacheServiceTest {
     @Test
     @DisplayName("缓存响应 - 成功存储")
     void cache_Success() {
-        when(valueOperations.set(anyString(), anyString(), any())).thenReturn(true);
+        doNothing().when(valueOperations).set(anyString(), anyString(), any(Duration.class));
 
         assertDoesNotThrow(() ->
                 llmResponseCacheService.cache(PROVIDER, SYSTEM_PROMPT, USER_MESSAGE, CACHED_RESPONSE));
 
-        verify(valueOperations).set(anyString(), eq(CACHED_RESPONSE), any());
+        verify(valueOperations).set(anyString(), eq(CACHED_RESPONSE), any(Duration.class));
     }
 
     @Test
     @DisplayName("缓存响应 - Redis异常时不抛出")
     void cache_RedisException_NoThrow() {
-        when(valueOperations.set(anyString(), anyString(), any()))
-                .thenThrow(new RuntimeException("Redis写入失败"));
+        doThrow(new RuntimeException("Redis写入失败"))
+                .when(valueOperations).set(anyString(), anyString(), any(Duration.class));
 
         assertDoesNotThrow(() ->
                 llmResponseCacheService.cache(PROVIDER, SYSTEM_PROMPT, USER_MESSAGE, CACHED_RESPONSE));
@@ -170,7 +178,7 @@ class LlmResponseCacheServiceTest {
 
         llmResponseCacheService.getCached(PROVIDER, SYSTEM_PROMPT, USER_MESSAGE);
 
-        verify(valueOperations).get(argThat(key ->
+        verify(valueOperations).get(argThat((String key) ->
                 key != null && key.startsWith("llm_cache:") && key.length() > "llm_cache:".length()
         ));
     }
@@ -186,7 +194,7 @@ class LlmResponseCacheServiceTest {
         assertFalse(miss.isPresent());
 
         // 缓存响应
-        when(valueOperations.set(anyString(), eq(CACHED_RESPONSE), any())).thenReturn(true);
+        doNothing().when(valueOperations).set(anyString(), eq(CACHED_RESPONSE), any(Duration.class));
         llmResponseCacheService.cache(PROVIDER, SYSTEM_PROMPT, USER_MESSAGE, CACHED_RESPONSE);
 
         // 第二次获取，缓存命中

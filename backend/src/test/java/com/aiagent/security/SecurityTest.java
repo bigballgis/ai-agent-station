@@ -68,7 +68,7 @@ class SecurityTest {
             user.setPassword(passwordEncoder.encode(TEST_PASSWORD));
             user.setEmail("security@test.com");
             user.setTenantId(100L);
-            user.setActive(true);
+            user.setIsActive(true);
             userRepository.save(user);
         }
     }

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayConfig {
 
     @Bean
-    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder, AuthenticationFilter authenticationFilter) {
         return builder.routes()
                 // Agent调用路由
                 .route("agent-execution", r -> r
@@ -18,7 +18,7 @@ public class GatewayConfig {
                         .method("POST")
                         .filters(f -> f
                                 .filter(new RequestLoggingFilter())
-                                .filter(new AuthenticationFilter())
+                                .filter(authenticationFilter)
                                 .filter(new RateLimitFilter())
                                 .stripPrefix(0)
                         )
@@ -30,7 +30,7 @@ public class GatewayConfig {
                         .method("GET")
                         .filters(f -> f
                                 .filter(new RequestLoggingFilter())
-                                .filter(new AuthenticationFilter())
+                                .filter(authenticationFilter)
                                 .stripPrefix(0)
                         )
                         .uri("http://localhost:8080"))
@@ -41,7 +41,7 @@ public class GatewayConfig {
                         .method("GET")
                         .filters(f -> f
                                 .filter(new RequestLoggingFilter())
-                                .filter(new AuthenticationFilter())
+                                .filter(authenticationFilter)
                                 .stripPrefix(0)
                         )
                         .uri("http://localhost:8080"))

@@ -173,7 +173,7 @@ public class AuthController {
         if (principal == null || principal.getId() == null) {
             return Result.error(401, "未认证");
         }
-        User user = userService.getById(principal.getId());
+        User user = userService.getUserById(principal.getId());
         return Result.success(DTOConverter.toUserResponseDTO(user));
     }
 

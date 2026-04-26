@@ -1,5 +1,6 @@
 package com.aiagent.security;
 
+import com.aiagent.config.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -32,12 +32,19 @@ class JwtUtilTest {
     private static final String TEST_USERNAME = "testuser";
     private static final Long TEST_TENANT_ID = 1L;
 
+    private static JwtUtil buildJwtUtil(String secret, long expiration, long refreshExpiration) {
+        JwtProperties props = new JwtProperties();
+        props.setSecret(secret);
+        props.setExpiration(expiration);
+        props.setRefreshExpiration(refreshExpiration);
+        JwtUtil util = new JwtUtil(props);
+        util.validateSecret();
+        return util;
+    }
+
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", TEST_SECRET);
-        ReflectionTestUtils.setField(jwtUtil, "expiration", 1800000L);  // 30 minutes
-        ReflectionTestUtils.setField(jwtUtil, "refreshExpiration", 604800000L);  // 7 days
+        jwtUtil = buildJwtUtil(TEST_SECRET, 1_800_000L, 604_800_000L);
     }
 
     // ==================== generateToken 测试 ====================
@@ -99,10 +106,7 @@ class JwtUtilTest {
     @Test
     @DisplayName("验证过期 Token - 返回 false")
     void testValidateToken_ExpiredToken_ReturnsFalse() {
-        jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", TEST_SECRET);
-        ReflectionTestUtils.setField(jwtUtil, "expiration", -1000L);  // 已过期
-        ReflectionTestUtils.setField(jwtUtil, "refreshExpiration", -1000L);
+        jwtUtil = buildJwtUtil(TEST_SECRET, -1000L, -1000L);
 
         String expiredToken = jwtUtil.generateToken(TEST_USER_ID, TEST_USERNAME, TEST_TENANT_ID);
 
@@ -198,10 +202,7 @@ class JwtUtilTest {
     @Test
     @DisplayName("检查过期 Token - 返回 true")
     void testIsTokenExpired_ExpiredToken_ReturnsTrue() {
-        jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", TEST_SECRET);
-        ReflectionTestUtils.setField(jwtUtil, "expiration", -1000L);
-        ReflectionTestUtils.setField(jwtUtil, "refreshExpiration", -1000L);
+        jwtUtil = buildJwtUtil(TEST_SECRET, -1000L, -1000L);
 
         String expiredToken = jwtUtil.generateToken(TEST_USER_ID, TEST_USERNAME, TEST_TENANT_ID);
 
@@ -237,18 +238,18 @@ class JwtUtilTest {
     @Test
     @DisplayName("验证密钥 - 密钥过短抛出异常")
     void testValidateSecret_ShortSecret_ThrowsException() {
-        JwtUtil util = new JwtUtil();
-        ReflectionTestUtils.setField(util, "secret", "short");
-
+        JwtProperties props = new JwtProperties();
+        props.setSecret("short");
+        JwtUtil util = new JwtUtil(props);
         assertThrows(IllegalStateException.class, util::validateSecret);
     }
 
     @Test
     @DisplayName("验证密钥 - null 密钥抛出异常")
     void testValidateSecret_NullSecret_ThrowsException() {
-        JwtUtil util = new JwtUtil();
-        ReflectionTestUtils.setField(util, "secret", null);
-
+        JwtProperties props = new JwtProperties();
+        props.setSecret(null);
+        JwtUtil util = new JwtUtil(props);
         assertThrows(IllegalStateException.class, util::validateSecret);
     }
 

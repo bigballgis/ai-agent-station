@@ -31,11 +31,11 @@ public class WorkflowAsyncExecutor {
             // 直接调用 WorkflowEngine 的 @Transactional 方法
             // 由于是通过 Spring 代理注入的，AOP 代理会正确生效
             workflowEngine.executeNode(instanceId);
-        } catch (BusinessException e) {
-            log.error("Async node execution business error: instanceId={}, error={}", instanceId, e.getMessage());
         } catch (ServiceUnavailableException e) {
             log.error("Async node execution service unavailable: instanceId={}, serviceName={}, error={}",
                     instanceId, e.getServiceName(), e.getMessage());
+        } catch (BusinessException e) {
+            log.error("Async node execution business error: instanceId={}, error={}", instanceId, e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error in async node execution: instanceId={}, error={}",
                     instanceId, e.getMessage(), e);

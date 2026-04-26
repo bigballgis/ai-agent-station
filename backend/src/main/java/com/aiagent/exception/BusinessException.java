@@ -20,14 +20,32 @@ public class BusinessException extends RuntimeException {
         this.messageCode = null;
     }
 
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
+        this.code = ResultCode.INTERNAL_SERVER_ERROR.getCode();
+        this.messageCode = null;
+    }
+
     public BusinessException(Integer code, String message) {
         super(message);
         this.code = code;
         this.messageCode = null;
     }
 
+    public BusinessException(Integer code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+        this.messageCode = null;
+    }
+
     public BusinessException(ResultCode resultCode) {
         super(resultCode.getMessage());
+        this.code = resultCode.getCode();
+        this.messageCode = resultCode.getMessageCode();
+    }
+
+    public BusinessException(ResultCode resultCode, Throwable cause) {
+        super(resultCode.getMessage(), cause);
         this.code = resultCode.getCode();
         this.messageCode = resultCode.getMessageCode();
     }

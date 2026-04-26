@@ -1,6 +1,7 @@
 package com.aiagent.service;
 
 import com.aiagent.security.JwtUtil;
+import com.aiagent.config.properties.AiAgentProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -42,6 +42,9 @@ class ApplicationHealthServiceTest {
     private JwtUtil jwtUtil;
 
     @Mock
+    private AiAgentProperties aiAgentProperties;
+
+    @Mock
     private Connection dbConnection;
 
     @Mock
@@ -57,11 +60,15 @@ class ApplicationHealthServiceTest {
 
     @BeforeEach
     void setUp() {
-        healthService = new ApplicationHealthService(dataSource, redisTemplate, cacheStatisticsService, jwtUtil);
-        ReflectionTestUtils.setField(healthService, "openaiApiKey", "");
-        ReflectionTestUtils.setField(healthService, "qwenApiKey", "");
-        ReflectionTestUtils.setField(healthService, "defaultProvider", "openai");
-        ReflectionTestUtils.setField(healthService, "cacheTtlMinutes", 30);
+        healthService = new ApplicationHealthService(dataSource, redisTemplate, cacheStatisticsService, jwtUtil, aiAgentProperties);
+
+        AiAgentProperties.Llm llm = new AiAgentProperties.Llm();
+        llm.setDefaultProvider("openai");
+        // Keep API keys empty to avoid real external calls. Also make the ollama URL malformed for fast failure.
+        AiAgentProperties.Llm.OllamaConfig ollama = new AiAgentProperties.Llm.OllamaConfig();
+        ollama.setBaseUrl("http://:");
+        llm.setOllama(ollama);
+        when(aiAgentProperties.getLlm()).thenReturn(llm);
     }
 
     // ==================== 数据库健康检查测试 ====================

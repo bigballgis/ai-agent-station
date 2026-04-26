@@ -2,6 +2,7 @@ package com.aiagent.service;
 
 import com.aiagent.entity.AgentTestResult;
 import com.aiagent.repository.AgentTestResultRepository;
+import com.aiagent.util.SecurityUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -77,24 +78,30 @@ class AgentTestResultServiceTest {
     @DisplayName("按执行ID查询测试结果 - 成功")
     void getResultsByExecutionId_Success() {
         List<AgentTestResult> results = Arrays.asList(testResult);
-        when(resultRepository.findByExecutionId(1L)).thenReturn(results);
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.findByExecutionIdAndTenantId(1L, 100L)).thenReturn(results);
 
-        List<AgentTestResult> result = agentTestResultService.getResultsByExecutionId(1L);
+            List<AgentTestResult> result = agentTestResultService.getResultsByExecutionId(1L);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("SUCCESS", result.get(0).getStatus());
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("SUCCESS", result.get(0).getStatus());
+        }
     }
 
     @Test
     @DisplayName("按执行ID查询测试结果 - 空列表")
     void getResultsByExecutionId_Empty() {
-        when(resultRepository.findByExecutionId(1L)).thenReturn(Collections.emptyList());
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.findByExecutionIdAndTenantId(1L, 100L)).thenReturn(Collections.emptyList());
 
-        List<AgentTestResult> result = agentTestResultService.getResultsByExecutionId(1L);
+            List<AgentTestResult> result = agentTestResultService.getResultsByExecutionId(1L);
 
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
     // ==================== getPassRate 测试 ====================
@@ -102,68 +109,53 @@ class AgentTestResultServiceTest {
     @Test
     @DisplayName("按Agent计算通过率 - 全部通过")
     void getPassRateByAgent_AllPassed() {
-        AgentTestResult result1 = new AgentTestResult();
-        result1.setStatus("SUCCESS");
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.countByAgentIdAndTenantId(1L, 100L)).thenReturn(2L);
+            when(resultRepository.countByAgentIdAndStatus(1L, "SUCCESS")).thenReturn(2L);
 
-        AgentTestResult result2 = new AgentTestResult();
-        result2.setStatus("SUCCESS");
-
-        when(resultRepository.countByAgentId(1L)).thenReturn(2L);
-        when(resultRepository.findByAgentId(1L)).thenReturn(Arrays.asList(result1, result2));
-
-        double passRate = agentTestResultService.getPassRateByAgent(1L);
-
-        assertEquals(100.0, passRate, 0.001);
+            double passRate = agentTestResultService.getPassRateByAgent(1L);
+            assertEquals(100.0, passRate, 0.001);
+        }
     }
 
     @Test
     @DisplayName("按Agent计算通过率 - 部分通过")
     void getPassRateByAgent_PartialPassed() {
-        AgentTestResult result1 = new AgentTestResult();
-        result1.setStatus("SUCCESS");
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.countByAgentIdAndTenantId(1L, 100L)).thenReturn(3L);
+            when(resultRepository.countByAgentIdAndStatus(1L, "SUCCESS")).thenReturn(2L);
 
-        AgentTestResult result2 = new AgentTestResult();
-        result2.setStatus("FAILED");
-
-        AgentTestResult result3 = new AgentTestResult();
-        result3.setStatus("SUCCESS");
-
-        when(resultRepository.countByAgentId(1L)).thenReturn(3L);
-        when(resultRepository.findByAgentId(1L))
-                .thenReturn(Arrays.asList(result1, result2, result3));
-
-        double passRate = agentTestResultService.getPassRateByAgent(1L);
-
-        // 2/3 * 100 = 66.667
-        assertEquals(66.667, passRate, 0.01);
+            double passRate = agentTestResultService.getPassRateByAgent(1L);
+            // 2/3 * 100 = 66.667
+            assertEquals(66.667, passRate, 0.01);
+        }
     }
 
     @Test
     @DisplayName("按Agent计算通过率 - 无测试结果时返回0")
     void getPassRateByAgent_NoResults() {
-        when(resultRepository.countByAgentId(1L)).thenReturn(0L);
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.countByAgentIdAndTenantId(1L, 100L)).thenReturn(0L);
 
-        double passRate = agentTestResultService.getPassRateByAgent(1L);
-
-        assertEquals(0.0, passRate, 0.001);
+            double passRate = agentTestResultService.getPassRateByAgent(1L);
+            assertEquals(0.0, passRate, 0.001);
+        }
     }
 
     @Test
     @DisplayName("按Agent计算通过率 - 全部失败")
     void getPassRateByAgent_AllFailed() {
-        AgentTestResult result1 = new AgentTestResult();
-        result1.setStatus("FAILED");
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.countByAgentIdAndTenantId(1L, 100L)).thenReturn(2L);
+            when(resultRepository.countByAgentIdAndStatus(1L, "SUCCESS")).thenReturn(0L);
 
-        AgentTestResult result2 = new AgentTestResult();
-        result2.setStatus("ERROR");
-
-        when(resultRepository.countByAgentId(1L)).thenReturn(2L);
-        when(resultRepository.findByAgentId(1L))
-                .thenReturn(Arrays.asList(result1, result2));
-
-        double passRate = agentTestResultService.getPassRateByAgent(1L);
-
-        assertEquals(0.0, passRate, 0.001);
+            double passRate = agentTestResultService.getPassRateByAgent(1L);
+            assertEquals(0.0, passRate, 0.001);
+        }
     }
 
     // ==================== updateResult 测试 ====================
@@ -219,23 +211,29 @@ class AgentTestResultServiceTest {
     @Test
     @DisplayName("按Agent查询测试结果 - 成功")
     void getResultsByAgentId_Success() {
-        when(resultRepository.findByAgentId(1L)).thenReturn(Arrays.asList(testResult));
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.findByAgentIdAndTenantId(1L, 100L)).thenReturn(Arrays.asList(testResult));
 
-        List<AgentTestResult> result = agentTestResultService.getResultsByAgentId(1L);
+            List<AgentTestResult> result = agentTestResultService.getResultsByAgentId(1L);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
+            assertNotNull(result);
+            assertEquals(1, result.size());
+        }
     }
 
     @Test
     @DisplayName("按测试用例查询测试结果 - 成功")
     void getResultsByTestCaseId_Success() {
-        when(resultRepository.findByTestCaseId(1L)).thenReturn(Arrays.asList(testResult));
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.findByTestCaseIdAndTenantId(1L, 100L)).thenReturn(Arrays.asList(testResult));
 
-        List<AgentTestResult> result = agentTestResultService.getResultsByTestCaseId(1L);
+            List<AgentTestResult> result = agentTestResultService.getResultsByTestCaseId(1L);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
+            assertNotNull(result);
+            assertEquals(1, result.size());
+        }
     }
 
     @Test
@@ -263,18 +261,13 @@ class AgentTestResultServiceTest {
     @Test
     @DisplayName("按测试用例计算通过率 - 成功")
     void getPassRateByTestCase_Success() {
-        AgentTestResult result1 = new AgentTestResult();
-        result1.setStatus("SUCCESS");
+        try (var mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentTenantId).thenReturn(100L);
+            when(resultRepository.countByTestCaseIdAndTenantId(1L, 100L)).thenReturn(2L);
+            when(resultRepository.countByTestCaseIdAndStatus(1L, "SUCCESS")).thenReturn(1L);
 
-        AgentTestResult result2 = new AgentTestResult();
-        result2.setStatus("FAILED");
-
-        when(resultRepository.countByTestCaseId(1L)).thenReturn(2L);
-        when(resultRepository.findByTestCaseId(1L))
-                .thenReturn(Arrays.asList(result1, result2));
-
-        double passRate = agentTestResultService.getPassRateByTestCase(1L);
-
-        assertEquals(50.0, passRate, 0.001);
+            double passRate = agentTestResultService.getPassRateByTestCase(1L);
+            assertEquals(50.0, passRate, 0.001);
+        }
     }
 }

@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -20,8 +21,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 使用 MockMvc 测试数据导出接口
  */
 @WebMvcTest(DataExportController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("数据导出控制器测试")
-class DataExportControllerTest {
+class DataExportControllerTest extends AbstractWebMvcSliceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -36,7 +38,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportAgents(
                 isNull(), isNull(), isNull(), isNull(), isNull(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/agents"))
+        mockMvc.perform(get("/v1/export/agents"))
                 .andExpect(status().isOk());
 
         verify(dataExportService).exportAgents(
@@ -50,7 +52,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportAgents(
                 any(), any(), any(), any(), any(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/agents")
+        mockMvc.perform(get("/v1/export/agents")
                         .param("tenantId", "100")
                         .param("status", "PUBLISHED")
                         .param("keyword", "测试"))
@@ -67,7 +69,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportUsers(
                 isNull(), isNull(), isNull(), isNull(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/users"))
+        mockMvc.perform(get("/v1/export/users"))
                 .andExpect(status().isOk());
 
         verify(dataExportService).exportUsers(
@@ -81,7 +83,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportUsers(
                 any(), any(), any(), any(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/users")
+        mockMvc.perform(get("/v1/export/users")
                         .param("tenantId", "100")
                         .param("keyword", "admin"))
                 .andExpect(status().isOk());
@@ -97,7 +99,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportLogs(
                 isNull(), isNull(), isNull(), isNull(), isNull(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/logs"))
+        mockMvc.perform(get("/v1/export/logs"))
                 .andExpect(status().isOk());
 
         verify(dataExportService).exportLogs(
@@ -111,7 +113,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportTestResults(
                 isNull(), isNull(), isNull(), isNull(), isNull(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/test-results"))
+        mockMvc.perform(get("/v1/export/test-results"))
                 .andExpect(status().isOk());
 
         verify(dataExportService).exportTestResults(
@@ -125,7 +127,7 @@ class DataExportControllerTest {
         doNothing().when(dataExportService).exportWorkflowInstances(
                 isNull(), isNull(), isNull(), isNull(), isNull(), any(HttpServletResponse.class));
 
-        mockMvc.perform(get("/export/workflow-instances"))
+        mockMvc.perform(get("/v1/export/workflow-instances"))
                 .andExpect(status().isOk());
 
         verify(dataExportService).exportWorkflowInstances(

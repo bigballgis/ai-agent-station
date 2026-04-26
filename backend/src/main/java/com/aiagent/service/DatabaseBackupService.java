@@ -276,7 +276,7 @@ public class DatabaseBackupService {
     public Result<Map<String, Object>> scheduleBackup(String cronExpression) {
         try {
             // Validate cron expression
-            CronExpression.parse(cronExpression);
+            CronExpression cron = CronExpression.parse(cronExpression);
 
             // Cancel existing schedule
             if (scheduledBackupFuture != null && !scheduledBackupFuture.isCancelled()) {
@@ -293,7 +293,7 @@ public class DatabaseBackupService {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("cronExpression", cronExpression);
             result.put("enabled", true);
-            result.put("nextExecution", trigger.nextExecutionTime(new Date()));
+            result.put("nextExecution", cron.next(LocalDateTime.now()));
 
             log.info("Automatic backup scheduled with cron: {}", cronExpression);
             return Result.success("Backup schedule updated", result);

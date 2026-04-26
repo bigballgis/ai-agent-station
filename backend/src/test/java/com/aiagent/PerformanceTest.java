@@ -42,7 +42,6 @@ public class PerformanceTest {
         testAgent = new Agent();
         testAgent.setTenantId(1L);
         testAgent.setName("Performance Test Agent");
-        testAgent.setAgentCode("performance-test-agent");
         testAgent.setDescription("Agent for performance testing");
         testAgent.setStatus(Agent.AgentStatus.PUBLISHED);
         testAgent.setCreatedBy(1L);

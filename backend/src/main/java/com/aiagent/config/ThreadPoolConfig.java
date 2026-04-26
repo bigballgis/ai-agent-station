@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ThreadPoolConfig {
 
     private final AppProperties appProperties;
+    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
 
     public ThreadPoolConfig(AppProperties appProperties) {
         this.appProperties = appProperties;
@@ -66,6 +67,8 @@ public class ThreadPoolConfig {
      */
     @Bean(name = "sseExecutor")
     public Executor sseExecutor() {
+        int coreSize = appProperties.getThreadPool().getCoreSize();
+        int maxSize = appProperties.getThreadPool().getMaxSize();
         log.info("[ThreadPool] 初始化 SSE 线程池: core={}, max={}, queue={}",
                 coreSize * 2, maxSize * 2, 500);
 
@@ -87,6 +90,9 @@ public class ThreadPoolConfig {
      */
     @Bean(name = "agentExecutor")
     public Executor agentExecutor() {
+        int coreSize = appProperties.getThreadPool().getCoreSize();
+        int maxSize = appProperties.getThreadPool().getMaxSize();
+        int keepAliveSeconds = appProperties.getThreadPool().getKeepAliveSeconds();
         log.info("[ThreadPool] 初始化 Agent 执行线程池: core={}, max={}, queue={}",
                 coreSize, maxSize, 100);
 

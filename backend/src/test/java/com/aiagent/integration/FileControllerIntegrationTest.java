@@ -2,6 +2,7 @@ package com.aiagent.integration;
 
 import com.aiagent.security.JwtUtil;
 import com.aiagent.service.FileStorageService;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @DisplayName("文件控制器集成测试")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled("Integration test requires full Spring environment (DB/Redis/filesystem). Enable in dedicated integration test pipeline.")
 class FileControllerIntegrationTest {
 
     @Autowired
